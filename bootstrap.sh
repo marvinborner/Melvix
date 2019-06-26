@@ -46,9 +46,10 @@ for dir in ${MELVIX}/usr{,/local}; do
     done
 
 install -dv ${MELVIX}/cross-tools{,/bin}
-ln -svf ../proc/mounts ${MELVIX}/etc/mtab
+ln -svf /proc/mounts ${MELVIX}/etc/mtab
 
 cp -rfv ${source}/etc/* ${MELVIX}/etc/
+cp -rfv ${source}/boot/grub/ ${MELVIX}/boot/
 
 echo "melvix" > ${MELVIX}/etc/HOSTNAME
 
