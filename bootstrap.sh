@@ -12,16 +12,16 @@ export PATH=${MELVIX}/cross-tools/bin:/bin:/usr/bin
 
 mkdir -pv ${MELVIX}/sources
 cd ${MELVIX}/sources
-wget "http://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.xz" && tar xf binutils-2.32.tar.xz
-wget "https://busybox.net/downloads/busybox-1.31.0.tar.bz2" && tar xf busybox-1.31.0.tar.bz2
-wget "https://github.com/cross-lfs/bootscripts-embedded/archive/master.tar.gz" && tar xf master.tar.gz
-wget "https://gcc.gnu.org/pub/gcc/releases/gcc-9.1.0/gcc-9.1.0.tar.xz" && tar xf gcc-9.1.0.tar.xz
-wget "http://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz" && tar xf gmp-6.1.2.tar.xz
-wget "https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-5.1.tar.xz" && tar xf linux-5.1.tar.xz
-wget "http://ftp.gnu.org/gnu/mpc/mpc-1.1.0.tar.gz" && tar xf mpc-1.1.0.tar.gz
-wget "http://ftp.gnu.org/gnu/glibc/glibc-2.29.tar.xz" && tar xf glibc-2.29.tar.xz
-wget "http://ftp.gnu.org/gnu/mpfr/mpfr-4.0.2.tar.xz" && tar xf mpfr-4.0.2.tar.xz
-wget "https://www.zlib.net/zlib-1.2.11.tar.xz" && tar xf zlib-1.2.11.tar.xz
+curl -SL "http://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.xz" | tar xJ
+curl -SL "https://busybox.net/downloads/busybox-1.31.0.tar.bz2" | tar xj
+curl -SL "https://github.com/cross-lfs/bootscripts-embedded/archive/master.tar.gz" | tar xz
+curl -SL "https://gcc.gnu.org/pub/gcc/releases/gcc-9.1.0/gcc-9.1.0.tar.xz" | tar xJ
+curl -SL "http://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz" | tar xJ
+curl -SL "https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-5.1.tar.xz" | tar xJ
+curl -SL "http://ftp.gnu.org/gnu/mpc/mpc-1.1.0.tar.gz" | tar xz
+curl -SL "http://ftp.gnu.org/gnu/glibc/glibc-2.29.tar.xz" | tar xJ
+curl -SL "http://ftp.gnu.org/gnu/mpfr/mpfr-4.0.2.tar.xz" | tar xJ
+curl -SL "https://www.zlib.net/zlib-1.2.11.tar.xz" | tar xJ
 cd ${MELVIX}
 
 mkdir -pv ${MELVIX}/{bin,boot{,grub},dev,{etc/,}opt,home,lib/{firmware,modules},lib64,mnt}
