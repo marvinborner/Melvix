@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
 
-export source=$(pwd)
-
-sudo useradd -m melvix
-sudo mkdir /home/melvix
-sudo chown -R melvix /home/melvix
-sudo -i -u melvix bash << SUPERAWESOMEENDLINGLINE
+export source=$1
 
 set +h
 umask 022
 export MELVIX=/home/melvix/os
-mkdir -pv ${MELVIX}
 cd ${MELVIX}
 
 export LC_ALL=POSIX
@@ -47,9 +41,6 @@ for dir in ${MELVIX}/usr{,/local}; do
 
 install -dv ${MELVIX}/cross-tools{,/bin}
 ln -svf /proc/mounts ${MELVIX}/etc/mtab
-
-cp -rfv ${source}/etc/* ${MELVIX}/etc/
-cp -rfv ${source}/boot/grub/ ${MELVIX}/boot/
 
 echo "melvix" > ${MELVIX}/etc/HOSTNAME
 
@@ -183,16 +174,3 @@ FILES="$(ls ${MELVIX}-copy/usr/lib64/*.a)"
 for file in ${FILES};
 do rm -f ${file}
 done
-
-SUPERAWESOMEENDLINGLINE
-export MELVIX=/home/melvix/os
-find ${MELVIX}-copy/{,usr/}{bin,lib,sbin} -type f -exec sudo strip --strip-debug '{}' ';'
-find ${MELVIX}-copy/{,usr/}lib64 -type f -exec sudo strip --strip-debug '{}' ';'
-sudo chown -R root:root ${MELVIX}-copy
-sudo chgrp 13 ${MELVIX}-copy/var/run/utmp ${MELVIX}-copy/var/log/lastlog
-sudo mknod -m 0666 ${MELVIX}-copy/dev/null c 1 3
-sudo mknod -m 0600 ${MELVIX}-copy/dev/console c 5 1
-sudo chmod 4755 ${MELVIX}-copy/bin/busybox
-
-cd ${MELVIX}-copy/
-sudo tar cfJ ../melvix-build.tar.xz *
