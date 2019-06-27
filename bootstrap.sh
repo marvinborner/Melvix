@@ -133,7 +133,7 @@ export RANLIB="${MELVIX_TARGET}-ranlib"
 export READELF="${MELVIX_TARGET}-readelf"
 export STRIP="${MELVIX_TARGET}-strip"
 
-cd ${MELVIX}/sources/binutils-2.32
+cd ${MELVIX}/sources/busybox-1.31.0
 make CROSS_COMPILE="${MELVIX_TARGET}-" defconfig
 # make CROSS_COMPILE="${MELVIX_TARGET}-" menuconfig
 make CROSS_COMPILE="${MELVIX_TARGET}-"

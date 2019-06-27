@@ -19,4 +19,4 @@ sudo mknod -m 0600 ${MELVIX}-copy/dev/console c 5 1
 sudo chmod 4755 ${MELVIX}-copy/bin/busybox
 
 cd ${MELVIX}-copy/
-sudo tar cfJ ../melvix-build.tar.xz *
+sudo tar cfJ ${source}/melvix-build.tar.xz *
