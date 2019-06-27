@@ -14,7 +14,7 @@ sudo -i -u melvix bash bootstrap.sh ${source}
 kill $! && trap " " EXIT
 
 export MELVIX=/home/melvix/os
-sudi find ${MELVIX}-copy/{,usr/}{bin,lib,sbin} -type f -exec sudo strip --strip-debug '{}' ';'
+sudo find ${MELVIX}-copy/{,usr/}{bin,lib,sbin} -type f -exec sudo strip --strip-debug '{}' ';'
 sudo find ${MELVIX}-copy/{,usr/}lib64 -type f -exec sudo strip --strip-debug '{}' ';'
 sudo chown -R root:root ${MELVIX}-copy
 sudo chgrp 13 ${MELVIX}-copy/var/run/utmp ${MELVIX}-copy/var/log/lastlog
