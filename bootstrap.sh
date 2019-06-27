@@ -15,8 +15,8 @@ cd ${MELVIX}/sources
 wget "http://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.xz" && tar xf binutils-2.32.tar.xz
 wget "https://busybox.net/downloads/busybox-1.31.0.tar.bz2" && tar xf busybox-1.31.0.tar.bz2
 wget "https://github.com/cross-lfs/bootscripts-embedded/archive/master.tar.gz" && tar xf master.tar.gz
-wget "https://gcc.gnu.org/pub/gcc/releases/gcc-9.1.0/gcc-9.1.0.tar.xz" && tar xf gcc-9.1.0.tar.bz2
-wget "http://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz" && tar gmp-6.1.2.tar.xz
+wget "https://gcc.gnu.org/pub/gcc/releases/gcc-9.1.0/gcc-9.1.0.tar.xz" && tar xf gcc-9.1.0.tar.xz
+wget "http://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz" && tar xf gmp-6.1.2.tar.xz
 wget "https://mirrors.edge.kernel.org/pub/linux/kernel/v5.x/linux-5.1.tar.xz" && tar xf linux-5.1.tar.xz
 wget "http://ftp.gnu.org/gnu/mpc/mpc-1.1.0.tar.gz" && tar xf mpc-1.1.0.tar.gz
 wget "http://ftp.gnu.org/gnu/glibc/glibc-2.29.tar.xz" && tar xf glibc-2.29.tar.xz
