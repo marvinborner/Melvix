@@ -8,15 +8,14 @@ sudo cp -r boot etc /home/melvix/os
 sudo chown -R melvix /home/melvix
 sudo cp bootstrap.sh /home/melvix
 
-echo "Compiling and packaging Melvix..."
 while :;do for s in / - \\ \|; do printf "\r$s";sleep .1;done;done &
 trap "kill $!" EXIT
-sudo -i -u melvix bash bootstrap.sh ${source} &> /dev/null
+sudo -i -u melvix bash bootstrap.sh ${source}
 kill $! && trap " " EXIT
 
 export MELVIX=/home/melvix/os
-find ${MELVIX}-copy/{,usr/}{bin,lib,sbin} -type f -exec sudo strip --strip-debug '{}' ';'
-find ${MELVIX}-copy/{,usr/}lib64 -type f -exec sudo strip --strip-debug '{}' ';'
+sudi find ${MELVIX}-copy/{,usr/}{bin,lib,sbin} -type f -exec sudo strip --strip-debug '{}' ';'
+sudo find ${MELVIX}-copy/{,usr/}lib64 -type f -exec sudo strip --strip-debug '{}' ';'
 sudo chown -R root:root ${MELVIX}-copy
 sudo chgrp 13 ${MELVIX}-copy/var/run/utmp ${MELVIX}-copy/var/log/lastlog
 sudo mknod -m 0666 ${MELVIX}-copy/dev/null c 1 3
