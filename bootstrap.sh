@@ -68,7 +68,8 @@ echo "Building binutils"
 mkdir ${MELVIX}/sources/binutils-build/
 cd ${MELVIX}/sources/binutils-build/
 ../binutils-2.32/configure --prefix=${MELVIX}/cross-tools --target=${MELVIX_TARGET} --with-sysroot=${MELVIX} --disable-nls --enable-shared --disable-multilib &> /dev/null
-make configure-host &> /dev/null && make &> /dev/null
+make configure-host &> /dev/null
+make &> /dev/null
 ln -s lib ${MELVIX}/cross-tools/lib64
 make install &> /dev/null
 cp ../binutils-2.32/include/libiberty.h ${MELVIX}/usr/include
@@ -113,7 +114,8 @@ RANLIB="${MELVIX_TARGET}-ranlib" CFLAGS="-O2" \
 --with-binutils=${MELVIX}/cross-tools/bin \
 --with-headers=${MELVIX}/usr/include \
 --cache-file=config.cache &> /dev/null
-make && make install_root=${MELVIX}/ install &> /dev/null
+make &> /dev/null
+make install_root=${MELVIX}/ install &> /dev/null
 
 echo "Building gcc"
 mkdir ${MELVIX}/sources/gcc-build
@@ -128,7 +130,8 @@ AR=ar LDFLAGS="-Wl,-rpath,${MELVIX}/cross-tools/lib" \
 --with-mpfr-include=$(pwd)/../gcc-9.1.0/mpfr/src \
 --with-mpfr-lib=$(pwd)/mpfr/src/.libs \
 --disable-multilib --with-arch=${MELVIX_CPU} &> /dev/null
-make && make install &> /dev/null
+make &> /dev/null
+make install &> /dev/null
 cp ${MELVIX}/cross-tools/${MELVIX_TARGET}/lib64/libgcc_s.so.1 ${MELVIX}/lib64
 export CC="${MELVIX_TARGET}-gcc"
 export CXX="${MELVIX_TARGET}-g++"
@@ -152,6 +155,7 @@ chmod 755 ${MELVIX}/cross-tools/bin/depmod.pl
 echo "Building kernel"
 cd ${MELVIX}/sources/linux-5.1
 make ARCH=${MELVIX_ARCH} CROSS_COMPILE=${MELVIX_TARGET}- x86_64_defconfig &> /dev/null
+mv ${MELVIX}/kernel.conf ${MELVIX}/sources/linux-5.1/.config
 # make ARCH=${MELVIX_ARCH} CROSS_COMPILE=${MELVIX_TARGET}- menuconfig
 make ARCH=${MELVIX_ARCH} CROSS_COMPILE=${MELVIX_TARGET}- &> /dev/null
 make ARCH=${MELVIX_ARCH} CROSS_COMPILE=${MELVIX_TARGET}- INSTALL_MOD_PATH=${MELVIX} modules_install &> /dev/null
@@ -170,7 +174,8 @@ echo "Building zlib"
 cd ${MELVIX}/sources/zlib-1.2.11
 sed -i 's/-O3/-Os/g' configure
 ./configure --prefix=/usr --shared &> /dev/null
-make && make DESTDIR=${MELVIX}/ install &> /dev/null
+make &> /dev/null
+make DESTDIR=${MELVIX}/ install &> /dev/null
 mv ${MELVIX}/usr/lib/libz.so.* ${MELVIX}/lib
 ln -sf ../../lib/libz.so.1 ${MELVIX}/usr/lib/libz.so
 ln -sf ../../lib/libz.so.1 ${MELVIX}/usr/lib/libz.so.1
