@@ -8,10 +8,12 @@ sudo cp -r boot etc kernel.conf /home/melvix/os
 sudo chown -R melvix /home/melvix
 sudo cp bootstrap.sh /home/melvix
 
+tput civis
 while :;do for s in / - \\ \|; do printf "\r$s";sleep .1;done;done &
 trap "kill $!" EXIT
 sudo -i -u melvix bash bootstrap.sh ${source}
 kill $! && trap " " EXIT
+tput cnorm
 
 export MELVIX=/home/melvix/os
 sudo find ${MELVIX}-copy/{,usr/}{bin,lib,sbin} -type f -exec sudo strip --strip-debug '{}' ';'

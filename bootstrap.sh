@@ -12,7 +12,7 @@ export PATH=${MELVIX}/cross-tools/bin:/bin:/usr/bin
 
 mkdir -p ${MELVIX}/sources
 cd ${MELVIX}/sources
-echo "Downloading resources"
+echo -en " Downloading resources"
 curl -sSL "http://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.xz" | tar xJ
 curl -sSL "https://busybox.net/downloads/busybox-1.31.0.tar.bz2" | tar xj
 curl -sSL "https://github.com/cross-lfs/bootscripts-embedded/archive/master.tar.gz" | tar xz
@@ -25,7 +25,7 @@ curl -sSL "http://ftp.gnu.org/gnu/mpfr/mpfr-4.0.2.tar.xz" | tar xJ
 curl -sSL "https://www.zlib.net/zlib-1.2.11.tar.xz" | tar xJ
 cd ${MELVIX}
 
-echo "Initializing filesystem structure"
+echo -en "\r Initializing filesystem structure"
 mkdir -p ${MELVIX}/{bin,boot{,/grub},dev,{etc/,}opt,home,lib/{firmware,modules},lib64,mnt}
 mkdir -p ${MELVIX}/{proc,media/{floppy,cdrom},sbin,srv,sys}
 mkdir -p ${MELVIX}/var/{lock,log,mail,run,spool}
@@ -57,14 +57,14 @@ export MELVIX_CPU=k8
 export MELVIX_ARCH=$(echo ${MELVIX_TARGET} | sed -e 's/-.*//' -e 's/i.86/i386/')
 export MELVIX_ENDIAN=little
 
-echo "Building kernel headers"
+echo -en "\r Building kernel headers"
 cd ${MELVIX}/sources/linux-5.1/
 make mrproper &> /dev/null
 make ARCH=${MELVIX_ARCH} headers_check &> /dev/null
 make ARCH=${MELVIX_ARCH} INSTALL_HDR_PATH=dest headers_install &> /dev/null
 cp -r dest/include/* ${MELVIX}/usr/include
 
-echo "Building binutils"
+echo -en "\r Building binutils"
 mkdir ${MELVIX}/sources/binutils-build/
 cd ${MELVIX}/sources/binutils-build/
 ../binutils-2.32/configure --prefix=${MELVIX}/cross-tools --target=${MELVIX_TARGET} --with-sysroot=${MELVIX} --disable-nls --enable-shared --disable-multilib &> /dev/null
@@ -74,7 +74,7 @@ ln -s lib ${MELVIX}/cross-tools/lib64
 make install &> /dev/null
 cp ../binutils-2.32/include/libiberty.h ${MELVIX}/usr/include
 
-echo "Building static gcc"
+echo -en "\r Building static gcc"
 cd ${MELVIX}/sources/
 mv gmp-6.1.2 gcc-9.1.0/gmp/
 mv mpc-1.1.0 gcc-9.1.0/mpc/
@@ -97,7 +97,7 @@ make all-gcc all-target-libgcc &> /dev/null
 make install-gcc install-target-libgcc &> /dev/null
 ln -s libgcc.a `${MELVIX_TARGET}-gcc -print-libgcc-file-name | sed 's/libgcc/&_eh/'`
 
-echo "Building glibc"
+echo -en "\r Building glibc"
 mkdir ${MELVIX}/sources/glibc-build
 cd ${MELVIX}/sources/glibc-build
 echo "libc_cv_forced_unwind=yes" > config.cache
@@ -117,7 +117,7 @@ RANLIB="${MELVIX_TARGET}-ranlib" CFLAGS="-O2" \
 make &> /dev/null
 make install_root=${MELVIX}/ install &> /dev/null
 
-echo "Building gcc"
+echo -en "\r Building gcc"
 mkdir ${MELVIX}/sources/gcc-build
 cd ${MELVIX}/sources/gcc-build
 AR=ar LDFLAGS="-Wl,-rpath,${MELVIX}/cross-tools/lib" \
@@ -143,7 +143,7 @@ export RANLIB="${MELVIX_TARGET}-ranlib"
 export READELF="${MELVIX_TARGET}-readelf"
 export STRIP="${MELVIX_TARGET}-strip"
 
-echo "Building busybox"
+echo -en "\r Building busybox"
 cd ${MELVIX}/sources/busybox-1.31.0
 make CROSS_COMPILE="${MELVIX_TARGET}-" defconfig &> /dev/null
 # make CROSS_COMPILE="${MELVIX_TARGET}-" menuconfig
@@ -152,7 +152,7 @@ make CROSS_COMPILE="${MELVIX_TARGET}-" CONFIG_PREFIX="${MELVIX}" install &> /dev
 cp examples/depmod.pl ${MELVIX}/cross-tools/bin
 chmod 755 ${MELVIX}/cross-tools/bin/depmod.pl
 
-echo "Building kernel"
+echo -en "\r Building kernel"
 cd ${MELVIX}/sources/linux-5.1
 make ARCH=${MELVIX_ARCH} CROSS_COMPILE=${MELVIX_TARGET}- x86_64_defconfig &> /dev/null
 mv ${MELVIX}/kernel.conf ${MELVIX}/sources/linux-5.1/.config
@@ -165,12 +165,12 @@ cp .config ${MELVIX}/boot/config
 
 ${MELVIX}/cross-tools/bin/depmod.pl -F ${MELVIX}/boot/System.map -b ${MELVIX}/lib/modules/5.1.0 &> /dev/null
 
-echo "Installing boot scripts"
+echo -en "\r Installing boot scripts"
 cd ${MELVIX}/sources/bootscripts-embedded-master
 make DESTDIR=${MELVIX}/ install-bootscripts &> /dev/null
 ln -s ../rc.d/startup ${MELVIX}/etc/init.d/rcS
 
-echo "Building zlib"
+echo -en "\r Building zlib"
 cd ${MELVIX}/sources/zlib-1.2.11
 sed -i 's/-O3/-Os/g' configure
 ./configure --prefix=/usr --shared &> /dev/null
@@ -182,7 +182,7 @@ ln -sf ../../lib/libz.so.1 ${MELVIX}/usr/lib/libz.so.1
 ln -sf ../lib/libz.so.1 ${MELVIX}/lib64/libz.so.1
 
 # Cleanup
-echo "Cleaning up and backing up current state"
+echo -en "\r Cleaning up and backing up current state"
 cp -rf ${MELVIX}/ ${MELVIX}-copy
 rm -rf ${MELVIX}-copy/cross-tools
 rm -rf ${MELVIX}-copy/usr/src/*
