@@ -4,7 +4,7 @@ export source=$(pwd)
 
 sudo useradd -m melvix
 sudo mkdir -p /home/melvix/os
-sudo cp -r boot etc /home/melvix/os
+sudo cp -r boot etc kernel.conf /home/melvix/os
 sudo chown -R melvix /home/melvix
 sudo cp bootstrap.sh /home/melvix
 
@@ -22,5 +22,4 @@ sudo mknod -m 0666 ${MELVIX}-copy/dev/null c 1 3
 sudo mknod -m 0600 ${MELVIX}-copy/dev/console c 5 1
 sudo chmod 4755 ${MELVIX}-copy/bin/busybox
 
-cd ${MELVIX}-copy/
-sudo tar cfJ ${source}/melvix-build.tar.xz *
+sudo tar cfJ ${source}/melvix-build.tar.xz ${MELVIX}-copy/*
