@@ -26,7 +26,7 @@ curl -sSL "https://www.zlib.net/zlib-1.2.11.tar.xz" | tar xJ
 cd ${MELVIX}
 
 echo "Initializing filesystem structure"
-mkdir -p ${MELVIX}/{bin,boot{,grub},dev,{etc/,}opt,home,lib/{firmware,modules},lib64,mnt}
+mkdir -p ${MELVIX}/{bin,boot{,/grub},dev,{etc/,}opt,home,lib/{firmware,modules},lib64,mnt}
 mkdir -p ${MELVIX}/{proc,media/{floppy,cdrom},sbin,srv,sys}
 mkdir -p ${MELVIX}/var/{lock,log,mail,run,spool}
 mkdir -p ${MELVIX}/var/{opt,cache,lib/{misc,locate},local}
