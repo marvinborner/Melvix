@@ -23,6 +23,7 @@ curl -sSL "http://ftp.gnu.org/gnu/mpc/mpc-1.1.0.tar.gz" | tar xz
 curl -sSL "http://ftp.gnu.org/gnu/glibc/glibc-2.29.tar.xz" | tar xJ
 curl -sSL "http://ftp.gnu.org/gnu/mpfr/mpfr-4.0.2.tar.xz" | tar xJ
 curl -sSL "https://www.zlib.net/zlib-1.2.11.tar.xz" | tar xJ
+curl -sSl "https://roy.marples.name/downloads/dhcpcd/dhcpcd-7.2.3.tar.xz" | tar xJ
 cd ${MELVIX}
 
 echo -en "\r Initializing filesystem structure"
@@ -180,6 +181,12 @@ mv ${MELVIX}/usr/lib/libz.so.* ${MELVIX}/lib
 ln -sf ../../lib/libz.so.1 ${MELVIX}/usr/lib/libz.so
 ln -sf ../../lib/libz.so.1 ${MELVIX}/usr/lib/libz.so.1
 ln -sf ../lib/libz.so.1 ${MELVIX}/lib64/libz.so.1
+
+echo -en "\r Building dhcpcd"
+cd ${MELVIX}/sources/dhcpcd-7.2.3
+./configure --prefix=/usr --sbindir=/sbin --sysconfdir=/etc --dbdir=/var/lib/dhcpcd --libexecdir=/usr/lib/dhcpcd &> /dev/null
+make &> /dev/null
+make DESTDIR=${MELVIX}/ install &> /dev/null
 
 # Cleanup
 echo -en "\r Cleaning up and backing up current state"
