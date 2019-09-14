@@ -10,8 +10,17 @@ mkdir ./build/
 
 # Make source files
 i686-elf-as ./src/boot.s -o ./build/boot.o
-i686-elf-gcc -c ./src/kernel.c -o ./build/kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-i686-elf-gcc -T ./src/linker.ld -o ./build/melvix.bin -ffreestanding -O2 -nostdlib ./build/boot.o ./build/kernel.o -lgcc
+
+files=""
+for line in $(find ./src -name \*.c); do
+  stripped=$(echo "${line}" | sed -r 's/\//_/g')
+  stripped=${stripped#??????}
+  stripped=${stripped%%?}o
+  i686-elf-gcc -c ./"${line}" -o ./build/"${stripped}" -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+  files="${files} ./build/${stripped}"
+done
+
+i686-elf-gcc -T ./src/linker.ld -o ./build/melvix.bin -ffreestanding -O2 -nostdlib ./build/boot.o $files -lgcc
 
 # Testing
 if grub-file --is-x86-multiboot ./build/melvix.bin; then
