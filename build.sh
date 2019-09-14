@@ -12,15 +12,15 @@ mkdir ./build/
 i686-elf-as ./src/boot.s -o ./build/boot.o
 
 files=""
-find ./src -name \*.c > ./build/tmp
+find ./src -name \*.c >./build/tmp
 while read -r line; do
   stripped=$(echo "${line}" | sed -r 's/\//_/g')
   stripped=${stripped#??????}
   stripped=${stripped%%?}o
   i686-elf-gcc -c ./"${line}" -o ./build/"${stripped}" -std=gnu99 -ffreestanding -O2 -Wall -Wextra
   files="${files} ./build/${stripped}"
-done < ./build/tmp
-rm tmp
+done <./build/tmp
+rm ./build/tmp
 
 # shellcheck disable=SC2086
 # Shellcheck suppression is needed because gcc would think that $files is one file
