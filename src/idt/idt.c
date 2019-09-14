@@ -21,6 +21,18 @@ struct idt_ptr idtp;
 // Defined in boot.asm
 extern void idt_load();
 
+void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags) {
+    // Specify the interrupt routine's base address
+    idt[num].base_lo = (base & 0xFFFF);
+    idt[num].base_hi = (base >> 16) & 0xFFFF;
+
+    // Set selector/segment of IDT entry
+    idt[num].sel = sel;
+    idt[num].always0 = 0;
+    idt[num].flags = flags;
+}
+
+
 // Install IDT
 void idt_install() {
     // Set IDT pointer and limit
