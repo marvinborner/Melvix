@@ -1,3 +1,8 @@
 .idea
 Melvix.iml
+
+build/
+cmake-build-debug/
 cross/
+cross64/
+iso/

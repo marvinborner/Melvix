@@ -1,10 +1,11 @@
 #!/usr/bin/env sh
 # Sets up a cross compiler
+# TODO: Rewrite everything for 64-Bit
 
-if [ ! -d "./cross64/" ]; then
+if [ ! -d "./cross/" ]; then
   # Create directory
-  mkdir -p cross64
-  cd cross64 || exit
+  mkdir -p cross
+  cd cross || exit
   DIR=$(pwd)
 
   # Get sources
@@ -16,7 +17,7 @@ if [ ! -d "./cross64/" ]; then
   # Prepare compiling
   mkdir -p "${DIR}/opt/bin"
   export PREFIX="${DIR}/opt"
-  export TARGET=x86_64-elf
+  export TARGET=i686-elf
   export PATH="$PREFIX/bin:$PATH"
 
   # Compile binutilsq
@@ -38,10 +39,10 @@ if [ ! -d "./cross64/" ]; then
   . cross.sh
 else
   # Should be sourced to take effect
-  cd cross64 || exit
+  cd cross || exit
   DIR=$(pwd)
   export PREFIX="${DIR}/opt"
-  export TARGET=x86_64-elf
+  export TARGET=i686-elf
   export PATH="$PREFIX/bin:$PATH"
   cd ..
 fi
