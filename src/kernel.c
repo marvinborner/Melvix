@@ -68,11 +68,16 @@ void terminal_put_entry_at(char c, uint8_t color, size_t x, size_t y) {
 }
 
 void terminal_put_char(char c) {
-    terminal_put_entry_at(c, terminal_color, terminal_column, terminal_row);
-    if (++terminal_column == VGA_WIDTH) {
+    if (c == '\n' || c == '\r') {
+        terminal_row += 1;
         terminal_column = 0;
-        if (++terminal_row == VGA_HEIGHT)
-            terminal_row = 0;
+    } else {
+        terminal_put_entry_at(c, terminal_color, terminal_column, terminal_row);
+        if (++terminal_column == VGA_WIDTH) {
+            terminal_column = 0;
+            if (++terminal_row == VGA_HEIGHT)
+                terminal_row = 0;
+        }
     }
 }
 
@@ -87,5 +92,5 @@ void terminal_write_string(const char *data) {
 
 void kernel_main(void) {
     terminal_initialize();
-    terminal_write_string("Melvix loaded successfully!");
+    terminal_write_string("Melvix loaded successfully!\nTest");
 }
