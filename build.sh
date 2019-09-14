@@ -9,7 +9,7 @@ rm -rf ./build/ ./iso/
 mkdir ./build/
 
 # Make source files
-i686-elf-as ./src/boot.s -o ./build/boot.o
+nasm -f elf ./src/boot.asm -o ./build/boot.o
 
 files=""
 find ./src -name \*.c >./build/tmp
