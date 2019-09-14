@@ -12,14 +12,18 @@ mkdir ./build/
 i686-elf-as ./src/boot.s -o ./build/boot.o
 
 files=""
-for line in $(find ./src -name \*.c); do
+find ./src -name \*.c > ./build/tmp
+while read -r line; do
   stripped=$(echo "${line}" | sed -r 's/\//_/g')
   stripped=${stripped#??????}
   stripped=${stripped%%?}o
   i686-elf-gcc -c ./"${line}" -o ./build/"${stripped}" -std=gnu99 -ffreestanding -O2 -Wall -Wextra
   files="${files} ./build/${stripped}"
-done
+done < ./build/tmp
+rm tmp
 
+# shellcheck disable=SC2086
+# Shellcheck suppression is needed because gcc would think that $files is one file
 i686-elf-gcc -T ./src/linker.ld -o ./build/melvix.bin -ffreestanding -O2 -nostdlib ./build/boot.o $files -lgcc
 
 # Testing
