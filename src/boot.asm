@@ -34,6 +34,7 @@ stublet:
     call kernel_main
     jmp $
 
+; GDT flush function
 global gdt_flush
 extern gp
 gdt_flush:
@@ -48,8 +49,14 @@ gdt_flush:
 flush2:
     ret ; Returns to C code
 
-; TODO: ISR
+; IDT loader
+global idt_load
+extern idtp
+idt_load:
+    lidt [idtp]
+    ret
 
+; Store the stack
 SECTION .bss
     resb 8192 ; Reserve 8KiB
 _sys_stack:
