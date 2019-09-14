@@ -1,10 +1,10 @@
 #!/usr/bin/env sh
 # Sets up a cross compiler
 
-if [ ! -d "./cross/" ]; then
+if [ ! -d "./cross64/" ]; then
   # Create directory
-  mkdir -p cross
-  cd cross || exit
+  mkdir -p cross64
+  cd cross64 || exit
   DIR=$(pwd)
 
   # Get sources
@@ -32,10 +32,16 @@ if [ ! -d "./cross/" ]; then
   make all-target-libgcc
   make install-gcc
   make install-target-libgcc
+
+  # Source exported variables
+  cd "${DIR}/.." || exit
+  . cross.sh
 else
-  cd cross || exit
+  # Should be sourced to take effect
+  cd cross64 || exit
   DIR=$(pwd)
   export PREFIX="${DIR}/opt"
   export TARGET=x86_64-elf
   export PATH="$PREFIX/bin:$PATH"
+  cd ..
 fi
