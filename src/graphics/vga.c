@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
+#include "../io/io.h"
 
 // Hardware text mode color constants
 enum vga_color {
@@ -45,17 +45,41 @@ size_t terminal_column;
 uint8_t terminal_color;
 uint16_t *terminal_buffer;
 
-void terminal_initialize(void) {
-    terminal_row = 0;
-    terminal_column = 0;
-    terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
-    terminal_buffer = (uint16_t *) 0xB8000;
+void terminal_clear() {
     for (size_t y = 0; y < VGA_HEIGHT; y++) {
         for (size_t x = 0; x < VGA_WIDTH; x++) {
             const size_t index = y * VGA_WIDTH + x;
             terminal_buffer[index] = vga_entry(' ', terminal_color);
         }
     }
+}
+
+void terminal_initialize(void) {
+    terminal_row = 0;
+    terminal_column = 0;
+    terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
+    terminal_buffer = (uint16_t *) 0xB8000;
+    terminal_clear();
+}
+
+void terminal_scroll(void) {
+    if (terminal_row >= VGA_HEIGHT) {
+        terminal_row = VGA_HEIGHT - 1;
+        for (size_t x = 0; x < VGA_WIDTH; x++)
+            for (size_t y = 0; y < VGA_HEIGHT; y++) {
+                uint16_t c = terminal_buffer[y * VGA_WIDTH + x];
+                terminal_buffer[(y - 1) * VGA_WIDTH + x] = c;
+                terminal_buffer[y * VGA_WIDTH + x] = vga_entry(' ', terminal_color);
+            }
+    }
+}
+
+void terminal_update_cursor(void) {
+    unsigned temp = terminal_row * VGA_WIDTH + terminal_column;
+    send(0x3D4, 14);
+    send(0x3D5, temp >> 8);
+    send(0x3D4, 15);
+    send(0x3D5, temp);
 }
 
 void terminal_set_color(uint8_t color) {
@@ -67,35 +91,32 @@ void terminal_put_entry_at(char c, uint8_t color, size_t x, size_t y) {
     terminal_buffer[index] = vga_entry(c, color);
 }
 
-void terminal_clear() {
-    for (size_t x = 0; x < VGA_WIDTH; x++)
-        for (size_t y = 0; y < VGA_HEIGHT; y++)
-            terminal_put_entry_at(' ', terminal_color, x, y);
-}
-
 void terminal_put_char(char c) {
-    bool new_line = c == '\n' || c == '\r';
-
-    if (new_line) {
-        terminal_row += 1;
+    if (c == 0x08) {
+        if (terminal_column != 0) terminal_column--;
+    } else if (c == 0x09) {
+        terminal_column = (terminal_column + 8) & ~(8 - 1);
+    } else if (c == '\r') {
         terminal_column = 0;
-    } else {
+    } else if (c == '\n') {
+        terminal_column = 0;
+        terminal_row++;
+        terminal_scroll();
+        terminal_put_entry_at('$', terminal_color, terminal_column, terminal_row);
+        terminal_column = 2;
+    } else if (c >= ' ') { // Any printable character
         terminal_put_entry_at(c, terminal_color, terminal_column, terminal_row);
+        terminal_column++;
     }
 
-    // Scroll content up
-    if (++terminal_column >= VGA_WIDTH || new_line) {
+    // Add new line on overflow
+    if (terminal_column >= VGA_WIDTH) {
         terminal_column = 0;
-        if (++terminal_row >= VGA_HEIGHT) {
-            terminal_row = VGA_HEIGHT - 1;
-            for (size_t x = 0; x < VGA_WIDTH; x++)
-                for (size_t y = 0; y < VGA_HEIGHT; y++) {
-                    uint16_t c = terminal_buffer[y * VGA_WIDTH + x];
-                    terminal_buffer[(y - 1) * VGA_WIDTH + x] = c;
-                    terminal_buffer[y * VGA_WIDTH + x] = vga_entry(' ', terminal_color);
-                }
-        }
+        terminal_row++;
     }
+
+    terminal_scroll();
+    terminal_update_cursor();
 }
 
 void terminal_write(const char *data, size_t size) {
