@@ -17,7 +17,7 @@ struct idt_ptr {
 struct idt_entry idt[256];
 struct idt_ptr idtp;
 
-// Defined in boot.asm
+// Defined in idt.asm
 extern void idt_load();
 
 void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags) {
