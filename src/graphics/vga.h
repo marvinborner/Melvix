@@ -12,4 +12,6 @@ void terminal_set_color(uint8_t color);
 
 void terminal_write_string(const char *data);
 
+void terminal_put_char(char c);
+
 #endif

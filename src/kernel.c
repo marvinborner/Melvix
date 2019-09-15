@@ -11,8 +11,9 @@ void kernel_main(void) {
     isrs_install();
     irq_install();
     timer_install();
+    keyboard_install();
     mouse_install();
 
     terminal_write_string("Melvix loaded successfully!\n");
-    // __asm__  ("div %0" :: "r"(0)); Exception testing x/0
+    // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
 }

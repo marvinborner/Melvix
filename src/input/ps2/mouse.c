@@ -1,4 +1,7 @@
 #include "../../io/io.h"
+#include "../../interrupts/interrupts.h"
+#include "../../graphics/vga.h"
+#include "../input.h"
 
 char mouse_cycle = 0;
 signed char mouse_byte[3], mouse_ex[3];
@@ -8,7 +11,7 @@ int mouse_but_1 = 0;
 int mouse_but_2 = 0;
 int mm_n[3] = {0, 0, 0,};
 
-void mouse_handler(struct iregs *a_r) {
+void mouse_handler(struct regs *a_r) {
     switch (mouse_cycle) {
         case 0:
             mouse_byte[0] = receive(0x60);
@@ -31,6 +34,8 @@ void mouse_handler(struct iregs *a_r) {
             mm_n[1] = 1;
             mouse_ex[2] = mouse_byte[2];
             mm_n[2] = 1;
+            break;
+        default:
             break;
     }
 }
@@ -92,7 +97,7 @@ void mouse_install() {
     mouse_read();
 
     // Setup the mouse handler
-    // irq_install_handler(12, mouse_handler);
+    irq_install_handler(2, mouse_handler);
 }
 
 

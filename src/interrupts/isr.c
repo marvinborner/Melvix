@@ -106,7 +106,7 @@ void isrs_install() {
 }
 
 // Error exception messages
-unsigned char *exception_messages[] = {
+const char *exception_messages[] = {
         "Division By Zero",
         "Debug",
         "Non Maskable Interrupt",
