@@ -37,9 +37,6 @@ void mouse_handler(struct regs *a_r) {
         default:
             break;
     }
-    if (mm_n[0] == 1) {
-        terminal_write_string("CLICK!\n");
-    }
 }
 
 inline void mouse_wait(char a_type) {
@@ -101,7 +98,6 @@ void mouse_install() {
     // Setup the mouse handler
     irq_install_handler(2, mouse_handler);
 }
-
 
 char get_mouse(int n) {
     if (mm_n[n] == 1) {

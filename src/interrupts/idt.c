@@ -31,7 +31,6 @@ void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, uns
     idt[num].flags = flags;
 }
 
-
 // Install IDT
 void idt_install() {
     // Set IDT pointer and limit

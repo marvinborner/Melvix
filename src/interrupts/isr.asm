@@ -249,7 +249,6 @@ isr31:
     push byte 31
     jmp isr_common_stub
 
-
 extern fault_handler
 
 ; Stores the ISR in the stack and calls the C fault handler
