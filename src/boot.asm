@@ -49,12 +49,8 @@ gdt_flush:
 flush2:
     ret ; Returns to C code
 
-; IDT loader
-global idt_load
-extern idtp
-idt_load:
-    lidt [idtp]
-    ret
+%include "src/interrupts/idt.asm"
+%include "src/interrupts/isr.asm"
 
 ; Store the stack
 SECTION .bss

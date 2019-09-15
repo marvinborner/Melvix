@@ -1,6 +1,5 @@
 #include "../memory/memory.h"
 
-/* Defines an IDT entry */
 struct idt_entry {
     unsigned short base_lo;
     unsigned short sel; // Kernel segment

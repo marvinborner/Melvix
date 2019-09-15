@@ -8,9 +8,10 @@
 rm -rf ./build/ ./iso/
 mkdir ./build/
 
-# Make source files
+# Assemble ASM files
 nasm -f elf ./src/boot.asm -o ./build/boot.o
 
+# Make all C files
 files=""
 find ./src -name \*.c >./build/tmp
 while read -r line; do
