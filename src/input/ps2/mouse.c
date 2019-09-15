@@ -1,7 +1,6 @@
 #include "../../io/io.h"
 #include "../../interrupts/interrupts.h"
 #include "../../graphics/vga.h"
-#include "../input.h"
 
 char mouse_cycle = 0;
 signed char mouse_byte[3], mouse_ex[3];
@@ -37,6 +36,9 @@ void mouse_handler(struct regs *a_r) {
             break;
         default:
             break;
+    }
+    if (mm_n[0] == 1) {
+        terminal_write_string("CLICK!\n");
     }
 }
 

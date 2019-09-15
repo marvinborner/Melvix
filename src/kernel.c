@@ -5,11 +5,14 @@
 #include "timer/timer.h"
 
 void kernel_main(void) {
-    terminal_initialize();
     gdt_install();
     idt_install();
     isrs_install();
     irq_install();
+
+    __asm__ __volatile__ ("sti");
+
+    terminal_initialize();
     timer_install();
     keyboard_install();
     mouse_install();

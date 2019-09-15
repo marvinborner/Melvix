@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 // Hardware text mode color constants
 enum vga_color {
@@ -66,16 +67,33 @@ void terminal_put_entry_at(char c, uint8_t color, size_t x, size_t y) {
     terminal_buffer[index] = vga_entry(c, color);
 }
 
+void terminal_clear() {
+    for (size_t x = 0; x < VGA_WIDTH; x++)
+        for (size_t y = 0; y < VGA_HEIGHT; y++)
+            terminal_put_entry_at(' ', terminal_color, x, y);
+}
+
 void terminal_put_char(char c) {
-    if (c == '\n' || c == '\r') {
+    bool new_line = c == '\n' || c == '\r';
+
+    if (new_line) {
         terminal_row += 1;
         terminal_column = 0;
     } else {
         terminal_put_entry_at(c, terminal_color, terminal_column, terminal_row);
-        if (++terminal_column == VGA_WIDTH) {
-            terminal_column = 0;
-            if (++terminal_row == VGA_HEIGHT)
-                terminal_row = 0;
+    }
+
+    // Scroll content up
+    if (++terminal_column >= VGA_WIDTH || new_line) {
+        terminal_column = 0;
+        if (++terminal_row >= VGA_HEIGHT) {
+            terminal_row = VGA_HEIGHT - 1;
+            for (size_t x = 0; x < VGA_WIDTH; x++)
+                for (size_t y = 0; y < VGA_HEIGHT; y++) {
+                    uint16_t c = terminal_buffer[y * VGA_WIDTH + x];
+                    terminal_buffer[(y - 1) * VGA_WIDTH + x] = c;
+                    terminal_buffer[y * VGA_WIDTH + x] = vga_entry(' ', terminal_color);
+                }
         }
     }
 }

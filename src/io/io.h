@@ -5,6 +5,6 @@
 
 unsigned char receive(unsigned short port);
 
-void send(unsigned short _port, unsigned char _data);
+void send(unsigned short port, unsigned char data);
 
 #endif
