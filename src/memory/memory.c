@@ -1,16 +1,14 @@
 #include "../graphics/vga.h"
 
-unsigned char *memory_copy(unsigned char *dest, const unsigned char *src, int count) {
-    // TODO: Add memory copy function
+void *memory_copy(void *dest, const void *src, size_t count) {
+    const char *sp = (const char *) src;
+    char *dp = (char *) dest;
+    for (; count != 0; count--) *dp++ = *sp++;
+    return dest;
 }
 
-unsigned char *memory_set(unsigned char *dest, unsigned char val, int count) {
-    unsigned char *p = dest;
-    while (count > 0) {
-        if (!*p) break;
-        *p = val;
-        p++;
-        count--;
-    }
+void *memory_set(void *dest, char val, size_t count) {
+    char *temp = (char *) dest;
+    for (; count != 0; count--) *temp++ = val;
     return dest;
 }
