@@ -20,7 +20,7 @@ mboot:
     dd MULTIBOOT_HEADER_MAGIC
     dd MULTIBOOT_HEADER_FLAGS
     dd MULTIBOOT_CHECKSUM
-    
+
     ; AOUT kludge
     dd mboot
     dd code
@@ -34,23 +34,13 @@ stublet:
     call kernel_main
     jmp $
 
-; GDT flush function
-global gdt_flush
-extern gp
-gdt_flush:
-    lgdt [gp]
-    mov ax, 0x10 ; Data segment offset of GDT
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    mov ss, ax
-    jmp 0x08:flush2 ; Code segment offset
-flush2:
-    ret ; Returns to C code
+%include "src/gdt/gdt.asm"
 
 %include "src/interrupts/idt.asm"
+
 %include "src/interrupts/isr.asm"
+
+%include "src/interrupts/irq.asm"
 
 ; Store the stack
 SECTION .bss
