@@ -1,8 +1,9 @@
-#include "graphics/vga.h"
+#include "graphics/graphics.h"
 #include "gdt/gdt.h"
 #include "interrupts/interrupts.h"
 #include "input/input.h"
 #include "timer/timer.h"
+#include "sound/sound.h"
 
 void kernel_main(void) {
     gdt_install();
@@ -18,5 +19,6 @@ void kernel_main(void) {
     mouse_install();
 
     terminal_write_string("Melvix loaded successfully!\n");
+    beep();
     // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
 }

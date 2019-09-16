@@ -42,4 +42,4 @@ cp ./src/grub.cfg ./iso/boot/grub/
 grub-mkrescue -o ./build/melvix.iso ./iso/
 
 # Run ISO
-qemu-system-x86_64 -enable-kvm -cdrom ./build/melvix.iso
+qemu-system-x86_64 -soundhw pcspk -enable-kvm -cdrom ./build/melvix.iso
