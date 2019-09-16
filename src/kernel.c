@@ -19,6 +19,14 @@ void kernel_main(void) {
     mouse_install();
 
     terminal_write_string("Melvix loaded successfully!\n");
-    beep();
+
+    beep(262, 20);
+    beep(294, 20);
+    beep(330, 20);
+    beep(349, 20);
+    beep(392, 20);
+    beep(440, 20);
+    beep(494, 20);
+    beep(523, 20);
     // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
 }

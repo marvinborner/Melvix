@@ -11,7 +11,6 @@ static void play_sound(uint32_t frequency) {
     send(0x42, (uint8_t) (divided));
     send(0x42, (uint8_t) (divided >> 8));
 
-    //And play the sound using the PC speaker
     tmp = receive(0x61);
     if (tmp != (tmp | 3)) {
         send(0x61, tmp | 3);
@@ -25,8 +24,8 @@ static void shut_up() {
 }
 
 //Make a beep
-void beep() {
-    play_sound(1000);
-    timer_wait(100);
+void beep(uint32_t frequency, uint32_t ticks) {
+    play_sound(frequency);
+    timer_wait(ticks);
     shut_up();
 }
