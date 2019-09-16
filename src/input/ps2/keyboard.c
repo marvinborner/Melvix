@@ -1,6 +1,6 @@
 #include "../../interrupts/interrupts.h"
 #include "../../io/io.h"
-#include "../../graphics/vga.h"
+#include "../../graphics/graphics.h"
 
 unsigned char keymap[128] = {
         0 /*E*/, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',

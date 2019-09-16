@@ -1,4 +1,4 @@
-#include "../graphics/vga.h"
+#include "../graphics/graphics.h"
 #include "interrupts.h"
 
 // Defined in isr.asm

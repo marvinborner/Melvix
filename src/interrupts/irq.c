@@ -1,6 +1,6 @@
 #include "../io/io.h"
 #include "interrupts.h"
-#include "../graphics/vga.h"
+#include "../graphics/graphics.h"
 
 extern void irq0();
 

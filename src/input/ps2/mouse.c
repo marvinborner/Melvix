@@ -1,6 +1,5 @@
 #include "../../io/io.h"
 #include "../../interrupts/interrupts.h"
-#include "../../graphics/vga.h"
 
 char mouse_cycle = 0;
 signed char mouse_byte[3], mouse_ex[3];
