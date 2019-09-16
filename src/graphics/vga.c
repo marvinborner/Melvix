@@ -54,7 +54,23 @@ void terminal_clear() {
     }
 }
 
+void terminal_enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+    send(0x3D4, 0x0A);
+    send(0x3D5, (receive(0x3D5) & 0xC0) | cursor_start);
+    send(0x3D4, 0x0B);
+    send(0x3D5, (receive(0x3D5) & 0xE0) | cursor_end);
+}
+
+void terminal_update_cursor(void) {
+    unsigned temp = terminal_row * VGA_WIDTH + terminal_column;
+    send(0x3D4, 14);
+    send(0x3D5, temp >> 8);
+    send(0x3D4, 15);
+    send(0x3D5, temp);
+}
+
 void terminal_initialize(void) {
+    terminal_enable_cursor(0, 15);
     terminal_row = 0;
     terminal_column = 0;
     terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
@@ -72,14 +88,6 @@ void terminal_scroll(void) {
                 terminal_buffer[y * VGA_WIDTH + x] = vga_entry(' ', terminal_color);
             }
     }
-}
-
-void terminal_update_cursor(void) {
-    unsigned temp = terminal_row * VGA_WIDTH + terminal_column;
-    send(0x3D4, 14);
-    send(0x3D5, temp >> 8);
-    send(0x3D4, 15);
-    send(0x3D5, temp);
 }
 
 void terminal_set_color(uint8_t color) {
