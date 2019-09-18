@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "../io/io.h"
+#include "../lib/lib.h"
 
 // Hardware text mode color constants
 enum vga_color {
@@ -28,13 +29,6 @@ static inline uint8_t vga_entry_color(enum vga_color fg, enum vga_color bg) {
 
 static inline uint16_t vga_entry(unsigned char uc, uint8_t color) {
     return (uint16_t) uc | (uint16_t) color << 8;
-}
-
-size_t strlen(const char *str) {
-    size_t len = 0;
-    while (str[len])
-        len++;
-    return len;
 }
 
 static const size_t VGA_WIDTH = 80;
@@ -99,6 +93,14 @@ void terminal_put_entry_at(char c, uint8_t color, size_t x, size_t y) {
     terminal_buffer[index] = vga_entry(c, color);
 }
 
+char* terminal_get_line() {
+    char* line = "";
+    for (size_t x = 0; x < terminal_column; i++) {
+	line += terminal_buffer[terminal_row * VGA_WIDTH + x];	
+    // TODO: Fix returning line..
+    return line;
+}
+
 void terminal_put_char(char c) {
     if (c == 0x08) {
         if (terminal_column != 0) terminal_column--;
@@ -107,6 +109,7 @@ void terminal_put_char(char c) {
     } else if (c == '\r') {
         terminal_column = 0;
     } else if (c == '\n') {
+	exec_command(line);
         terminal_column = 0;
         terminal_row++;
         terminal_scroll();
