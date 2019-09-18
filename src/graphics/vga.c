@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "../io/io.h"
 #include "../lib/lib.h"
+#include "../commands/command.h"
 
 // Hardware text mode color constants
 enum vga_color {
@@ -109,7 +110,7 @@ void terminal_put_char(char c) {
     } else if (c == '\r') {
         terminal_column = 0;
     } else if (c == '\n') {
-	exec_command(line);
+	exec_command(terminal_get_line());
         terminal_column = 0;
         terminal_row++;
         terminal_scroll();
