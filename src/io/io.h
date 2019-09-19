@@ -7,4 +7,6 @@ unsigned char receive(unsigned short port);
 
 void send(unsigned short port, unsigned char data);
 
+void reboot();
+
 #endif

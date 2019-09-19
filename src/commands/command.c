@@ -19,6 +19,8 @@ void exec_command(char *command) {
         terminal_write_line("pong!");
     else if (starts_with(command, "shutdown"))
         shutdown();
+    else if (starts_with(command, "reboot"))
+        reboot();
     else
         terminal_write_line("Command not found!");
 }
