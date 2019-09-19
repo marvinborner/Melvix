@@ -1,14 +1,13 @@
 #include "../graphics/graphics.h"
 #include "../lib/lib.h"
 #include "../io/io.h"
+#include "../apm/apm.h"
 
 int32_t starts_with(const char *a, const char *b) {
     size_t length_pre = strlen(b);
     size_t length_main = strlen(a);
     return length_main < length_pre ? 0 : memory_compare(b, a, length_pre) == 0;
 }
-
-extern void shutdown();
 
 void exec_command(char *command) {
     if (starts_with(command, "ls"))
@@ -18,7 +17,9 @@ void exec_command(char *command) {
     else if (starts_with(command, "ping"))
         terminal_write_line("pong!");
     else if (starts_with(command, "shutdown"))
-        shutdown();
+        apm_poweroff();
+    else if (starts_with(command, "zzz"))
+        apm_sleep();
     else if (starts_with(command, "reboot"))
         reboot();
     else

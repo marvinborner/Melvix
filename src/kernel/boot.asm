@@ -42,7 +42,7 @@ stublet:
 
 %include "src/kernel/interrupts/irq.asm"
 
-%include "src/kernel/io/io.asm"
+%include "src/kernel/apm/apm.asm"
 
 ; Store the stack
 SECTION .bss
