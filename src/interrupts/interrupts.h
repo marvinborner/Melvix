@@ -25,4 +25,6 @@ void irq_uninstall_handler(int irq);
 
 void irq_handler(struct regs *r);
 
+int irq_is_installed(int irq);
+
 #endif

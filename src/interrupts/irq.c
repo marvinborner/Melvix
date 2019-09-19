@@ -50,6 +50,10 @@ void irq_uninstall_handler(int irq) {
     irq_routines[irq] = 0;
 }
 
+int irq_is_installed(int irq) {
+    return irq_routines[irq] != 0;
+}
+
 // Remap IRQs for protected mode compatibility via the PIC
 void irq_remap(void) {
     send(0x20, 0x11);

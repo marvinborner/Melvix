@@ -42,6 +42,8 @@ stublet:
 
 %include "src/interrupts/irq.asm"
 
+%include "src/io/io.asm"
+
 ; Store the stack
 SECTION .bss
     resb 8192 ; Reserve 8KiB

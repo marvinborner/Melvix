@@ -14,11 +14,11 @@ void kernel_main(void) {
     __asm__ __volatile__ ("sti");
 
     terminal_initialize();
+    terminal_write_string("Melvix loaded successfully!\n");
+
     timer_install();
     keyboard_install();
     mouse_install();
-
-    terminal_write_string("Melvix loaded successfully!\n");
 
     beep(262, 20);
     beep(294, 20);

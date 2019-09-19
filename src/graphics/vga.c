@@ -3,6 +3,7 @@
 #include "../io/io.h"
 #include "../lib/lib.h"
 #include "../commands/command.h"
+#include "../interrupts/interrupts.h"
 
 // Hardware text mode color constants
 enum vga_color {
@@ -39,6 +40,8 @@ size_t terminal_row;
 size_t terminal_column;
 uint8_t terminal_color;
 uint16_t *terminal_buffer;
+
+char text[1024] = {0};
 
 void terminal_clear() {
     for (size_t y = 0; y < VGA_HEIGHT; y++) {
@@ -94,14 +97,6 @@ void terminal_put_entry_at(char c, uint8_t color, size_t x, size_t y) {
     terminal_buffer[index] = vga_entry(c, color);
 }
 
-char* terminal_get_line() {
-    char* line = "";
-    for (size_t x = 0; x < terminal_column; i++) {
-	line += terminal_buffer[terminal_row * VGA_WIDTH + x];	
-    // TODO: Fix returning line..
-    return line;
-}
-
 void terminal_put_char(char c) {
     if (c == 0x08) {
         if (terminal_column != 0) terminal_column--;
@@ -110,13 +105,15 @@ void terminal_put_char(char c) {
     } else if (c == '\r') {
         terminal_column = 0;
     } else if (c == '\n') {
-	exec_command(terminal_get_line());
+        if (irq_is_installed(1)) exec_command(text);
+        memory_set(text, 0, sizeof(text));
         terminal_column = 0;
         terminal_row++;
         terminal_scroll();
         terminal_put_entry_at('$', terminal_color, terminal_column, terminal_row);
         terminal_column = 2;
     } else if (c >= ' ') { // Any printable character
+        strcat(text, &c);
         terminal_put_entry_at(c, terminal_color, terminal_column, terminal_row);
         terminal_column++;
     }
@@ -138,4 +135,11 @@ void terminal_write(const char *data, size_t size) {
 
 void terminal_write_string(const char *data) {
     terminal_write(data, strlen(data));
+}
+
+void terminal_write_line(const char *data) {
+    terminal_row++;
+    terminal_column = 0;
+    terminal_write_string(data);
+    terminal_column = 0;
 }
