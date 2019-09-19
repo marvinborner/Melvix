@@ -14,6 +14,7 @@ void kernel_main(void) {
     __asm__ __volatile__ ("sti");
 
     terminal_initialize();
+    vesa_init();
     terminal_write_string("Melvix loaded successfully!\n");
 
     timer_install();

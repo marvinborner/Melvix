@@ -44,6 +44,8 @@ stublet:
 
 %include "src/kernel/apm/apm.asm"
 
+%include "src/kernel/graphics/vesa.asm"
+
 ; Store the stack
 SECTION .bss
     resb 8192 ; Reserve 8KiB

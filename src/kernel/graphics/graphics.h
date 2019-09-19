@@ -18,4 +18,7 @@ void terminal_put_char(char c);
 
 void terminal_write_line(const char *data);
 
+// VESA
+void vesa_init();
+
 #endif
