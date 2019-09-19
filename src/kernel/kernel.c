@@ -19,14 +19,5 @@ void kernel_main(void) {
     timer_install();
     keyboard_install();
     mouse_install();
-
-    beep(262, 20);
-    beep(294, 20);
-    beep(330, 20);
-    beep(349, 20);
-    beep(392, 20);
-    beep(440, 20);
-    beep(494, 20);
-    beep(523, 20);
     // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
 }

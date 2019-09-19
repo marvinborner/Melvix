@@ -34,15 +34,15 @@ stublet:
     call kernel_main
     jmp $
 
-%include "src/gdt/gdt.asm"
+%include "src/kernel/gdt/gdt.asm"
 
-%include "src/interrupts/idt.asm"
+%include "src/kernel/interrupts/idt.asm"
 
-%include "src/interrupts/isr.asm"
+%include "src/kernel/interrupts/isr.asm"
 
-%include "src/interrupts/irq.asm"
+%include "src/kernel/interrupts/irq.asm"
 
-%include "src/io/io.asm"
+%include "src/kernel/io/io.asm"
 
 ; Store the stack
 SECTION .bss
