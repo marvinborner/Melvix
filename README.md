@@ -19,6 +19,7 @@
     * nasm
     * grub
     * qemu
-* Run `make` 
-* Test Melvix in QEMU (should open automatically after successful `make`)
+* Build a cross compiler using `make cross`
+* Run `make build` 
+* Test Melvix in QEMU (opens after `make test`)
 * Optional: Flash the built ISO to a USB/Floppy/CD drive using `sudo dd if=./build/melvix.iso of=/dev/sdX bs=4M oflag=sync`
