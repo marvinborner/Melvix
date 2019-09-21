@@ -9,7 +9,7 @@ rm -rf ./build/ ./iso/
 mkdir ./build/
 
 # Assemble ASM files
-nasm -f elf ./src/kernel/boot.asm -o ./build/boot.o
+nasm -f elf ./src/kernel/boot.asm -o ./build/boot.o || exit
 
 # Make all C files
 files=""
@@ -18,14 +18,14 @@ while read -r line; do
   stripped=$(echo "${line}" | sed -r 's/\//_/g')
   stripped=${stripped#??????}
   stripped=${stripped%%?}o
-  i686-elf-gcc -c ./"${line}" -o ./build/"${stripped}" -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+  i686-elf-gcc -c ./"${line}" -o ./build/"${stripped}" -std=gnu99 -ffreestanding -O2 -Wall -Wextra || exit
   files="${files} ./build/${stripped}"
 done <./build/tmp
 rm ./build/tmp
 
 # shellcheck disable=SC2086
 # Shellcheck suppression is needed because gcc would think that $files is one file
-i686-elf-gcc -T ./src/kernel/linker.ld -o ./build/melvix.bin -ffreestanding -O2 -nostdlib ./build/boot.o $files -lgcc
+i686-elf-gcc -T ./src/kernel/linker.ld -o ./build/melvix.bin -ffreestanding -O2 -nostdlib ./build/boot.o $files -lgcc || exit
 
 # Testing
 if grub-file --is-x86-multiboot ./build/melvix.bin; then
