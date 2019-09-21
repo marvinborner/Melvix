@@ -6,12 +6,11 @@
 #include "sound/sound.h"
 
 void kernel_main(void) {
+    asm volatile ("sti");
     gdt_install();
     idt_install();
     isrs_install();
     irq_install();
-
-    __asm__ __volatile__ ("sti");
 
     terminal_initialize();
     vesa_init();

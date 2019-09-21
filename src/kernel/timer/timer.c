@@ -5,9 +5,9 @@ volatile unsigned int timer_ticks = 0;
 
 void timer_phase(int hz) {
     int divisor = 1193180 / hz;
-    send(0x43, 0x36); // 01 10 11 0b // CTR, RW, MODE, BCD
-    send(0x40, divisor & 0xFF);
-    send(0x40, divisor >> 8);
+    send_b(0x43, 0x36); // 01 10 11 0b // CTR, RW, MODE, BCD
+    send_b(0x40, divisor & 0xFF);
+    send_b(0x40, divisor >> 8);
 }
 
 // Executed 100 times per second
@@ -21,7 +21,7 @@ void timer_wait(int ticks) {
 
     eticks = timer_ticks + ticks;
     while (timer_ticks < eticks) {
-        __asm__ __volatile__ ("sti//hlt//cli");
+        asm volatile ("sti//hlt//cli");
     }
 }
 

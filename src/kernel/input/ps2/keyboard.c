@@ -35,7 +35,7 @@ unsigned char keymap[128] = {
 void keyboard_handler(struct regs *r) {
     unsigned char scan_code;
 
-    scan_code = receive(0x60);
+    scan_code = receive_b(0x60);
 
     if (scan_code & 0x80) {
         // Release

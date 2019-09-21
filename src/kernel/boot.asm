@@ -42,9 +42,7 @@ stublet:
 
 %include "src/kernel/interrupts/irq.asm"
 
-%include "src/kernel/apm/apm.asm"
-
-%include "src/kernel/graphics/vesa.asm"
+; %include "src/kernel/graphics/vesa.asm"
 
 ; Store the stack
 SECTION .bss

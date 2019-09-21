@@ -53,18 +53,18 @@ void terminal_clear() {
 }
 
 void terminal_enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
-    send(0x3D4, 0x0A);
-    send(0x3D5, (receive(0x3D5) & 0xC0) | cursor_start);
-    send(0x3D4, 0x0B);
-    send(0x3D5, (receive(0x3D5) & 0xE0) | cursor_end);
+    send_b(0x3D4, 0x0A);
+    send_b(0x3D5, (receive_b(0x3D5) & 0xC0) | cursor_start);
+    send_b(0x3D4, 0x0B);
+    send_b(0x3D5, (receive_b(0x3D5) & 0xE0) | cursor_end);
 }
 
 void terminal_update_cursor(void) {
     unsigned temp = terminal_row * VGA_WIDTH + terminal_column;
-    send(0x3D4, 14);
-    send(0x3D5, temp >> 8);
-    send(0x3D4, 15);
-    send(0x3D5, temp);
+    send_b(0x3D4, 14);
+    send_b(0x3D5, temp >> 8);
+    send_b(0x3D4, 15);
+    send_b(0x3D5, temp);
 }
 
 void terminal_initialize(void) {

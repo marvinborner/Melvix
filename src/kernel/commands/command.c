@@ -1,7 +1,7 @@
 #include "../graphics/graphics.h"
 #include "../lib/lib.h"
 #include "../io/io.h"
-#include "../apm/apm.h"
+#include "../acpi/acpi.h"
 
 int32_t starts_with(const char *a, const char *b) {
     size_t length_pre = strlen(b);
@@ -17,9 +17,9 @@ void exec_command(char *command) {
     else if (starts_with(command, "ping"))
         terminal_write_line("pong!");
     else if (starts_with(command, "shutdown"))
-        apm_poweroff();
+        acpi_poweroff();
     else if (starts_with(command, "zzz"))
-        apm_sleep();
+        terminal_write_line("Not implemented");
     else if (starts_with(command, "reboot"))
         reboot();
     else

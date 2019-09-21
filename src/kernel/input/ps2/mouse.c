@@ -12,15 +12,15 @@ int mm_n[3] = {0, 0, 0,};
 void mouse_handler(struct regs *a_r) {
     switch (mouse_cycle) {
         case 0:
-            mouse_byte[0] = receive(0x60);
+            mouse_byte[0] = receive_b(0x60);
             mouse_cycle++;
             break;
         case 1:
-            mouse_byte[1] = receive(0x60);
+            mouse_byte[1] = receive_b(0x60);
             mouse_cycle++;
             break;
         case 2:
-            mouse_byte[2] = receive(0x60);
+            mouse_byte[2] = receive_b(0x60);
             mouse_x = mouse_byte[1];
             mouse_y = mouse_byte[2];
             mouse_but_1 = (mouse_byte[0] % 2);
@@ -42,14 +42,14 @@ inline void mouse_wait(char a_type) {
     unsigned int _time_out = 100000;
     if (a_type == 0) {
         while (_time_out--) {
-            if ((receive(0x64) & 1) == 1) {
+            if ((receive_b(0x64) & 1) == 1) {
                 return;
             }
         }
         return;
     } else {
         while (_time_out--) {
-            if ((receive(0x64) & 2) == 0) {
+            if ((receive_b(0x64) & 2) == 0) {
                 return;
             }
         }
@@ -59,14 +59,14 @@ inline void mouse_wait(char a_type) {
 
 inline void mouse_write(char a_write) {
     mouse_wait(1);
-    send(0x64, 0xD4);
+    send_b(0x64, 0xD4);
     mouse_wait(1);
-    send(0x60, a_write);
+    send_b(0x60, a_write);
 }
 
 char mouse_read() {
     mouse_wait(0);
-    return receive(0x60);
+    return receive_b(0x60);
 }
 
 void mouse_install() {
@@ -74,17 +74,17 @@ void mouse_install() {
 
     // Enable auxiliary mouse device
     mouse_wait(1);
-    send(0x64, 0xA8);
+    send_b(0x64, 0xA8);
 
     // Enable interrupts
     mouse_wait(1);
-    send(0x64, 0x20);
+    send_b(0x64, 0x20);
     mouse_wait(0);
-    _status = (receive(0x60) | 2);
+    _status = (receive_b(0x60) | 2);
     mouse_wait(1);
-    send(0x64, 0x60);
+    send_b(0x64, 0x60);
     mouse_wait(1);
-    send(0x60, _status);
+    send_b(0x60, _status);
 
     // Use default settings
     mouse_write(0xF6);

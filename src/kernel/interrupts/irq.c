@@ -56,16 +56,16 @@ int irq_is_installed(int irq) {
 
 // Remap IRQs for protected mode compatibility via the PIC
 void irq_remap(void) {
-    send(0x20, 0x11);
-    send(0xA0, 0x11);
-    send(0x21, 0x20);
-    send(0xA1, 0x28);
-    send(0x21, 0x04);
-    send(0xA1, 0x02);
-    send(0x21, 0x01);
-    send(0xA1, 0x01);
-    send(0x21, 0x0);
-    send(0xA1, 0x0);
+    send_b(0x20, 0x11);
+    send_b(0xA0, 0x11);
+    send_b(0x21, 0x20);
+    send_b(0xA1, 0x28);
+    send_b(0x21, 0x04);
+    send_b(0xA1, 0x02);
+    send_b(0x21, 0x01);
+    send_b(0xA1, 0x01);
+    send_b(0x21, 0x0);
+    send_b(0xA1, 0x0);
 }
 
 // Map ISRs to the correct entries in the IDT
@@ -101,9 +101,9 @@ void irq_handler(struct regs *r) {
 
     // Send end of interrupt to second (slave) IRQ controller
     if (r->int_no >= 40) {
-        send(0xA0, 0x20);
+        send_b(0xA0, 0x20);
     }
 
     // Send end of interrupt to master interrupt controller
-    send(0x20, 0x20);
+    send_b(0x20, 0x20);
 }
