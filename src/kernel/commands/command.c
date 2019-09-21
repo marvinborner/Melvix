@@ -16,6 +16,8 @@ void exec_command(char *command) {
         terminal_write_line("I can't help you write now");
     else if (starts_with(command, "ping"))
         terminal_write_line("pong!");
+    else if (starts_with(command, "clear"))
+        terminal_clear();
     else if (starts_with(command, "shutdown"))
         acpi_poweroff();
     else if (starts_with(command, "zzz"))

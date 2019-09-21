@@ -44,6 +44,8 @@ uint16_t *terminal_buffer;
 char text[1024] = {0};
 
 void terminal_clear() {
+    terminal_row = 0;
+    terminal_column = 0;
     for (size_t y = 0; y < VGA_HEIGHT; y++) {
         for (size_t x = 0; x < VGA_WIDTH; x++) {
             const size_t index = y * VGA_WIDTH + x;
