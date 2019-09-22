@@ -2,6 +2,6 @@ language: c
 
 before_install:
   - sudo apt-get update
-  - sudo apt-get install -y build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo libcloog-isl-dev libisl-dev
+  - sudo apt-get install -y build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo libcloog-isl-dev libisl-dev curl nasm grub qemu qemu-kvm
 
 script: make cross build
