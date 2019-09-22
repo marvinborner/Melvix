@@ -1,15 +1,17 @@
+.DEFAULT_GOAL := build
+.SILENT: cross build test
+
 DIR := $(shell pwd)/cross
 export PREFIX := $(DIR)/opt
 export TARGET := i686-elf
 export PATH := $(PREFIX)/bin:$(PATH)
 
 clean:
-	@-rm -rf build
+	@-rm -rf ./build ./iso
 	@echo Cleaned build directory
 
-build:
+build: clean
 	set -e; \
-	rm -rf ./build/ ./iso/; \
 	mkdir ./build/; \
 
 	# Assemble ASM files
@@ -43,6 +45,7 @@ build:
 
 cross:
 	set -e; \
+	[ -d "./cross/" ] && echo "Please remove cross/ and try again" && exit; \
 	mkdir cross || exit; \
 	cd cross || exit; \
 	DIR=$$(pwd); \
