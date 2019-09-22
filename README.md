@@ -1,6 +1,8 @@
 # Melvix
 <p align="center">
     <i>„A lightweight unix-like operating system“</i>
+    <br><br>
+    <img src="https://img.shields.io/travis/marvinborner/Melvix?style=for-the-badge" />
 </p>
 
 ## Build
