@@ -44,7 +44,7 @@ unsigned int *acpi_check_rsd_ptr(unsigned int *ptr) {
     struct RSDPtr *rsdp = (struct RSDPtr *) ptr;
     char *bptr;
     char check = 0;
-    int i;
+    unsigned int i;
 
     if (memory_compare(sig, rsdp, 8) == 0) {
         bptr = (char *) ptr;

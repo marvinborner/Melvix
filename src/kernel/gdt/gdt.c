@@ -9,7 +9,7 @@ struct gdt_entry {
 
 struct gdt_ptr {
     unsigned short limit;
-    unsigned int base;
+    void *base;
 } __attribute__((packed));
 
 struct gdt_entry gdt[3];

@@ -23,7 +23,7 @@ build: clean
 		stripped=$$(echo "$${line}" | sed -r 's/\//_/g'); \
 		stripped=$${stripped#??????}; \
 		stripped=$${stripped%%?}o; \
-		i686-elf-gcc -c ./"$${line}" -o ./build/"$${stripped}" -std=gnu99 -ffreestanding -O2 -Wall -Wextra || exit; \
+		i686-elf-gcc -c ./"$${line}" -o ./build/"$${stripped}" -std=gnu99 -ffreestanding -O2 -Wall -Wextra -Wno-unused-parameter || exit; \
 	done <./build/tmp; \
 	rm ./build/tmp; \
 

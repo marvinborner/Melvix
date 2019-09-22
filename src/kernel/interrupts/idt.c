@@ -10,7 +10,7 @@ struct idt_entry {
 
 struct idt_ptr {
     unsigned short limit;
-    unsigned int base;
+    void *base;
 } __attribute__((packed));
 
 // Initialize IDT with 256 entries
