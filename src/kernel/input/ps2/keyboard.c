@@ -2,7 +2,7 @@
 #include "../../io/io.h"
 #include "../../graphics/graphics.h"
 
-unsigned char keymap[128] = {
+char keymap[128] = {
         0 /*E*/, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
         '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
         0 /*C*/, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0 /*LS*/,
@@ -44,7 +44,18 @@ void keyboard_handler(struct regs *r) {
     }
 }
 
+void keyboard_acknowledge() {
+    while (receive_b(0x60) != 0xfa);
+}
+
+void keyboard_rate() {
+    send_b(0x60, 0xF3);
+    keyboard_acknowledge();
+    send_b(0x60, 0x0); // Rate{00000} Delay{00} 0
+}
+
 /* Installs the keyboard handler into IRQ1 */
 void keyboard_install() {
+    keyboard_rate();
     irq_install_handler(1, keyboard_handler);
 }
