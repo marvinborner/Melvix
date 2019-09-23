@@ -1,6 +1,8 @@
-[BITS 32]
 global start
 start:
+    [BITS 16]
+    call search_video_mode
+    [bits 32]
     mov esp, _sys_stack ; Points stack to stack area
     jmp stublet
 
@@ -29,6 +31,7 @@ mboot:
     dd start
 
 ; Endless loop
+[bits 32]
 stublet:
     extern kernel_main
     call kernel_main
@@ -42,7 +45,7 @@ stublet:
 
 %include "src/kernel/interrupts/irq.asm"
 
-; %include "src/kernel/graphics/vesa.asm"
+%include "src/kernel/graphics/vesa.asm"
 
 ; Store the stack
 SECTION .bss
