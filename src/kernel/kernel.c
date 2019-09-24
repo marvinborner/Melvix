@@ -12,8 +12,8 @@ void kernel_main(void) {
     irq_install();
 
     terminal_initialize();
-    // vesa_init();
     terminal_write_string("Melvix loaded successfully!\n");
+    terminal_write_string((const char *) best.height);
 
     timer_install();
     keyboard_install();

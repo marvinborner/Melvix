@@ -40,7 +40,5 @@ void idt_install() {
     // Clear IDT by setting memory cells to 0
     memory_set(&idt, 0, sizeof(struct idt_entry) * 256);
 
-    // TODO: Add method to add ISRs to IDT
-
     idt_load();
 }

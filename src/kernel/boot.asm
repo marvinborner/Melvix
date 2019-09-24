@@ -1,9 +1,9 @@
+[bits 32]
 global start
 start:
-    [BITS 16]
-    call search_video_mode
-    [bits 32]
     mov esp, _sys_stack ; Points stack to stack area
+    extern init_graphics
+    call init_graphics
     jmp stublet
 
 ; Align with 4 Bytes
@@ -31,11 +31,12 @@ mboot:
     dd start
 
 ; Endless loop
-[bits 32]
 stublet:
     extern kernel_main
     call kernel_main
     jmp $
+
+%include "src/kernel/graphics/vesa.asm"
 
 %include "src/kernel/gdt/gdt.asm"
 
@@ -44,8 +45,6 @@ stublet:
 %include "src/kernel/interrupts/isr.asm"
 
 %include "src/kernel/interrupts/irq.asm"
-
-%include "src/kernel/graphics/vesa.asm"
 
 ; Store the stack
 SECTION .bss
