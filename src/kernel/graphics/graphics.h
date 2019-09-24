@@ -20,9 +20,4 @@ void terminal_put_char(char c);
 
 void terminal_write_line(const char *data);
 
-// VESA/VBE
-void init_graphics();
-
-struct vbe_best best;
-
 #endif

@@ -11,9 +11,10 @@ void kernel_main(void) {
     isrs_install();
     irq_install();
 
-    terminal_initialize();
-    terminal_write_string("Melvix loaded successfully!\n");
-    terminal_write_string((const char *) best.height);
+    vbe_set_mode(0x11B); // 1280x1024
+
+    // terminal_initialize();
+    // terminal_write_string("Melvix loaded successfully!\n");
 
     timer_install();
     keyboard_install();

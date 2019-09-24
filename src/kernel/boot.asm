@@ -2,8 +2,6 @@
 global start
 start:
     mov esp, _sys_stack ; Points stack to stack area
-    extern init_graphics
-    call init_graphics
     jmp stublet
 
 ; Align with 4 Bytes
@@ -36,8 +34,6 @@ stublet:
     call kernel_main
     jmp $
 
-%include "src/kernel/graphics/vesa.asm"
-
 %include "src/kernel/gdt/gdt.asm"
 
 %include "src/kernel/interrupts/idt.asm"
@@ -45,6 +41,8 @@ stublet:
 %include "src/kernel/interrupts/isr.asm"
 
 %include "src/kernel/interrupts/irq.asm"
+
+%include "src/kernel/interact.asm"
 
 ; Store the stack
 SECTION .bss

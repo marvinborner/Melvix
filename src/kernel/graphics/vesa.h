@@ -3,33 +3,7 @@
 
 #include <stdint.h>
 
-struct vbe_best {
-    uint8_t bpp;
-    uint16_t height;
-    uint16_t width;
-    uint32_t framebuffer;
-    uint32_t bytes_per_line;
-    uint32_t bytes_per_pixel;
-    uint32_t x_cur_max;
-    uint32_t y_cur_max;
-} __attribute__ ((packed));
-
-struct vbe_info {
-    char signature[4];    // must be "VESA" to indicate valid VBE support
-    uint16_t version;            // VBE version; high byte is major version, low byte is minor version
-    uint32_t oem;            // segment:offset pointer to OEM
-    uint32_t capabilities;        // bitfield that describes card capabilities
-    uint32_t video_modes;        // segment:offset pointer to list of supported video modes
-    uint16_t video_memory;        // amount of video memory in 64KB blocks
-    uint16_t software_rev;        // software revision
-    uint32_t vendor;            // segment:offset to card vendor string
-    uint32_t product_name;        // segment:offset to card model name
-    uint32_t product_rev;        // segment:offset pointer to product revision
-    char reserved[222];        // reserved for future expansion
-    char oem_data[256];        // OEM BIOSes store their strings in this area
-} __attribute__ ((packed));
-
-struct vbe_mode_info {
+typedef struct __attribute__ ((packed)) {
     uint16_t attributes;        // deprecated, only bit 7 should be of interest to you, and it indicates the mode supports a linear frame buffer.
     uint8_t window_a;            // deprecated
     uint8_t window_b;            // deprecated
@@ -65,6 +39,21 @@ struct vbe_mode_info {
     uint32_t off_screen_mem_off;
     uint16_t off_screen_mem_size;    // size of memory in the framebuffer but not being displayed on the screen
     uint8_t reserved1[206];
-} __attribute__ ((packed));
+} vbe_mode_info;
+
+vbe_mode_info *vbe_set_mode(unsigned short mode);
+
+typedef struct __attribute__ ((packed)) {
+    unsigned short di, si, bp, sp, bx, dx, cx, ax;
+    unsigned short gs, fs, es, ds, eflags;
+} regs16_t;
+
+extern void int32(unsigned char intnum, regs16_t *regs);
+
+int vbe_current_mode;
+int vbe_width;
+int vbe_height;
+int vbe_bpp;
+int vbe_pitch;
 
 #endif
