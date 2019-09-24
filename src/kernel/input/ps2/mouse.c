@@ -1,13 +1,13 @@
-#include "../../io/io.h"
 #include "../../interrupts/interrupts.h"
+#include "../../io/io.h"
+#include "../../graphics/graphics.h"
 
 char mouse_cycle = 0;
-signed char mouse_byte[3], mouse_ex[3];
+signed char mouse_byte[3];
 signed char mouse_x = 0;
 signed char mouse_y = 0;
 int mouse_but_1 = 0;
 int mouse_but_2 = 0;
-int mm_n[3] = {0, 0, 0,};
 
 void mouse_handler(struct regs *a_r) {
     switch (mouse_cycle) {
@@ -26,38 +26,31 @@ void mouse_handler(struct regs *a_r) {
             mouse_but_1 = (mouse_byte[0] % 2);
             mouse_but_2 = ((mouse_byte[0] % 4) - (mouse_byte[0] % 2)) / 2;
             mouse_cycle = 0;
-            mouse_ex[0] = mouse_byte[0];
-            mm_n[0] = 1;
-            mouse_ex[1] = mouse_byte[1];
-            mm_n[1] = 1;
-            mouse_ex[2] = mouse_byte[2];
-            mm_n[2] = 1;
             break;
         default:
             break;
     }
+
+    if (mouse_but_1 == 1)
+        terminal_write_line("CLICK!");
 }
 
-inline void mouse_wait(char a_type) {
-    unsigned int _time_out = 100000;
+inline void mouse_wait(unsigned char a_type) {
+    unsigned int time_out = 100000;
     if (a_type == 0) {
-        while (_time_out--) {
-            if ((receive_b(0x64) & 1) == 1) {
+        while (time_out--)
+            if ((receive_b(0x64) & 1) == 1)
                 return;
-            }
-        }
         return;
     } else {
-        while (_time_out--) {
-            if ((receive_b(0x64) & 2) == 0) {
+        while (time_out--)
+            if ((receive_b(0x64) & 2) == 0)
                 return;
-            }
-        }
         return;
     }
 }
 
-inline void mouse_write(char a_write) {
+inline void mouse_write(unsigned char a_write) {
     mouse_wait(1);
     send_b(0x64, 0xD4);
     mouse_wait(1);
@@ -70,7 +63,7 @@ char mouse_read() {
 }
 
 void mouse_install() {
-    char _status;
+    unsigned char status;
 
     // Enable auxiliary mouse device
     mouse_wait(1);
@@ -80,11 +73,11 @@ void mouse_install() {
     mouse_wait(1);
     send_b(0x64, 0x20);
     mouse_wait(0);
-    _status = (receive_b(0x60) | 2);
+    status = (receive_b(0x60) | 2);
     mouse_wait(1);
     send_b(0x64, 0x60);
     mouse_wait(1);
-    send_b(0x60, _status);
+    send_b(0x60, status);
 
     // Use default settings
     mouse_write(0xF6);
@@ -96,12 +89,4 @@ void mouse_install() {
 
     // Setup the mouse handler
     irq_install_handler(2, mouse_handler);
-}
-
-char get_mouse(int n) {
-    if (mm_n[n] == 1) {
-        mm_n[n] = 0;
-        return mouse_ex[n];
-    } else
-        return 0;
 }

@@ -3,8 +3,6 @@
 
 void mouse_install();
 
-char get_mouse(int n);
-
 void keyboard_install();
 
 #endif
