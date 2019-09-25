@@ -18,6 +18,8 @@ void terminal_write_string(const char *data);
 
 void terminal_put_char(char c);
 
+void terminal_put_keyboard_char(char c);
+
 void terminal_write_line(const char *data);
 
 #endif

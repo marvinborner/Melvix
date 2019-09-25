@@ -107,15 +107,10 @@ void terminal_put_char(char c) {
     } else if (c == '\r') {
         terminal_column = 0;
     } else if (c == '\n') {
-        if (irq_is_installed(1)) exec_command(text);
-        memory_set(text, 0, sizeof(text));
-        terminal_column = 0;
         terminal_row++;
+        terminal_column = 0;
         terminal_scroll();
-        terminal_put_entry_at('$', terminal_color, terminal_column, terminal_row);
-        terminal_column = 2;
     } else if (c >= ' ') { // Any printable character
-        strcat(text, &c);
         terminal_put_entry_at(c, terminal_color, terminal_column, terminal_row);
         terminal_column++;
     }
@@ -135,12 +130,25 @@ void terminal_write(const char *data, size_t size) {
         terminal_put_char(data[i]);
 }
 
+void terminal_put_keyboard_char(char c) {
+    terminal_put_char(c);
+    if (c == '\n' && irq_is_installed(1)) {
+        exec_command(text);
+        memory_set(text, 0, sizeof(text));
+        terminal_column = 0;
+        terminal_row++;
+        terminal_scroll();
+        terminal_put_entry_at('$', terminal_color, terminal_column, terminal_row);
+        terminal_column = 2;
+        terminal_update_cursor();
+    } else if (c >= ' ' && irq_is_installed(1)) strcat(text, &c);
+}
+
 void terminal_write_string(const char *data) {
     terminal_write(data, strlen(data));
 }
 
 void terminal_write_line(const char *data) {
-    terminal_row++;
     terminal_column = 0;
     terminal_write_string(data);
     terminal_column = 0;

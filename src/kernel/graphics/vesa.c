@@ -1,11 +1,16 @@
 #include "vesa.h"
 #include "graphics.h"
-#include "../sound/sound.h"
 #include "../lib/lib.h"
-#include "../acpi/acpi.h"
+#include "../input/input.h"
+#include "../system.h"
 
 void switch_to_vga() {
-    terminal_initialize();
+    regs16_t regs;
+    regs.ax = 0x0003;
+    int32(0x10, &regs);
+    init();
+    terminal_write_line("FAILED!");
+    keyboard_install();
 }
 
 vbe_mode_info *vbe_set_mode(unsigned short mode) {
@@ -54,9 +59,8 @@ vbe_mode_info *vbe_set_mode(unsigned short mode) {
 void set_optimal_resolution() {
     extern vbe_info *vbe_init_structure;
     regs16_t regs;
-    regs.ax = 0x4F01;
-    regs.cx = vbe_init_structure;
-    regs.di = 0x0000;
+    regs.ax = 0x4F00;
+    regs.di = vbe_init_structure;
     regs.es = 0xA000;
     int32(0x10, &regs);
 
@@ -65,11 +69,14 @@ void set_optimal_resolution() {
     }
 
     vbe_info *vbe_modes = (vbe_info *) 0xA0000;
+
     if (strcmp(vbe_modes->signature, "VESA") == 0) {
-        loop:
-        asm volatile ("hlt");
-        goto loop;
+        init();
+        terminal_write_string("SUCCESS!\n");
+        keyboard_install();
     } else {
-        acpi_poweroff();
+        init();
+        terminal_write_string("FAILED!\n");
+        keyboard_install();
     }
 }

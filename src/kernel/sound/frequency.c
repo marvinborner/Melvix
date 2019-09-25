@@ -2,7 +2,7 @@
 #include "../io/io.h"
 #include "../timer/timer.h"
 
-static void play_sound(uint32_t frequency) {
+void play_sound(uint32_t frequency) {
     uint32_t divided;
     uint8_t tmp;
 
@@ -23,7 +23,7 @@ static void shut_up() {
     send_b(0x61, tmp);
 }
 
-//Make a beep
+// Make a beep
 void beep(uint32_t frequency, uint32_t ticks) {
     play_sound(frequency);
     timer_wait(ticks);

@@ -5,22 +5,23 @@
 #include "input/input.h"
 #include "timer/timer.h"
 
-void kernel_main(void) {
+void init() {
     asm volatile ("sti");
     gdt_install();
     idt_install();
     isrs_install();
     irq_install();
     timer_install();
-
-    // vbe_set_mode(0x11B); // 1280x1024
-
     terminal_initialize();
-    terminal_write_string("Melvix loaded successfully!\n");
-
-    set_optimal_resolution();
     keyboard_install();
     // mouse_install();
+}
+
+void kernel_main(void) {
+    // vbe_set_mode(0x11B);
+    set_optimal_resolution();
+
+    terminal_write_string("Melvix loaded successfully!\n");
 
     // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
 }

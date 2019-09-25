@@ -25,3 +25,32 @@ char *strcat(char *dst, const char *src) {
     dst[i + j] = 0;
     return dst;
 }
+
+char *strcpy(char *dst, const char *src) {
+    unsigned int i = 0;
+    for (i = 0; src[i] != 0; i++) {
+        dst[i] = src[i];
+    }
+    dst[i] = 0;
+    return dst;
+}
+
+char *itoa(int i, char b[]) {
+    char const digit[] = "0123456789";
+    char *p = b;
+    if (i < 0) {
+        *p++ = '-';
+        i *= -1;
+    }
+    int shifter = i;
+    do {
+        ++p;
+        shifter = shifter / 10;
+    } while (shifter);
+    *p = '\0';
+    do {
+        *--p = digit[i % 10];
+        i = i / 10;
+    } while (i);
+    return b;
+}

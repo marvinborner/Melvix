@@ -37,10 +37,8 @@ void keyboard_handler(struct regs *r) {
 
     scan_code = receive_b(0x60);
 
-    if (scan_code & 0x80) {
-        // Release
-    } else {
-        terminal_put_char(keymap[scan_code]);
+    if (!(scan_code & 0x80)) {
+        terminal_put_keyboard_char(keymap[scan_code]);
     }
 }
 
