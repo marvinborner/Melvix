@@ -4,6 +4,21 @@
 #include <stdint.h>
 
 typedef struct __attribute__ ((packed)) {
+    char signature[4];    // must be "VESA" to indicate valid VBE support
+    uint32_t version;            // VBE version; high byte is major version, low byte is minor version
+    uint32_t oem;            // segment:offset pointer to OEM
+    uint32_t capabilities;        // bitfield that describes card capabilities
+    uint32_t video_modes;        // segment:offset pointer to list of supported video modes
+    uint32_t video_memory;        // amount of video memory in 64KB blocks
+    uint32_t software_rev;        // software revision
+    uint32_t vendor;            // segment:offset to card vendor string
+    uint32_t product_name;        // segment:offset to card model name
+    uint32_t product_rev;        // segment:offset pointer to product revision
+    char reserved[222];        // reserved for future expansion
+    char oem_data[256];        // OEM BIOSes store their strings in this area
+} vbe_info;
+
+typedef struct __attribute__ ((packed)) {
     uint16_t attributes;        // deprecated, only bit 7 should be of interest to you, and it indicates the mode supports a linear frame buffer.
     uint8_t window_a;            // deprecated
     uint8_t window_b;            // deprecated
@@ -42,6 +57,8 @@ typedef struct __attribute__ ((packed)) {
 } vbe_mode_info;
 
 vbe_mode_info *vbe_set_mode(unsigned short mode);
+
+void set_optimal_resolution();
 
 typedef struct __attribute__ ((packed)) {
     unsigned short di, si, bp, sp, bx, dx, cx, ax;

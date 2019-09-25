@@ -1,3 +1,4 @@
+#include "graphics/vesa.h"
 #include "graphics/graphics.h"
 #include "gdt/gdt.h"
 #include "interrupts/interrupts.h"
@@ -10,14 +11,16 @@ void kernel_main(void) {
     idt_install();
     isrs_install();
     irq_install();
-
-    vbe_set_mode(0x11B); // 1280x1024
-
-    // terminal_initialize();
-    // terminal_write_string("Melvix loaded successfully!\n");
-
     timer_install();
+
+    // vbe_set_mode(0x11B); // 1280x1024
+
+    terminal_initialize();
+    terminal_write_string("Melvix loaded successfully!\n");
+
+    set_optimal_resolution();
     keyboard_install();
     // mouse_install();
+
     // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
 }

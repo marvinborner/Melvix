@@ -1,5 +1,6 @@
 [bits 32]
 global start
+global vbe_init_structure
 start:
     mov esp, _sys_stack ; Points stack to stack area
     jmp stublet
@@ -43,6 +44,10 @@ stublet:
 %include "src/kernel/interrupts/irq.asm"
 
 %include "src/kernel/interact.asm"
+
+vbe_init_structure:
+	.signature db "VBE2"
+	.table_data: resb 512-4
 
 ; Store the stack
 SECTION .bss
