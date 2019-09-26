@@ -2,13 +2,14 @@
 #define MELVIX_VESA_H
 
 #include <stdint.h>
+#include "../system.h"
 
-typedef struct __attribute__ ((packed)) {
+struct vbe_info {
     char signature[4];
     uint32_t version;
     uint32_t oem;
     uint32_t capabilities;
-    uint32_t video_modes;
+    struct far_ptr video_modes;
     uint32_t video_memory;
     uint32_t software_rev;
     uint32_t vendor;
@@ -16,9 +17,9 @@ typedef struct __attribute__ ((packed)) {
     uint32_t product_rev;
     char reserved[222];
     char oem_data[256];
-} vbe_info;
+} __attribute__ ((packed));
 
-typedef struct __attribute__ ((packed)) {
+struct vbe_mode_info {
     uint16_t attributes;
     uint8_t window_a;
     uint8_t window_b;
@@ -54,18 +55,11 @@ typedef struct __attribute__ ((packed)) {
     uint32_t off_screen_mem_off;
     uint16_t off_screen_mem_size;
     uint8_t reserved1[206];
-} vbe_mode_info;
+} __attribute__ ((packed));
 
-vbe_mode_info *vbe_set_mode(unsigned short mode);
+struct vbe_mode_info *vbe_set_mode(unsigned short mode);
 
 void set_optimal_resolution();
-
-typedef struct __attribute__ ((packed)) {
-    unsigned short di, si, bp, sp, bx, dx, cx, ax;
-    unsigned short gs, fs, es, ds, eflags;
-} regs16_t;
-
-extern void int32(unsigned char intnum, regs16_t *regs);
 
 int vbe_current_mode;
 int vbe_width;

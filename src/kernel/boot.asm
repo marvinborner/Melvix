@@ -45,10 +45,6 @@ stublet:
 
 %include "src/kernel/interact.asm"
 
-vbe_init_structure:
-	.signature db "VBE2"
-	.table_data: resb 512-4
-
 ; Store the stack
 SECTION .bss
     resb 8192 ; Reserve 8KiB
