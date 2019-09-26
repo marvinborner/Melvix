@@ -1,39 +1,72 @@
-[bits 32]
-global start
-global vbe_init_structure
+global start ; Make start available to linker
+extern kernel_main ; Get main function from kernel.c
+
+; Set Multiboot headers for GRUB
+MODULEALIGN equ  1<<0
+MEMINFO     equ  1<<1
+FLAGS       equ  MODULEALIGN | MEMINFO
+MAGIC       equ  0x1BADB002
+CHECKSUM    equ  -(MAGIC + FLAGS)
+
+; Set virtual base address of kernel space
+KERNEL_VIRTUAL_BASE equ 0xC0000000 ; 3GB
+KERNEL_PAGE_NUMBER equ (KERNEL_VIRTUAL_BASE >> 22) ; Page directory index of kernel's 4MB PTE.
+
+section .data
+align 0x1000
+BootPageDirectory:
+    ; Create page directory entry to identity-map the first 4MB of the 32-bit physical address space.
+    dd 0x00000083
+    times (KERNEL_PAGE_NUMBER - 1) dd 0
+    ; Create 4MB page directory entry to contain the kernel
+    dd 0x00000083
+    times (1024 - KERNEL_PAGE_NUMBER - 1) dd 0
+
+section .text
+align 4
+MultiBootHeader:
+    dd MAGIC
+    dd FLAGS
+    dd CHECKSUM
+
+; Reserve 16k for initial kernel stack space
+STACKSIZE equ 0x4000
+
+; Set up entry point for linker
+loader equ (start - 0xC0000000)
+global loader
+
 start:
-    mov esp, _sys_stack ; Points stack to stack area
-    jmp stublet
+    ; Using physical addresses for now
+    mov ecx, (BootPageDirectory - KERNEL_VIRTUAL_BASE)
+    mov cr3, ecx ; Load Page Directory Base Register
 
-; Align with 4 Bytes
-ALIGN 4
-mboot:
-    ; Multiboot macros
-    MULTIBOOT_PAGE_ALIGN equ 1<<0
-    MULTIBOOT_MEMORY_INFO equ 1<<1
-    MULTIBOOT_AOUT_KLUDGE equ 1<<16
-    MULTIBOOT_HEADER_MAGIC equ 0x1BADB002
-    MULTIBOOT_HEADER_FLAGS equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE
-    MULTIBOOT_CHECKSUM	equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
-    EXTERN code, bss, end
+    mov ecx, cr4
+    or ecx, 0x00000010 ; Set PSE in CR4 to enable 4MB pages
+    mov cr4, ecx
 
-    ; GRUB Multiboot header
-    dd MULTIBOOT_HEADER_MAGIC
-    dd MULTIBOOT_HEADER_FLAGS
-    dd MULTIBOOT_CHECKSUM
+    mov ecx, cr0
+    or ecx, 0x80000000 ; Enable paging
+    mov cr0, ecx
 
-    ; AOUT kludge
-    dd mboot
-    dd code
-    dd bss
-    dd end
-    dd start
+    ; Long jump to StartInHigherHalf
+    lea ecx, [StartInHigherHalf]
+    jmp ecx
 
-; Endless loop
-stublet:
-    extern kernel_main
+StartInHigherHalf:
+    mov dword [BootPageDirectory], 0
+    invlpg [0]
+
+    mov esp, stack+STACKSIZE           ; Set up the stack
+    push eax                           ; Pass Multiboot magic number
+
+    ; Pass Multiboot info structure
+    push ebx
+    add ebx, KERNEL_VIRTUAL_BASE
+    push ebx
+
     call kernel_main
-    jmp $
+    hlt
 
 %include "src/kernel/gdt/gdt.asm"
 
@@ -45,7 +78,7 @@ stublet:
 
 %include "src/kernel/interact.asm"
 
-; Store the stack
-SECTION .bss
-    resb 8192 ; Reserve 8KiB
-_sys_stack:
+section .bss
+align 32
+stack:
+    resb STACKSIZE      ; reserve 16k stack on a uint64_t boundary
