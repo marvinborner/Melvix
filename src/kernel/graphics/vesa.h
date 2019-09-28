@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include "../system.h"
 
+/**
+ * The CPUs response to the 0x4F00 call
+ * Used to receive the supported video modes
+ */
 struct vbe_info {
     char signature[4];
     uint32_t version;
@@ -19,6 +23,10 @@ struct vbe_info {
     char oem_data[256];
 } __attribute__ ((packed));
 
+/**
+ * The CPUs response to the 0x4F01 call
+ * Used to get information about a specific video mode code
+ */
 struct vbe_mode_info {
     uint16_t attributes;
     uint8_t window_a;
@@ -57,14 +65,43 @@ struct vbe_mode_info {
     uint8_t reserved1[206];
 } __attribute__ ((packed));
 
+/**
+ * Set the video mode to a specified resolution using
+ * a video mode code
+ * @param mode The requested video mode code from 0x4F00 call
+ * @return A structure with information about the video mode
+ */
 struct vbe_mode_info *vbe_set_mode(unsigned short mode);
 
+/**
+ * Find the highest resolution using 0x4F00 and call
+ * vbe_set_mode using the video_modes far_ptr
+ */
 void set_optimal_resolution();
 
+/**
+ * The current video mode
+ */
 int vbe_current_mode;
+
+/**
+ * The width of the current video mode
+ */
 int vbe_width;
+
+/**
+ * The height of the current video mode
+ */
 int vbe_height;
+
+/**
+ * The bits per pixel of the current video mode
+ */
 int vbe_bpp;
+
+/**
+ * The pitch (bytes per line) of the current video mode
+ */
 int vbe_pitch;
 
 #endif

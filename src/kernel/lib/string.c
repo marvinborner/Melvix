@@ -15,24 +15,24 @@ size_t strcmp(const char *s1, const char *s2) {
     return *(const unsigned char *) s1 - *(const unsigned char *) s2;
 }
 
-char *strcat(char *dst, const char *src) {
+char *strcat(char *dest, const char *src) {
     unsigned int i = 0;
     unsigned int j = 0;
-    for (i = 0; dst[i] != 0; i++) {}
+    for (i = 0; dest[i] != 0; i++) {}
     for (j = 0; src[j] != 0; j++) {
-        dst[i + j] = src[j];
+        dest[i + j] = src[j];
     }
-    dst[i + j] = 0;
-    return dst;
+    dest[i + j] = 0;
+    return dest;
 }
 
-char *strcpy(char *dst, const char *src) {
+char *strcpy(char *dest, const char *src) {
     unsigned int i = 0;
     for (i = 0; src[i] != 0; i++) {
-        dst[i] = src[i];
+        dest[i] = src[i];
     }
-    dst[i] = 0;
-    return dst;
+    dest[i] = 0;
+    return dest;
 }
 
 char *itoa(int i, char b[]) {
