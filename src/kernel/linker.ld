@@ -1,24 +1,25 @@
+OUTPUT_FORMAT("binary")
 ENTRY(start)
-OUTPUT_FORMAT(elf32-i386)
-
-SECTIONS {
-   . = 0xC0100000;
- 
-   .text : AT(ADDR(.text) - 0xC0000000) {
-       *(.text)
-       *(.rodata*)
-   }
- 
-   .data ALIGN (0x1000) : AT(ADDR(.data) - 0xC0000000) {
-       *(.data)
-   }
- 
-   .bss : AT(ADDR(.bss) - 0xC0000000) {
-       _sbss = .;
-       *(COMMON)
-       *(.bss)
-       _ebss = .;
-   }
-
-   end = .;
+phys = 0x00100000;
+SECTIONS
+{
+  .text phys : AT(phys) {
+    code = .;
+    *(.text)
+    *(.rodata*)
+    . = ALIGN(4096);
+  }
+  .data : AT(phys + (data - code))
+  {
+    data = .;
+    *(.data)
+    . = ALIGN(4096);
+  }
+  .bss : AT(phys + (bss - code))
+  {
+    bss = .;
+    *(.bss)
+    . = ALIGN(4096);
+  }
+  end = .;
 }

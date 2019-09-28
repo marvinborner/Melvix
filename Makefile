@@ -17,7 +17,7 @@ build: clean
 	# Assemble ASM files
 	nasm -f elf ./src/kernel/boot.asm -o ./build/boot.o || exit; \
 
-    # Make all C files
+	# Make all C files
 	find ./src/kernel/ -name \*.c >./build/tmp; \
 	while read -r line; do \
 		stripped=$$(echo "$${line}" | sed -r 's/\//_/g'); \
