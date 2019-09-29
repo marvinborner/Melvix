@@ -63,6 +63,9 @@ void set_optimal_resolution() {
     struct vbe_info *info;
     struct vbe_mode_info *mode_info;
 
+    // info = lmalloc(sizeof(struct vbe_info));
+    // mode_info = lmalloc(sizeof(struct vbe_mode_info));
+
     info->signature[0] = 'V';
     info->signature[1] = 'B';
     info->signature[2] = 'E';
@@ -95,6 +98,8 @@ void set_optimal_resolution() {
             highest = mode_info;
         }
     }
+
+    // lfree(info);
 
     /*if (strcmp((const char *) info->version, (const char *) 0x300) == 0) {
         init();

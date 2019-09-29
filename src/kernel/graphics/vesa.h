@@ -11,9 +11,9 @@
 struct vbe_info {
     char signature[4];
     uint32_t version;
-    uint32_t oem;
+    far_ptr_t oem;
     uint32_t capabilities;
-    struct far_ptr video_modes;
+    far_ptr_t video_modes;
     uint32_t video_memory;
     uint32_t software_rev;
     uint32_t vendor;

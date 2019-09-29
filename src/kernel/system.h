@@ -1,6 +1,8 @@
 #ifndef MELVIX_SYSTEM_H
 #define MELVIX_SYSTEM_H
 
+#include "graphics/graphics.h"
+
 /**
  * Initialize the basic features of the OS
  */
@@ -33,17 +35,19 @@ struct far_ptr {
     };
 } __attribute__ ((packed));
 
+typedef struct far_ptr far_ptr_t;
+
 /**
  * Get offset from ASM segment:offset pointer
  */
-static inline uint16_t get_offset(const volatile void *p) {
+uint16_t get_offset(const volatile void *p) {
     return (uint16_t) (uintptr_t) p & 0x000F;
 }
 
 /**
  * Get segment from ASM segment:offset pointer
  */
-static inline uint16_t get_segment(const volatile void *p) {
+uint16_t get_segment(const volatile void *p) {
     return (uint16_t) (((uintptr_t) p) >> 4);
 }
 
@@ -52,8 +56,8 @@ static inline uint16_t get_segment(const volatile void *p) {
  * @param __ptr The ASM segment:offset pointer
  * @return The new far pointer
  */
-static inline struct far_ptr FAR_PTR(void *__ptr) {
-    struct far_ptr __fptr;
+far_ptr_t FAR_PTR(void *__ptr) {
+    far_ptr_t __fptr;
     __fptr.offset = get_offset(__ptr);
     __fptr.segment = get_segment(__ptr);
     return __fptr;
@@ -64,8 +68,47 @@ static inline struct far_ptr FAR_PTR(void *__ptr) {
  * @param fptr The ASM far pointer
  * @return The normalized pointer
  */
-static inline void *get_ptr(struct far_ptr fptr) {
+void *get_ptr(far_ptr_t fptr) {
     return (void *) (unsigned long) ((fptr.segment << 4) + fptr.offset);
+}
+
+/**
+ * Display a warning message
+ * TODO: Add line number and file name
+ * @param msg The warning cause/reason
+ */
+void warn(char *msg) {
+    asm volatile ("cli");
+    terminal_set_color(6);
+    terminal_write_line("WARNING");
+    terminal_write_string(msg);
+    terminal_set_color(7);
+}
+
+/**
+ * Halt the entire system and display a message
+ * TODO: Add line number and file name
+ * @param msg The error cause/reason
+ */
+void panic(char *msg) {
+    asm volatile ("cli");
+    terminal_set_color(4);
+    terminal_write_line("PANIC");
+    terminal_write_string(msg);
+    loop:
+    asm volatile ("hlt");
+    goto loop;
+}
+
+/**
+ * Assert that a value is non-zero, else panic
+ * TODO: Add line number and file name
+ * @param x The value
+ */
+void assert(int x) {
+    if (x == 0) {
+        panic("Assertion failed");
+    }
 }
 
 #endif

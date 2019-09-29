@@ -35,7 +35,7 @@ void mouse_handler(struct regs *a_r) {
         terminal_write_line("CLICK!");
 }
 
-inline void mouse_wait(unsigned char a_type) {
+void mouse_wait(unsigned char a_type) {
     unsigned int time_out = 100000;
     if (a_type == 0) {
         while (time_out--)
@@ -50,7 +50,7 @@ inline void mouse_wait(unsigned char a_type) {
     }
 }
 
-inline void mouse_write(unsigned char a_write) {
+void mouse_write(unsigned char a_write) {
     mouse_wait(1);
     send_b(0x64, 0xD4);
     mouse_wait(1);
