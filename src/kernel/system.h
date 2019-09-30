@@ -1,7 +1,7 @@
 #ifndef MELVIX_SYSTEM_H
 #define MELVIX_SYSTEM_H
 
-#include "graphics/graphics.h"
+#include <stdint.h>
 
 /**
  * Initialize the basic features of the OS
@@ -35,19 +35,17 @@ struct far_ptr {
     };
 } __attribute__ ((packed));
 
-typedef struct far_ptr far_ptr_t;
-
 /**
  * Get offset from ASM segment:offset pointer
  */
-uint16_t get_offset(const volatile void *p) {
+static inline uint16_t get_offset(const volatile void *p) {
     return (uint16_t) (uintptr_t) p & 0x000F;
 }
 
 /**
  * Get segment from ASM segment:offset pointer
  */
-uint16_t get_segment(const volatile void *p) {
+static inline uint16_t get_segment(const volatile void *p) {
     return (uint16_t) (((uintptr_t) p) >> 4);
 }
 
@@ -56,8 +54,8 @@ uint16_t get_segment(const volatile void *p) {
  * @param __ptr The ASM segment:offset pointer
  * @return The new far pointer
  */
-far_ptr_t FAR_PTR(void *__ptr) {
-    far_ptr_t __fptr;
+static inline struct far_ptr FAR_PTR(void *__ptr) {
+    struct far_ptr __fptr;
     __fptr.offset = get_offset(__ptr);
     __fptr.segment = get_segment(__ptr);
     return __fptr;
@@ -68,7 +66,7 @@ far_ptr_t FAR_PTR(void *__ptr) {
  * @param fptr The ASM far pointer
  * @return The normalized pointer
  */
-void *get_ptr(far_ptr_t fptr) {
+static inline void *get_ptr(struct far_ptr fptr) {
     return (void *) (unsigned long) ((fptr.segment << 4) + fptr.offset);
 }
 
@@ -77,7 +75,7 @@ void *get_ptr(far_ptr_t fptr) {
  * TODO: Add line number and file name
  * @param msg The warning cause/reason
  */
-void warn(char *msg) {
+static inline void warn(char *msg) {
     asm volatile ("cli");
     terminal_set_color(6);
     terminal_write_line("WARNING");
@@ -90,7 +88,7 @@ void warn(char *msg) {
  * TODO: Add line number and file name
  * @param msg The error cause/reason
  */
-void panic(char *msg) {
+static inline void panic(char *msg) {
     asm volatile ("cli");
     terminal_set_color(4);
     terminal_write_line("PANIC");
@@ -105,7 +103,7 @@ void panic(char *msg) {
  * TODO: Add line number and file name
  * @param x The value
  */
-void assert(int x) {
+static inline void assert(int x) {
     if (x == 0) {
         panic("Assertion failed");
     }

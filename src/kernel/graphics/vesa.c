@@ -2,6 +2,7 @@
 #include "graphics.h"
 #include "../input/input.h"
 #include "../system.h"
+#include "../paging/kheap.h"
 
 void switch_to_vga() {
     regs16_t regs;
@@ -56,15 +57,11 @@ struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
 }
 
 void set_optimal_resolution() {
-    init();
-    terminal_write_string("SUCCESS!\n");
-    keyboard_install();
-
     struct vbe_info *info;
     struct vbe_mode_info *mode_info;
 
-    // info = lmalloc(sizeof(struct vbe_info));
-    // mode_info = lmalloc(sizeof(struct vbe_mode_info));
+    info = kmalloc(sizeof(struct vbe_info));
+    mode_info = kmalloc(sizeof(struct vbe_mode_info));
 
     info->signature[0] = 'V';
     info->signature[1] = 'B';
@@ -83,7 +80,8 @@ void set_optimal_resolution() {
 
     uint16_t *mode_ptr = get_ptr(info->video_modes);
     uint16_t mode;
-    struct vbe_mode_info *highest;
+    uint16_t highest = 0x11B;
+    uint16_t highest_height = 0;
     while ((mode = *mode_ptr++) != 0xFFFF) {
         mode &= 0x1FF;
         regs16_t regs2;
@@ -94,12 +92,15 @@ void set_optimal_resolution() {
         int32(0x10, &regs2);
 
         if ((mode_info->attributes & 0x90) != 0x90) continue;
-        if (mode_info->height >= highest->height) {
-            highest = mode_info;
+        if (mode_info->height >= highest_height) {
+            highest = mode;
+            highest_height = mode_info->height;
         }
     }
 
-    // lfree(info);
+    vbe_set_mode(0x11B);
+
+    kfree(info);
 
     /*if (strcmp((const char *) info->version, (const char *) 0x300) == 0) {
         init();
