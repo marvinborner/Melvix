@@ -2,6 +2,8 @@
 #define MELVIX_SYSTEM_H
 
 #include <stdint.h>
+#include "timer/timer.h"
+#include "lib/lib.h"
 
 /**
  * Initialize the basic features of the OS
@@ -71,15 +73,39 @@ static inline void *get_ptr(struct far_ptr fptr) {
 }
 
 /**
+ * Print the current kernel time
+ */
+static inline void kernel_time() {
+    terminal_write_string("\n");
+    terminal_write_string("[");
+    terminal_write_number(get_time());
+    terminal_write_string("] ");
+}
+
+/**
+ * Display an information message
+ * @param msg The information
+ */
+static inline void info(char *msg) {
+    terminal_set_color(10);
+    kernel_time();
+    terminal_write_string("INFO: ");
+    terminal_write_string(msg);
+    terminal_write_string("\n");
+    terminal_set_color(7);
+}
+
+/**
  * Display a warning message
  * TODO: Add line number and file name
  * @param msg The warning cause/reason
  */
 static inline void warn(char *msg) {
-    asm volatile ("cli");
     terminal_set_color(6);
-    terminal_write_line("WARNING");
+    kernel_time();
+    terminal_write_string("WARNING: ");
     terminal_write_string(msg);
+    terminal_write_string("\n");
     terminal_set_color(7);
 }
 
@@ -91,8 +117,10 @@ static inline void warn(char *msg) {
 static inline void panic(char *msg) {
     asm volatile ("cli");
     terminal_set_color(4);
-    terminal_write_line("PANIC");
+    kernel_time();
+    terminal_write_string("PANIC: ");
     terminal_write_string(msg);
+    terminal_write_string(" - System Halted!");
     loop:
     asm volatile ("hlt");
     goto loop;

@@ -8,7 +8,6 @@
 vpage_dir_t *current_vpage_dir = NULL;
 vpage_dir_t *root_vpage_dir = NULL;
 
-//Assembly abstraction for more maintainable code
 page_table_t *get_cr3() {
     unsigned int cr3;
 

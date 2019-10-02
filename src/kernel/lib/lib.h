@@ -65,8 +65,8 @@ int memory_compare(const void *a_ptr, const void *b_ptr, size_t size);
  * Convert an int into a string
  * @param i The integer which should be converted
  * @param b The converted int as string
- * @return The converted string (b)
+ * @param base The desired base
  */
-char *itoa(int i, char b[]);
+void *itoa(int i, char *b, int base);
 
 #endif

@@ -1,5 +1,6 @@
 #include "../graphics/graphics.h"
 #include "interrupts.h"
+#include "../lib/lib.h"
 
 // Defined in isr.asm
 extern void isr0();
@@ -147,9 +148,8 @@ const char *exception_messages[] = {
 // Master exception handler - halt via endless loop
 void fault_handler(struct regs *r) {
     if (r->int_no < 32) {
-        terminal_write_string("\n");
-        terminal_write_string(exception_messages[r->int_no]);
-        terminal_write_string(" Exception. System Halted!\n");
-        for (;;);
+        char *message = (char *) exception_messages[r->int_no];
+        strcat(message, " Exception");
+        panic(message);
     }
 }

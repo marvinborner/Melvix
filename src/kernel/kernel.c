@@ -12,21 +12,21 @@ void init() {
     idt_install();
     isrs_install();
     irq_install();
-    init_kheap();
-    page_init();
     timer_install();
-    // terminal_initialize();
+    terminal_initialize();
+    // init_kheap();
+    // page_init();
     keyboard_install();
     // mouse_install();
     asm volatile ("sti");
 }
 
 void kernel_main(void) {
-    // vbe_set_mode(0x11B);
     set_optimal_resolution();
+    // vbe_set_mode(0x11B);
     init();
-
-    // terminal_write_string("Melvix loaded successfully!\n");
+    terminal_write_string("Melvix loaded successfully!\n");
+    terminal_write_string("Loading VESA!\n");
 
     // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
     for (;;);

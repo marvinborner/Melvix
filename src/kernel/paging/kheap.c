@@ -21,7 +21,7 @@ void init_kheap() {
 }
 
 void *fmalloc(unsigned int size) {
-    //assert(placement_address + size < MEM_END);
+    assert(placement_address + size < MEM_END);
     unsigned int hold = placement_address;
     memory_set((void *) hold, 0, size);
     placement_address += size;

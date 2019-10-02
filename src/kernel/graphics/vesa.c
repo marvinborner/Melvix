@@ -2,7 +2,7 @@
 #include "graphics.h"
 #include "../input/input.h"
 #include "../system.h"
-#include "../paging/kheap.h"
+#include "../lib/lib.h"
 
 void switch_to_vga() {
     regs16_t regs;
@@ -57,21 +57,15 @@ struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
 }
 
 void set_optimal_resolution() {
-    struct vbe_info *info;
-    struct vbe_mode_info *mode_info;
+    struct vbe_info *info = (struct vbe_info *) 0x2000;
+    struct vbe_mode_info *mode_info = (struct vbe_mode_info *) 0x3000;
 
-    info = kmalloc(sizeof(struct vbe_info));
-    mode_info = kmalloc(sizeof(struct vbe_mode_info));
-
-    info->signature[0] = 'V';
-    info->signature[1] = 'B';
-    info->signature[2] = 'E';
-    info->signature[3] = '2';
+    memory_copy(info->signature, "VBE2", 4);
 
     regs16_t regs;
     regs.ax = 0x4F00;
-    regs.es = get_segment(info);
-    regs.di = get_offset(info);
+    regs.es = 0;
+    regs.di = info;
     int32(0x10, &regs);
 
     if (regs.ax != 0x004F) {
@@ -81,7 +75,8 @@ void set_optimal_resolution() {
     uint16_t *mode_ptr = get_ptr(info->video_modes);
     uint16_t mode;
     uint16_t highest = 0x11B;
-    uint16_t highest_height = 0;
+    uint16_t highest_width = 0;
+
     while ((mode = *mode_ptr++) != 0xFFFF) {
         mode &= 0x1FF;
         regs16_t regs2;
@@ -92,24 +87,12 @@ void set_optimal_resolution() {
         int32(0x10, &regs2);
 
         if ((mode_info->attributes & 0x90) != 0x90) continue;
-        if (mode_info->height >= highest_height) {
+
+        if (mode_info->width >= highest_width && (float) mode_info->width / (float) mode_info->height < 2.0) {
             highest = mode;
-            highest_height = mode_info->height;
+            highest_width = mode_info->width;
         }
     }
 
-    vbe_set_mode(0x11B);
-
-    kfree(info);
-
-    /*if (strcmp((const char *) info->version, (const char *) 0x300) == 0) {
-        init();
-        terminal_write_string("SUCCESS!\n");
-        terminal_write_line((const char *) &info->vendor);
-        keyboard_install();
-    } else {
-        init();
-        terminal_write_string("FAILED!\n");
-        keyboard_install(); // Find out why commands only work when keyboard gets reinstalled after write
-    }*/
+    vbe_set_mode(highest);
 }

@@ -34,6 +34,12 @@ void terminal_clear();
 void terminal_write_string(const char *data);
 
 /**
+ * Write an integer to the terminal
+ * @param data The integer that should be written
+ */
+void terminal_write_number(int data);
+
+/**
  * Put a new char at the x+1 cursor position and
  * handle according events (e.g. overflow, linebreak)
  * @param c The character (can also be \n or \r)

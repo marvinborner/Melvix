@@ -1,7 +1,7 @@
 #include "../interrupts/interrupts.h"
 #include "../io/io.h"
 
-volatile unsigned int timer_ticks = 0;
+static unsigned int timer_ticks = 0;
 
 void timer_phase(int hz) {
     int divisor = 1193180 / hz;
@@ -23,6 +23,10 @@ void timer_wait(int ticks) {
     while (timer_ticks < eticks) {
         asm volatile ("sti//hlt//cli");
     }
+}
+
+unsigned int get_time() {
+    return timer_ticks;
 }
 
 // Install timer handler into IRQ0

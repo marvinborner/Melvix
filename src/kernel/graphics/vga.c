@@ -148,6 +148,12 @@ void terminal_write_string(const char *data) {
     terminal_write(data, strlen(data));
 }
 
+void terminal_write_number(int data) {
+    char converted[128];
+    itoa(data, converted, 10);
+    terminal_write(converted, strlen(converted));
+}
+
 void terminal_write_line(const char *data) {
     terminal_column = 0;
     terminal_write_string(data);
