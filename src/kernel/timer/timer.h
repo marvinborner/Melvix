@@ -14,7 +14,7 @@ void timer_wait(int ticks);
 
 /**
  * Get the current timer ticks
- * @return The current timer ticks (100 ticks = 1 second)
+ * @return The current timer ticks (1000 ticks = 1 second)
  */
 unsigned int get_time();
 

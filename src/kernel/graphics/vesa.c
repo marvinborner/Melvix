@@ -1,19 +1,16 @@
 #include "vesa.h"
-#include "graphics.h"
-#include "../input/input.h"
 #include "../system.h"
 #include "../lib/lib.h"
 
 void switch_to_vga() {
+    vesa_available = 0;
     regs16_t regs;
     regs.ax = 0x0003;
     int32(0x10, &regs);
-    init();
-    terminal_write_line("FAILED!");
-    keyboard_install();
 }
 
 struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
+    vesa_available = 0;
     regs16_t regs;
     regs.ax = 0x4F02;
     regs.bx = mode | (1 << 14);
@@ -47,6 +44,8 @@ struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
         regs.ax = 0x0003;
         int32(0x10, &regs);
 
+        vesa_available = 1;
+
         return vbe_info;
     } else {
         switch_to_vga();
@@ -57,6 +56,7 @@ struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
 }
 
 void set_optimal_resolution() {
+    vesa_available = 0;
     struct vbe_info *info = (struct vbe_info *) 0x2000;
     struct vbe_mode_info *mode_info = (struct vbe_mode_info *) 0x3000;
 

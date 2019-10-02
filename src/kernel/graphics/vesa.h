@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "../system.h"
 
+int vesa_available;
+
 /**
  * The CPUs response to the 0x4F00 call
  * Used to receive the supported video modes

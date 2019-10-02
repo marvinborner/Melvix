@@ -52,7 +52,7 @@ void keyboard_rate() {
     send_b(0x60, 0x0); // Rate{00000} Delay{00} 0
 }
 
-/* Installs the keyboard handler into IRQ1 */
+// Installs the keyboard handler into IRQ1
 void keyboard_install() {
     keyboard_rate();
     irq_install_handler(1, keyboard_handler);

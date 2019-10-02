@@ -87,11 +87,11 @@ static inline void kernel_time() {
  * @param msg The information
  */
 static inline void info(char *msg) {
-    terminal_set_color(10);
+    terminal_set_color(9);
     kernel_time();
     terminal_write_string("INFO: ");
     terminal_write_string(msg);
-    terminal_write_string("\n");
+    terminal_write_string("\r");
     terminal_set_color(7);
 }
 
@@ -105,7 +105,7 @@ static inline void warn(char *msg) {
     kernel_time();
     terminal_write_string("WARNING: ");
     terminal_write_string(msg);
-    terminal_write_string("\n");
+    terminal_write_string("\r");
     terminal_set_color(7);
 }
 

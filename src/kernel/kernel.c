@@ -8,14 +8,14 @@
 #include "paging/kheap.h"
 
 void init() {
+    timer_install();
     gdt_install();
     idt_install();
     isrs_install();
     irq_install();
-    timer_install();
-    terminal_initialize();
-    // init_kheap();
-    // page_init();
+    // terminal_initialize(); // TODO: Re[ace VGA functions with VESA
+    init_kheap();
+    page_init();
     keyboard_install();
     // mouse_install();
     asm volatile ("sti");
@@ -23,10 +23,15 @@ void init() {
 
 void kernel_main(void) {
     set_optimal_resolution();
-    // vbe_set_mode(0x11B);
     init();
-    terminal_write_string("Melvix loaded successfully!\n");
-    terminal_write_string("Loading VESA!\n");
+    info("Melvix loaded successfully!");
+    info("Loading VESA...");
+
+    if (vesa_available) {
+        info("Loaded VESA!");
+    } else {
+        warn("VESA loading failed!");
+    }
 
     // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
     for (;;);
