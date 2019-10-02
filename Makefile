@@ -72,4 +72,7 @@ cross:
 test: build
 	qemu-system-x86_64 -soundhw pcspk -enable-kvm -cdrom ./build/melvix.iso
 
-.PHONY: build clean cross test
+debug:
+	qemu-system-x86_64 -soundhw pcspk -enable-kvm -cdrom ./build/melvix.iso
+
+.PHONY: build clean cross test debug
