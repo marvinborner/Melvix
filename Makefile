@@ -69,10 +69,9 @@ cross:
 	make install-target-libgcc; \
 	cd "$${DIR}/.." || exit;
 
-test: build
-	qemu-system-x86_64 -soundhw pcspk -enable-kvm -cdrom ./build/melvix.iso
+test: build debug
 
 debug:
-	qemu-system-x86_64 -soundhw pcspk -enable-kvm -cdrom ./build/melvix.iso
+	qemu-system-x86_64 -soundhw pcspk -enable-kvm -d cpu_reset -D qemu.log -vga std -cdrom ./build/melvix.iso
 
 .PHONY: build clean cross test debug
