@@ -6,6 +6,32 @@
 
 int vesa_available;
 
+struct edid_data {
+    uint8_t padding[8];
+    uint32_t manufacture_id;
+    uint32_t edid_id;
+    int serial_number;
+    uint8_t manufacture_week;
+    uint8_t manufacture_year;
+    uint8_t edid_version;
+    uint8_t video_input_type;
+    uint8_t max_horizontal_size;
+    uint8_t max_vertical_size;
+    uint8_t gama_factor;
+    uint8_t dpms_flags;
+    uint8_t chroma_information[10];
+    uint8_t timings_1;
+    uint8_t timings_2;
+    uint8_t reserved_timings;
+    uint32_t timing_identification[8];
+    uint8_t timing_description_1[18];
+    uint8_t timing_description_2[18];
+    uint8_t timing_description_3[18];
+    uint8_t timing_description_4[18];
+    uint8_t unused;
+    uint8_t checksum;
+};
+
 /**
  * The CPUs response to the 0x4F00 call
  * Used to receive the supported video modes
@@ -67,6 +93,8 @@ struct vbe_mode_info {
     uint8_t reserved1[206];
 } __attribute__ ((packed));
 
+struct edid_data get_edid();
+
 /**
  * Set the video mode to a specified resolution using
  * a video mode code
@@ -80,6 +108,17 @@ struct vbe_mode_info *vbe_set_mode(unsigned short mode);
  * vbe_set_mode using the video_modes far_ptr
  */
 void set_optimal_resolution();
+
+/**
+ * Draw a string in VESA mode
+ * @param ch
+ */
+void vesa_draw_string(char *data);
+
+/**
+ * The best VBE mode info data
+ */
+struct vbe_mode_info *mode_info;
 
 /**
  * The current video mode
