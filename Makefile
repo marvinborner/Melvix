@@ -72,6 +72,6 @@ cross:
 test: build debug
 
 debug:
-	qemu-system-x86_64 -soundhw pcspk -enable-kvm -d cpu_reset -D qemu.log -vga std -cdrom ./build/melvix.iso
+	qemu-system-x86_64 -soundhw pcspk -enable-kvm -serial file:serial.log -d cpu_reset -D qemu.log -vga std -cdrom ./build/melvix.iso
 
 .PHONY: build clean cross test debug

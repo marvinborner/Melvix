@@ -45,4 +45,15 @@ void send_w(uint16_t port, uint16_t data);
  */
 void send_l(uint16_t port, uint32_t data);
 
+/**
+ * Initialize the serial conenction
+ */
+void init_serial();
+
+/**
+ * Write a string to the serial port (QEMU logging)
+ * @param data
+ */
+void write_serial(char *data);
+
 #endif
