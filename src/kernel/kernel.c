@@ -9,6 +9,7 @@
 #include "paging/kheap.h"
 
 void init() {
+    initialise_paging();
     timer_install();
     gdt_install();
     idt_install();
@@ -16,26 +17,21 @@ void init() {
     irq_install();
     init_serial();
     // terminal_initialize(); // TODO: Replace VGA functions with VESA
-    // init_kheap();
-    // page_init();
-    // keyboard_install();
-    // mouse_install();
     asm volatile ("sti");
 }
 
 void kernel_main(void) {
     set_optimal_resolution();
     init();
-    // info("Melvix loaded successfully!\n\n");
-    // info("Loading VESA...");
 
+    /* TODO: Fix page fault exception
     vesa_draw_string("This is a testing text!");
 
     if (vesa_available) {
-        write_serial("Loaded VESA!");
+        serial_write("Loaded VESA!\n");
     } else {
-        write_serial("VESA loading failed!");
-    }
+        serial_write("VESA loading failed!\n");
+    }*/
 
     // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
     loop:

@@ -146,18 +146,16 @@ void terminal_put_keyboard_char(char c) {
 
 void terminal_write_string(const char *data) {
     // terminal_write(data, strlen(data));
-    write_serial(data);
+    serial_write(data);
 }
 
 void terminal_write_number(int data) {
-    char converted[128];
-    itoa(data, converted, 10);
-    write_serial(converted);
+    serial_write_dec(data);
     // terminal_write(converted, strlen(converted));
 }
 
 void terminal_write_line(const char *data) {
-    write_serial(data);
+    serial_write(data);
     terminal_column = 0;
     // terminal_write_string(data);
     terminal_column = 0;

@@ -1,63 +1,64 @@
 #ifndef MELVIX_PAGING_H
 #define MELVIX_PAGING_H
 
-#define PAGE_S 0x400000
+#include <stdint.h>
+#include "../interrupts/interrupts.h"
 
-extern unsigned int *current_dir;
-extern unsigned int *root_dir;
-
-typedef struct {
-    unsigned int present    : 1;
-    unsigned int rw        : 1;
-    unsigned int user    : 1;
-    unsigned int accessed    : 1;
-    unsigned int dirty    : 1;
-    unsigned int unused    : 7;
-    unsigned int frame    : 20;
+typedef struct page {
+    uint32_t present    : 1;   // Page present in memory
+    uint32_t rw         : 1;   // Read-only if clear, readwrite if set
+    uint32_t user       : 1;   // Supervisor level only if clear
+    uint32_t accessed   : 1;   // Has the page been accessed since last refresh?
+    uint32_t dirty      : 1;   // Has the page been written to since last refresh?
+    uint32_t unused     : 7;   // Amalgamation of unused and reserved bits
+    uint32_t frame      : 20;  // Frame address (shifted right 12 bits)
 } page_t;
 
-typedef struct {
+typedef struct page_table {
     page_t pages[1024];
 } page_table_t;
 
-typedef struct {
+typedef struct page_directory {
     page_table_t *tables[1024];
-    unsigned int tables_physical[1024];
-    unsigned int physical_address;
+    uint32_t tablesPhysical[1024];
+    uint32_t physicalAddr;
 } page_directory_t;
 
-typedef struct {
-    page_table_t *tables[1024];
-} vpage_dir_t;
+/**
+ * Initialize the environment and enables paging
+ */
+void initialise_paging();
 
-extern vpage_dir_t *root_vpage_dir;
+/**
+ * Load the page directory into the CR3 register
+ * @param new The page directory
+ */
+void switch_page_directory(page_directory_t *new);
 
-#define EMPTY_TAB ((page_table_t*) 0x00000002)
+/**
+ * Get a specific page pointer
+ * @param address The page address
+ * @param make If 1 create the page first
+ * @param dir The page directory
+ * @return The page pointer
+ */
+page_t *get_page(uint32_t address, int make, page_directory_t *dir);
 
-page_table_t *get_cr3();
+/**
+ * Page fault handler
+ * @param r The IRQ registers
+ */
+void page_fault(struct regs *r);
 
-unsigned int get_cr0();
+void alloc_frame(page_t *page, int is_kernel, int is_writeable);
 
-void set_cr3(vpage_dir_t *dir);
+void free_frame(page_t *page);
 
-void set_cr0(unsigned int new_cr0);
-
-void switch_vpage_dir(vpage_dir_t *dir);
-
-vpage_dir_t *mk_vpage_dir();
-
-page_table_t *mk_vpage_table();
-
-void page_init();
-
-void vpage_map(vpage_dir_t *cr3, unsigned int virt, unsigned int phys);
-
-void vpage_map_user(vpage_dir_t *cr3, unsigned int virt, unsigned int phys);
-
-void convert_vpage(vpage_dir_t *kdir);
-
-void dump_page(vpage_dir_t *dir, unsigned int address);
-
-vpage_dir_t *copy_user_dir(vpage_dir_t *dir);
+/**
+ * Copy/clone a page directory
+ * @param src The page directory
+ * @return A new page directory pointer
+ */
+page_directory_t *clone_directory(page_directory_t *src);
 
 #endif

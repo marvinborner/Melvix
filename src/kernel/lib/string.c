@@ -34,20 +34,3 @@ char *strcpy(char *dest, const char *src) {
     dest[i] = 0;
     return dest;
 }
-
-void *itoa(int i, char *b, int base) {
-    int temp_i;
-    temp_i = i;
-    int stringLen = 1;
-
-    while ((int) temp_i / base != 0) {
-        temp_i = (int) temp_i / base;
-        stringLen++;
-    }
-
-    temp_i = i;
-    do {
-        *(b + stringLen - 1) = (temp_i % base) + '0';
-        temp_i = (int) temp_i / base;
-    } while (stringLen--);
-}

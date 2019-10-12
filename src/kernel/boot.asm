@@ -41,6 +41,21 @@ stublet:
     call kernel_main
     jmp $
 
+[global copy_page_physical]
+copy_page_physical:
+    push ebx
+    pushf
+    cli
+    mov ebx, [esp+12]
+    mov ecx, [esp+16]
+
+    ; Disable paging
+    mov edx, cr0
+    and edx, 0x7fffffff
+    mov cr0, edx
+
+    mov edx, 1024
+
 %include "src/kernel/gdt/gdt.asm"
 
 %include "src/kernel/interrupts/idt.asm"

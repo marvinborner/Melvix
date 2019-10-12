@@ -1,158 +1,198 @@
-#include <stddef.h>
 #include "paging.h"
 #include "kheap.h"
 #include "../lib/lib.h"
 #include "../graphics/graphics.h"
-#include "../interrupts/interrupts.h"
+#include "../io/io.h"
 
-vpage_dir_t *current_vpage_dir = NULL;
-vpage_dir_t *root_vpage_dir = NULL;
+page_directory_t *kernel_directory = 0;
+page_directory_t *current_directory = 0;
+uint32_t *frames;
+uint32_t nframes;
 
-page_table_t *get_cr3() {
-    unsigned int cr3;
+extern uint32_t placement_address;
+extern heap_t *kheap;
 
-    asm volatile ("movl %%cr3, %%eax" : "=a" (cr3));
-    return (page_table_t *) cr3;
+#define INDEX_FROM_BIT(a) (a/(8*4))
+#define OFFSET_FROM_BIT(a) (a%(8*4))
+
+static void set_frame(uint32_t frame_addr) {
+    uint32_t frame = frame_addr / 0x1000;
+    uint32_t idx = INDEX_FROM_BIT(frame);
+    uint32_t off = OFFSET_FROM_BIT(frame);
+    frames[idx] |= (0x1 << off);
 }
 
-unsigned int get_cr0() {
-    unsigned int cr0;
-
-    asm volatile ("movl %%cr0, %%eax" : "=a" (cr0));
-    return cr0;
+static void clear_frame(uint32_t frame_addr) {
+    uint32_t frame = frame_addr / 0x1000;
+    uint32_t idx = INDEX_FROM_BIT(frame);
+    uint32_t off = OFFSET_FROM_BIT(frame);
+    frames[idx] &= ~(0x1 << off);
 }
 
-void set_cr3(vpage_dir_t *dir) {
-    asm volatile ("movl %%eax, %%cr3"::"a" ((unsigned int) &dir->tables[0]));
+static uint32_t test_frame(uint32_t frame_addr) {
+    uint32_t frame = frame_addr / 0x1000;
+    uint32_t idx = INDEX_FROM_BIT(frame);
+    uint32_t off = OFFSET_FROM_BIT(frame);
+    return (frames[idx] & (0x1 << off));
 }
 
-void set_cr0(unsigned int new_cr0) {
-    asm volatile ("movl %%eax, %%cr0"::"a" (new_cr0));
+static uint32_t first_frame() {
+    uint32_t i, j;
+    for (i = 0; i < INDEX_FROM_BIT(nframes); i++) {
+        if (frames[i] != 0xFFFFFFFF) {
+            for (j = 0; j < 32; j++) {
+                uint32_t toTest = 0x1 << j;
+                if (!(frames[i] & toTest)) {
+                    return i * 4 * 8 + j;
+                }
+            }
+        }
+    }
 }
 
-void switch_vpage_dir(vpage_dir_t *dir) {
-    set_cr3(dir);
-    set_cr0(get_cr0() | 0x80000000);
+void alloc_frame(page_t *page, int is_kernel, int is_writeable) {
+    if (page->frame != 0) {
+        return;
+    } else {
+        uint32_t idx = first_frame();
+        if (idx == (uint32_t) -1) panic("No free frames!");
+        set_frame(idx * 0x1000);
+        page->present = 1;
+        page->rw = (is_writeable == 1) ? 1 : 0;
+        page->user = (is_kernel == 1) ? 0 : 1;
+        page->frame = idx;
+    }
 }
 
-vpage_dir_t *mk_vpage_dir() {
-    vpage_dir_t *dir = (vpage_dir_t *) kmalloc_a(sizeof(vpage_dir_t));
+void free_frame(page_t *page) {
+    uint32_t frame;
+    if (!(frame = page->frame)) {
+        return;
+    } else {
+        clear_frame(frame);
+        page->frame = 0x0;
+    }
+}
+
+void initialise_paging() {
+    uint32_t mem_end_page = 0x1000000;
+    nframes = mem_end_page / 0x1000;
+    frames = (uint32_t *) kmalloc(INDEX_FROM_BIT(nframes));
+    memory_set(frames, 0, INDEX_FROM_BIT(nframes));
+
+    uint32_t phys;
+    kernel_directory = (page_directory_t *) kmalloc_a(sizeof(page_directory_t));
+    memory_set(kernel_directory, 0, sizeof(page_directory_t));
+    kernel_directory->physicalAddr = (uint32_t) kernel_directory->tablesPhysical;
+
+    int i = 0;
+    for (i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
+        get_page(i, 1, kernel_directory);
+
+    i = 0;
+    while (i < 0x400000) {
+        alloc_frame(get_page(i, 1, kernel_directory), 0, 0);
+        i += 0x1000;
+    }
+
+    for (i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
+        alloc_frame(get_page(i, 1, kernel_directory), 0, 0);
+
+    irq_install_handler(14, page_fault);
+    switch_page_directory(kernel_directory);
+    kheap = create_heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, 0, 0);
+    current_directory = clone_directory(kernel_directory);
+    switch_page_directory(current_directory);
+}
+
+void switch_page_directory(page_directory_t *dir) {
+    current_directory = dir;
+    asm volatile("mov %0, %%cr3"::"r"(dir->physicalAddr));
+    uint32_t cr0;
+    asm volatile("mov %%cr0, %0": "=r"(cr0));
+    cr0 |= 0x80000000;
+    asm volatile("mov %0, %%cr0"::"r"(cr0));
+}
+
+page_t *get_page(uint32_t address, int make, page_directory_t *dir) {
+    address /= 0x1000;
+    uint32_t table_idx = address / 1024;
+
+    if (dir->tables[table_idx]) {
+        return &dir->tables[table_idx]->pages[address % 1024];
+    } else if (make) {
+        uint32_t tmp;
+        dir->tables[table_idx] = (page_table_t *) kmalloc_ap(sizeof(page_table_t), &tmp);
+        memory_set(dir->tables[table_idx], 0, 0x1000);
+        dir->tablesPhysical[table_idx] = tmp | 0x7;
+        return &dir->tables[table_idx]->pages[address % 1024];
+    } else {
+        return 0;
+    }
+}
+
+void page_fault(struct regs *r) {
+    uint32_t faulting_address;
+    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+
+    int present = !(r->err_code & 0x1);
+    int rw = r->err_code & 0x2;
+    int us = r->err_code & 0x4;
+    int reserved = r->err_code & 0x8;
+    int id = r->err_code & 0x10;
+
+    serial_write("Page fault! ( ");
+    if (present) serial_write("present ");
+    if (rw) serial_write("read-only ");
+    if (us) serial_write("user-mode ");
+    if (reserved) serial_write("reserved ");
+    serial_write(") at 0x");
+    serial_write_hex(faulting_address);
+    serial_write(" - EIP: ");
+    serial_write_hex(r->eip);
+    serial_write("\n");
+    panic("Page fault");
+}
+
+static page_table_t *clone_table(page_table_t *src, uint32_t *physAddr) {
+    page_table_t *table = (page_table_t *) kmalloc_ap(sizeof(page_table_t), physAddr);
+    memory_set(table, 0, sizeof(page_directory_t));
 
     int i;
-    for (i = 0; i < 1024; i++)
-        dir->tables[i] = EMPTY_TAB;
+    for (i = 0; i < 1024; i++) {
+        if (!src->pages[i].frame)
+            continue;
+        alloc_frame(&table->pages[i], 0, 0);
+        if (src->pages[i].present) table->pages[i].present = 1;
+        if (src->pages[i].rw) table->pages[i].rw = 1;
+        if (src->pages[i].user) table->pages[i].user = 1;
+        if (src->pages[i].accessed)table->pages[i].accessed = 1;
+        if (src->pages[i].dirty) table->pages[i].dirty = 1;
+        extern void copy_page_physical(int a, int b);
+        copy_page_physical(src->pages[i].frame * 0x1000, table->pages[i].frame * 0x1000);
+    }
+    return table;
+}
 
+page_directory_t *clone_directory(page_directory_t *src) {
+    uint32_t phys;
+    page_directory_t *dir = (page_directory_t *) kmalloc_ap(sizeof(page_directory_t), &phys);
+    memory_set(dir, 0, sizeof(page_directory_t));
+    uint32_t offset = (uint32_t) dir->tablesPhysical - (uint32_t) dir;
+    dir->physicalAddr = phys + offset;
+
+    for (int i = 0; i < 1024; i++) {
+        if (!src->tables[i])
+            continue;
+
+        if (kernel_directory->tables[i] == src->tables[i]) {
+            dir->tables[i] = src->tables[i];
+            dir->tablesPhysical[i] = src->tablesPhysical[i];
+        } else {
+            uint32_t phys;
+            dir->tables[i] = clone_table(src->tables[i], &phys);
+            dir->tablesPhysical[i] = phys | 0x07;
+        }
+    }
     return dir;
-}
-
-page_table_t *mk_vpage_table() {
-    page_table_t *tab = (page_table_t *) kmalloc_a(sizeof(page_table_t));
-
-    int i;
-    for (i = 0; i < 1024; i++) {
-        tab->pages[i].present = 0;
-        tab->pages[i].rw = 1;
-    }
-
-    return tab;
-}
-
-void vpage_map(vpage_dir_t *dir, unsigned int phys, unsigned int virt) {
-    short id = virt >> 22;
-    page_table_t *tab = mk_vpage_table();
-
-    dir->tables[id] = ((page_table_t *) ((unsigned int) tab | 3));
-
-    int i;
-    for (i = 0; i < 1024; i++) {
-        tab->pages[i].frame = phys >> 12;
-        tab->pages[i].present = 1;
-        phys += 4096;
-    }
-}
-
-void vpage_map_user(vpage_dir_t *dir, unsigned int phys, unsigned int virt) {
-    short id = virt >> 22;
-    page_table_t *tab = mk_vpage_table();
-
-    dir->tables[id] = ((page_table_t *) ((unsigned int) tab | 3 | 4));
-
-    int i;
-    for (i = 0; i < 1024; i++) {
-        tab->pages[i].frame = phys >> 12;
-        tab->pages[i].present = 1;
-        tab->pages[i].user = 1;
-        phys += 4096;
-    }
-}
-
-void vpage_fault(struct regs *r) {
-    asm volatile ("cli");
-
-    unsigned int no_page = r->err_code & 1;
-    unsigned int rw = r->err_code & 2;
-    unsigned int um = r->err_code & 4;
-    unsigned int re = r->err_code & 8;
-    unsigned int dc = r->err_code & 16;
-
-    if (dc) terminal_write_line(" (Instruction decode error) ");
-    if (!no_page) terminal_write_line(" (No page present) ");
-    if (um) terminal_write_line(" (in user mode) ");
-    if (rw) terminal_write_line(" (Write permissions) ");
-    if (re) terminal_write_line(" (RE) ");
-
-    terminal_write_line("\n");
-}
-
-void page_init() {
-    current_vpage_dir = mk_vpage_dir();
-    root_vpage_dir = current_vpage_dir;
-
-    unsigned int i;
-    for (i = 0; i < 0xF0000000; i += PAGE_S)
-        vpage_map(root_vpage_dir, i, i);
-
-    irq_install_handler(14, vpage_fault);
-    asm volatile ("cli");
-    switch_vpage_dir(root_vpage_dir);
-}
-
-void convert_vpage(vpage_dir_t *kdir) {
-    int i;
-    for (i = 0; i < 1024; i++) {
-        kdir->tables[i] = (page_table_t *) ((unsigned int) kdir->tables[i] | 4);
-
-        if (((unsigned int) kdir->tables[i]) & 1) {
-            int j;
-            for (j = 0; j < 1024; j++)
-                kdir->tables[i]->pages[j].user = 1;
-        }
-    }
-}
-
-void dump_page(vpage_dir_t *dir, unsigned int address) {
-    unsigned short id = address >> 22;
-    terminal_write_line(&"Index salt ="[(unsigned int) dir->tables[id]]);
-}
-
-vpage_dir_t *copy_user_dir(vpage_dir_t *dir) {
-    unsigned int i;
-
-    vpage_dir_t *copy = mk_vpage_dir();
-    memory_copy(copy, root_vpage_dir, sizeof(vpage_dir_t));
-
-    for (i = 0; i < 1024; i++) {
-        if (((unsigned int) dir->tables[i]) & 4) {
-            //vga_fmt("Found a user page at index %d\n", i);
-            page_table_t *tab = (page_table_t *) ((unsigned int) dir->tables[i] & 0xFFFFF000);
-            //vga_fmt("Table at address %X maps to %X\n", (unsigned int) tab, i << 22);
-            //vga_fmt("Virtually mapped from %X\n", tab->pages[0].frame << 12);
-
-            void *buffer = kmalloc_a(PAGE_S);
-            memory_copy(buffer, (void *) (tab->pages[0].frame << 12), PAGE_S);
-            vpage_map_user(copy, (unsigned int) buffer, (unsigned int) i << 22);
-        }
-    }
-
-    return copy;
 }

@@ -7,7 +7,7 @@
 #include "font.h"
 
 void switch_to_vga() {
-    write_serial("Force switch to VGA!");
+    serial_write("Force switch to VGA!\n");
     vesa_available = 0;
     regs16_t regs;
     regs.ax = 0x0003;
@@ -15,7 +15,7 @@ void switch_to_vga() {
 }
 
 struct edid_data get_edid() {
-    struct edid_data *edid = umalloc(sizeof(struct edid_data));
+    /*struct edid_data *edid = umalloc(sizeof(struct edid_data));
 
     regs16_t regs;
     regs.ax = 0x4F15;
@@ -26,11 +26,11 @@ struct edid_data get_edid() {
 
     ufree(edid);
 
-    return *edid;
+    return *edid;*/
 }
 
 struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
-    write_serial("Setting VBE mode!");
+    serial_write("Setting VBE mode!\n");
     vesa_available = 0;
     regs16_t regs;
     regs.ax = 0x4F02;
@@ -142,12 +142,11 @@ void vesa_set_pixel(uint16_t x, uint16_t y, uint32_t color) {
 }
 
 void vesa_draw_char(char ch, int x, int y) {
-    int cx, cy;
     int mask[8] = {1, 2, 4, 8, 16, 32, 64, 128};
     unsigned char *glyph = font[ch - 32];
 
-    for (cy = 0; cy < 13; cy++) {
-        for (cx = 0; cx < 8; cx++) {
+    for (int cy = 0; cy < 13; cy++) {
+        for (int cx = 0; cx < 8; cx++) {
             if (glyph[cy] & mask[cx]) {
                 vesa_set_pixel(x + 8 - cx, y + 13 - cy, terminal_color);
             }
@@ -156,14 +155,13 @@ void vesa_draw_char(char ch, int x, int y) {
 }
 
 void vesa_draw_rectangle(int x1, int y1, int x2, int y2, int color) {
-    int i, j;
     char blue = color & 255;
     char green = (color >> 8) & 255;
     char red = (color >> 16) & 255;
     int pos1 = x1 * vbe_bpp + y1 * vbe_pitch;
     char *draw = &fb[pos1];
-    for (i = 0; i <= y2 - y1; i++) {
-        for (j = 0; j <= x2 - x1; j++) {
+    for (int i = 0; i <= y2 - y1; i++) {
+        for (int j = 0; j <= x2 - x1; j++) {
             draw[vbe_bpp * j] = blue;
             draw[vbe_bpp * j + 1] = green;
             draw[vbe_bpp * j + 2] = red;

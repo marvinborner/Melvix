@@ -61,12 +61,4 @@ void *memory_set(void *dest, char val, size_t count);
  */
 int memory_compare(const void *a_ptr, const void *b_ptr, size_t size);
 
-/**
- * Convert an int into a string
- * @param i The integer which should be converted
- * @param b The converted int as string
- * @param base The desired base
- */
-void *itoa(int i, char *b, int base);
-
 #endif
