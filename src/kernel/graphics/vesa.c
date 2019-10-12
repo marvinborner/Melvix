@@ -50,8 +50,6 @@ struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
 
         struct vbe_mode_info *vbe_info = (struct vbe_mode_info *) 0xA0000;
 
-        terminal_write_number(vbe_info->width);
-        terminal_write_number(vbe_info->height);
         vbe_width = vbe_info->width;
         vbe_height = vbe_info->height;
         vbe_bpp = vbe_info->bpp / 8;
@@ -137,7 +135,7 @@ void vesa_clear() {
 }
 
 void vesa_set_pixel(uint16_t x, uint16_t y, uint32_t color) {
-    unsigned pos = x * (vbe_bpp / 8) + y * vbe_pitch;
+    unsigned pos = x * (vbe_bpp) + y * vbe_pitch;
     fb[pos] = color & 255;
     fb[pos + 1] = (color >> 8) & 255;
     fb[pos + 2] = (color >> 16) & 255;
@@ -157,13 +155,32 @@ void vesa_draw_char(char ch, int x, int y) {
     }
 }
 
+void vesa_draw_rectangle(int x1, int y1, int x2, int y2, int color) {
+    int i, j;
+    char blue = color & 255;
+    char green = (color >> 8) & 255;
+    char red = (color >> 16) & 255;
+    int pos1 = x1 * vbe_bpp + y1 * vbe_pitch;
+    char *draw = &fb[pos1];
+    for (i = 0; i <= y2 - y1; i++) {
+        for (j = 0; j <= x2 - x1; j++) {
+            draw[vbe_bpp * j] = blue;
+            draw[vbe_bpp * j + 1] = green;
+            draw[vbe_bpp * j + 2] = red;
+        }
+        draw += vbe_pitch;
+    }
+}
+
 void vesa_draw_string(char *data) {
     vesa_clear();
     int i = 0;
     while (data[i] != '\0') {
-        vesa_draw_char(data[i], terminal_x + (10 * i), terminal_y);
+        vesa_draw_char(data[i], terminal_x, terminal_y);
+        terminal_x += 10;
         i++;
     }
+    // vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 10, terminal_y + 16, 0xffffff);
 }
 
 void vesa_set_color(uint32_t color) {

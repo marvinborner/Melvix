@@ -137,7 +137,7 @@ int vbe_width;
 int vbe_height;
 
 /**
- * The bits per pixel of the current video mode
+ * The bits per pixel (pixel width) of the current video mode
  */
 int vbe_bpp;
 

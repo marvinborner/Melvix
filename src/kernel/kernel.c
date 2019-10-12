@@ -29,7 +29,7 @@ void kernel_main(void) {
     // info("Melvix loaded successfully!\n\n");
     // info("Loading VESA...");
 
-    vesa_draw_string("test");
+    vesa_draw_string("This is a testing text!");
 
     if (vesa_available) {
         write_serial("Loaded VESA!");
