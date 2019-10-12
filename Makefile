@@ -11,7 +11,7 @@ clean:
 	@echo Cleaned build directory
 
 build: clean
-	set -e; \
+	@set -e; \
 	mkdir ./build/; \
 
 	# Assemble ASM files
@@ -44,8 +44,8 @@ build: clean
 	grub-mkrescue -o ./build/melvix.iso ./iso/;
 
 cross:
-	set -e; \
-	[ -d "./cross/" ] && echo "Please remove cross/ and try again" && exit; \
+	@set -e; \
+	[ -d "./cross/" ] && echo "Please remove ./cross/ and try again" && exit; \
 	mkdir cross || exit; \
 	cd cross || exit; \
 	DIR=$$(pwd); \
@@ -72,7 +72,10 @@ cross:
 test: build debug
 
 debug:
-	rm -f qemu.log
-	qemu-system-x86_64 -soundhw pcspk -M accel=kvm:tcg -vga vmware -serial stdio -d cpu_reset -D qemu.log -m 512M -cdrom ./build/melvix.iso
+	@rm -f qemu.log
+	@echo "Starting simulation"
+	@echo "[SERIAL OUTPUT]"
+	@qemu-system-x86_64 -soundhw pcspk -M accel=kvm:tcg -vga vmware -serial stdio -d cpu_reset -D qemu.log -m 512M -cdrom ./build/melvix.iso
+	@echo "[END OF CONNECTION]"
 
 .PHONY: build clean cross test debug
