@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "../lib/lib.h"
+#include "io.h"
 
 uint8_t receive_b(uint16_t port) {
     unsigned char value;
@@ -39,6 +40,7 @@ void init_serial() {
     send_b(0x3f8 + 3, 0x03);
     send_b(0x3f8 + 2, 0xC7);
     send_b(0x3f8 + 4, 0x0B);
+    write_serial("Installed serial connection!");
 }
 
 int is_transmit_empty() {
@@ -49,5 +51,10 @@ void write_serial(char *data) {
     for (size_t i = 0; i < strlen(data); i++) {
         while (is_transmit_empty() == 0);
         send_b(0x3f8, data[i]);
+    }
+    char *linebreak = "\n";
+    for (size_t i = 0; i < strlen(linebreak); i++) {
+        while (is_transmit_empty() == 0);
+        send_b(0x3f8, linebreak[i]);
     }
 }

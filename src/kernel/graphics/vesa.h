@@ -8,16 +8,17 @@ int vesa_available;
 
 struct edid_data {
     uint8_t padding[8];
-    uint32_t manufacture_id;
-    uint32_t edid_id;
-    int serial_number;
+    uint16_t manufacture_id;
+    uint16_t product_code;
+    uint32_t serial_number;
     uint8_t manufacture_week;
     uint8_t manufacture_year;
     uint8_t edid_version;
+    uint8_t edid_revision;
     uint8_t video_input_type;
     uint8_t max_horizontal_size;
     uint8_t max_vertical_size;
-    uint8_t gama_factor;
+    uint8_t gamma_factor;
     uint8_t dpms_flags;
     uint8_t chroma_information[10];
     uint8_t timings_1;
@@ -93,6 +94,11 @@ struct vbe_mode_info {
     uint8_t reserved1[206];
 } __attribute__ ((packed));
 
+/**
+ * Get the monitors EDID information
+ * TODO: Add EDID/VBE resolution mode verification
+ * @return The EDID information
+ */
 struct edid_data get_edid();
 
 /**
@@ -114,11 +120,6 @@ void set_optimal_resolution();
  * @param ch
  */
 void vesa_draw_string(char *data);
-
-/**
- * The best VBE mode info data
- */
-struct vbe_mode_info *mode_info;
 
 /**
  * The current video mode
@@ -144,5 +145,10 @@ int vbe_bpp;
  * The pitch (bytes per line) of the current video mode
  */
 int vbe_pitch;
+
+/**
+ * The framebuffer interface
+ */
+char *fb;
 
 #endif

@@ -121,6 +121,7 @@ static inline void panic(char *msg) {
     terminal_write_string("PANIC: ");
     terminal_write_string(msg);
     terminal_write_string(" - System Halted!");
+    write_serial(msg);
     loop:
     asm volatile ("hlt");
     goto loop;

@@ -70,7 +70,7 @@ void terminal_update_cursor(void) {
 }
 
 void terminal_initialize(void) {
-    terminal_enable_cursor(0, 15);
+    // terminal_enable_cursor(0, 15);
     terminal_row = 0;
     terminal_column = 0;
     terminal_color = vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK);
@@ -95,8 +95,8 @@ void terminal_set_color(uint8_t color) {
 }
 
 void terminal_put_entry_at(char c, uint8_t color, size_t x, size_t y) {
-    const size_t index = y * VGA_WIDTH + x;
-    terminal_buffer[index] = vga_entry(c, color);
+    // const size_t index = y * VGA_WIDTH + x;
+    // terminal_buffer[index] = vga_entry(c, color);
 }
 
 void terminal_put_char(char c) {
@@ -109,9 +109,9 @@ void terminal_put_char(char c) {
     } else if (c == '\n') {
         terminal_row++;
         terminal_column = 0;
-        terminal_scroll();
+        // terminal_scroll();
     } else if (c >= ' ') { // Any printable character
-        terminal_put_entry_at(c, terminal_color, terminal_column, terminal_row);
+        // terminal_put_entry_at(c, terminal_color, terminal_column, terminal_row);
         terminal_column++;
     }
 
@@ -121,8 +121,8 @@ void terminal_put_char(char c) {
         terminal_row++;
     }
 
-    terminal_scroll();
-    terminal_update_cursor();
+    // terminal_scroll();
+    // terminal_update_cursor();
 }
 
 void terminal_write(const char *data, size_t size) {
@@ -133,29 +133,32 @@ void terminal_write(const char *data, size_t size) {
 void terminal_put_keyboard_char(char c) {
     terminal_put_char(c);
     if (c == '\n' && irq_is_installed(1)) {
-        exec_command(text);
-        memory_set(text, 0, sizeof(text));
+        // exec_command(text);
+        // memory_set(text, 0, sizeof(text));
         terminal_column = 0;
         terminal_row++;
-        terminal_scroll();
+        // terminal_scroll();
         terminal_put_entry_at('$', terminal_color, terminal_column, terminal_row);
         terminal_column = 2;
-        terminal_update_cursor();
+        // terminal_update_cursor();
     } else if (c >= ' ' && irq_is_installed(1)) strcat(text, &c);
 }
 
 void terminal_write_string(const char *data) {
-    terminal_write(data, strlen(data));
+    // terminal_write(data, strlen(data));
+    write_serial(data);
 }
 
 void terminal_write_number(int data) {
     char converted[128];
     itoa(data, converted, 10);
-    terminal_write(converted, strlen(converted));
+    write_serial(converted);
+    // terminal_write(converted, strlen(converted));
 }
 
 void terminal_write_line(const char *data) {
+    write_serial(data);
     terminal_column = 0;
-    terminal_write_string(data);
+    // terminal_write_string(data);
     terminal_column = 0;
 }
