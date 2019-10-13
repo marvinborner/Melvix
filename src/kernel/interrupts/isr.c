@@ -1,6 +1,6 @@
-#include "../graphics/graphics.h"
 #include "interrupts.h"
 #include "../lib/lib.h"
+#include "../system.h"
 
 // Defined in isr.asm
 extern void isr0();

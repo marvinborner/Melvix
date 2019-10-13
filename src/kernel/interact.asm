@@ -32,9 +32,6 @@ endstruc
 
 section .text
    int32: use32                               ; by Napalm
-   mov edx, cr0
-   and edx, 0x7fffffff
-   mov cr0, edx
    _int32:
       cli                                    ; disable interrupts
       pusha                                  ; save register state to 32bit stack

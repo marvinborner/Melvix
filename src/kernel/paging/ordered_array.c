@@ -33,7 +33,7 @@ void destroy_ordered_array(ordered_array_t *array) {
 }
 
 void insert_ordered_array(type_t item, ordered_array_t *array) {
-    assert(array->less_than);
+    assert((int) array->less_than);
     uint32_t iterator = 0;
     while (iterator < array->size && array->less_than(array->array[iterator], item))
         iterator++;

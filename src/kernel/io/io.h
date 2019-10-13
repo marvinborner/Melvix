@@ -54,7 +54,7 @@ void init_serial();
  * Write a string to the serial port (QEMU logging)
  * @param data The string that should get transmitted
  */
-void serial_write(char *data);
+void serial_write(const char *data);
 
 /**
  * Write a hex number to the serial port (QEMU logging)

@@ -1,9 +1,8 @@
-#ifndef MELVIX_VGA_H
-#define MELVIX_VGA_H
+#ifndef MELVIX_GRAPHICS_H
+#define MELVIX_GRAPHICS_H
 
 #include <stddef.h>
 #include <stdint.h>
-#include "vesa.h"
 
 /**
  * Linked table of colors and hardware color codes

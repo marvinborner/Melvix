@@ -24,14 +24,13 @@ void kernel_main(void) {
     set_optimal_resolution();
     init();
 
-    /* TODO: Fix page fault exception
-    vesa_draw_string("This is a testing text!");
+    // vesa_draw_string("This is a testing text!");
 
     if (vesa_available) {
         serial_write("Loaded VESA!\n");
     } else {
         serial_write("VESA loading failed!\n");
-    }*/
+    }
 
     // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
     loop:

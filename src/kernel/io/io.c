@@ -52,7 +52,7 @@ void serial_put(char ch) {
     send_b(0x3f8, ch);
 }
 
-void serial_write(char *data) {
+void serial_write(const char *data) {
     for (size_t i = 0; i < strlen(data); i++) {
         serial_put(data[i]);
     }

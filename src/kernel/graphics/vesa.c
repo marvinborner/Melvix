@@ -15,7 +15,7 @@ void switch_to_vga() {
 }
 
 struct edid_data get_edid() {
-    /*struct edid_data *edid = umalloc(sizeof(struct edid_data));
+    struct edid_data *edid = (struct edid_data *) kmalloc(sizeof(struct edid_data));
 
     regs16_t regs;
     regs.ax = 0x4F15;
@@ -24,9 +24,9 @@ struct edid_data get_edid() {
     regs.di = get_offset(edid);
     int32(0x10, &regs);
 
-    ufree(edid);
+    kfree(edid);
 
-    return *edid;*/
+    return *edid;
 }
 
 struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
@@ -81,7 +81,7 @@ void set_optimal_resolution() {
     regs16_t regs;
     regs.ax = 0x4F00;
     regs.es = 0;
-    regs.di = (unsigned short) info;
+    regs.di = 0x2000;
     int32(0x10, &regs);
 
     if (regs.ax != 0x004F || strcmp(info->signature, "VESA") != 0) {

@@ -160,7 +160,7 @@ void *alloc(uint32_t size, unsigned char page_align, heap_t *heap) {
 
         uint32_t idx = -1;
         uint32_t value = 0x0;
-        while (iterator < heap->index.size) {
+        while (iterator < (int) heap->index.size) {
             uint32_t tmp = (uint32_t) lookup_ordered_array(iterator, &heap->index);
             if (tmp > value) {
                 value = tmp;
@@ -169,7 +169,7 @@ void *alloc(uint32_t size, unsigned char page_align, heap_t *heap) {
             iterator++;
         }
 
-        if (idx == -1) {
+        if ((int) idx == -1) {
             header_t *header = (header_t *) old_end_address;
             header->magic = HEAP_MAGIC;
             header->size = new_length - old_length;

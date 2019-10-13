@@ -75,7 +75,7 @@ debug:
 	@rm -f qemu.log
 	@echo "Starting simulation"
 	@echo "[SERIAL OUTPUT]"
-	@qemu-system-x86_64 -soundhw pcspk -M accel=kvm:tcg -vga vmware -serial stdio -d cpu_reset -D qemu.log -m 512M -cdrom ./build/melvix.iso
+	@qemu-system-x86_64 -no-reboot -soundhw pcspk -M accel=kvm:tcg -vga vmware -serial stdio -d cpu_reset -D qemu.log -m 512M -cdrom ./build/melvix.iso
 	@echo "[END OF CONNECTION]"
 
 .PHONY: build clean cross test debug

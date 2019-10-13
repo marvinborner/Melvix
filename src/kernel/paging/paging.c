@@ -1,7 +1,7 @@
 #include "paging.h"
 #include "kheap.h"
+#include "../system.h"
 #include "../lib/lib.h"
-#include "../graphics/graphics.h"
 #include "../io/io.h"
 
 page_directory_t *kernel_directory = 0;
@@ -29,12 +29,12 @@ static void clear_frame(uint32_t frame_addr) {
     frames[idx] &= ~(0x1 << off);
 }
 
-static uint32_t test_frame(uint32_t frame_addr) {
+/*static uint32_t test_frame(uint32_t frame_addr) {
     uint32_t frame = frame_addr / 0x1000;
     uint32_t idx = INDEX_FROM_BIT(frame);
     uint32_t off = OFFSET_FROM_BIT(frame);
     return (frames[idx] & (0x1 << off));
-}
+}*/
 
 static uint32_t first_frame() {
     uint32_t i, j;
@@ -48,6 +48,7 @@ static uint32_t first_frame() {
             }
         }
     }
+    return -1;
 }
 
 void alloc_frame(page_t *page, int is_kernel, int is_writeable) {
@@ -80,12 +81,11 @@ void initialise_paging() {
     frames = (uint32_t *) kmalloc(INDEX_FROM_BIT(nframes));
     memory_set(frames, 0, INDEX_FROM_BIT(nframes));
 
-    uint32_t phys;
     kernel_directory = (page_directory_t *) kmalloc_a(sizeof(page_directory_t));
     memory_set(kernel_directory, 0, sizeof(page_directory_t));
     kernel_directory->physicalAddr = (uint32_t) kernel_directory->tablesPhysical;
 
-    int i = 0;
+    unsigned int i = 0;
     for (i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
         get_page(i, 1, kernel_directory);
 
@@ -139,7 +139,7 @@ void page_fault(struct regs *r) {
     int rw = r->err_code & 0x2;
     int us = r->err_code & 0x4;
     int reserved = r->err_code & 0x8;
-    int id = r->err_code & 0x10;
+    // int id = r->err_code & 0x10;
 
     serial_write("Page fault! ( ");
     if (present) serial_write("present ");

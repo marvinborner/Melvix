@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include "timer/timer.h"
 #include "lib/lib.h"
+#include "graphics/graphics.h"
+#include "io/io.h"
 
 /**
  * Initialize the basic features of the OS
