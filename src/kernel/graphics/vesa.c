@@ -67,10 +67,8 @@ struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
         return vbe_info;
     } else {
         switch_to_vga();
+        return ((void *) 0);
     }
-
-    struct vbe_mode_info vbe_info;
-    return &vbe_info;
 }
 
 void set_optimal_resolution() {
@@ -83,7 +81,7 @@ void set_optimal_resolution() {
     regs16_t regs;
     regs.ax = 0x4F00;
     regs.es = 0;
-    regs.di = info;
+    regs.di = (unsigned short) info;
     int32(0x10, &regs);
 
     if (regs.ax != 0x004F || strcmp(info->signature, "VESA") != 0) {

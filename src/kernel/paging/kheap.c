@@ -55,7 +55,7 @@ uint32_t kmalloc(uint32_t sz) {
 static void expand(uint32_t new_size, heap_t *heap) {
     assert(new_size > heap->end_address - heap->start_address);
 
-    if (new_size & 0xFFFFF000 != 0) {
+    if ((new_size & 0xFFFFF000) != 0) {
         new_size &= 0xFFFFF000;
         new_size += 0x1000;
     }
@@ -100,7 +100,7 @@ static int find_smallest_hole(uint32_t size, unsigned char page_align, heap_t *h
         if (page_align > 0) {
             uint32_t location = (uint32_t) header;
             int offset = 0;
-            if ((location + sizeof(header_t)) & 0xFFFFF000 != 0)
+            if (((location + sizeof(header_t)) & 0xFFFFF000) != 0)
                 offset = 0x1000 - (location + sizeof(header_t)) % 0x1000;
             int hole_size = (int) header->size - offset;
 
@@ -128,7 +128,7 @@ heap_t *create_heap(uint32_t start, uint32_t end_addr, uint32_t max, unsigned ch
     heap->index = place_ordered_array((void *) start, HEAP_INDEX_SIZE, &header_t_less_than);
 
     start += sizeof(type_t) * HEAP_INDEX_SIZE;
-    if (start & 0xFFFFF000 != 0) {
+    if ((start & 0xFFFFF000) != 0) {
         start &= 0xFFFFF000;
         start += 0x1000;
     }
