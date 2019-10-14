@@ -5,6 +5,7 @@
 #include "../paging/kheap.h"
 #include "../io/io.h"
 #include "font.h"
+#include "../paging/paging.h"
 
 void switch_to_vga() {
     serial_write("Force switch to VGA!\n");
@@ -31,30 +32,39 @@ struct edid_data get_edid() {
 
 struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
     serial_write("Setting VBE mode!\n");
+    serial_write_hex(mode);
     vesa_available = 0;
     regs16_t regs;
     regs.ax = 0x4F02;
     regs.bx = mode | (1 << 14);
+    disable_paging();
     int32(0x10, &regs);
+    enable_paging();
 
     if (regs.ax == 0x004F) {
-        regs.ax = 0x4F01;
-        regs.cx = mode;
-        regs.es = 0xA000;
-        regs.di = 0x0000;
-        int32(0x10, &regs);
-        if (regs.ax != 0x004F) {
+        struct vbe_mode_info *vbe_info = (struct vbe_mode_info *) 0x7E00;
+        regs16_t regs2;
+        regs2.ax = 0x4F01;
+        regs2.cx = mode;
+        regs2.es = 0;
+        regs2.di = 0x7E00;
+        disable_paging();
+        int32(0x10, &regs2);
+        enable_paging();
+
+        if (regs2.ax != 0x004F) {
             switch_to_vga();
             return ((void *) 0);
         }
 
-        struct vbe_mode_info *vbe_info = (struct vbe_mode_info *) 0xA0000;
+        struct vbe_mode_info *vbe_info_final = (struct vbe_mode_info *) kmalloc(sizeof(vbe_info));
+        memory_copy(vbe_info_final, vbe_info, sizeof(vbe_info));
 
-        vbe_width = vbe_info->width;
-        vbe_height = vbe_info->height;
-        vbe_bpp = vbe_info->bpp / 8;
-        vbe_pitch = vbe_info->pitch;
-        fb = (char *) vbe_info->framebuffer;
+        vbe_width = vbe_info_final->width;
+        vbe_height = vbe_info_final->height;
+        vbe_bpp = vbe_info_final->bpp / 8;
+        vbe_pitch = vbe_info_final->pitch;
+        fb = (char *) vbe_info_final->framebuffer;
 
         /*for (int i = 0; i < vbe_width * vbe_height * vbe_bpp; i++) {
         fb[i] = 100;
@@ -71,37 +81,53 @@ struct vbe_mode_info *vbe_set_mode(unsigned short mode) {
     }
 }
 
-void set_optimal_resolution() {
+uint16_t *vbe_get_modes() {
     vesa_available = 0;
-    struct vbe_info *info = (struct vbe_info *) 0x2000;
-    struct vbe_mode_info *mode_info = (struct vbe_mode_info *) 0x3000;
+    struct vbe_info *info = (struct vbe_info *) 0x7E00;
 
     memory_copy(info->signature, "VBE2", 4);
 
     regs16_t regs;
     regs.ax = 0x4F00;
     regs.es = 0;
-    regs.di = 0x2000;
+    regs.di = 0x7E00;
+    disable_paging();
     int32(0x10, &regs);
+    enable_paging();
 
     if (regs.ax != 0x004F || strcmp(info->signature, "VESA") != 0) {
         switch_to_vga();
-        return;
+        return ((void *) 0);
     }
 
     uint16_t *mode_ptr = get_ptr(info->video_modes);
+    int number_modes = 1;
+    for (uint16_t *p = mode_ptr; *p != 0xFFFF; p++) number_modes++;
+
+    uint16_t *video_modes = (uint16_t *) kmalloc(sizeof(uint16_t) * number_modes);
+    for (int i = 0; i < number_modes; i++) video_modes[i] = mode_ptr[i];
+
+    return video_modes;
+}
+
+void set_optimal_resolution() {
+    uint16_t *video_modes = vbe_get_modes();
     uint16_t mode;
     uint16_t highest = 0x11B;
     uint16_t highest_width = 0;
 
-    while ((mode = *mode_ptr++) != 0xFFFF) {
+    while ((mode = *video_modes++) != 0xFFFF) {
         mode &= 0x1FF;
         regs16_t regs2;
         regs2.ax = 0x4F01;
         regs2.cx = mode;
-        regs2.es = get_segment(mode_info);
-        regs2.di = get_offset(mode_info);
+        regs2.es = 0;
+        regs2.di = 0x7E00;
+        disable_paging();
         int32(0x10, &regs2);
+        enable_paging();
+
+        struct vbe_mode_info *mode_info = (struct vbe_mode_info *) 0x7E00;
 
         if ((mode_info->attributes & 0x90) != 0x90) continue;
 
@@ -114,7 +140,7 @@ void set_optimal_resolution() {
             highest_width = mode_info->width;
         }
     }
-
+    serial_write("Reached set mode!\n");
     vbe_set_mode(highest);
 }
 

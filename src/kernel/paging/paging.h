@@ -25,9 +25,19 @@ typedef struct page_directory {
 } page_directory_t;
 
 /**
- * Initialize the environment and enables paging
+ * Initialize the environment and enable paging
  */
 void initialise_paging();
+
+/**
+ * Enable paging bit in CR0 (without initializing)
+ */
+void enable_paging();
+
+/**
+ * Disable paging bit in CR0
+ */
+void disable_paging();
 
 /**
  * Load the page directory into the CR3 register
