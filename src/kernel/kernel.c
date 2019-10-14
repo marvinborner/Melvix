@@ -11,18 +11,18 @@
 void init() {
     timer_install();
     gdt_install();
+    initialise_paging();
     idt_install();
     isrs_install();
     irq_install();
-    initialise_paging();
     init_serial();
+    set_optimal_resolution();
     // terminal_initialize(); // TODO: Replace VGA functions with VESA
     asm volatile ("sti");
 }
 
 void kernel_main(void) {
     init();
-    set_optimal_resolution();
 
     // vesa_draw_string("This is a testing text!");
 
