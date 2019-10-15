@@ -44,7 +44,7 @@ section .text
    reloc: use32                               ; by Napalm
       mov  [REBASE(stack32_ptr)], esp        ; save 32bit stack pointer
       sidt [REBASE(idt32_ptr)]               ; save 32bit idt pointer
-      ;sgdt [REBASE(gdt32_ptr)]               ; save 32bit gdt pointer
+      sgdt [REBASE(gdt32_ptr)]               ; save 32bit gdt pointer
       lgdt [REBASE(gdt16_ptr)]               ; load 16bit gdt pointer
       lea  esi, [esp+0x24]                   ; set position of intnum on 32bit stack
       lodsd                                  ; read intnum into eax
@@ -144,8 +144,8 @@ section .text
       dd 0x00000000                          ; table base address
 
    gdt32_ptr:                                 ; GDT table pointer for 32bit access
-      dw 0x0018                              ; table limit (size)
-      dd 0x00130000                          ; table base address
+      dw 0x0000                              ; table limit (size)
+      dd 0x00000000                          ; table base address
 
    idt16_ptr:                                 ; IDT table pointer for 16bit access
       dw 0x03FF                              ; table limit (size)

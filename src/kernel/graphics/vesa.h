@@ -103,6 +103,7 @@ struct vbe_mode_info {
     uint16_t width;
     uint16_t height;
     uint8_t bpp;
+    uint8_t memory_model;
     uint32_t framebuffer;
 } __attribute__ ((packed));
 

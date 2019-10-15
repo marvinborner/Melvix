@@ -24,7 +24,7 @@ void init() {
 void kernel_main(void) {
     init();
 
-    // vesa_draw_string("This is a testing text!");
+    vesa_draw_string("This is a testing text!");
 
     if (vesa_available) {
         serial_write("Loaded VESA!\n");
