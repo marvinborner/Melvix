@@ -56,7 +56,7 @@ struct vbe_info {
  * The CPUs response to the 0x4F01 call
  * Used to get information about a specific video mode code
  */
-struct vbe_mode_info {
+struct vbe_mode_info_all {
     uint16_t attributes;
     uint8_t window_a;
     uint8_t window_b;
@@ -95,6 +95,19 @@ struct vbe_mode_info {
 } __attribute__ ((packed));
 
 /**
+ * The actual vbe mode info structure
+ */
+struct vbe_mode_info {
+    uint16_t attributes;
+    uint16_t pitch;
+    uint16_t width;
+    uint16_t height;
+    uint8_t bpp;
+    uint8_t memory_model;
+    uint32_t framebuffer;
+} __attribute__ ((packed));
+
+/**
  * Get the monitors EDID information
  * TODO: Add EDID/VBE resolution mode verification
  * @return The EDID information
@@ -105,9 +118,8 @@ struct edid_data get_edid();
  * Set the video mode to a specified resolution using
  * a video mode code
  * @param mode The requested video mode code from 0x4F00 call
- * @return A structure with information about the video mode
  */
-struct vbe_mode_info *vbe_set_mode(unsigned short mode);
+void vbe_set_mode(unsigned short mode);
 
 /**
  * Find the highest resolution using 0x4F00 and call

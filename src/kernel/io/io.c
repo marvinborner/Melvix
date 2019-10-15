@@ -3,19 +3,19 @@
 #include "io.h"
 
 uint8_t receive_b(uint16_t port) {
-    unsigned char value;
+    uint8_t value;
     asm volatile ("inb %1, %0" : "=a"(value) : "Nd"(port));
     return value;
 }
 
 uint16_t receive_w(uint16_t port) {
-    unsigned char value;
-    asm volatile("inb %1,%0" : "=a"(value) : "Nd"(port)); // TODO: Fix inw error
+    uint16_t value;
+    asm volatile("inw %1, %0" : "=a"(value) : "Nd"(port));
     return value;
 }
 
 uint32_t receive_l(uint16_t port) {
-    unsigned char value;
+    uint32_t value;
     asm volatile ("inb %1, %0" : "=a"(value) : "Nd"(port));
     return value;
 }

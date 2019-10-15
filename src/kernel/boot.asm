@@ -54,7 +54,7 @@ copy_page_physical:
     and edx, 0x7fffffff
     mov cr0, edx
 
-    mov edx, 1024
+    mov edx, 0x400
 
 %include "src/kernel/gdt/gdt.asm"
 
@@ -68,5 +68,5 @@ copy_page_physical:
 
 ; Store the stack
 SECTION .bss
-    resb 8192 ; Reserve 8KiB
+    resb 0x2000 ; Reserve 8KiB
 _sys_stack:
