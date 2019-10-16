@@ -99,11 +99,9 @@ struct vbe_mode_info_all {
  */
 struct vbe_mode_info {
     uint16_t attributes;
-    uint16_t pitch;
     uint16_t width;
     uint16_t height;
     uint8_t bpp;
-    uint8_t memory_model;
     uint32_t framebuffer;
 } __attribute__ ((packed));
 
@@ -113,6 +111,12 @@ struct vbe_mode_info {
  * @return The EDID information
  */
 struct edid_data get_edid();
+
+
+/**
+ * Forces switch to VGA, displays an error and halts the CPU
+ */
+void switch_to_vga();
 
 /**
  * Set the video mode to a specified resolution using
@@ -149,18 +153,13 @@ int vbe_width;
 int vbe_height;
 
 /**
- * The bits per pixel (pixel width) of the current video mode
+ * The bytes per pixel (pixel width) of the current video mode
  */
 int vbe_bpp;
 
 /**
- * The pitch (bytes per line) of the current video mode
- */
-int vbe_pitch;
-
-/**
  * The framebuffer interface
  */
-char *fb;
+uint32_t fb;
 
 #endif

@@ -1,11 +1,10 @@
 #include "vesa.h"
-#include "graphics.h"
-#include "../system.h"
+#include "../io/io.h"
 #include "../lib/lib.h"
 #include "../paging/kheap.h"
-#include "../io/io.h"
-#include "font.h"
 #include "../paging/paging.h"
+#include "../system.h"
+#include "font.h"
 
 extern page_directory_t *kernel_directory;
 
@@ -14,7 +13,15 @@ void switch_to_vga() {
     vesa_available = 0;
     regs16_t regs;
     regs.ax = 0x0003;
+    disable_paging();
     int32(0x10, &regs);
+    enable_paging();
+
+    uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
+    char *error = "This computer has no supported video drivers!";
+    for (size_t i = 0; i < strlen(error); i++)
+        terminal_buffer[i] = (uint16_t) error[i] | (uint16_t) 0x700;
+    panic("No VESA!");
 }
 
 struct edid_data get_edid() {
@@ -25,7 +32,9 @@ struct edid_data get_edid() {
     regs.bx = 0x01; // BL
     regs.es = get_segment(edid);
     regs.di = get_offset(edid);
+    disable_paging();
     int32(0x10, &regs);
+    enable_paging();
 
     kfree(edid);
 
@@ -33,14 +42,12 @@ struct edid_data get_edid() {
 }
 
 void vbe_set_mode(unsigned short mode) {
-    serial_write("Setting VBE mode: ");
-    serial_write_hex(mode);
-    serial_write("\n");
     vesa_available = 0;
     regs16_t regs;
     regs.ax = 0x4F02;
     regs.bx = mode;
-    regs.bx = mode | (1 << 14);
+    regs.bx |= 0x4000;
+    regs.bx &= 0x7FFF;
     disable_paging();
     int32(0x10, &regs);
     enable_paging();
@@ -98,8 +105,6 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
     mode_info_final->width = mode_info->width;
     mode_info_final->height = mode_info->height;
     mode_info_final->bpp = mode_info->bpp;
-    mode_info_final->pitch = mode_info->pitch;
-    mode_info_final->memory_model = mode_info->memory_model;
     mode_info_final->framebuffer = mode_info->framebuffer;
 
     return mode_info_final;
@@ -114,10 +119,8 @@ void set_optimal_resolution() {
         struct vbe_mode_info *mode_info = vbe_get_mode_info(*mode);
 
         if (mode_info->width >= highest_width &&
-            (float) mode_info->width / (float) mode_info->height < 2.0 &&
-            (mode_info->attributes & 0x1) != 0x1 &&
-            (mode_info->attributes & 0x90) != 0x90 &&
-            mode_info->memory_model != 6) {
+            // (float) mode_info->width / (float) mode_info->height < 2.0 &&
+            mode_info->attributes & 0x80) {
             highest = *mode;
             highest_width = mode_info->width;
             kfree(mode_info);
@@ -129,36 +132,32 @@ void set_optimal_resolution() {
     struct vbe_mode_info *highest_info = vbe_get_mode_info(highest);
     vbe_width = highest_info->width;
     vbe_height = highest_info->height;
-    vbe_bpp = highest_info->bpp / 8;
-    vbe_pitch = highest_info->pitch;
-    fb = (char *) highest_info->framebuffer;
-    uint32_t fb_psize = vbe_width * vbe_height * vbe_bpp;
-    for (uint32_t z = 0; z < fb_psize; z += 4096)
-        alloc_frame(get_page((uint32_t) (fb + z), 1, kernel_directory), 1, 1);
+    vbe_bpp = highest_info->bpp >> 3;
+    fb = highest_info->framebuffer;
 
-    serial_write("Reached set mode!\n");
+    serial_write("Using mode: ");
+    serial_write_dec(vbe_width);
+    serial_write("x");
+    serial_write_dec(vbe_height);
+    serial_write("x");
+    serial_write_dec(vbe_bpp << 3);
+    serial_write("\n");
+
+    uint32_t fb_size = vbe_width * vbe_height * vbe_bpp;
+    for (uint32_t z = 0; z < fb_size; z += 4096)
+        alloc_frame(get_page(fb + z, 1, kernel_directory), 1, 1);
     vbe_set_mode(highest);
 }
 
 uint16_t terminal_x = 1;
 uint16_t terminal_y = 1;
-uint32_t terminal_color = 0xFFFFFF;
+uint32_t terminal_color = 0xBEBEBE;
 
 // char text[1024] = {0};
 
-void vesa_clear() {
-    for (int i = 0; i < vbe_width * vbe_height * vbe_bpp; i++) {
-        fb[i] = 0;
-        fb[i + 1] = 0;
-        fb[i + 2] = 0;
-    }
-}
-
 void vesa_set_pixel(uint16_t x, uint16_t y, uint32_t color) {
-    unsigned pos = x * vbe_bpp + y * vbe_pitch;
-    fb[pos] = color & 255;
-    fb[pos + 1] = (color >> 8) & 255;
-    fb[pos + 2] = (color >> 16) & 255;
+    uint32_t pixel = x * vbe_bpp + y * vbe_width * vbe_bpp + fb;
+    *((uint32_t *) pixel) = color;
 }
 
 void vesa_draw_char(char ch, int x, int y) {
@@ -174,31 +173,13 @@ void vesa_draw_char(char ch, int x, int y) {
     }
 }
 
-void vesa_draw_rectangle(int x1, int y1, int x2, int y2, int color) {
-    char blue = color & 255;
-    char green = (color >> 8) & 255;
-    char red = (color >> 16) & 255;
-    int pos1 = x1 * vbe_bpp + y1 * vbe_pitch;
-    char *draw = &fb[pos1];
-    for (int i = 0; i <= y2 - y1; i++) {
-        for (int j = 0; j <= x2 - x1; j++) {
-            draw[vbe_bpp * j] = blue;
-            draw[vbe_bpp * j + 1] = green;
-            draw[vbe_bpp * j + 2] = red;
-        }
-        draw += vbe_pitch;
-    }
-}
-
 void vesa_draw_string(char *data) {
-    // vesa_clear(); // PAGE FAULT?!
     int i = 0;
     while (data[i] != '\0') {
         vesa_draw_char(data[i], terminal_x, terminal_y);
         terminal_x += 10;
         i++;
     }
-    // vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 10, terminal_y + 16, 0xffffff);
 }
 
 void vesa_set_color(uint32_t color) {
