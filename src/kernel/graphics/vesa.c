@@ -1,10 +1,10 @@
 #include "vesa.h"
+#include "font.h"
 #include "../io/io.h"
 #include "../lib/lib.h"
 #include "../paging/kheap.h"
 #include "../paging/paging.h"
 #include "../system.h"
-#include "font.h"
 
 extern page_directory_t *kernel_directory;
 
@@ -47,7 +47,6 @@ void vbe_set_mode(unsigned short mode) {
     regs.ax = 0x4F02;
     regs.bx = mode;
     regs.bx |= 0x4000;
-    regs.bx &= 0x7FFF;
     disable_paging();
     int32(0x10, &regs);
     enable_paging();
@@ -105,37 +104,43 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
     mode_info_final->width = mode_info->width;
     mode_info_final->height = mode_info->height;
     mode_info_final->bpp = mode_info->bpp;
+    mode_info_final->memory_model = mode_info->memory_model;
     mode_info_final->framebuffer = mode_info->framebuffer;
+    mode_info_final->success = (uint16_t) regs.ax == 0x004F;
 
     return mode_info_final;
 }
 
 void set_optimal_resolution() {
     uint16_t *video_modes = vbe_get_modes();
-    uint16_t highest = 0x11B;
-    uint16_t highest_width = 0;
+    uint16_t highest = 0x11;
+    vbe_width = 640; // Default if detecting fails
+    vbe_height = 480;
+    vbe_bpp = 1;
 
     for (uint16_t *mode = video_modes; *mode != 0xFFFF; mode++) {
         struct vbe_mode_info *mode_info = vbe_get_mode_info(*mode);
 
-        if (mode_info->width >= highest_width &&
-            // (float) mode_info->width / (float) mode_info->height < 2.0 &&
-            mode_info->attributes & 0x80) {
+        if ((mode_info->attributes & 0x90) != 0x90 || !mode_info->success ||
+            (mode_info->memory_model != 4 && mode_info->memory_model != 6))
+            continue;
+
+        if (mode_info->width >= vbe_width) {
+            // (float) mode_info->width / (float) mode_info->height < 2.0 &&) {
             highest = *mode;
-            highest_width = mode_info->width;
+            vbe_width = mode_info->width;
+            vbe_height = mode_info->height;
+            vbe_bpp = mode_info->bpp >> 3;
+            fb = (unsigned char *) mode_info->framebuffer;
             kfree(mode_info);
         }
         kfree(mode_info);
     }
     kfree(video_modes);
 
-    struct vbe_mode_info *highest_info = vbe_get_mode_info(highest);
-    vbe_width = highest_info->width;
-    vbe_height = highest_info->height;
-    vbe_bpp = highest_info->bpp >> 3;
-    fb = highest_info->framebuffer;
-
-    serial_write("Using mode: ");
+    serial_write("Using mode: (");
+    serial_write_hex(highest);
+    serial_write(") ");
     serial_write_dec(vbe_width);
     serial_write("x");
     serial_write_dec(vbe_height);
@@ -144,8 +149,8 @@ void set_optimal_resolution() {
     serial_write("\n");
 
     uint32_t fb_size = vbe_width * vbe_height * vbe_bpp;
-    for (uint32_t z = 0; z < fb_size; z += 4096)
-        alloc_frame(get_page(fb + z, 1, kernel_directory), 1, 1);
+    for (uint32_t z = 0; z <= fb_size; z += 4096)
+        alloc_frame(get_page((uint32_t) fb + z, 1, kernel_directory), 1, 1);
     vbe_set_mode(highest);
 }
 
@@ -155,9 +160,19 @@ uint32_t terminal_color = 0xBEBEBE;
 
 // char text[1024] = {0};
 
+void vesa_clear() {
+    for (int i = 0; i < vbe_width * vbe_height * vbe_bpp; i++) {
+        fb[i] = 0;
+        fb[i + 1] = 0;
+        fb[i + 2] = 0;
+    }
+}
+
 void vesa_set_pixel(uint16_t x, uint16_t y, uint32_t color) {
-    uint32_t pixel = x * vbe_bpp + y * vbe_width * vbe_bpp + fb;
-    *((uint32_t *) pixel) = color;
+    unsigned pos = x * vbe_bpp + y * vbe_width * vbe_bpp;
+    fb[pos] = color & 255;
+    fb[pos + 1] = (color >> 8) & 255;
+    fb[pos + 2] = (color >> 16) & 255;
 }
 
 void vesa_draw_char(char ch, int x, int y) {
@@ -174,6 +189,7 @@ void vesa_draw_char(char ch, int x, int y) {
 }
 
 void vesa_draw_string(char *data) {
+    vesa_clear();
     int i = 0;
     while (data[i] != '\0') {
         vesa_draw_char(data[i], terminal_x, terminal_y);
