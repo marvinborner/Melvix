@@ -22,17 +22,15 @@ size_t strcmp(const char *s1, const char *s2);
  * Append the data of src to dest
  * @param dest The string destination pointer
  * @param src The string pointer that will get appended
- * @return The modified dest pointer
  */
-char *strcat(char *dest, const char *src);
+void strcat(char *dest, const char *src);
 
 /**
  * Copy the data of src to dest
  * @param dest The copying destination pointer (gets replaced)
  * @param src The string pointer that will get copied
- * @return The modified dest pointer
  */
-char *strcpy(char *dest, const char *src);
+void strcpy(char *dest, const char *src);
 
 /**
  * Copy n data from src to dest

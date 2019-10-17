@@ -8,29 +8,22 @@ size_t strlen(const char *str) {
 }
 
 size_t strcmp(const char *s1, const char *s2) {
-    while (*s1 && (*s1 == *s2)) {
-        s1++;
-        s2++;
-    }
-    return *(const unsigned char *) s1 - *(const unsigned char *) s2;
+    size_t s_a = strlen(s1);
+    for (size_t i = 0; i < s_a; i++) if (s1[i] != s2[i]) return 1;
+    return 0;
 }
 
-char *strcat(char *dest, const char *src) {
-    unsigned int i = 0;
-    unsigned int j = 0;
-    for (i = 0; dest[i] != 0; i++) {}
-    for (j = 0; src[j] != 0; j++) {
-        dest[i + j] = src[j];
-    }
-    dest[i + j] = 0;
-    return dest;
+void strcat(char *dest, const char *src) {
+    size_t s_dest = strlen(dest);
+    size_t s_orig = strlen(src);
+
+    for (size_t i = 0; i < s_orig; i++) dest[s_dest + i] = src[i];
+    dest[s_dest + s_orig] = 0;
 }
 
-char *strcpy(char *dest, const char *src) {
-    unsigned int i = 0;
-    for (i = 0; src[i] != 0; i++) {
-        dest[i] = src[i];
-    }
-    dest[i] = 0;
-    return dest;
+void strcpy(char *dest, const char *src) {
+    size_t s_orig = strlen(src);
+
+    for (size_t i = 0; i < s_orig; i++) dest[i] = src[i];
+    dest[s_orig] = 0;
 }
