@@ -120,10 +120,9 @@ static inline void panic(char *msg) {
     asm volatile ("cli");
     terminal_set_color(4);
     kernel_time();
-    terminal_write_string("PANIC: ");
-    terminal_write_string(msg);
-    terminal_write_string(" - System Halted!");
+    serial_write("PANIC: ");
     serial_write(msg);
+    serial_write(" - System Halted!\n");
     loop:
     asm volatile ("hlt");
     goto loop;

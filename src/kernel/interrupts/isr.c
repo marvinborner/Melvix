@@ -145,9 +145,28 @@ const char *exception_messages[] = {
         "Reserved"
 };
 
-// Master exception handler - halt via endless loop
+// Master exception/interrupt/fault handler - halt via panic
 void fault_handler(struct regs *r) {
     if (r->int_no < 32) {
+        uint32_t faulting_address;
+        asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+
+        serial_write("\n[DEBUG]\nEIP: ");
+        serial_write_hex(r->eip);
+        serial_write("\nEAX: ");
+        serial_write_hex(r->eax);
+        serial_write("\nEBX: ");
+        serial_write_hex(r->ebx);
+        serial_write("\nECX: ");
+        serial_write_hex(r->ecx);
+        serial_write("\nEDX: ");
+        serial_write_hex(r->edx);
+        serial_write("\nFaulting address: ");
+        serial_write_hex(faulting_address);
+        serial_write("\nError flags: ");
+        serial_write_hex(r->eflags);
+        serial_write("\nError code: ");
+        serial_write_hex(r->err_code);
         char *message = (char *) exception_messages[r->int_no];
         strcat(message, " Exception");
         panic(message);

@@ -98,11 +98,11 @@ void initialise_paging() {
     for (i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
         alloc_frame(get_page(i, 1, kernel_directory), 0, 0);
 
-    irq_install_handler(14, page_fault);
     switch_page_directory(kernel_directory);
     kheap = create_heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, 0, 0);
     current_directory = clone_directory(kernel_directory);
     switch_page_directory(current_directory);
+    serial_write("Paging init successful!\n");
 }
 
 void disable_paging() {
@@ -141,29 +141,6 @@ page_t *get_page(uint32_t address, int make, page_directory_t *dir) {
     } else {
         return 0;
     }
-}
-
-void page_fault(struct regs *r) {
-    uint32_t faulting_address;
-    asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
-
-    int present = !(r->err_code & 0x1);
-    int rw = r->err_code & 0x2;
-    int us = r->err_code & 0x4;
-    int reserved = r->err_code & 0x8;
-    // int id = r->err_code & 0x10;
-
-    serial_write("Page fault! ( ");
-    if (present) serial_write("present ");
-    if (rw) serial_write("read-only ");
-    if (us) serial_write("user-mode ");
-    if (reserved) serial_write("reserved ");
-    serial_write(") at 0x");
-    serial_write_hex(faulting_address);
-    serial_write(" - EIP: ");
-    serial_write_hex(r->eip);
-    serial_write("\n");
-    panic("Page fault");
 }
 
 static page_table_t *clone_table(page_table_t *src, uint32_t *physAddr) {
