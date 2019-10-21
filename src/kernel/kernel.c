@@ -1,12 +1,9 @@
 #include "graphics/vesa.h"
-#include "graphics/graphics.h"
 #include "gdt/gdt.h"
 #include "interrupts/interrupts.h"
-#include "input/input.h"
 #include "io/io.h"
 #include "timer/timer.h"
 #include "paging/paging.h"
-#include "paging/kheap.h"
 
 void init() {
     timer_install();
