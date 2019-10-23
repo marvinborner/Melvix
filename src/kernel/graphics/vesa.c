@@ -63,8 +63,8 @@ uint16_t *vbe_get_modes() {
 
     regs16_t regs;
     regs.ax = 0x4F00;
-    regs.es = 0;
-    regs.di = 0x7E00;
+    regs.es = get_segment(info_address);
+    regs.di = get_offset(info_address);
     disable_paging();
     int32(0x10, &regs);
     enable_paging();
@@ -89,20 +89,22 @@ uint16_t *vbe_get_modes() {
 }
 
 struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
+    struct vbe_mode_info_all *mode_info = (struct vbe_mode_info_all *) 0x7E00;
+
     regs16_t regs;
     regs.ax = 0x4F01;
     regs.cx = mode;
-    regs.es = 0;
-    regs.di = 0x7E00;
+    regs.es = get_segment(mode_info);
+    regs.di = get_offset(mode_info);
     disable_paging();
     int32(0x10, &regs);
     enable_paging();
 
-    struct vbe_mode_info_all *mode_info = (struct vbe_mode_info_all *) 0x7E00;
     struct vbe_mode_info *mode_info_final = (struct vbe_mode_info *) kmalloc(sizeof(struct vbe_mode_info));
     mode_info_final->attributes = mode_info->attributes;
     mode_info_final->width = mode_info->width;
     mode_info_final->height = mode_info->height;
+    mode_info_final->pitch = mode_info->pitch;
     mode_info_final->bpp = mode_info->bpp;
     mode_info_final->memory_model = mode_info->memory_model;
     mode_info_final->framebuffer = mode_info->framebuffer;
@@ -130,7 +132,8 @@ void set_optimal_resolution() {
             highest = *mode;
             vbe_width = mode_info->width;
             vbe_height = mode_info->height;
-            vbe_bpp = mode_info->bpp >> 3;
+            vbe_pitch = mode_info->pitch;
+            vbe_bpp = mode_info->bpp / 8;
             fb = (unsigned char *) mode_info->framebuffer;
             kfree(mode_info);
         }
@@ -149,30 +152,34 @@ void set_optimal_resolution() {
     serial_write("\n");
 
     uint32_t fb_size = vbe_width * vbe_height * vbe_bpp;
-    for (uint32_t z = 0; z <= fb_size; z += 4096)
-        alloc_frame(get_page((uint32_t) fb + z, 1, kernel_directory), 1, 1);
+    fb = (unsigned char *) kmalloc_p(fb_size, (uint32_t *) fb);
+
     vbe_set_mode(highest);
 }
 
 uint16_t terminal_x = 1;
 uint16_t terminal_y = 1;
-uint32_t terminal_color = 0xBEBEBE;
+uint32_t terminal_color = 0xFFFFFF;
 
 // char text[1024] = {0};
 
 void vesa_clear() {
-    for (int i = 0; i < vbe_width * vbe_height * vbe_bpp; i++) {
+    /*for (int i = 0; i < vbe_width * vbe_height * vbe_bpp; i++) {
         fb[i] = 0;
         fb[i + 1] = 0;
         fb[i + 2] = 0;
-    }
+    }*/
 }
 
 void vesa_set_pixel(uint16_t x, uint16_t y, uint32_t color) {
-    unsigned pos = x * vbe_bpp + y * vbe_width * vbe_bpp;
+    /*unsigned pos = x * vbe_bpp + y * vbe_pitch;
     fb[pos] = color & 255;
     fb[pos + 1] = (color >> 8) & 255;
-    fb[pos + 2] = (color >> 16) & 255;
+    fb[pos + 2] = (color >> 16) & 255;*/
+    uint32_t pixel = y * vbe_width * vbe_bpp;
+    pixel += x * vbe_bpp;
+    pixel += (uint32_t) fb;
+    *((uint32_t *) pixel) = color;
 }
 
 void vesa_draw_char(char ch, int x, int y) {
@@ -189,7 +196,7 @@ void vesa_draw_char(char ch, int x, int y) {
 }
 
 void vesa_draw_string(char *data) {
-    vesa_clear();
+    // vesa_clear();
     int i = 0;
     while (data[i] != '\0') {
         vesa_draw_char(data[i], terminal_x, terminal_y);

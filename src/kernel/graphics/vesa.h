@@ -101,6 +101,7 @@ struct vbe_mode_info {
     uint16_t attributes;
     uint16_t width;
     uint16_t height;
+    uint16_t pitch;
     uint8_t bpp;
     uint8_t memory_model;
     uint32_t framebuffer;
@@ -153,6 +154,11 @@ int vbe_width;
  * The height of the current video mode
  */
 int vbe_height;
+
+/**
+ * The pitch (bytes per line) of the current video mode
+ */
+int vbe_pitch;
 
 /**
  * The bytes per pixel (pixel width) of the current video mode
