@@ -127,6 +127,12 @@ void set_optimal_resolution() {
             (mode_info->memory_model != 4 && mode_info->memory_model != 6))
             continue;
 
+        serial_write("Found mode: ");
+        serial_write_dec(mode_info->width);
+        serial_write("x");
+        serial_write_dec(mode_info->height);
+        serial_write("\n");
+
         if (mode_info->width >= vbe_width) {
             // (float) mode_info->width / (float) mode_info->height < 2.0 &&) {
             highest = *mode;
@@ -152,7 +158,8 @@ void set_optimal_resolution() {
     serial_write("\n");
 
     uint32_t fb_size = vbe_width * vbe_height * vbe_bpp;
-    fb = (unsigned char *) kmalloc_p(fb_size, (uint32_t *) fb);
+    for (uint32_t z = 0; z <= fb_size; z += 4096)
+        alloc_frame(get_page((uint32_t) fb + z, 1, kernel_directory), 1, 1);
 
     vbe_set_mode(highest);
 }
