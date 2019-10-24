@@ -4,10 +4,12 @@
 #include "io/io.h"
 #include "timer/timer.h"
 #include "paging/paging.h"
+#include "input/input.h"
 
 void init() {
     timer_install();
     gdt_install();
+    keyboard_install();
     initialise_paging();
     idt_install();
     isrs_install();

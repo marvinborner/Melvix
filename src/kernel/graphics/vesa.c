@@ -191,6 +191,23 @@ void vesa_set_pixel(uint16_t x, uint16_t y, uint32_t color) {
     fb[pos + 2] = (color >> 16) & 255;
 }
 
+void vesa_draw_rectangle(int x1, int y1, int x2, int y2, int color) {
+    int i, j;
+    char blue = color & 255;
+    char green = (color >> 8) & 255;
+    char red = (color >> 16) & 255;
+    int pos1 = x1 * vbe_bpp + y1 * vbe_pitch;
+    char *draw = &fb[pos1];
+    for (i = 0; i <= y2 - y1; i++) {
+        for (j = 0; j <= x2 - x1; j++) {
+            draw[vbe_bpp * j] = blue;
+            draw[vbe_bpp * j + 1] = green;
+            draw[vbe_bpp * j + 2] = red;
+        }
+        draw += vbe_pitch;
+    }
+}
+
 void vesa_draw_char(char ch, int x, int y) {
     int mask[8] = {1, 2, 4, 8, 16, 32, 64, 128};
     unsigned char *glyph = font[ch - 32];
@@ -202,6 +219,34 @@ void vesa_draw_char(char ch, int x, int y) {
             }
         }
     }
+}
+
+void vesa_keyboard_char(char ch) {
+    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 10, terminal_y + 16, 0x0);
+
+    if (ch == 0x08) {
+        if (terminal_x != 0) terminal_x -= 10;
+    } else if (ch == 0x09) {
+        terminal_x += 8 * 10;
+    } else if (ch == '\r') {
+        terminal_x = 0;
+    } else if (ch == '\n') {
+        terminal_y += 15;
+        terminal_x = 0;
+        // terminal_scroll();
+    } else if (ch >= ' ') {
+        vesa_draw_char(ch, terminal_x, terminal_y);
+        terminal_x += 10;
+    }
+
+    // Add new line on overflow
+    if (terminal_x >= vbe_width) {
+        terminal_x = 0;
+        terminal_y += 15;
+    }
+
+    // terminal_scroll();
+    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 10, terminal_y + 16, terminal_color);
 }
 
 void vesa_draw_string(char *data) {

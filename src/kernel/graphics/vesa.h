@@ -135,6 +135,12 @@ void vbe_set_mode(unsigned short mode);
 void set_optimal_resolution();
 
 /**
+ * Draw a char from keyboard
+ * @param ch
+ */
+void vesa_keyboard_char(char ch);
+
+/**
  * Draw a string in VESA mode
  * @param ch
  */
