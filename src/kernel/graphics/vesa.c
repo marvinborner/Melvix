@@ -127,10 +127,14 @@ void set_optimal_resolution() {
             (mode_info->memory_model != 4 && mode_info->memory_model != 6))
             continue;
 
-        serial_write("Found mode: ");
+        serial_write("Found mode: (");
+        serial_write_hex(*mode);
+        serial_write(") ");
         serial_write_dec(mode_info->width);
         serial_write("x");
         serial_write_dec(mode_info->height);
+        serial_write("x");
+        serial_write_dec(mode_info->bpp);
         serial_write("\n");
 
         if (mode_info->width >= vbe_width) {
@@ -162,6 +166,8 @@ void set_optimal_resolution() {
         alloc_frame(get_page((uint32_t) fb + z, 1, kernel_directory), 1, 1);
 
     vbe_set_mode(highest);
+
+    disable_paging();
 }
 
 uint16_t terminal_x = 1;
@@ -171,22 +177,18 @@ uint32_t terminal_color = 0xFFFFFF;
 // char text[1024] = {0};
 
 void vesa_clear() {
-    /*for (int i = 0; i < vbe_width * vbe_height * vbe_bpp; i++) {
+    for (int i = 0; i < vbe_width * vbe_height * vbe_bpp; i++) {
         fb[i] = 0;
         fb[i + 1] = 0;
         fb[i + 2] = 0;
-    }*/
+    }
 }
 
 void vesa_set_pixel(uint16_t x, uint16_t y, uint32_t color) {
-    /*unsigned pos = x * vbe_bpp + y * vbe_pitch;
+    unsigned pos = x * vbe_bpp + y * vbe_pitch;
     fb[pos] = color & 255;
     fb[pos + 1] = (color >> 8) & 255;
-    fb[pos + 2] = (color >> 16) & 255;*/
-    uint32_t pixel = y * vbe_width * vbe_bpp;
-    pixel += x * vbe_bpp;
-    pixel += (uint32_t) fb;
-    *((uint32_t *) pixel) = color;
+    fb[pos + 2] = (color >> 16) & 255;
 }
 
 void vesa_draw_char(char ch, int x, int y) {
@@ -203,7 +205,7 @@ void vesa_draw_char(char ch, int x, int y) {
 }
 
 void vesa_draw_string(char *data) {
-    // vesa_clear();
+    vesa_clear();
     int i = 0;
     while (data[i] != '\0') {
         vesa_draw_char(data[i], terminal_x, terminal_y);

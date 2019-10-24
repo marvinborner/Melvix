@@ -5,8 +5,8 @@
 #include "../system.h"
 
 extern uint32_t end;
-uint32_t placement_address = (uint32_t) &end;
 extern page_directory_t *kernel_directory;
+uint32_t placement_address = (uint32_t) &end;
 heap_t *kheap = 0;
 
 uint32_t kmalloc_int(uint32_t sz, int align, uint32_t *phys) {
