@@ -115,10 +115,7 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
 
 void set_optimal_resolution() {
     uint16_t *video_modes = vbe_get_modes();
-    uint16_t highest = 0x11;
-    vbe_width = 640; // Default if detecting fails
-    vbe_height = 480;
-    vbe_bpp = 1;
+    uint16_t highest = 0;
 
     for (uint16_t *mode = video_modes; *mode != 0xFFFF; mode++) {
         struct vbe_mode_info *mode_info = vbe_get_mode_info(*mode);
@@ -143,13 +140,23 @@ void set_optimal_resolution() {
             vbe_width = mode_info->width;
             vbe_height = mode_info->height;
             vbe_pitch = mode_info->pitch;
-            vbe_bpp = mode_info->bpp / 8;
+            vbe_bpp = mode_info->bpp >> 3;
             fb = (unsigned char *) mode_info->framebuffer;
             kfree(mode_info);
         }
         kfree(mode_info);
     }
     kfree(video_modes);
+
+    if (highest == 0) {
+        struct vbe_mode_info *mode_info = vbe_get_mode_info(0x010e);
+        highest = 0x010e;
+        vbe_width = mode_info->width;
+        vbe_height = mode_info->height;
+        vbe_pitch = mode_info->pitch;
+        vbe_bpp = mode_info->bpp >> 3;
+        fb = (unsigned char *) mode_info->framebuffer;
+    }
 
     serial_write("Using mode: (");
     serial_write_hex(highest);
