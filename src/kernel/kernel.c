@@ -9,8 +9,8 @@
 void init() {
     timer_install();
     gdt_install();
+    paging_install();
     keyboard_install();
-    initialise_paging();
     idt_install();
     isrs_install();
     irq_install();

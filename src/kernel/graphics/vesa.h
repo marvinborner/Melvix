@@ -39,12 +39,12 @@ struct edid_data {
  */
 struct vbe_info {
     char signature[4];
-    uint32_t version;
-    struct far_ptr oem;
+    uint16_t version;
+    uint32_t oem;
     uint32_t capabilities;
-    struct far_ptr video_modes;
-    uint32_t video_memory;
-    uint32_t software_rev;
+    uint32_t video_modes;
+    uint16_t video_memory;
+    uint16_t software_rev;
     uint32_t vendor;
     uint32_t product_name;
     uint32_t product_rev;
@@ -114,7 +114,6 @@ struct vbe_mode_info {
  * @return The EDID information
  */
 struct edid_data get_edid();
-
 
 /**
  * Forces switch to VGA, displays an error and halts the CPU

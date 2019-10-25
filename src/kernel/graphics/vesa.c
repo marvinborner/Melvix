@@ -2,20 +2,18 @@
 #include "font.h"
 #include "../io/io.h"
 #include "../lib/lib.h"
-#include "../paging/kheap.h"
 #include "../paging/paging.h"
 #include "../system.h"
-
-extern page_directory_t *kernel_directory;
+#include "../lib/alloc.h"
 
 void switch_to_vga() {
     serial_write("Force switch to VGA!\n");
     vesa_available = 0;
     regs16_t regs;
     regs.ax = 0x0003;
-    disable_paging();
+    paging_disable();
     int32(0x10, &regs);
-    enable_paging();
+    paging_enable();
 
     uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
     char *error = "This computer has no supported video drivers!";
@@ -32,9 +30,9 @@ struct edid_data get_edid() {
     regs.bx = 0x01; // BL
     regs.es = get_segment(edid);
     regs.di = get_offset(edid);
-    disable_paging();
+    paging_disable();
     int32(0x10, &regs);
-    enable_paging();
+    paging_enable();
 
     kfree(edid);
 
@@ -47,9 +45,9 @@ void vbe_set_mode(unsigned short mode) {
     regs.ax = 0x4F02;
     regs.bx = mode;
     regs.bx |= 0x4000;
-    disable_paging();
+    paging_disable();
     int32(0x10, &regs);
-    enable_paging();
+    paging_enable();
 
     if (regs.ax != 0x004F) switch_to_vga();
     else vesa_available = 1;
@@ -63,11 +61,11 @@ uint16_t *vbe_get_modes() {
 
     regs16_t regs;
     regs.ax = 0x4F00;
-    regs.es = get_segment(info_address);
-    regs.di = get_offset(info_address);
-    disable_paging();
+    regs.es = 0;
+    regs.di = 0x7E00;
+    paging_disable();
     int32(0x10, &regs);
-    enable_paging();
+    paging_enable();
 
     struct vbe_info *info = (struct vbe_info *) info_address;
 
@@ -77,28 +75,33 @@ uint16_t *vbe_get_modes() {
     }
 
     // Get number of modes
-    uint16_t *mode_ptr = get_ptr(info->video_modes);
+    uint16_t *mode_ptr = (uint16_t *) info->video_modes;
     int number_modes = 1;
     for (uint16_t *p = mode_ptr; *p != 0xFFFF; p++) number_modes++;
 
-    uint16_t *video_modes = (uint16_t *) kmalloc(sizeof(uint16_t) * number_modes);
+    uint16_t *video_modes = kmalloc(sizeof(uint16_t) * number_modes);
     for (int i = 0; i < number_modes; i++)
-        video_modes[i] = mode_ptr[i];
+        video_modes[i] = mode_ptr[i]; // THIS FAILS
+
+    for (int i = 0; i < 47; i++) {
+        serial_write_hex(video_modes[i]);
+        serial_write("\n");
+    }
 
     return video_modes;
 }
 
 struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
-    struct vbe_mode_info_all *mode_info = (struct vbe_mode_info_all *) 0x7E00;
-
     regs16_t regs;
     regs.ax = 0x4F01;
     regs.cx = mode;
-    regs.es = get_segment(mode_info);
-    regs.di = get_offset(mode_info);
-    disable_paging();
+    regs.es = 0;
+    regs.di = 0x7E00;
+    paging_disable();
     int32(0x10, &regs);
-    enable_paging();
+    paging_enable();
+
+    struct vbe_mode_info_all *mode_info = (struct vbe_mode_info_all *) 0x7E00;
 
     struct vbe_mode_info *mode_info_final = (struct vbe_mode_info *) kmalloc(sizeof(struct vbe_mode_info));
     mode_info_final->attributes = mode_info->attributes;
@@ -115,10 +118,17 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
 
 void set_optimal_resolution() {
     uint16_t *video_modes = vbe_get_modes();
+    serial_write("\n\n");
+    for (int i = 0; i < 47; i++) {
+        serial_write_hex(video_modes[i]);
+        serial_write("\n");
+    }
+
     uint16_t highest = 0;
 
     for (uint16_t *mode = video_modes; *mode != 0xFFFF; mode++) {
         struct vbe_mode_info *mode_info = vbe_get_mode_info(*mode);
+        serial_write_dec(mode_info->width);
 
         if ((mode_info->attributes & 0x90) != 0x90 || !mode_info->success ||
             (mode_info->memory_model != 4 && mode_info->memory_model != 6))
@@ -156,6 +166,7 @@ void set_optimal_resolution() {
         vbe_pitch = mode_info->pitch;
         vbe_bpp = mode_info->bpp >> 3;
         fb = (unsigned char *) mode_info->framebuffer;
+        kfree(mode_info);
     }
 
     serial_write("Using mode: (");
@@ -168,13 +179,11 @@ void set_optimal_resolution() {
     serial_write_dec(vbe_bpp << 3);
     serial_write("\n");
 
-    uint32_t fb_size = vbe_width * vbe_height * vbe_bpp;
-    for (uint32_t z = 0; z <= fb_size; z += 4096)
-        alloc_frame(get_page((uint32_t) fb + z, 1, kernel_directory), 1, 1);
+    uint32_t fb_psize = vbe_width * vbe_height * vbe_bpp;
+    for (uint32_t z = 0; z < fb_psize; z += 4096)
+        paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
 
     vbe_set_mode(highest);
-
-    disable_paging();
 }
 
 uint16_t terminal_x = 1;
@@ -204,7 +213,7 @@ void vesa_draw_rectangle(int x1, int y1, int x2, int y2, int color) {
     char green = (color >> 8) & 255;
     char red = (color >> 16) & 255;
     int pos1 = x1 * vbe_bpp + y1 * vbe_pitch;
-    char *draw = &fb[pos1];
+    char *draw = (char *) &fb[pos1];
     for (i = 0; i <= y2 - y1; i++) {
         for (j = 0; j <= x2 - x1; j++) {
             draw[vbe_bpp * j] = blue;

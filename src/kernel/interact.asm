@@ -29,7 +29,6 @@ endstruc
 %define DATA16                                 GDTENTRY(4)   ; 0x20
 %define STACK16                                (INT32_BASE - regs16_t_size)
 
-
 section .text
    int32: use32                               ; by Napalm
    _int32:
