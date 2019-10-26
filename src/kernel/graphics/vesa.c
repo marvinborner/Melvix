@@ -17,10 +17,10 @@ void switch_to_vga() {
     paging_enable();
 
     uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
-    char *error = "This computer has no supported video drivers!";
+    char *error = "Melvix does not support this graphics hardware!";
     for (size_t i = 0; i < strlen(error); i++)
         terminal_buffer[i] = (uint16_t) error[i] | (uint16_t) 0x700;
-    panic("No VESA!");
+    panic("No VESA support!");
 }
 
 struct edid_data get_edid() {
@@ -70,10 +70,7 @@ uint16_t *vbe_get_modes() {
 
     struct vbe_info *info = (struct vbe_info *) info_address;
 
-    if (regs.ax != 0x004F || strcmp(info->signature, "VESA") != 0) {
-        switch_to_vga();
-        return ((void *) 0);
-    }
+    if (regs.ax != 0x004F || strcmp(info->signature, "VESA") != 0) switch_to_vga();
 
     // Get number of modes
     uint16_t *mode_ptr = (uint16_t *) info->video_modes;
@@ -150,15 +147,38 @@ void set_optimal_resolution() {
     kfree(video_modes);*/
 
     if (highest == 0) {
-        serial_write("Mode detection failed\n");
-        struct vbe_mode_info *mode_info = vbe_get_mode_info(0x577);
-        highest = 0x577;
-        vbe_width = mode_info->width;
-        vbe_height = mode_info->height;
-        vbe_pitch = mode_info->pitch;
-        vbe_bpp = mode_info->bpp >> 3;
-        fb = (unsigned char *) mode_info->framebuffer;
-        kfree(mode_info);
+        serial_write("Mode detection failed!\nTrying common modes...\n");
+        struct vbe_mode_info *mode_info;
+        int modes[] = {
+                322, 287, 286, 285, 284, // 1600x1200
+                356, 355, 354, 353, 352, // 1440x900
+                317, 283, 282, 281, 263, 262, // 1280x1024
+                361, 360, 359, 358, 357, // 1152x720
+                312, 280, 279, 278, 261, 260, // 1024x768
+                366, 365, 364, 363, 362, // 1024x640
+                307, 306, 305, 304, 303, // 896x672
+                302, 277, 267, 275, 259, 258, 106, // 800x600
+                371, 370, 369, 368, 367, // 800x500
+                297, 274, 273, 272, 257, // 640x480
+                292, 291, 290, 289, 256, // 640x400
+                271, 270, 269, // 320x200
+        };
+
+        for (size_t i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
+            mode_info = vbe_get_mode_info(modes[i]);
+            if (mode_info->success && mode_info->width > vbe_width) {
+                highest = modes[i];
+                vbe_width = mode_info->width;
+                vbe_height = mode_info->height;
+                vbe_pitch = mode_info->pitch;
+                vbe_bpp = mode_info->bpp >> 3;
+                fb = (unsigned char *) mode_info->framebuffer;
+            }
+        }
+
+        // Everything else failed :(
+        if (highest == 0)
+            switch_to_vga();
     }
 
     serial_write("Using mode: (");
