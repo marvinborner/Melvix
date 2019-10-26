@@ -1,8 +1,8 @@
 #include <stdint.h>
-#include "interrupts.h"
-#include "../lib/lib.h"
-#include "../system.h"
-#include "../io/io.h"
+#include <kernel/interrupts/interrupts.h>
+#include <kernel/lib/lib.h>
+#include <kernel/system.h>
+#include <kernel/io/io.h>
 
 // Defined in isr.asm
 extern void isr0();

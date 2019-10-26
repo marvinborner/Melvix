@@ -1,10 +1,10 @@
-#include "graphics/vesa.h"
-#include "gdt/gdt.h"
-#include "interrupts/interrupts.h"
-#include "io/io.h"
-#include "timer/timer.h"
-#include "paging/paging.h"
-#include "input/input.h"
+#include <kernel/graphics/vesa.h>
+#include <kernel/gdt/gdt.h>
+#include <kernel/interrupts/interrupts.h>
+#include <kernel/io/io.h>
+#include <kernel/timer/timer.h>
+#include <kernel/paging/paging.h>
+#include <kernel/input/input.h>
 
 void init() {
     timer_install();

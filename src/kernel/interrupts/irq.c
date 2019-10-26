@@ -1,5 +1,5 @@
-#include "../io/io.h"
-#include "interrupts.h"
+#include <kernel/io/io.h>
+#include <kernel/interrupts/interrupts.h>
 
 extern void irq0();
 

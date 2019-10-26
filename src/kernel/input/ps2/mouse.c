@@ -1,6 +1,6 @@
-#include "../../interrupts/interrupts.h"
-#include "../../io/io.h"
-#include "../../graphics/vesa.h"
+#include <kernel/interrupts/interrupts.h>
+#include <kernel/io/io.h>
+#include <kernel/graphics/vesa.h>
 
 char mouse_cycle = 0;
 signed char mouse_byte[3];

@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "../io/io.h"
-#include "../timer/timer.h"
+#include <kernel/io/io.h>
+#include <kernel/timer/timer.h>
 
 void play_sound(uint32_t frequency) {
     uint32_t divided;

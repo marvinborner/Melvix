@@ -1,5 +1,5 @@
-#include "../interrupts/interrupts.h"
-#include "../io/io.h"
+#include <kernel/interrupts/interrupts.h>
+#include <kernel/io/io.h>
 
 static unsigned int timer_ticks = 0;
 

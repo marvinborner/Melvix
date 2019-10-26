@@ -1,7 +1,7 @@
-#include "../lib/lib.h"
-#include "../io/io.h"
-#include "../acpi/acpi.h"
-#include "../graphics/vesa.h"
+#include <kernel/lib/lib.h>
+#include <kernel/io/io.h>
+#include <kernel/acpi/acpi.h>
+#include <kernel/graphics/vesa.h>
 
 int32_t starts_with(const char *a, const char *b) {
     size_t length_pre = strlen(b);

@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "paging.h"
-#include "../system.h"
+#include <kernel/paging/paging.h>
+#include <kernel/system.h>
 
 extern void *end;
 

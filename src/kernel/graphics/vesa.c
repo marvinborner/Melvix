@@ -1,11 +1,11 @@
-#include "vesa.h"
-#include "font.h"
-#include "../io/io.h"
-#include "../lib/lib.h"
-#include "../paging/paging.h"
-#include "../system.h"
-#include "../lib/alloc.h"
-#include "../commands/command.h"
+#include <kernel/graphics/vesa.h>
+#include <kernel/graphics/font.h>
+#include <kernel/io/io.h>
+#include <kernel/lib/lib.h>
+#include <kernel/paging/paging.h>
+#include <kernel/system.h>
+#include <kernel/lib/alloc.h>
+#include <kernel/commands/command.h>
 
 void switch_to_vga() {
     serial_write("Force switch to VGA!\n");

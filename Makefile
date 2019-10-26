@@ -23,11 +23,11 @@ build: clean
 		stripped=$$(echo "$${line}" | sed -r 's/\//_/g'); \
 		stripped=$${stripped#??????}; \
 		stripped=$${stripped%%?}o; \
-		i686-elf-gcc -c ./"$${line}" -o ./build/"$${stripped}" -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
+		i686-elf-gcc -c ./"$${line}" -o ./build/"$${stripped}" -I ./src -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
 	done <./build/tmp; \
 	rm ./build/tmp; \
 
-	i686-elf-gcc -T ./src/kernel/linker.ld -o ./build/melvix.bin -std=gnu99 -ffreestanding -O2 -nostdlib ./build/*.o || exit; \
+	i686-elf-gcc -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin -std=gnu99 -ffreestanding -O2 -nostdlib ./build/*.o || exit; \
 
 	# Testing
 	if grub-file --is-x86-multiboot ./build/melvix.bin; then \

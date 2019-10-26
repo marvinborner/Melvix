@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
-#include "alloc.h"
-#include "../paging/paging.h"
+#include <kernel/lib/alloc.h>
+#include <kernel/paging/paging.h>
 
 int liballoc_lock() {
     asm volatile ("cli");

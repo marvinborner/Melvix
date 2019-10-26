@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "../lib/lib.h"
-#include "io.h"
+#include <kernel/lib/lib.h>
+#include <kernel/io/io.h>
 
 uint8_t receive_b(uint16_t port) {
     uint8_t value;

@@ -2,7 +2,7 @@
 #define MELVIX_VESA_H
 
 #include <stdint.h>
-#include "../system.h"
+#include <kernel/system.h>
 
 int vesa_available;
 

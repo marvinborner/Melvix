@@ -1,6 +1,6 @@
-#include "../io/io.h"
-#include "../lib/lib.h"
-#include "../timer/timer.h"
+#include <kernel/io/io.h>
+#include <kernel/lib/lib.h>
+#include <kernel/timer/timer.h>
 #include <stddef.h>
 
 uint32_t *SMI_CMD;

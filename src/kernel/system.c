@@ -1,10 +1,10 @@
 #ifndef MELVIX_SYSTEM_H
 #define MELVIX_SYSTEM_H
 
-#include "timer/timer.h"
-#include "io/io.h"
-#include "graphics/vesa.h"
-#include "system.h"
+#include <kernel/timer/timer.h>
+#include <kernel/io/io.h>
+#include <kernel/graphics/vesa.h>
+#include <kernel/system.h>
 
 void kernel_time() {
     vesa_draw_string("\n");

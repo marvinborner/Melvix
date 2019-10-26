@@ -1,4 +1,4 @@
-#include "../lib/lib.h"
+#include <kernel/lib/lib.h>
 
 struct idt_entry {
     unsigned short base_lo;
