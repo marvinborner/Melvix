@@ -9,7 +9,9 @@ size_t strlen(const char *str) {
 
 size_t strcmp(const char *s1, const char *s2) {
     size_t s_a = strlen(s1);
-    for (size_t i = 0; i < s_a; i++) if (s1[i] != s2[i]) return 1;
+    for (size_t i = 0; i < s_a; i++) 
+        if (s1[i] != s2[i])
+            return 1;
     return 0;
 }
 

@@ -157,6 +157,11 @@ void vesa_draw_string(char *data);
 void vesa_draw_number(int n);
 
 /**
+ * The current input
+ */
+char *text;
+
+/**
  * The current video mode
  */
 int vbe_current_mode;

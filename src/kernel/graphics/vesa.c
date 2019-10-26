@@ -174,13 +174,12 @@ void set_optimal_resolution() {
         paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
 
     vbe_set_mode(highest);
+    text = (char *) kmalloc(1024);
 }
 
 uint16_t terminal_x = 1;
 uint16_t terminal_y = 1;
 uint32_t terminal_color = 0xFFFFFF;
-
-// char text[1024] = {0};
 
 void vesa_clear() {
     for (int i = 0; i < vbe_width * vbe_height * vbe_bpp; i++) {
@@ -215,18 +214,28 @@ void vesa_draw_rectangle(int x1, int y1, int x2, int y2, int color) {
 }
 
 void vesa_draw_char(char ch) {
-    int mask[8] = {1, 2, 4, 8, 16, 32, 64, 128};
-    unsigned char *glyph = font[ch - 32];
+    if (ch >= ' ') {
+        int mask[8] = {1, 2, 4, 8, 16, 32, 64, 128};
+        unsigned char *glyph = font[ch - 32];
 
-    for (int cy = 0; cy < 13; cy++) {
-        for (int cx = 0; cx < 8; cx++) {
-            if (glyph[cy] & mask[cx]) {
-                vesa_set_pixel(terminal_x + 8 - cx, terminal_y + 13 - cy, terminal_color);
+        for (int cy = 0; cy < 13; cy++) {
+            for (int cx = 0; cx < 8; cx++) {
+                if (glyph[cy] & mask[cx]) {
+                    vesa_set_pixel(terminal_x + 8 - cx, terminal_y + 13 - cy, terminal_color);
+                }
             }
         }
+
+        terminal_x += 10;
+    } else if (ch == '\n') {
+        terminal_x = 0;
+        terminal_y += 15;
     }
 
-    terminal_x += 10;
+    if (terminal_x >= vbe_width) {
+        terminal_x = 0;
+        terminal_y += 15;
+    }
 }
 
 void vesa_keyboard_char(char ch) {
@@ -235,21 +244,19 @@ void vesa_keyboard_char(char ch) {
     if (ch == 0x08) {
         if (terminal_x != 0) terminal_x -= 10;
     } else if (ch == 0x09) {
-        terminal_x += 8 * 10;
+        terminal_x += 4 * 10;
     } else if (ch == '\r') {
         terminal_x = 0;
     } else if (ch == '\n') {
-        terminal_y += 15;
         terminal_x = 0;
+        terminal_y += 15;
+        serial_write(text);
+        exec_command(text);
+        memory_set(text, 0, sizeof(text));
         // terminal_scroll();
     } else if (ch >= ' ') {
         vesa_draw_char(ch);
-    }
-
-    // Add new line on overflow
-    if (terminal_x >= vbe_width) {
-        terminal_x = 0;
-        terminal_y += 15;
+        strcat(text, &ch);
     }
 
     // terminal_scroll();
@@ -257,7 +264,6 @@ void vesa_keyboard_char(char ch) {
 }
 
 void vesa_draw_string(char *data) {
-    vesa_clear();
     int i = 0;
     while (data[i] != '\0') {
         vesa_draw_char(data[i]);
