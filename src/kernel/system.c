@@ -4,7 +4,6 @@
 #include <kernel/timer/timer.h>
 #include <kernel/io/io.h>
 #include <kernel/graphics/vesa.h>
-#include <kernel/system.h>
 
 void kernel_time() {
     vesa_draw_string("\n");

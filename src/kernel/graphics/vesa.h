@@ -56,7 +56,7 @@ struct vbe_info {
  * The CPUs response to the 0x4F01 call
  * Used to get information about a specific video mode code
  */
-struct vbe_mode_info_all {
+struct vbe_mode_info {
     uint16_t attributes;
     uint8_t window_a;
     uint8_t window_b;
@@ -92,20 +92,6 @@ struct vbe_mode_info_all {
     uint32_t off_screen_mem_off;
     uint16_t off_screen_mem_size;
     uint8_t reserved1[206];
-} __attribute__ ((packed));
-
-/**
- * The actual vbe mode info structure
- */
-struct vbe_mode_info {
-    uint16_t attributes;
-    uint16_t width;
-    uint16_t height;
-    uint16_t pitch;
-    uint8_t bpp;
-    uint8_t memory_model;
-    uint32_t framebuffer;
-    int success;
 } __attribute__ ((packed));
 
 /**

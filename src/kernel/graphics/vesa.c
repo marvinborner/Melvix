@@ -77,11 +77,7 @@ uint16_t *vbe_get_modes() {
     size_t number_modes = 1;
     for (uint16_t *p = mode_ptr; *p != 0xFFFF; p++) number_modes++;
 
-    uint16_t *video_modes = kmalloc(sizeof(uint16_t) * number_modes);
-    for (size_t i = 0; i < number_modes; i++)
-        video_modes[i] = mode_ptr[i]; // THIS FAILS
-
-    return video_modes;
+    return mode_ptr;
 }
 
 struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
@@ -94,31 +90,24 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
     int32(0x10, &regs);
     paging_enable();
 
-    struct vbe_mode_info_all *mode_info = (struct vbe_mode_info_all *) 0x7E00;
+    struct vbe_mode_info *mode_info = (struct vbe_mode_info *) 0x7E00;
 
-    struct vbe_mode_info *mode_info_final = (struct vbe_mode_info *) kmalloc(sizeof(struct vbe_mode_info));
-    mode_info_final->attributes = mode_info->attributes;
-    mode_info_final->width = mode_info->width;
-    mode_info_final->height = mode_info->height;
-    mode_info_final->pitch = mode_info->pitch;
-    mode_info_final->bpp = mode_info->bpp;
-    mode_info_final->memory_model = mode_info->memory_model;
-    mode_info_final->framebuffer = mode_info->framebuffer;
-    mode_info_final->success = (uint16_t) regs.ax == 0x004F;
+    if (regs.ax != 0x004f) {
+        return 0;
+    }
 
-    return mode_info_final;
+    return mode_info;
 }
 
 void set_optimal_resolution() {
-    // uint16_t *video_modes = vbe_get_modes(); // TODO: Fix mode getting and optimal resolution finder
+    uint16_t *video_modes = vbe_get_modes(); // TODO: Fix mode getting and optimal resolution finder
 
     uint16_t highest = 0;
 
-    /*for (uint16_t *mode = video_modes; *mode != 0xFFFF; mode++) {
+    for (uint16_t *mode = video_modes; *mode != 0xFFFF; mode++) {
         struct vbe_mode_info *mode_info = vbe_get_mode_info(*mode);
-        // serial_write_dec(mode_info->width);
 
-        if ((mode_info->attributes & 0x90) != 0x90 || !mode_info->success ||
+        if (mode_info == 0 || (mode_info->attributes & 0x90) != 0x90 ||
             (mode_info->memory_model != 4 && mode_info->memory_model != 6))
             continue;
 
@@ -140,11 +129,8 @@ void set_optimal_resolution() {
             vbe_pitch = mode_info->pitch;
             vbe_bpp = mode_info->bpp >> 3;
             fb = (unsigned char *) mode_info->framebuffer;
-            kfree(mode_info);
         }
-        kfree(mode_info);
     }
-    kfree(video_modes);*/
 
     if (highest == 0) {
         serial_write("Mode detection failed!\nTrying common modes...\n");
@@ -166,7 +152,7 @@ void set_optimal_resolution() {
 
         for (size_t i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
             mode_info = vbe_get_mode_info(modes[i]);
-            if (mode_info->success && mode_info->width > vbe_width) {
+            if (mode_info != 0 && mode_info->width > vbe_width) {
                 highest = modes[i];
                 vbe_width = mode_info->width;
                 vbe_height = mode_info->height;
@@ -191,11 +177,19 @@ void set_optimal_resolution() {
     serial_write_dec(vbe_bpp << 3);
     serial_write("\n");
 
-    uint32_t fb_psize = vbe_width * vbe_height * vbe_bpp;
-    for (uint32_t z = 0; z < fb_psize; z += 4096)
+    uint32_t fb_size = vbe_width * vbe_height * vbe_bpp;
+    for (uint32_t z = 0; z < fb_size; z += 4096)
         paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
 
     vbe_set_mode(highest);
+    vesa_draw_string("Using mode: ");
+    vesa_draw_number(vbe_width);
+    vesa_draw_string("x");
+    vesa_draw_number(vbe_height);
+    vesa_draw_string("x");
+    vesa_draw_number(vbe_bpp << 3);
+    vesa_draw_string("\n");
+
 }
 
 uint16_t terminal_x = 1;
