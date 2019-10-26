@@ -5,6 +5,7 @@
 #include "../paging/paging.h"
 #include "../system.h"
 #include "../lib/alloc.h"
+#include "../commands/command.h"
 
 void switch_to_vga() {
     serial_write("Force switch to VGA!\n");
@@ -28,8 +29,8 @@ struct edid_data get_edid() {
     regs16_t regs;
     regs.ax = 0x4F15;
     regs.bx = 0x01; // BL
-    regs.es = get_segment(edid);
-    regs.di = get_offset(edid);
+    regs.es = 0;
+    regs.di = (unsigned short) edid;
     paging_disable();
     int32(0x10, &regs);
     paging_enable();
@@ -112,7 +113,7 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
 }
 
 void set_optimal_resolution() {
-    uint16_t *video_modes = vbe_get_modes();
+    // uint16_t *video_modes = vbe_get_modes(); // TODO: Fix mode getting and optimal resolution finder
 
     uint16_t highest = 0;
 
@@ -149,6 +150,7 @@ void set_optimal_resolution() {
     kfree(video_modes);*/
 
     if (highest == 0) {
+        serial_write("Mode detection failed\n");
         struct vbe_mode_info *mode_info = vbe_get_mode_info(0x577);
         highest = 0x577;
         vbe_width = mode_info->width;
@@ -174,7 +176,6 @@ void set_optimal_resolution() {
         paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
 
     vbe_set_mode(highest);
-    text = (char *) kmalloc(1024);
 }
 
 uint16_t terminal_x = 1;
@@ -221,7 +222,7 @@ void vesa_draw_char(char ch) {
         for (int cy = 0; cy < 13; cy++) {
             for (int cx = 0; cx < 8; cx++) {
                 if (glyph[cy] & mask[cx]) {
-                    vesa_set_pixel(terminal_x + 8 - cx, terminal_y + 13 - cy, terminal_color);
+                    vesa_set_pixel(terminal_x + 8 - cx, terminal_y + 16 - cy, terminal_color);
                 }
             }
         }
@@ -229,17 +230,17 @@ void vesa_draw_char(char ch) {
         terminal_x += 10;
     } else if (ch == '\n') {
         terminal_x = 0;
-        terminal_y += 15;
+        terminal_y += 16;
     }
 
     if (terminal_x >= vbe_width) {
         terminal_x = 0;
-        terminal_y += 15;
+        terminal_y += 16;
     }
 }
 
 void vesa_keyboard_char(char ch) {
-    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 10, terminal_y + 16, 0x0);
+    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 8, terminal_y + 16, 0x0);
 
     if (ch == 0x08) {
         if (terminal_x != 0) terminal_x -= 10;
@@ -248,9 +249,7 @@ void vesa_keyboard_char(char ch) {
     } else if (ch == '\r') {
         terminal_x = 0;
     } else if (ch == '\n') {
-        terminal_x = 0;
-        terminal_y += 15;
-        serial_write(text);
+        vesa_draw_char(ch);
         exec_command(text);
         memory_set(text, 0, sizeof(text));
         // terminal_scroll();
@@ -260,7 +259,7 @@ void vesa_keyboard_char(char ch) {
     }
 
     // terminal_scroll();
-    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 10, terminal_y + 16, terminal_color);
+    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 8, terminal_y + 16, terminal_color);
 }
 
 void vesa_draw_string(char *data) {

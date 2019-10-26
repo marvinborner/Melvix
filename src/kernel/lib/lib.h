@@ -14,7 +14,7 @@ size_t strlen(const char *str);
  * Compare two strings
  * @param s1 The first string pointer
  * @param s2 The second string pointer
- * @return The length difference between s1 and s2
+ * @return Non-zero if not equal
  */
 size_t strcmp(const char *s1, const char *s2);
 

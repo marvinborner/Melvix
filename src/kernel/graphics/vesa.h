@@ -159,7 +159,7 @@ void vesa_draw_number(int n);
 /**
  * The current input
  */
-char *text;
+char text[1024];
 
 /**
  * The current video mode

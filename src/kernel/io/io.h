@@ -51,20 +51,26 @@ void send_l(uint16_t port, uint32_t data);
 void init_serial();
 
 /**
+ * Write a single char to the serial port (QEMU logging)
+ * @param ch The char
+ */
+void serial_put(char ch);
+
+/**
  * Write a string to the serial port (QEMU logging)
- * @param data The string that should get transmitted
+ * @param data The string
  */
 void serial_write(const char *data);
 
 /**
- * Write a hex number to the serial port (QEMU logging)
- * @param n The hex number that should get transmitted
+ * Write a hexadecimal formatted int to the serial port (QEMU logging)
+ * @param n The decimal number
  */
 void serial_write_hex(int n);
 
 /**
- * Write a dec number to the serial port (QEMU logging)
- * @param n The dec number that should get transmitted
+ * Write a decimal number to the serial port (QEMU logging)
+ * @param n The decimal number
  */
 void serial_write_dec(int n);
 
