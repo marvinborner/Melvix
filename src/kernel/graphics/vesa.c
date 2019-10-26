@@ -76,17 +76,12 @@ uint16_t *vbe_get_modes() {
 
     // Get number of modes
     uint16_t *mode_ptr = (uint16_t *) info->video_modes;
-    int number_modes = 1;
+    size_t number_modes = 1;
     for (uint16_t *p = mode_ptr; *p != 0xFFFF; p++) number_modes++;
 
     uint16_t *video_modes = kmalloc(sizeof(uint16_t) * number_modes);
-    for (int i = 0; i < number_modes; i++)
+    for (size_t i = 0; i < number_modes; i++)
         video_modes[i] = mode_ptr[i]; // THIS FAILS
-
-    for (int i = 0; i < 47; i++) {
-        serial_write_hex(video_modes[i]);
-        serial_write("\n");
-    }
 
     return video_modes;
 }
@@ -118,17 +113,12 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
 
 void set_optimal_resolution() {
     uint16_t *video_modes = vbe_get_modes();
-    serial_write("\n\n");
-    for (int i = 0; i < 47; i++) {
-        serial_write_hex(video_modes[i]);
-        serial_write("\n");
-    }
 
     uint16_t highest = 0;
 
-    for (uint16_t *mode = video_modes; *mode != 0xFFFF; mode++) {
+    /*for (uint16_t *mode = video_modes; *mode != 0xFFFF; mode++) {
         struct vbe_mode_info *mode_info = vbe_get_mode_info(*mode);
-        serial_write_dec(mode_info->width);
+        // serial_write_dec(mode_info->width);
 
         if ((mode_info->attributes & 0x90) != 0x90 || !mode_info->success ||
             (mode_info->memory_model != 4 && mode_info->memory_model != 6))
@@ -156,11 +146,11 @@ void set_optimal_resolution() {
         }
         kfree(mode_info);
     }
-    kfree(video_modes);
+    kfree(video_modes);*/
 
     if (highest == 0) {
-        struct vbe_mode_info *mode_info = vbe_get_mode_info(0x010e);
-        highest = 0x010e;
+        struct vbe_mode_info *mode_info = vbe_get_mode_info(0x577);
+        highest = 0x577;
         vbe_width = mode_info->width;
         vbe_height = mode_info->height;
         vbe_pitch = mode_info->pitch;
@@ -224,17 +214,19 @@ void vesa_draw_rectangle(int x1, int y1, int x2, int y2, int color) {
     }
 }
 
-void vesa_draw_char(char ch, int x, int y) {
+void vesa_draw_char(char ch) {
     int mask[8] = {1, 2, 4, 8, 16, 32, 64, 128};
     unsigned char *glyph = font[ch - 32];
 
     for (int cy = 0; cy < 13; cy++) {
         for (int cx = 0; cx < 8; cx++) {
             if (glyph[cy] & mask[cx]) {
-                vesa_set_pixel(x + 8 - cx, y + 13 - cy, terminal_color);
+                vesa_set_pixel(terminal_x + 8 - cx, terminal_y + 13 - cy, terminal_color);
             }
         }
     }
+
+    terminal_x += 10;
 }
 
 void vesa_keyboard_char(char ch) {
@@ -251,8 +243,7 @@ void vesa_keyboard_char(char ch) {
         terminal_x = 0;
         // terminal_scroll();
     } else if (ch >= ' ') {
-        vesa_draw_char(ch, terminal_x, terminal_y);
-        terminal_x += 10;
+        vesa_draw_char(ch);
     }
 
     // Add new line on overflow
@@ -269,10 +260,27 @@ void vesa_draw_string(char *data) {
     vesa_clear();
     int i = 0;
     while (data[i] != '\0') {
-        vesa_draw_char(data[i], terminal_x, terminal_y);
-        terminal_x += 10;
+        vesa_draw_char(data[i]);
         i++;
     }
+}
+
+void vesa_draw_number(int n) {
+    if (n == 0) vesa_draw_char('0');
+    int acc = n;
+    char c[32];
+    int i = 0;
+    while (acc > 0) {
+        c[i] = '0' + acc % 10;
+        acc /= 10;
+        i++;
+    }
+    c[i] = 0;
+    static char c2[32];
+    c2[i--] = 0;
+    int j = 0;
+    while (i >= 0) c2[i--] = c[j++];
+    vesa_draw_string(c2);
 }
 
 void vesa_set_color(uint32_t color) {

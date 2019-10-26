@@ -1,4 +1,3 @@
-#include "../graphics/graphics.h"
 #include "../io/io.h"
 #include "../lib/lib.h"
 #include "../timer/timer.h"
@@ -192,7 +191,7 @@ void acpi_poweroff() {
     acpi_enable();
 
     if (SCI_EN == 0) {
-        terminal_write_line("ACPI shutdown is not supported");
+        serial_write("ACPI shutdown is not supported\n");
         return;
     }
 
@@ -206,7 +205,7 @@ void acpi_poweroff() {
         send_w(0x4004, 0x3400); // VirtualBox
     }
 
-    terminal_write_line("Shutdown failed");
+    serial_write("Shutdown failed\n");
 }
 
 void reboot() {

@@ -134,16 +134,27 @@ void vbe_set_mode(unsigned short mode);
 void set_optimal_resolution();
 
 /**
+ * Clears the screen with black
+ */
+void vesa_clear();
+
+/**
  * Draw a char from keyboard
- * @param ch
+ * @param ch The character
  */
 void vesa_keyboard_char(char ch);
 
 /**
  * Draw a string in VESA mode
- * @param ch
+ * @param data The string
  */
 void vesa_draw_string(char *data);
+
+/**
+ * Draw a number in VESA mode
+ * @param n The number
+ */
+void vesa_draw_number(int n);
 
 /**
  * The current video mode

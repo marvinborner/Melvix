@@ -16,7 +16,6 @@ void init() {
     irq_install();
     init_serial();
     set_optimal_resolution();
-    // terminal_initialize(); // TODO: Replace VGA functions with VESA
     asm volatile ("sti");
 }
 

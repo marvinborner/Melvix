@@ -1,6 +1,6 @@
 #include "../../interrupts/interrupts.h"
 #include "../../io/io.h"
-#include "../../graphics/graphics.h"
+#include "../../graphics/vesa.h"
 
 char mouse_cycle = 0;
 signed char mouse_byte[3];
@@ -32,7 +32,7 @@ void mouse_handler(struct regs *a_r) {
     }
 
     if (mouse_but_1 == 1)
-        terminal_write_line("CLICK!");
+        vesa_draw_string("CLICK!\n");
 }
 
 void mouse_wait(unsigned char a_type) {

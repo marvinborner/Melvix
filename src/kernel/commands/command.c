@@ -1,7 +1,7 @@
-#include "../graphics/graphics.h"
 #include "../lib/lib.h"
 #include "../io/io.h"
 #include "../acpi/acpi.h"
+#include "../graphics/vesa.h"
 
 int32_t starts_with(const char *a, const char *b) {
     size_t length_pre = strlen(b);
@@ -11,19 +11,19 @@ int32_t starts_with(const char *a, const char *b) {
 
 void exec_command(char *command) {
     if (starts_with(command, "ls"))
-        terminal_write_line("Listing files");
+        vesa_draw_string("Listing files\n");
     else if (starts_with(command, "help"))
-        terminal_write_line("I can't help you write now");
+        vesa_draw_string("I can't help you write now\n");
     else if (starts_with(command, "ping"))
-        terminal_write_line("pong!");
+        vesa_draw_string("pong!\n");
     else if (starts_with(command, "clear"))
-        terminal_clear();
+        vesa_clear();
     else if (starts_with(command, "shutdown"))
         acpi_poweroff();
     else if (starts_with(command, "zzz"))
-        terminal_write_line("Not implemented");
+        vesa_draw_string("Not implemented\n");
     else if (starts_with(command, "reboot"))
         reboot();
     else
-        terminal_write_line("Command not found!");
+        vesa_draw_string("Command not found!\n");
 }

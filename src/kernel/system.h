@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "timer/timer.h"
 #include "lib/lib.h"
-#include "graphics/graphics.h"
+#include "graphics/vesa.h"
 #include "io/io.h"
 
 /**
@@ -78,10 +78,10 @@ static inline void *get_ptr(struct far_ptr fptr) {
  * Print the current kernel time
  */
 static inline void kernel_time() {
-    terminal_write_string("\n");
-    terminal_write_string("[");
-    terminal_write_number(get_time());
-    terminal_write_string("] ");
+    vesa_draw_string("\n");
+    vesa_draw_string("[");
+    vesa_draw_number(get_time());
+    vesa_draw_string("] ");
 }
 
 /**
@@ -89,12 +89,12 @@ static inline void kernel_time() {
  * @param msg The information
  */
 static inline void info(char *msg) {
-    terminal_set_color(9);
+    // terminal_set_color(9);
     kernel_time();
-    terminal_write_string("INFO: ");
-    terminal_write_string(msg);
-    terminal_write_string("\r");
-    terminal_set_color(7);
+    vesa_draw_string("INFO: ");
+    vesa_draw_string(msg);
+    vesa_draw_string("\r");
+    // terminal_set_color(7);
 }
 
 /**
@@ -103,12 +103,12 @@ static inline void info(char *msg) {
  * @param msg The warning cause/reason
  */
 static inline void warn(char *msg) {
-    terminal_set_color(6);
+    // terminal_set_color(6);
     kernel_time();
-    terminal_write_string("WARNING: ");
-    terminal_write_string(msg);
-    terminal_write_string("\r");
-    terminal_set_color(7);
+    vesa_draw_string("WARNING: ");
+    vesa_draw_string(msg);
+    vesa_draw_string("\r");
+    // terminal_set_color(7);
 }
 
 /**
@@ -118,7 +118,7 @@ static inline void warn(char *msg) {
  */
 static inline void panic(char *msg) {
     asm volatile ("cli");
-    terminal_set_color(4);
+    // terminal_set_color(4);
     kernel_time();
     serial_write("PANIC: ");
     serial_write(msg);
