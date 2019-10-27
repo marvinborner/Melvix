@@ -2,7 +2,7 @@
 #include <kernel/io/io.h>
 #include <kernel/system.h>
 
-static unsigned int timer_ticks = 0;
+static unsigned long timer_ticks = 0;
 
 void timer_phase(int hz) {
     int divisor = (int) (3579545.0 / 3.0 / (double) hz);
