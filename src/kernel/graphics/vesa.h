@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <kernel/system.h>
 
-int vesa_available;
-
 struct edid_data {
     uint8_t padding[8];
     uint16_t manufacture_id;
@@ -141,6 +139,39 @@ void vesa_draw_string(char *data);
  * @param n The number
  */
 void vesa_draw_number(int n);
+
+/**
+ * Sets the color using a rgb number
+ * @param color The color
+ */
+void vesa_set_color(uint32_t color);
+
+/**
+ * An enum with vesa colors
+ */
+enum vesa_color {
+    vesa_black = 0x1d1f24,
+    vesa_red = 0xE06C75,
+    vesa_green = 0x98C379,
+    vesa_yellow = 0xE5C07B,
+    vesa_blue = 0x61AFEF,
+    vesa_magenta = 0xC678DD,
+    vesa_cyan = 0x56B6C2,
+    vesa_white = 0xABB2BF,
+    vesa_dark_black = 0x3E4452,
+    vesa_dark_red = 0xBE5046,
+    vesa_dark_green = 0x98C379,
+    vesa_dark_yellow = 0xD19A66,
+    vesa_dark_blue = 0x61AFEF,
+    vesa_dark_magenta = 0xC678DD,
+    vesa_dark_cyan = 0x56B6C2,
+    vesa_dark_white = 0x5C6370,
+};
+
+/**
+ * The default text color
+ */
+uint32_t text_color;
 
 /**
  * The current input

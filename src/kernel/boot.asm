@@ -11,9 +11,9 @@ mboot:
     ; Multiboot macros
     MULTIBOOT_PAGE_ALIGN equ 1<<0
     MULTIBOOT_MEMORY_INFO equ 1<<1
-    MULTIBOOT_VIDEO_MODE equ 1<<2
+    MULTIBOOT_AOUT_KLUDGE equ 1<<16
     MULTIBOOT_HEADER_MAGIC equ 0x1BADB002
-    MULTIBOOT_HEADER_FLAGS equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_VIDEO_MODE
+    MULTIBOOT_HEADER_FLAGS equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE
     MULTIBOOT_CHECKSUM	equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
     EXTERN code, bss, end
 
@@ -28,12 +28,6 @@ mboot:
     dd bss
     dd end
     dd start
-
-    ; Request linear graphics mode
-    dd 0
-    dd 640 ; width
-    dd 480 ; height
-    dd 8 ; bpp
 
 ; Endless loop
 stublet:

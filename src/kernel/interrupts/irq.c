@@ -1,5 +1,6 @@
 #include <kernel/io/io.h>
 #include <kernel/interrupts/interrupts.h>
+#include <kernel/system.h>
 
 extern void irq0();
 
@@ -86,6 +87,7 @@ void irq_install() {
     idt_set_gate(45, (unsigned) irq13, 0x08, 0x8E);
     idt_set_gate(46, (unsigned) irq14, 0x08, 0x8E);
     idt_set_gate(47, (unsigned) irq15, 0x08, 0x8E);
+    vga_log("Installed Interrupt Requests", 8);
 }
 
 // Handle IRQ ISRs

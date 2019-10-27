@@ -1,5 +1,6 @@
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/io/io.h>
+#include <kernel/system.h>
 
 static unsigned int timer_ticks = 0;
 
@@ -33,4 +34,5 @@ unsigned int get_time() {
 void timer_install() {
     timer_phase(1000);
     irq_install_handler(0, timer_handler);
+    vga_log("Installed timer", 1);
 }

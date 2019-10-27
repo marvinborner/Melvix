@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <kernel/lib/lib.h>
 #include <kernel/io/io.h>
+#include <kernel/system.h>
 
 uint8_t receive_b(uint16_t port) {
     uint8_t value;
@@ -41,6 +42,7 @@ void init_serial() {
     send_b(0x3f8 + 2, 0xC7);
     send_b(0x3f8 + 4, 0x0B);
     serial_write("Installed serial connection!\n");
+    vga_log("Installed serial connection", 3);
 }
 
 int is_transmit_empty() {

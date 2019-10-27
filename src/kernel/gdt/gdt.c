@@ -1,3 +1,5 @@
+#include <kernel/system.h>
+
 struct gdt_entry {
     unsigned short limit_low;
     unsigned short base_low;
@@ -48,4 +50,6 @@ void gdt_install() {
 
     // Remove old GDT and install the new changes!
     gdt_flush();
+
+    vga_log("Installed Global Descriptor Table", 2);
 }

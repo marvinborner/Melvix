@@ -56,4 +56,5 @@ void keyboard_rate() {
 void keyboard_install() {
     keyboard_rate();
     irq_install_handler(1, keyboard_handler);
+    vga_log("Installed keyboard handler", 5);
 }

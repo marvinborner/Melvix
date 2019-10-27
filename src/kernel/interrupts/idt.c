@@ -1,4 +1,5 @@
 #include <kernel/lib/lib.h>
+#include <kernel/system.h>
 
 struct idt_entry {
     unsigned short base_lo;
@@ -41,4 +42,5 @@ void idt_install() {
     memory_set(&idt, 0, sizeof(struct idt_entry) * 256);
 
     idt_load();
+    vga_log("Installed Interrupt Descriptor Table", 6);
 }

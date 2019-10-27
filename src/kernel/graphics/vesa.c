@@ -9,7 +9,6 @@
 
 void switch_to_vga() {
     serial_write("Force switch to VGA!\n");
-    vesa_available = 0;
     regs16_t regs;
     regs.ax = 0x0003;
     paging_disable();
@@ -41,7 +40,6 @@ struct edid_data get_edid() {
 }
 
 void vbe_set_mode(unsigned short mode) {
-    vesa_available = 0;
     regs16_t regs;
     regs.ax = 0x4F02;
     regs.bx = mode;
@@ -50,12 +48,11 @@ void vbe_set_mode(unsigned short mode) {
     int32(0x10, &regs);
     paging_enable();
 
-    if (regs.ax != 0x004F) switch_to_vga();
-    else vesa_available = 1;
+    if (regs.ax != 0x004F)
+        switch_to_vga();
 }
 
 uint16_t *vbe_get_modes() {
-    vesa_available = 0;
     char *info_address = (char *) 0x7E00;
     strcpy(info_address, "VBE2");
     for (int i = 4; i < 512; i++) *(info_address + i) = 0;
@@ -100,7 +97,8 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
 }
 
 void set_optimal_resolution() {
-    uint16_t *video_modes = vbe_get_modes(); // TODO: Fix mode getting and optimal resolution finder
+    vga_log("Switching to graphics mode", 9);
+    uint16_t *video_modes = vbe_get_modes();
 
     uint16_t highest = 0;
 
@@ -167,42 +165,32 @@ void set_optimal_resolution() {
             switch_to_vga();
     }
 
-    serial_write("Using mode: (");
-    serial_write_hex(highest);
-    serial_write(") ");
-    serial_write_dec(vbe_width);
-    serial_write("x");
-    serial_write_dec(vbe_height);
-    serial_write("x");
-    serial_write_dec(vbe_bpp << 3);
-    serial_write("\n");
-
-    uint32_t fb_size = vbe_width * vbe_height * vbe_bpp;
-    for (uint32_t z = 0; z < fb_size; z += 4096)
-        paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
-
     vbe_set_mode(highest);
-    vesa_draw_string("Using mode: ");
+
+    vesa_clear();
+
+    info("Successfully switched to video mode!");
+
+    serial_write("Using mode: ");
+    serial_write_hex(highest);
+    log("Using mode: ");
     vesa_draw_number(vbe_width);
     vesa_draw_string("x");
     vesa_draw_number(vbe_height);
     vesa_draw_string("x");
     vesa_draw_number(vbe_bpp << 3);
-    vesa_draw_string("\n");
+
+    uint32_t fb_size = vbe_width * vbe_height * vbe_bpp;
+    for (uint32_t z = 0; z < fb_size; z += 4096)
+        paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
 
 }
 
 uint16_t terminal_x = 1;
 uint16_t terminal_y = 1;
-uint32_t terminal_color = 0xFFFFFF;
-
-void vesa_clear() {
-    for (int i = 0; i < vbe_width * vbe_height * vbe_bpp; i++) {
-        fb[i] = 0;
-        fb[i + 1] = 0;
-        fb[i + 2] = 0;
-    }
-}
+uint32_t text_color = vesa_white;
+uint32_t terminal_background = vesa_black;
+uint32_t terminal_color = vesa_white;
 
 void vesa_set_pixel(uint16_t x, uint16_t y, uint32_t color) {
     unsigned pos = x * vbe_bpp + y * vbe_pitch;
@@ -228,6 +216,10 @@ void vesa_draw_rectangle(int x1, int y1, int x2, int y2, int color) {
     }
 }
 
+void vesa_clear() {
+    vesa_draw_rectangle(0, 0, vbe_width, vbe_height, terminal_background);
+}
+
 void vesa_draw_char(char ch) {
     if (ch >= ' ') {
         int mask[8] = {1, 2, 4, 8, 16, 32, 64, 128};
@@ -237,6 +229,8 @@ void vesa_draw_char(char ch) {
             for (int cx = 0; cx < 8; cx++) {
                 if (glyph[cy] & mask[cx]) {
                     vesa_set_pixel(terminal_x + 8 - cx, terminal_y + 16 - cy, terminal_color);
+                } else {
+                    vesa_set_pixel(terminal_x + 8 - cx, terminal_y + 16 - cy, terminal_background);
                 }
             }
         }
@@ -254,7 +248,7 @@ void vesa_draw_char(char ch) {
 }
 
 void vesa_keyboard_char(char ch) {
-    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 8, terminal_y + 16, 0x0);
+    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 8, terminal_y + 16, terminal_background);
 
     if (ch == 0x08) {
         if (terminal_x != 0) terminal_x -= 10;

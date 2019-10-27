@@ -22,9 +22,22 @@ typedef struct __attribute__ ((packed)) {
 extern void int32(unsigned char intnum, regs16_t *regs);
 
 /**
+ * Log a message before VESA has been initialized
+ * @param msg The message
+ * @param line The hardcoded linenumber
+ */
+void vga_log(char *msg, int line);
+
+/**
  * Print the current kernel time
  */
 void kernel_time();
+
+/**
+ * Display a general log message
+ * @param msg The message
+ */
+void log(char *msg);
 
 /**
  * Display an information message

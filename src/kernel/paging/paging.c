@@ -24,6 +24,7 @@ void paging_install() {
     paging_set_used(0, ((uint32_t) end >> 12) + 1);
 
     paging_enable();
+    vga_log("Installed paging", 4);
 }
 
 int paging_enabled() {
