@@ -11,7 +11,7 @@ char keymap[128] = {
         '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 14 /*RS*/, '*',
         0, // Alt key
         ' ', // Space bar
-        0, // Caps lock
+        15, // Caps lock
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // F keys
         0, // Num lock
         0, // Scroll lock
@@ -41,7 +41,7 @@ char shift_keymap[128] = {
         '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 14 /*RS*/, '*',
         0, // Alt key
         ' ', // Space bar
-        0, // Caps lock
+        15, // Caps lock
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, // F keys
         0, // Num lock
         0, // Scroll lock
@@ -72,8 +72,12 @@ void keyboard_handler(struct regs *r) {
     scan_code = receive_b(0x60);
 
     if (!(scan_code & 0x80)) { // PRESS
-        if (current_keymap[scan_code] == 14) {
+        // TODO: Fix caps lock deactivation when pressing shift while shifted
+        if (current_keymap[scan_code] == 14 || (current_keymap[scan_code] == 15 && !shift_pressed)) {
             shift_pressed = 1;
+            return;
+        } else if (current_keymap[scan_code] == 15 && shift_pressed) {
+            shift_pressed = 0;
             return;
         }
         vesa_keyboard_char(current_keymap[scan_code]);
