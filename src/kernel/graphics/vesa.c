@@ -299,7 +299,8 @@ void vesa_keyboard_char(char ch) {
         // terminal_scroll();
     } else if (ch >= ' ') {
         vesa_draw_char(ch);
-        strcat(text, &ch);
+        char tmp[2] = {ch};
+        strcat(text, tmp);
     }
 
     // terminal_scroll();
