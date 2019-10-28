@@ -3,6 +3,7 @@
 #include <kernel/timer/timer.h>
 #include <kernel/acpi/acpi.h>
 #include <stddef.h>
+#include <kernel/system.h>
 
 struct FACP *facp;
 uint32_t *SMI_CMD;
@@ -152,6 +153,8 @@ int acpi_install() {
 
                             SLP_EN = 1 << 13;
                             SCI_EN = 1;
+
+                            vga_log("Installed ACPI", 5);
 
                             return 0;
                         } // Else: \_S5 parse error

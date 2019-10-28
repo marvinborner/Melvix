@@ -9,6 +9,7 @@
 
 void init() {
     vga_log("Installing basic features of Melvix...", 0);
+    // Install features
     timer_install();
     gdt_install();
     init_serial();
@@ -17,15 +18,17 @@ void init() {
     idt_install();
     isrs_install();
     irq_install();
-    keyboard_install();
     set_optimal_resolution();
+    // Install drivers
+    asm volatile ("cli");
+    keyboard_install();
     asm volatile ("sti");
 }
 
 void kernel_main(void) {
     init();
 
-    // __asm__  ("div %0" :: "r"(0)); // Exception testing x/0
+    // asm volatile  ("div %0" :: "r"(0)); // Exception testing x/0
     loop:
     asm volatile ("hlt");
     goto loop;
