@@ -1,8 +1,10 @@
 #include <kernel/io/io.h>
 #include <kernel/lib/lib.h>
 #include <kernel/timer/timer.h>
+#include <kernel/acpi/acpi.h>
 #include <stddef.h>
 
+struct FACP *facp;
 uint32_t *SMI_CMD;
 char ACPI_ENABLE;
 char ACPI_DISABLE;
@@ -13,30 +15,6 @@ int SLP_TYPb;
 int SLP_EN;
 int SCI_EN;
 char PM1_CNT_LEN;
-
-struct RSDPtr {
-    char Signature[8];
-    char CheckSum;
-    char OemID[6];
-    char Revision;
-    uint32_t *RsdtAddress;
-};
-
-struct FACP {
-    char Signature[4];
-    uint32_t Length;
-    char unneded1[40 - 8];
-    uint32_t *DSDT;
-    char unneded2[48 - 44];
-    uint32_t *SMI_CMD;
-    char ACPI_ENABLE;
-    char ACPI_DISABLE;
-    char unneded3[64 - 54];
-    uint32_t *PM1a_CNT_BLK;
-    uint32_t *PM1b_CNT_BLK;
-    char unneded4[89 - 72];
-    char PM1_CNT_LEN;
-};
 
 unsigned int *acpi_check_rsd_ptr(unsigned int *ptr) {
     char *sig = "RSD PTR ";
@@ -53,7 +31,7 @@ unsigned int *acpi_check_rsd_ptr(unsigned int *ptr) {
         }
 
         if (check == 0) {
-            return (unsigned int *) rsdp->RsdtAddress;
+            return (unsigned int *) rsdp->rsdt_address;
         }
     }
 
@@ -138,16 +116,16 @@ int acpi_install() {
         while (0 < entrys--) {
             if (acpi_check_header((unsigned int *) *ptr, "FACP") == 0) {
                 entrys = -2;
-                struct FACP *facp = (struct FACP *) *ptr;
+                facp = (struct FACP *) *ptr;
                 if (acpi_check_header((unsigned int *) facp->DSDT, "DSDT") == 0) {
                     char *S5Addr = (char *) facp->DSDT + 36;
-                    int dsdtLength = *(facp->DSDT + 1) - 36;
-                    while (0 < dsdtLength--) {
+                    int dsdt_length = *(facp->DSDT + 1) - 36;
+                    while (0 < dsdt_length--) {
                         if (memory_compare(S5Addr, "_S5_", 4) == 0)
                             break;
                         S5Addr++;
                     }
-                    if (dsdtLength > 0) {
+                    if (dsdt_length > 0) {
                         if ((*(S5Addr - 1) == 0x08 || (*(S5Addr - 2) == 0x08 && *(S5Addr - 1) == '\\')) &&
                             *(S5Addr + 4) == 0x12) {
                             S5Addr += 5;
@@ -187,7 +165,6 @@ int acpi_install() {
 }
 
 void acpi_poweroff() {
-    acpi_install();
     acpi_enable();
 
     if (SCI_EN == 0) {

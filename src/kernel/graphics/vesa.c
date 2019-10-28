@@ -113,8 +113,8 @@ void set_optimal_resolution() {
         serial_write_dec(mode_info->bpp);
         serial_write("\n");
 
-        //if (mode_info->width > vbe_width || (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl))) {
-        if (mode_info->width > vbe_width || (mode_info->bpp == 16)) {
+        if (mode_info->width > vbe_width || (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl)) {
+            // if ((mode_info->bpp == 8)) { // Force specific bpp for debugging
             // (float) mode_info->width / (float) mode_info->height < 2.0 &&) {
             highest = *mode;
             vbe_width = mode_info->width;
@@ -199,10 +199,6 @@ uint16_t terminal_x = 1;
 uint16_t terminal_y = 1;
 
 void vesa_convert_color(uint32_t *color_array, uint32_t color) {
-    serial_write("Converting ");
-    serial_write_hex(color);
-    serial_write(" to ");
-
     uint8_t red = (color >> 16) & 255;
     uint8_t green = (color >> 8) & 255;
     uint8_t blue = color & 255;
@@ -224,8 +220,6 @@ void vesa_convert_color(uint32_t *color_array, uint32_t color) {
     } else {
         panic("Unknown color bpp!");
     }
-
-    serial_write("\n");
 }
 
 void vesa_set_pixel(uint16_t x, uint16_t y, const uint32_t color[3]) {

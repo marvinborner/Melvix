@@ -5,6 +5,7 @@
 #include <kernel/timer/timer.h>
 #include <kernel/paging/paging.h>
 #include <kernel/input/input.h>
+#include <kernel/acpi/acpi.h>
 
 void init() {
     vga_log("Installing basic features of Melvix...", 0);
@@ -12,10 +13,11 @@ void init() {
     gdt_install();
     init_serial();
     paging_install();
-    keyboard_install();
+    acpi_install();
     idt_install();
     isrs_install();
     irq_install();
+    keyboard_install();
     set_optimal_resolution();
     asm volatile ("sti");
 }

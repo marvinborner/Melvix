@@ -2,6 +2,8 @@
 #include <kernel/io/io.h>
 #include <kernel/acpi/acpi.h>
 #include <kernel/graphics/vesa.h>
+#include <kernel/cmos/rtc.h>
+#include <kernel/timer/timer.h>
 
 int32_t starts_with(const char *a, const char *b) {
     size_t length_pre = strlen(b);
@@ -22,6 +24,11 @@ void exec_command(char *command) {
         acpi_poweroff();
     else if (starts_with(command, "zzz"))
         vesa_draw_string("Not implemented\n");
+    else if (starts_with(command, "time")) {
+        vesa_draw_number(get_time());
+        vesa_draw_string("\n");
+    } else if (starts_with(command, "date"))
+        write_time();
     else if (starts_with(command, "reboot"))
         reboot();
     else
