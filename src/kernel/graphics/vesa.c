@@ -114,7 +114,7 @@ void set_optimal_resolution() {
         serial_write("\n");
 
         if (mode_info->width > vbe_width || (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl)) {
-            // if ((mode_info->bpp == 8)) { // Force specific bpp for debugging
+            // if (mode_info->bpp == 32) { // Force specific bpp for debugging
             // (float) mode_info->width / (float) mode_info->height < 2.0 &&) {
             highest = *mode;
             vbe_width = mode_info->width;
@@ -213,14 +213,10 @@ void vesa_convert_color(uint32_t *color_array, uint32_t color) {
         color_array[0] = (new_color >> 16) & 255;
         color_array[1] = (new_color >> 8) & 255;
         color_array[2] = new_color & 255;
-    } else if ((vbe_bpl << 3) == 24) {
+    } else if ((vbe_bpl << 3) == 24 || (vbe_bpl << 3) == 32) {
         color_array[0] = red;
         color_array[1] = green;
         color_array[2] = blue;
-    } else if ((vbe_bpl << 3) == 32) {
-        color_array[0] = red & 0xff000000;
-        color_array[1] = green & 0xff000000;
-        color_array[2] = blue & 0xff000000;
     } else {
         panic("Unknown color bpp!");
     }
@@ -259,8 +255,8 @@ void vesa_draw_char(char ch) {
         const uint16_t *glyph = font_bitmap[ch - 32];
         char *draw = (char *) &fb[pos];
 
-        for (int cy = 0; cy < font_height; cy++) {
-            for (int cx = 0; cx < font_width; cx++) {
+        for (int cy = 0; cy <= font_height; cy++) {
+            for (int cx = 0; cx <= font_width + 1; cx++) {
                 if (glyph[cy] & (0x8000 >> cx)) { // Side effect: Smoothness factor!
                     draw[vbe_bpl * cx] = terminal_color[2];
                     draw[vbe_bpl * cx + 1] = terminal_color[1];
@@ -287,7 +283,7 @@ void vesa_draw_char(char ch) {
 }
 
 void vesa_keyboard_char(char ch) {
-    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + font_width - 1, terminal_y + font_height - 1,
+    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + font_width, terminal_y + font_height,
                         terminal_background);
 
     if (ch == 0x08) {
@@ -307,7 +303,7 @@ void vesa_keyboard_char(char ch) {
     }
 
     // terminal_scroll();
-    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + font_width - 1, terminal_y + font_height - 1,
+    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + font_width, terminal_y + font_height,
                         terminal_color);
 }
 
