@@ -8,12 +8,11 @@ size_t strlen(const char *str) {
     return len;
 }
 
-size_t strcmp(const char *s1, const char *s2) {
-    size_t s_a = strlen(s1);
-    for (size_t i = 0; i < s_a; i++) 
-        if (s1[i] != s2[i])
-            return 1;
-    return 0;
+size_t strcmp (const char * s1, const char * s2) {
+    for(; *s1 == *s2; ++s1, ++s2)
+        if(*s1 == 0)
+            return 0;
+    return *(unsigned char *)s1 < *(unsigned char *)s2 ? -1 : 1;
 }
 
 void strcat(char *dest, const char *src) {
