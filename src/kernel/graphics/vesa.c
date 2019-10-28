@@ -213,10 +213,14 @@ void vesa_convert_color(uint32_t *color_array, uint32_t color) {
         color_array[0] = (new_color >> 16) & 255;
         color_array[1] = (new_color >> 8) & 255;
         color_array[2] = new_color & 255;
-    } else if ((vbe_bpl << 3) == 24 || (vbe_bpl << 3) == 32) {
+    } else if ((vbe_bpl << 3) == 24) {
         color_array[0] = red;
         color_array[1] = green;
         color_array[2] = blue;
+    } else if ((vbe_bpl << 3) == 32) {
+        color_array[0] = red & 0xff000000;
+        color_array[1] = green & 0xff000000;
+        color_array[2] = blue & 0xff000000;
     } else {
         panic("Unknown color bpp!");
     }
@@ -252,12 +256,12 @@ void vesa_clear() {
 void vesa_draw_char(char ch) {
     if (ch >= ' ') {
         int pos = terminal_x * vbe_bpl + terminal_y * vbe_pitch;
-        const unsigned char *glyph = &font.bitmap[ch - 32];
+        const uint16_t *glyph = font_bitmap[ch - 32];
         char *draw = (char *) &fb[pos];
 
-        for (int cy = 64; cy >= 0; cy--) {
-            for (int cx = 0; cx < 16; cx++) {
-                if (glyph[cy] & (1 << cx)) {
+        for (int cy = 0; cy < font_height; cy++) {
+            for (int cx = 0; cx < font_width; cx++) {
+                if (glyph[cy] & (0x8000 >> cx)) { // Side effect: Smoothness factor!
                     draw[vbe_bpl * cx] = terminal_color[2];
                     draw[vbe_bpl * cx + 1] = terminal_color[1];
                     draw[vbe_bpl * cx + 2] = terminal_color[0];
@@ -270,25 +274,26 @@ void vesa_draw_char(char ch) {
             draw += vbe_pitch;
         }
 
-        terminal_x += 10;
+        terminal_x += font_width + 2;
     } else if (ch == '\n') {
         terminal_x = 0;
-        terminal_y += 16;
+        terminal_y += font_height + 2;
     }
 
     if (terminal_x >= vbe_width) {
         terminal_x = 0;
-        terminal_y += 16;
+        terminal_y += font_height + 2;
     }
 }
 
 void vesa_keyboard_char(char ch) {
-    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 8, terminal_y + 16, terminal_background);
+    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + font_width - 1, terminal_y + font_height - 1,
+                        terminal_background);
 
     if (ch == 0x08) {
-        if (terminal_x != 0) terminal_x -= 10;
+        if (terminal_x != 0) terminal_x -= font_width + 2;
     } else if (ch == 0x09) {
-        terminal_x += 4 * 10;
+        terminal_x += 4 * (font_width + 2);
     } else if (ch == '\r') {
         terminal_x = 0;
     } else if (ch == '\n') {
@@ -302,7 +307,8 @@ void vesa_keyboard_char(char ch) {
     }
 
     // terminal_scroll();
-    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + 8, terminal_y + 16, terminal_color);
+    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + font_width - 1, terminal_y + font_height - 1,
+                        terminal_color);
 }
 
 void vesa_draw_string(char *data) {
