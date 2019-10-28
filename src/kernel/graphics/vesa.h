@@ -171,7 +171,7 @@ enum vesa_color {
 /**
  * The default text color
  */
-uint32_t text_color;
+const uint32_t default_text_color;
 
 /**
  * The current input
@@ -199,9 +199,9 @@ int vbe_height;
 int vbe_pitch;
 
 /**
- * The bytes per pixel (pixel width) of the current video mode
+ * The bytes per line (pixel width) of the current video mode
  */
-int vbe_bpp;
+int vbe_bpl;
 
 /**
  * The framebuffer interface

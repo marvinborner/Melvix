@@ -23,7 +23,7 @@ void log(char *msg) {
     vesa_set_color(vesa_dark_white);
     kernel_time();
     vesa_draw_string(msg);
-    vesa_set_color(text_color);
+    vesa_set_color(default_text_color);
 }
 
 void info(char *msg) {
@@ -31,7 +31,7 @@ void info(char *msg) {
     kernel_time();
     vesa_draw_string("INFORMATION: ");
     vesa_draw_string(msg);
-    vesa_set_color(text_color);
+    vesa_set_color(default_text_color);
 }
 
 void warn(char *msg) {
@@ -39,19 +39,19 @@ void warn(char *msg) {
     kernel_time();
     vesa_draw_string("WARNING: ");
     vesa_draw_string(msg);
-    vesa_set_color(text_color);
+    vesa_set_color(default_text_color);
 }
 
 void panic(char *msg) {
     asm volatile ("cli");
     vesa_set_color(vesa_dark_red);
     kernel_time();
-    serial_write("PANIC: ");
+    serial_write("\nPANIC: ");
     serial_write(msg);
-    serial_write(" - System Halted!\n");
+    serial_write(" - System halted!\n");
     vesa_draw_string("PANIC: ");
     vesa_draw_string(msg);
-    vesa_draw_string(" - System Halted!\n");
+    vesa_draw_string(" - System halted!\n");
     loop:
     asm volatile ("hlt");
     goto loop;

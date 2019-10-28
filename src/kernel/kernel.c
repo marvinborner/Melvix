@@ -7,6 +7,7 @@
 #include <kernel/input/input.h>
 
 void init() {
+    vga_log("Installing basic features of Melvix...", 0);
     timer_install();
     gdt_install();
     init_serial();
