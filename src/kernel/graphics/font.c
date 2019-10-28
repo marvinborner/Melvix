@@ -1,8 +1,7 @@
 // (c) 2009, 2010 Lutz Sammer, License: AGPLv3
 // Generated from Spleen font via bdf2c
 
-#include
-<kernel/graphics/font.h>
+#include <kernel/graphics/font.h>
 
 static const unsigned char __font_bitmap__[] = {
 // 32 $20 'SPACE'
