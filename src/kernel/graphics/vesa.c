@@ -257,12 +257,12 @@ void vesa_clear() {
 
 void vesa_draw_char(char ch) {
     if (ch >= ' ') {
-        int pos = (terminal_x - 8) * vbe_bpl + (terminal_y - 16) * vbe_pitch;
+        int pos = terminal_x * vbe_bpl + terminal_y * vbe_pitch;
         int mask[8] = {1, 2, 4, 8, 16, 32, 64, 128};
         unsigned char *glyph = font[ch - 32];
         char *draw = (char *) &fb[pos];
 
-        for (int cy = 0; cy < 13; cy++) {
+        for (int cy = 12; cy >= 0; cy--) {
             for (int cx = 0; cx < 8; cx++) {
                 if (glyph[cy] & mask[cx]) {
                     draw[vbe_bpl * cx] = terminal_color[2];
