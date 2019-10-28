@@ -288,6 +288,7 @@ void vesa_keyboard_char(char ch) {
 
     if (ch == 0x08) {
         if (terminal_x != 0) terminal_x -= font_width + 2;
+        text[strlen(text) - 1] = '\0';
     } else if (ch == 0x09) {
         terminal_x += 4 * (font_width + 2);
     } else if (ch == '\r') {
