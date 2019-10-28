@@ -12,24 +12,24 @@ int32_t starts_with(const char *a, const char *b) {
 }
 
 void exec_command(char *command) {
-    if (starts_with(command, "ls"))
+    if (strcmp(command, "ls") == 0)
         vesa_draw_string("Listing files\n");
-    else if (starts_with(command, "help"))
+    else if (strcmp(command, "help") == 0)
         vesa_draw_string("I can't help you write now\n");
-    else if (starts_with(command, "ping"))
+    else if (strcmp(command, "ping") == 0)
         vesa_draw_string("pong!\n");
-    else if (starts_with(command, "clear"))
+    else if (strcmp(command, "clear") == 0)
         vesa_clear();
-    else if (starts_with(command, "shutdown"))
+    else if (strcmp(command, "shutdown") == 0)
         acpi_poweroff();
-    else if (starts_with(command, "zzz"))
+    else if (strcmp(command, "zzz") == 0)
         vesa_draw_string("Not implemented\n");
-    else if (starts_with(command, "time")) {
+    else if (strcmp(command, "time") == 0) {
         vesa_draw_number(get_time());
         vesa_draw_string("\n");
-    } else if (starts_with(command, "date"))
+    } else if (strcmp(command, "date") == 0)
         write_time();
-    else if (starts_with(command, "reboot"))
+    else if (strcmp(command, "reboot") == 0)
         reboot();
     else
         vesa_draw_string("Command not found!\n");
