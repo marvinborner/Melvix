@@ -258,7 +258,7 @@ void vesa_clear() {
 void vesa_draw_char(char ch) {
     if (ch >= ' ') {
         int pos = terminal_x * vbe_bpl + terminal_y * vbe_pitch;
-        int mask[8] = {1, 2, 4, 8, 16, 32, 64, 128};
+        int mask[8] = {128, 64, 32, 16, 8, 4, 2, 1};
         unsigned char *glyph = font[ch - 32];
         char *draw = (char *) &fb[pos];
 
