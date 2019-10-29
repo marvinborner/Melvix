@@ -171,7 +171,9 @@ void set_optimal_resolution() {
 
     vbe_set_mode(highest);
 
-    vesa_set_font(24);
+    if (vbe_height > 1440) vesa_set_font(32);
+    else if (vbe_height > 720) vesa_set_font(24);
+    else vesa_set_font(16);
     vesa_set_color(default_text_color);
     vesa_clear();
 
@@ -212,7 +214,7 @@ void vesa_convert_color(uint32_t *color_array, uint32_t color) {
     uint8_t blue = color & 255;
 
     if ((vbe_bpl << 3) == 8) {
-        uint32_t new_color = ((red * 7 / 255) << 5) + ((green * 7 / 255) << 2) + (blue * 3 / 256);
+        uint32_t new_color = ((red * 7 / 255) << 5) + ((green * 7 / 255) << 2) + (blue * 3 / 255);
         color_array[0] = (new_color >> 16) & 255;
         color_array[1] = (new_color >> 8) & 255;
         color_array[2] = new_color & 255;
