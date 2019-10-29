@@ -1,5 +1,6 @@
-// (c) 2009, 2010 Lutz Sammer, License: AGPLv3
-// Generated from Spleen font via bdf2c
+// Generated using the Spleen font and the bdf2c converter (modified using the conv.sh script)
+// Spleen font: (c) 2018-2019, Frederic Cambus, License: MIT
+// bdf2c: (c) 2009-2010 Lutz Sammer, License: AGPLv3
 
 #ifndef MELVIX_FONT_H
 #define MELVIX_FONT_H
