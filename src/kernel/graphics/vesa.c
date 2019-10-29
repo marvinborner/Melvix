@@ -171,9 +171,7 @@ void set_optimal_resolution() {
 
     vbe_set_mode(highest);
 
-    // TODO: Add support for 24 pixel font
-    if (vbe_height / 32 > 40) vesa_set_font(32);
-    else vesa_set_font(16);
+    vesa_set_font(24);
     vesa_set_color(default_text_color);
     vesa_clear();
 
@@ -267,6 +265,7 @@ void vesa_draw_char(char ch) {
 
         for (int cy = 0; cy <= font_height; cy++) {
             if (font_height == 16) bitmap = font_16[ch - 32][cy];
+            else if (font_height == 24) bitmap = font_24[ch - 32][cy] >> 4;
             else if (font_height == 32) bitmap = font_32[ch - 32][cy];
             for (int cx = 0; cx <= font_width + 1; cx++) {
                 if (bitmap & ((1 << font_width) >> cx)) { // Side effect: Smoothness factor!
