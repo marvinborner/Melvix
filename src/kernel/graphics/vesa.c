@@ -171,6 +171,9 @@ void set_optimal_resolution() {
 
     vbe_set_mode(highest);
 
+    // TODO: Add support for 24 pixel font
+    if (vbe_height / 32 > 40) vesa_set_font(32);
+    else vesa_set_font(16);
     vesa_set_color(default_text_color);
     vesa_clear();
 
@@ -197,6 +200,13 @@ uint32_t terminal_color[3] = {0xab, 0xb2, 0xbf};
 uint32_t terminal_background[3] = {0x1d, 0x1f, 0x24};
 uint16_t terminal_x = 1;
 uint16_t terminal_y = 1;
+int font_width;
+int font_height;
+
+void vesa_set_font(int height) {
+    font_width = height / 2;
+    font_height = height;
+}
 
 void vesa_convert_color(uint32_t *color_array, uint32_t color) {
     uint8_t red = (color >> 16) & 255;
@@ -252,12 +262,14 @@ void vesa_clear() {
 void vesa_draw_char(char ch) {
     if (ch >= ' ') {
         int pos = terminal_x * vbe_bpl + terminal_y * vbe_pitch;
-        const uint16_t *glyph = font_bitmap[ch - 32];
         char *draw = (char *) &fb[pos];
+        uint16_t bitmap = 0;
 
         for (int cy = 0; cy <= font_height; cy++) {
+            if (font_height == 16) bitmap = font_16[ch - 32][cy];
+            else if (font_height == 32) bitmap = font_32[ch - 32][cy];
             for (int cx = 0; cx <= font_width + 1; cx++) {
-                if (glyph[cy] & (0x8000 >> cx)) { // Side effect: Smoothness factor!
+                if (bitmap & ((1 << font_width) >> cx)) { // Side effect: Smoothness factor!
                     draw[vbe_bpl * cx] = terminal_color[2];
                     draw[vbe_bpl * cx + 1] = terminal_color[1];
                     draw[vbe_bpl * cx + 2] = terminal_color[0];

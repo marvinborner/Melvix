@@ -123,6 +123,12 @@ void set_optimal_resolution();
 void vesa_clear();
 
 /**
+ * Sets one of the fonts inside the font header file
+ * @param height The desired font height
+ */
+void vesa_set_font(int height);
+
+/**
  * Draw a char from keyboard
  * @param ch The character
  */
