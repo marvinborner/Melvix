@@ -4,6 +4,7 @@
 #include <kernel/lib/lib.h>
 #include <kernel/lib/alloc.h>
 #include <kernel/io/io.h>
+#include <kernel/graphics/vesa.h>
 
 initrd_header_t *initrd_header;
 initrd_file_header_t *file_headers;
@@ -102,4 +103,29 @@ fs_node_t *initialise_initrd(uint32_t location) {
         root_nodes[i].impl = 0;
     }
     return initrd_root;
+}
+
+void initrd_test() {
+    int i = 0;
+    struct dirent *node = 0;
+    vesa_draw_string("\n");
+    while ((node = readdir_fs(fs_root, i)) != 0) {
+        vesa_draw_string("Found file: ");
+        vesa_draw_string(node->name);
+        vesa_draw_string("\n");
+        fs_node_t *fsnode = finddir_fs(fs_root, node->name);
+
+        if ((fsnode->flags & 0x7) == FS_DIRECTORY)
+            vesa_draw_string("\t (directory)\n");
+        else {
+            vesa_draw_string("\t contents: \"");
+            uint8_t buf[fsnode->length];
+            uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
+            for (uint32_t j = 0; j < sz; j++)
+                vesa_draw_char(buf[j]);
+
+            vesa_draw_string("\"\n");
+        }
+        i++;
+    }
 }

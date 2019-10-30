@@ -128,6 +128,10 @@ void vesa_clear();
  */
 void vesa_set_font(int height);
 
+/**
+ * Draws a single char
+ * @param ch The char
+ */
 void vesa_draw_char(char ch);
 
 /**
@@ -140,7 +144,7 @@ void vesa_keyboard_char(char ch);
  * Draw a string in VESA mode
  * @param data The string
  */
-void vesa_draw_string(char *data);
+void vesa_draw_string(const char *data);
 
 /**
  * Draw a number in VESA mode

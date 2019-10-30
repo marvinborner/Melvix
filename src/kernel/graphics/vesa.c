@@ -324,7 +324,7 @@ void vesa_keyboard_char(char ch) {
                         terminal_color);
 }
 
-void vesa_draw_string(char *data) {
+void vesa_draw_string(const char *data) {
     int i = 0;
     while (data[i] != '\0') {
         vesa_draw_char(data[i]);

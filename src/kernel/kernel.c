@@ -8,8 +8,11 @@
 #include <kernel/acpi/acpi.h>
 #include <kernel/mutliboot.h>
 #include <kernel/fs/initrd.h>
+#include <kernel/syscall/syscall.h>
 
-void init() {
+extern void switch_to_user();
+
+void kernel_main(struct multiboot *mboot_ptr) {
     vga_log("Installing basic features of Melvix...", 0);
     // Install features
     timer_install();
@@ -21,44 +24,25 @@ void init() {
     isrs_install();
     irq_install();
     set_optimal_resolution();
+
     // Install drivers
     asm volatile ("cli");
     keyboard_install();
     asm volatile ("sti");
-}
 
-void kernel_main(struct multiboot *mboot_ptr) {
-    init();
-
+    // Setup initial ramdisk
     assert(mboot_ptr->mods_count > 0);
     uint32_t initrd_location = *((uint32_t *) mboot_ptr->mods_addr);
     uint32_t initrd_end = *(uint32_t *) (mboot_ptr->mods_addr + 4);
     paging_set_used(0, (initrd_end >> 12) + 1);
-
     fs_root = initialise_initrd(initrd_location);
+    initrd_test();
 
-    int i = 0;
-    struct dirent *node = 0;
-    vesa_draw_string("\n");
-    while ((node = readdir_fs(fs_root, i)) != 0) {
-        vesa_draw_string("Found file: ");
-        vesa_draw_string(node->name);
-        vesa_draw_string("\n");
-        fs_node_t *fsnode = finddir_fs(fs_root, node->name);
+    // User mode!
+    syscalls_install();
+    switch_to_user();
 
-        if ((fsnode->flags & 0x7) == FS_DIRECTORY)
-            vesa_draw_string("\t (directory)\n");
-        else {
-            vesa_draw_string("\t contents: \"");
-            uint8_t buf[fsnode->length];
-            uint32_t sz = read_fs(fsnode, 0, fsnode->length, buf);
-            for (uint32_t j = 0; j < sz; j++)
-                vesa_draw_char(buf[j]);
-
-            vesa_draw_string("\"\n");
-        }
-        i++;
-    }
+    syscall_serial_write("Hello, user world!\n");
 
     // asm volatile  ("div %0" :: "r"(0)); // Exception testing x/0
     loop:

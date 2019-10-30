@@ -17,4 +17,6 @@ typedef struct {
 
 fs_node_t *initialise_initrd(uint32_t location);
 
+void initrd_test();
+
 #endif
