@@ -287,6 +287,8 @@ void vesa_draw_char(char ch) {
     } else if (ch == '\n') {
         terminal_x = 0;
         terminal_y += font_height + 2;
+    } else if (ch == '\t') {
+        terminal_x += 4 * (font_width + 2);
     }
 
     if (terminal_x >= vbe_width) {

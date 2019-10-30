@@ -30,6 +30,8 @@ int main(char argc, char **argv) {
         headers[i].magic = 0xBF;
     }
 
+    printf(headers[1].name);
+
     FILE *wstream = fopen("./initrd.img", "w");
     unsigned char *data = (unsigned char *) malloc(off);
     fwrite(&nheaders, sizeof(int), 1, wstream);

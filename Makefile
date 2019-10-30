@@ -40,24 +40,11 @@ build: clean
 	# Create ISO
 	mkdir -p ./iso/boot/grub; \
 	cp ./build/melvix.bin ./iso/boot/; \
-	cp ./src/kernel/grub.cfg ./iso/boot/grub/; \
+	cp ./src/bootloader/grub.cfg ./iso/boot/grub/; \
+	gcc -w ./src/bootloader/make_initrd.c -o ./build/make_initrd || exit; \
+	./build/make_initrd ./src/bootloader/test.txt test.txt || exit; \
+	mv initrd.img ./iso/boot/melvix.initrd || exit; \
 	grub-mkrescue -o ./build/melvix.iso ./iso/;
-
-image: build
-	@set -e; \
-	gcc -w ./src/utils/make_initrd.c -o ./build/make_initrd || exit; \
-	./build/make_initrd ./src/utils/test.txt test.txt || exit; \
-	mv initrd.img ./build/initrd.img || exit; \
-	dd if=/dev/zero of=./build/image.img iflag=fullblock bs=1M count=10 && sync; \
-	mkfs.ext2 ./build/image.img; \
-	device=$$(sudo losetup -f); \
-	sudo losetup $$device ./build/image.img || exit; \
-	mkdir ./build/mnt/ || exit; \
-	sudo mount $$device ./build/mnt/ || exit; \
-	sudo cp ./build/melvix.iso ./build/mnt/kernel || exit; \
-	sudo cp ./build/initrd.img ./build/mnt/initrd || exit; \
-	sudo umount $$device || exit; \
-	sudo losetup -d $$device;
 
 cross:
 	@set -e; \

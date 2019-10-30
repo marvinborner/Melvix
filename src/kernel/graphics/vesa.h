@@ -128,6 +128,8 @@ void vesa_clear();
  */
 void vesa_set_font(int height);
 
+void vesa_draw_char(char ch);
+
 /**
  * Draw a char from keyboard
  * @param ch The character
