@@ -309,7 +309,7 @@ void vesa_keyboard_char(char ch) {
     } else if (ch == '\n') {
         vesa_draw_char(ch);
         exec_command(text);
-        memory_set(text, 0, sizeof(text));
+        memset(text, 0, sizeof(text));
         // terminal_scroll();
     } else if (ch >= ' ') {
         vesa_draw_char(ch);

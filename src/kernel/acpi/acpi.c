@@ -24,7 +24,7 @@ unsigned int *acpi_check_rsd_ptr(unsigned int *ptr) {
     char check = 0;
     unsigned int i;
 
-    if (memory_compare(sig, rsdp, 8) == 0) {
+    if (memcmp(sig, rsdp, 8) == 0) {
         bptr = (char *) ptr;
         for (i = 0; i < sizeof(struct RSDPtr); i++) {
             check += *bptr;
@@ -62,7 +62,7 @@ unsigned int *acpi_get_rsd_ptr() {
 }
 
 int acpi_check_header(unsigned int *ptr, char *sig) {
-    if (memory_compare(ptr, sig, 4) == 0) {
+    if (memcmp(ptr, sig, 4) == 0) {
         char *checkPtr = (char *) ptr;
         int len = *(ptr + 1);
         char check = 0;
@@ -122,7 +122,7 @@ int acpi_install() {
                     char *S5Addr = (char *) facp->DSDT + 36;
                     int dsdt_length = *(facp->DSDT + 1) - 36;
                     while (0 < dsdt_length--) {
-                        if (memory_compare(S5Addr, "_S5_", 4) == 0)
+                        if (memcmp(S5Addr, "_S5_", 4) == 0)
                             break;
                         S5Addr++;
                     }

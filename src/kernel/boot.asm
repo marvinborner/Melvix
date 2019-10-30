@@ -30,8 +30,13 @@ mboot:
     dd start
 
 ; Endless loop
+extern kernel_main
 stublet:
-    extern kernel_main
+    ; Load multiboot information
+    push esp
+    push ebx
+
+    cli
     call kernel_main
     jmp $
 

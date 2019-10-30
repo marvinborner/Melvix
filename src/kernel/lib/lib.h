@@ -39,7 +39,7 @@ void strcpy(char *dest, const char *src);
  * @param count The number of bytes to be copied (src)
  * @return The modified dest pointer
  */
-void *memory_copy(void *dest, const void *src, size_t count);
+void *memcpy(void *dest, const void *src, size_t count);
 
 /**
  * Replace n bytes of dest by val
@@ -48,7 +48,7 @@ void *memory_copy(void *dest, const void *src, size_t count);
  * @param count The number of times val should replace dest entry
  * @return The modified dest pointer
  */
-void *memory_set(void *dest, char val, size_t count);
+void *memset(void *dest, char val, size_t count);
 
 /**
  * Compare the first n bytes of a and b
@@ -57,6 +57,6 @@ void *memory_set(void *dest, char val, size_t count);
  * @param size The number of bytes to be compared
  * @return -1 if a < b, 0 if a = b and 1 if a > b
  */
-int memory_compare(const void *a_ptr, const void *b_ptr, size_t size);
+int memcmp(const void *a_ptr, const void *b_ptr, size_t size);
 
 #endif
