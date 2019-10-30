@@ -3,6 +3,7 @@
 #include <kernel/fs/vfs.h>
 #include <kernel/lib/lib.h>
 #include <kernel/lib/alloc.h>
+#include <kernel/io/io.h>
 
 initrd_header_t *initrd_header;
 initrd_file_header_t *file_headers;
@@ -31,7 +32,7 @@ static struct dirent *initrd_readdir(fs_node_t *node, uint32_t index) {
         return &dirent;
     }
 
-    if (index - 1 >= nroot_nodes)
+    if (index - 1 >= (uint32_t) nroot_nodes)
         return 0;
     strcpy(dirent.name, root_nodes[index - 1].name);
     dirent.name[strlen(root_nodes[index - 1].name)] = 0;
@@ -84,10 +85,10 @@ fs_node_t *initialise_initrd(uint32_t location) {
     root_nodes = (fs_node_t *) kmalloc(sizeof(fs_node_t) * initrd_header->nfiles);
     nroot_nodes = initrd_header->nfiles;
 
-    for (int i = 0; i < initrd_header->nfiles; i++) {
+    for (uint32_t i = 0; i < initrd_header->nfiles; i++) {
         file_headers[i].offset += location;
 
-        strcpy(root_nodes[i].name, &file_headers[i].name);
+        strcpy(root_nodes[i].name, (const char *) &file_headers[i].name);
         root_nodes[i].mask = root_nodes[i].uid = root_nodes[i].gid = 0;
         root_nodes[i].length = file_headers[i].length;
         root_nodes[i].inode = i;
