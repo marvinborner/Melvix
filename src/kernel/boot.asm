@@ -30,8 +30,13 @@ mboot:
     dd start
 
 ; Endless loop
+extern kernel_main
 stublet:
-    extern kernel_main
+    ; Load multiboot information
+    push esp
+    push ebx
+
+    cli
     call kernel_main
     jmp $
 
@@ -44,6 +49,24 @@ stublet:
 %include "src/kernel/interrupts/irq.asm"
 
 %include "src/kernel/interact.asm"
+
+global switch_to_user
+extern test_user
+switch_to_user:
+    sti
+    mov ax, 0x23
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    mov eax, esp
+    push 0x23
+    push eax
+    pushf
+    push 0x1B
+    push test_user
+    iret
 
 ; Store the stack
 SECTION .bss

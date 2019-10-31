@@ -167,7 +167,7 @@ void set_optimal_resolution() {
             switch_to_vga();
     } else vga_log("Mode detection succeeded", 11);
 
-    timer_wait(500);
+    // timer_wait(500);
 
     vbe_set_mode(highest);
 
@@ -287,6 +287,8 @@ void vesa_draw_char(char ch) {
     } else if (ch == '\n') {
         terminal_x = 0;
         terminal_y += font_height + 2;
+    } else if (ch == '\t') {
+        terminal_x += 4 * (font_width + 2);
     }
 
     if (terminal_x >= vbe_width) {
@@ -309,7 +311,7 @@ void vesa_keyboard_char(char ch) {
     } else if (ch == '\n') {
         vesa_draw_char(ch);
         exec_command(text);
-        memory_set(text, 0, sizeof(text));
+        memset(text, 0, sizeof(text));
         // terminal_scroll();
     } else if (ch >= ' ') {
         vesa_draw_char(ch);
@@ -322,7 +324,7 @@ void vesa_keyboard_char(char ch) {
                         terminal_color);
 }
 
-void vesa_draw_string(char *data) {
+void vesa_draw_string(const char *data) {
     int i = 0;
     while (data[i] != '\0') {
         vesa_draw_char(data[i]);

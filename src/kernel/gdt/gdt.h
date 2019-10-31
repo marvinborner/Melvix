@@ -6,4 +6,6 @@
  */
 void gdt_install();
 
+void tss_write(int32_t num, uint16_t ss0, uint32_t esp0);
+
 #endif

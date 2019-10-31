@@ -18,7 +18,7 @@ build: clean
 	nasm -f elf ./src/kernel/boot.asm -o ./build/boot.o || exit; \
 
 	# Make all C files
-	find ./src/kernel/ -name \*.c >./build/tmp; \
+	find ./src/kernel/ ./src/userspace/ -name \*.c >./build/tmp; \
 	while read -r line; do \
 		stripped=$$(echo "$${line}" | sed -r 's/\//_/g'); \
 		stripped=$${stripped#??????}; \
@@ -40,7 +40,10 @@ build: clean
 	# Create ISO
 	mkdir -p ./iso/boot/grub; \
 	cp ./build/melvix.bin ./iso/boot/; \
-	cp ./src/kernel/grub.cfg ./iso/boot/grub/; \
+	cp ./src/bootloader/grub.cfg ./iso/boot/grub/; \
+	gcc -w ./src/bootloader/make_initrd.c -o ./build/make_initrd || exit; \
+	./build/make_initrd ./src/bootloader/test.txt test.txt || exit; \
+	mv initrd.img ./iso/boot/melvix.initrd || exit; \
 	grub-mkrescue -o ./build/melvix.iso ./iso/;
 
 cross:
@@ -75,7 +78,7 @@ debug:
 	@rm -f qemu.log
 	@echo "Starting simulation"
 	@echo "[SERIAL OUTPUT]"
-	@qemu-system-x86_64 -no-reboot -soundhw pcspk -M accel=kvm:tcg -vga std -serial stdio -d cpu_reset -D qemu.log -m 512M -cdrom ./build/melvix.iso
+	@qemu-system-x86_64 -no-reboot -soundhw pcspk -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -d cpu_reset -D qemu.log -m 512M -cdrom ./build/melvix.iso
 	@echo "[END OF CONNECTION]"
 
 .PHONY: build clean cross test debug

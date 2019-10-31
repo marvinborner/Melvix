@@ -2,6 +2,11 @@
 #define MELVIX_SYSTEM_H
 
 /**
+ * The kernel end
+ */
+extern void *end;
+
+/**
  * Initialize the basic features of the OS
  */
 void init();
