@@ -24,14 +24,14 @@ struct edid_data get_edid() {
     regs.ax = 0x4F15;
     regs.bx = 0x01; // BL
     regs.es = 0;
-    regs.di = (unsigned short) edid;
+    regs.di = (uintptr_t) &edid;
     paging_disable();
     int32(0x10, &regs);
     paging_enable();
 
     kfree(edid);
 
-    return *edid;
+    return *(struct edid_data *) edid;
 }
 
 void vbe_set_mode(unsigned short mode) {

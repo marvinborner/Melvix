@@ -41,7 +41,7 @@ build: clean
 	mkdir -p ./iso/boot/grub; \
 	cp ./build/melvix.bin ./iso/boot/; \
 	cp ./src/bootloader/grub.cfg ./iso/boot/grub/; \
-	gcc -w ./src/bootloader/make_initrd.c -o ./build/make_initrd || exit; \
+	gcc ./src/bootloader/make_initrd.c -o ./build/make_initrd || exit; \
 	./build/make_initrd ./src/bootloader/test.txt test.txt || exit; \
 	mv initrd.img ./iso/boot/melvix.initrd || exit; \
 	grub-mkrescue -o ./build/melvix.iso ./iso/;

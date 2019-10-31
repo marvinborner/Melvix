@@ -71,7 +71,7 @@ void keyboard_handler(struct regs *r) {
 
     scan_code = receive_b(0x60);
 
-    if (!(scan_code & 0x80)) { // PRESS
+    if ((scan_code & 0x80) == 0) { // PRESS
         // TODO: Fix caps lock deactivation when pressing shift while shifted
         if (current_keymap[scan_code] == 14 || (current_keymap[scan_code] == 15 && !shift_pressed)) {
             shift_pressed = 1;
@@ -81,7 +81,7 @@ void keyboard_handler(struct regs *r) {
             return;
         }
         vesa_keyboard_char(current_keymap[scan_code]);
-    } else if (scan_code & 0x80) { // RELEASE
+    } else { // RELEASE
         char key = current_keymap[scan_code];
         if (key == 14) shift_pressed = 0;
     }
