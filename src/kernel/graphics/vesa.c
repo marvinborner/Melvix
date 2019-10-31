@@ -167,7 +167,7 @@ void set_optimal_resolution() {
             switch_to_vga();
     } else vga_log("Mode detection succeeded", 11);
 
-    timer_wait(500);
+    // timer_wait(500);
 
     vbe_set_mode(highest);
 

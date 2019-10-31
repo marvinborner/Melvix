@@ -39,10 +39,11 @@ void kernel_main(struct multiboot *mboot_ptr) {
     initrd_test();
 
     // User mode!
+    info("Switching to user mode...");
     syscalls_install();
     switch_to_user();
 
-    syscall_serial_write("Hello, user world!\n");
+    panic("This should NOT happen!");
 
     // asm volatile  ("div %0" :: "r"(0)); // Exception testing x/0
     loop:

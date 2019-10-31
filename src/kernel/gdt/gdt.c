@@ -97,7 +97,7 @@ void gdt_install() {
 
     // Remove old GDT and install the new changes!
     gdt_flush();
-    tss_flush(); // FAILS
+    tss_flush();
 
     vga_log("Installed Global Descriptor Table", 2);
 }

@@ -51,23 +51,22 @@ stublet:
 %include "src/kernel/interact.asm"
 
 global switch_to_user
+extern test_user
 switch_to_user:
-     cli
-     mov ax,0x23
-     mov ds,ax
-     mov es,ax
-     mov fs,ax
-     mov gs,ax
+    sti
+    mov ax, 0x23
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
 
-     mov eax,esp
-     push 0x23
-     push eax
-     pushf
-     pop eax
-     or eax, 0x200
-     push eax
-     push 0x1B
-     iret
+    mov eax, esp
+    push 0x23
+    push eax
+    pushf
+    push 0x1B
+    push test_user
+    iret
 
 ; Store the stack
 SECTION .bss
