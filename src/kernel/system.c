@@ -9,8 +9,15 @@ void vga_log(char *msg, int line) {
     uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
     for (size_t i = 0; i < strlen(msg); i++)
         terminal_buffer[line * 80 + i] = (uint16_t) msg[i] | (uint16_t) 0x700;
-    strcpy(msg, "\n");
-    memcpy(vga_buffer, msg, sizeof(msg));
+    char string[80];
+    char time[8];
+    strcpy(string, "[");
+    strcat(string, itoa((int) get_time(), time));
+    strcat(string, "] ");
+    strcat(string, "INFORMATION: ");
+    strcat(string, msg);
+    strcat(string, "\n");
+    strcat(vga_buffer, string);
 }
 
 void kernel_time() {

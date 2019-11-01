@@ -88,19 +88,6 @@ void serial_write_hex(int n) {
 }
 
 void serial_write_dec(int n) {
-    if (n == 0) serial_put('0');
-    int acc = n;
-    char c[32];
-    int i = 0;
-    while (acc > 0) {
-        c[i] = '0' + acc % 10;
-        acc /= 10;
-        i++;
-    }
-    c[i] = 0;
-    static char c2[32];
-    c2[i--] = 0;
-    int j = 0;
-    while (i >= 0) c2[i--] = c[j++];
-    serial_write(c2);
+    char string[16];
+    serial_write(itoa(n, string));
 }

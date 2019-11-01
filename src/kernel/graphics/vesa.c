@@ -171,13 +171,15 @@ void set_optimal_resolution() {
 
     vbe_set_mode(highest);
 
-    vesa_draw_string(vga_buffer);
-
     if (vbe_height > 1440) vesa_set_font(32);
     else if (vbe_height > 720) vesa_set_font(24);
     else vesa_set_font(16);
     vesa_set_color(default_text_color);
     vesa_clear();
+
+    vesa_set_color(vesa_blue);
+    vesa_draw_string(vga_buffer);
+    vesa_set_color(default_text_color);
 
     info("Successfully switched to video mode!");
 
@@ -335,21 +337,8 @@ void vesa_draw_string(const char *data) {
 }
 
 void vesa_draw_number(int n) {
-    if (n == 0) vesa_draw_char('0');
-    int acc = n;
-    char c[32];
-    int i = 0;
-    while (acc > 0) {
-        c[i] = '0' + acc % 10;
-        acc /= 10;
-        i++;
-    }
-    c[i] = 0;
-    static char c2[32];
-    c2[i--] = 0;
-    int j = 0;
-    while (i >= 0) c2[i--] = c[j++];
-    vesa_draw_string(c2);
+    char string[16];
+    vesa_draw_string(itoa(n, string));
 }
 
 void vesa_set_color(uint32_t color) {

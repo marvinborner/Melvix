@@ -33,6 +33,14 @@ void strcat(char *dest, const char *src);
 void strcpy(char *dest, const char *src);
 
 /**
+ * Convert an integer to a char array (string)
+ * @param i The integer
+ * @param b The char array
+ * @return The char pointer
+ */
+char *itoa(int i, char b[]);
+
+/**
  * Copy n data from src to dest
  * @param dest The destination array pointer
  * @param src The source array pointer of the data
