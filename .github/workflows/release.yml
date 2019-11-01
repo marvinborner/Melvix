@@ -3,6 +3,9 @@ name: Weekly project build and release
 on:
   schedule:
     - cron: "0 2 * * 0"
+  push:
+    branches:
+      - master
 
 jobs:
   build:
