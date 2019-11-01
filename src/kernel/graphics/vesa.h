@@ -17,7 +17,7 @@ struct edid_data {
     uint8_t max_horizontal_size;
     uint8_t max_vertical_size;
     uint8_t gamma_factor;
-    uint8_t dpms_flags;
+    uint8_t dpms_flags; // power management features
     uint8_t chroma_information[10];
     uint8_t timings_1;
     uint8_t timings_2;
@@ -160,6 +160,7 @@ void vesa_set_color(uint32_t color);
 
 /**
  * An enum with vesa colors
+ * From https://github.com/joshdick/onedark.vim/ License: MIT
  */
 enum vesa_color {
     vesa_black = 0x1d1f24,

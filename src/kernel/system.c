@@ -1,15 +1,16 @@
-#ifndef MELVIX_SYSTEM_H
-#define MELVIX_SYSTEM_H
-
 #include <kernel/timer/timer.h>
 #include <kernel/io/io.h>
 #include <kernel/graphics/vesa.h>
 #include <kernel/lib/lib.h>
 
+char *vga_buffer = (char *) 0x500;
+
 void vga_log(char *msg, int line) {
     uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
     for (size_t i = 0; i < strlen(msg); i++)
         terminal_buffer[line * 80 + i] = (uint16_t) msg[i] | (uint16_t) 0x700;
+    strcpy(msg, "\n");
+    memcpy(vga_buffer, msg, sizeof(msg));
 }
 
 void kernel_time() {
@@ -62,5 +63,3 @@ void assert(int x) {
         panic("Assertion failed");
     }
 }
-
-#endif

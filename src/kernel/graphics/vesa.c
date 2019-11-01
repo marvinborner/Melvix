@@ -18,18 +18,20 @@ void switch_to_vga() {
 }
 
 struct edid_data get_edid() {
-    struct edid_data *edid = (struct edid_data *) kmalloc(sizeof(struct edid_data));
-
     regs16_t regs;
     regs.ax = 0x4F15;
-    regs.bx = 0x01; // BL
+    regs.bx = 0x1; // BL
     regs.es = 0;
-    regs.di = (uintptr_t) &edid;
+    regs.di = 0x7E00;
     paging_disable();
     int32(0x10, &regs);
     paging_enable();
 
-    kfree(edid);
+    if ((regs.ax & 0xFF) != 0x4F) {
+        warn("No EDID available!");
+    }
+
+    struct edid_data *edid = (struct edid_data *) 0x7E00;
 
     return *(struct edid_data *) edid;
 }
@@ -167,9 +169,9 @@ void set_optimal_resolution() {
             switch_to_vga();
     } else vga_log("Mode detection succeeded", 11);
 
-    // timer_wait(500);
-
     vbe_set_mode(highest);
+
+    vesa_draw_string(vga_buffer);
 
     if (vbe_height > 1440) vesa_set_font(32);
     else if (vbe_height > 720) vesa_set_font(24);
@@ -198,8 +200,8 @@ const uint32_t default_text_color = vesa_white;
 const uint32_t default_background_color = vesa_black;
 uint32_t terminal_color[3] = {0xab, 0xb2, 0xbf};
 uint32_t terminal_background[3] = {0x1d, 0x1f, 0x24};
-uint16_t terminal_x = 1;
-uint16_t terminal_y = 1;
+uint16_t terminal_x = 0;
+uint16_t terminal_y = 0;
 int font_width;
 int font_height;
 

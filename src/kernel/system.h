@@ -27,6 +27,11 @@ typedef struct __attribute__ ((packed)) {
 extern void int32(unsigned char intnum, regs16_t *regs);
 
 /**
+ * The vga log buffer to transfer the logs to VESA
+ */
+char *vga_buffer;
+
+/**
  * Log a message before VESA has been initialized
  * @param msg The message
  * @param line The hardcoded linenumber
