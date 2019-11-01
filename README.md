@@ -40,3 +40,4 @@
 Melvix is released under the MIT License and uses the following 3rd party applications (as stated in the regarding files): 
 * [Spleen font](https://github.com/fcambus/spleen) - [MIT License](https://github.com/fcambus/spleen/blob/5759e9abb130b89ba192edc5324b12ef07b7dad3/LICENSE)
 * [bdf2c converter](https://github.com/pixelmatix/bdf2c) - [AGPL 3.0 License](https://github.com/pixelmatix/bdf2c/blob/b07deb7a484751b3e3fb6c952f6bc54b1b2950fd/AGPL-3.0.txt)
+* [onedark.vim colorscheme](https://github.com/joshdick/onedark.vim/) - [MIT License](https://github.com/joshdick/onedark.vim/blob/fe035976117ba5c2481df3b2cad3bb0a8b045b9f/LICENSE)
