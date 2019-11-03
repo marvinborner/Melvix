@@ -155,6 +155,7 @@ int acpi_install() {
                             SCI_EN = 1;
 
                             vga_log("Installed ACPI", 5);
+                            acpi_enable();
 
                             return 0;
                         } // Else: \_S5 parse error
@@ -168,8 +169,6 @@ int acpi_install() {
 }
 
 void acpi_poweroff() {
-    acpi_enable();
-
     if (SCI_EN == 0) {
         serial_write("ACPI shutdown is not supported\n");
         return;

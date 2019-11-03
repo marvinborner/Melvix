@@ -9,6 +9,7 @@
 #include <kernel/mutliboot.h>
 #include <kernel/fs/initrd.h>
 #include <kernel/syscall/syscall.h>
+#include <kernel/smbios/smbios.h>
 
 extern void switch_to_user();
 
@@ -23,12 +24,14 @@ void kernel_main(struct multiboot *mboot_ptr) {
     idt_install();
     isrs_install();
     irq_install();
-    set_optimal_resolution();
 
     // Install drivers
-    asm volatile ("cli");
-    keyboard_install();
     asm volatile ("sti");
+    set_optimal_resolution();
+    keyboard_install();
+
+    // Get hardware information
+    get_smbios();
 
     // Setup initial ramdisk
     assert(mboot_ptr->mods_count > 0);
