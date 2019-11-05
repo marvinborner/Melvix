@@ -341,6 +341,14 @@ void vesa_draw_number(int n) {
     vesa_draw_string(itoa(n, string));
 }
 
+void vesa_draw_cursor(int x, int y) {
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x > vbe_width - 1) x = vbe_width - 1;
+    if (y > vbe_height - 1) y = vbe_height - 1;
+    vesa_draw_rectangle(x, y, x + font_width, y + font_height, terminal_color);
+}
+
 void vesa_set_color(uint32_t color) {
     vesa_convert_color(terminal_color, color);
     vesa_convert_color(terminal_background, default_background_color);

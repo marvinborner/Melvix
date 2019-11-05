@@ -3,17 +3,19 @@
 #include <kernel/graphics/vesa.h>
 
 char mouse_cycle = 0;
-signed char mouse_byte[3];
-signed char mouse_x = 0;
-signed char mouse_y = 0;
+char mouse_byte[3];
+int mouse_x = 0;
+int mouse_y = 0;
 int mouse_but_1 = 0;
 int mouse_but_2 = 0;
+int mouse_but_3 = 0;
 
 void mouse_handler(struct regs *a_r) {
     switch (mouse_cycle) {
         case 0:
             mouse_byte[0] = receive_b(0x60);
-            mouse_cycle++;
+            if (((mouse_byte[0] >> 3) & 1) == 1) mouse_cycle++;
+            else mouse_cycle = 0;
             break;
         case 1:
             mouse_byte[1] = receive_b(0x60);
@@ -21,18 +23,17 @@ void mouse_handler(struct regs *a_r) {
             break;
         case 2:
             mouse_byte[2] = receive_b(0x60);
-            mouse_x = mouse_byte[1];
-            mouse_y = mouse_byte[2];
-            mouse_but_1 = (mouse_byte[0] % 2);
-            mouse_but_2 = ((mouse_byte[0] % 4) - (mouse_byte[0] % 2)) / 2;
+            mouse_x += mouse_byte[1];
+            mouse_y -= mouse_byte[2];
+            mouse_but_1 = mouse_byte[0] & 1;
+            mouse_but_2 = (mouse_byte[0] >> 1) & 1;
+            mouse_but_3 = (mouse_byte[0] >> 2) & 1;
             mouse_cycle = 0;
+            vesa_draw_cursor(mouse_x, mouse_y);
             break;
         default:
             break;
     }
-
-    if (mouse_but_1 == 1)
-        vesa_draw_string("CLICK!\n");
 }
 
 void mouse_wait(unsigned char a_type) {
@@ -88,5 +89,5 @@ void mouse_install() {
     mouse_read();
 
     // Setup the mouse handler
-    irq_install_handler(2, mouse_handler);
+    irq_install_handler(12, mouse_handler);
 }

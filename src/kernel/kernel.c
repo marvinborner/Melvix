@@ -24,11 +24,13 @@ void kernel_main(struct multiboot *mboot_ptr) {
     idt_install();
     isrs_install();
     irq_install();
+    set_optimal_resolution();
 
     // Install drivers
-    asm volatile ("sti");
-    set_optimal_resolution();
+    asm volatile ("cli");
+    mouse_install();
     keyboard_install();
+    asm volatile ("sti");
 
     // Get hardware information
     get_smbios();
@@ -42,11 +44,13 @@ void kernel_main(struct multiboot *mboot_ptr) {
     initrd_test();
 
     // User mode!
+    /* COMMENTED FOR DEVELOPMENT OF KERNEL
     info("Switching to user mode...");
     syscalls_install();
     switch_to_user();
 
     panic("This should NOT happen!");
+    */
 
     // asm volatile  ("div %0" :: "r"(0)); // Exception testing x/0
     loop:

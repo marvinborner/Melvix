@@ -118,6 +118,16 @@ void vbe_set_mode(unsigned short mode);
 void set_optimal_resolution();
 
 /**
+ * Draws a efficient rectangle
+ * @param x1 First X coordinate
+ * @param y1 First Y coordinate
+ * @param x2 Second X coordinate
+ * @param y2 Second Y coordinate
+ * @param color Rectangle color
+ */
+void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const uint32_t color[3]);
+
+/**
  * Clears the screen with black
  */
 void vesa_clear();
@@ -153,6 +163,13 @@ void vesa_draw_string(const char *data);
 void vesa_draw_number(int n);
 
 /**
+ * Updates the cursor
+ * @param x The X position
+ * @param y The Y position
+ */
+void vesa_draw_cursor(int x, int y);
+
+/**
  * Sets the color using a rgb number
  * @param color The color
  */
@@ -185,6 +202,11 @@ enum vesa_color {
  * The default text color
  */
 const uint32_t default_text_color;
+
+/**
+ * The current text color (as normalized array)
+ */
+uint32_t terminal_color[3];
 
 /**
  * The current input
