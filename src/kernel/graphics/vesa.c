@@ -342,11 +342,22 @@ void vesa_draw_number(int n) {
 }
 
 void vesa_draw_cursor(int x, int y) {
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
-    if (x > vbe_width - 1) x = vbe_width - 1;
-    if (y > vbe_height - 1) y = vbe_height - 1;
-    vesa_draw_rectangle(x, y, x + font_width, y + font_height, terminal_color);
+    int pos = x * vbe_bpl + y * vbe_pitch;
+    char *draw = (char *) &fb[pos];
+    for (int cy = 0; cy <= 19; cy++) {
+        for (int cx = 0; cx <= 12 + 1; cx++) {
+            if (cursor[cy] & ((1 << 12) >> cx)) {
+                draw[vbe_bpl * cx] = terminal_color[2];
+                draw[vbe_bpl * cx + 1] = terminal_color[1];
+                draw[vbe_bpl * cx + 2] = terminal_color[0];
+            } else {
+                draw[vbe_bpl * cx] = terminal_background[2];
+                draw[vbe_bpl * cx + 1] = terminal_background[1];
+                draw[vbe_bpl * cx + 2] = terminal_background[0];
+            }
+        }
+        draw += vbe_pitch;
+    }
 }
 
 void vesa_set_color(uint32_t color) {

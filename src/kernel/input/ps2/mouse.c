@@ -29,6 +29,11 @@ void mouse_handler(struct regs *a_r) {
             mouse_but_2 = (mouse_byte[0] >> 1) & 1;
             mouse_but_3 = (mouse_byte[0] >> 2) & 1;
             mouse_cycle = 0;
+
+            if (mouse_x < 0) mouse_x = 0;
+            if (mouse_y < 0) mouse_y = 0;
+            if (mouse_x > vbe_width - 1) mouse_x = vbe_width - 1;
+            if (mouse_y > vbe_height - 1) mouse_y = vbe_height - 1;
             vesa_draw_cursor(mouse_x, mouse_y);
             break;
         default:
