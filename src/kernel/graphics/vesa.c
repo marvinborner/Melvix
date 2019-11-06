@@ -341,11 +341,36 @@ void vesa_draw_number(int n) {
     vesa_draw_string(itoa(n, string));
 }
 
+char *prev = 0;
+int prev_coords[2] = {};
+
 void vesa_draw_cursor(int x, int y) {
-    int pos = x * vbe_bpl + y * vbe_pitch;
-    char *draw = (char *) &fb[pos];
+    // Reset previous area
+    char *reset = (char *) &fb[prev_coords[0] * vbe_bpl + prev_coords[1] * vbe_pitch];
+    if (prev != 0) {
+        for (int cy = 0; cy <= 19; cy++) {
+            for (int cx = 0; cx <= 12 + 1; cx++) {
+                reset[vbe_bpl * cx] = prev[vbe_bpl * cx];
+                reset[vbe_bpl * cx + 1] = prev[vbe_bpl * cx + 1];
+                reset[vbe_bpl * cx + 2] = prev[vbe_bpl * cx + 2];
+            }
+            reset += vbe_pitch;
+        }
+        kfree(prev);
+    }
+
+    prev = kmalloc(19 * 12 * vbe_bpl);
+
+    // Draw cursor
+    char *draw = (char *) &fb[x * vbe_bpl + y * vbe_pitch];
+    prev_coords[0] = x;
+    prev_coords[1] = y;
     for (int cy = 0; cy <= 19; cy++) {
         for (int cx = 0; cx <= 12 + 1; cx++) {
+            // Performance issue?
+            prev[vbe_bpl * cx] = draw[vbe_bpl * cx];
+            prev[vbe_bpl * cx + 1] = draw[vbe_bpl * cx + 1];
+            prev[vbe_bpl * cx + 2] = draw[vbe_bpl * cx + 2];
             if (cursor[cy] & ((1 << 12) >> cx)) {
                 draw[vbe_bpl * cx] = terminal_color[2];
                 draw[vbe_bpl * cx + 1] = terminal_color[1];
