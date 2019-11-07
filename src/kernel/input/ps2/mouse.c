@@ -95,4 +95,5 @@ void mouse_install() {
 
     // Setup the mouse handler
     irq_install_handler(12, mouse_handler);
+    info("Installed mouse handler");
 }

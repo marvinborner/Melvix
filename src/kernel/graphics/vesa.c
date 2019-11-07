@@ -6,7 +6,6 @@
 #include <kernel/system.h>
 #include <kernel/lib/alloc.h>
 #include <kernel/commands/command.h>
-#include <kernel/timer/timer.h>
 
 void switch_to_vga() {
     serial_write("Force switch to VGA!\n");
@@ -92,6 +91,7 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
 }
 
 void set_optimal_resolution() {
+    asm volatile ("sti");
     vga_log("Switching to graphics mode", 9);
     vga_log("Trying to detect available modes", 10);
     uint16_t *video_modes = vbe_get_modes();
@@ -346,10 +346,10 @@ int prev_coords[2] = {};
 
 void vesa_draw_cursor(int x, int y) {
     // Reset previous area
-    char *reset = (char *) &fb[prev_coords[0] * vbe_bpl + prev_coords[1] * vbe_pitch];
     if (prev != 0) {
+        char *reset = (char *) &fb[prev_coords[0] * vbe_bpl + prev_coords[1] * vbe_pitch];
         for (int cy = 0; cy <= 19; cy++) {
-            for (int cx = 0; cx <= 12 + 1; cx++) {
+            for (int cx = 0; cx <= 12; cx++) {
                 reset[vbe_bpl * cx] = prev[vbe_bpl * cx];
                 reset[vbe_bpl * cx + 1] = prev[vbe_bpl * cx + 1];
                 reset[vbe_bpl * cx + 2] = prev[vbe_bpl * cx + 2];
@@ -366,7 +366,7 @@ void vesa_draw_cursor(int x, int y) {
     prev_coords[0] = x;
     prev_coords[1] = y;
     for (int cy = 0; cy <= 19; cy++) {
-        for (int cx = 0; cx <= 12 + 1; cx++) {
+        for (int cx = 0; cx <= 12; cx++) {
             // Performance issue?
             prev[vbe_bpl * cx] = draw[vbe_bpl * cx];
             prev[vbe_bpl * cx + 1] = draw[vbe_bpl * cx + 1];
