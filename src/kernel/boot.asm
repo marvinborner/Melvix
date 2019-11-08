@@ -1,44 +1,33 @@
-[bits 32]
-global start
+; The first section of the ELF will be used to locate the entry point.
+section .ezlocation
+dd _start
 
-start:
-    mov esp, _sys_stack ; Points stack to stack area
-    jmp stublet
+; Set stack
+section .bss
+align 16
+global STACK_BOTTOM
+global STACK_TOP
 
-; Align with 4 Bytes
-ALIGN 4
-mboot:
-    ; Multiboot macros
-    MULTIBOOT_PAGE_ALIGN equ 1<<0
-    MULTIBOOT_MEMORY_INFO equ 1<<1
-    MULTIBOOT_AOUT_KLUDGE equ 1<<16
-    MULTIBOOT_HEADER_MAGIC equ 0x1BADB002
-    MULTIBOOT_HEADER_FLAGS equ MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_AOUT_KLUDGE
-    MULTIBOOT_CHECKSUM	equ -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
-    EXTERN code, bss, end
+STACK_BOTTOM:
+resb 0x4000
+STACK_TOP:
 
-    ; GRUB Multiboot header
-    dd MULTIBOOT_HEADER_MAGIC
-    dd MULTIBOOT_HEADER_FLAGS
-    dd MULTIBOOT_CHECKSUM
 
-    ; AOUT kludge
-    dd mboot
-    dd code
-    dd bss
-    dd end
-    dd start
+section .text
 
-; Endless loop
+global _start
 extern kernel_main
-stublet:
-    ; Load multiboot information
-    push esp
-    push ebx
+_start:
+	mov esp, STACK_TOP
+	push ebx
+	push eax
 
-    cli
-    call kernel_main
-    jmp $
+	call kernel_main
+	cli
+
+hlt_L:
+	hlt
+	jmp hlt_L
 
 %include "src/kernel/gdt/gdt.asm"
 
@@ -68,7 +57,7 @@ switch_to_user:
     push test_user
     iret
 
-; Store the stack
-SECTION .bss
-    resb 0x2000 ; Reserve 8KiB
-_sys_stack:
+section .sizedetect
+global ASM_KERNEL_END
+ASM_KERNEL_END:
+	; Kernel size detection

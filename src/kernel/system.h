@@ -4,7 +4,7 @@
 /**
  * The kernel end
  */
-extern void *end;
+extern void *ASM_KERNEL_END;
 
 /**
  * Initialize the basic features of the OS

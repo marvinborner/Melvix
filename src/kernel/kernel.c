@@ -36,12 +36,12 @@ void kernel_main(struct multiboot *mboot_ptr) {
     get_smbios();
 
     // Setup initial ramdisk
-    assert(mboot_ptr->mods_count > 0);
+    /*assert(mboot_ptr->mods_count > 0);
     uint32_t initrd_location = *((uint32_t *) mboot_ptr->mods_addr);
     uint32_t initrd_end = *(uint32_t *) (mboot_ptr->mods_addr + 4);
     paging_set_used(0, (initrd_end >> 12) + 1);
     fs_root = initialise_initrd(initrd_location);
-    initrd_test();
+    initrd_test();*/
 
     // User mode!
     /* COMMENTED FOR DEVELOPMENT OF KERNEL

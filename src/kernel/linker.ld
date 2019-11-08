@@ -1,27 +1,33 @@
-ENTRY(start)
-SECTIONS
-{
-    .text 0x100000 :
-    {
-        code = .; _code = .; __code = .;
-        *(.text)
-        . = ALIGN(4096);
-    }
+ENTRY(_start)
 
-    .data :
-    {
-        data = .; _data = .; __data = .;
-        *(.data)
-        *(.rodata)
-        . = ALIGN(4096);
-    }
+/* Where the sections of the object files will be put in the final image */
+SECTIONS {
+	/* Begin @ 1 MB */
+	. = 1M;
 
-    .bss :
-    {
-        bss = .; _bss = .; __bss = .;
-        *(.bss)
-        . = ALIGN(4096);
-    }
+	/* Put the multiboot header. Next, the .text section. */
+	.text BLOCK(4K) : ALIGN(4K) {
+		*(.ezlocation)
+		*(.text)
+	}
 
-    end = .; _end = .; __end = .;
+	/* Read-only data. */
+	.rodata BLOCK(4K) : ALIGN(4K) {
+		*(.rodata)
+	}
+
+	/* Read-write data (initialized) */
+	.data BLOCK(4K) : ALIGN(4K) {
+		*(.data)
+	}
+
+	/* Read-write data (uninitialized) and stack */
+	.bss BLOCK(4K) : ALIGN(4K) {
+		*(COMMON)
+		*(.bss)
+	}
+
+	.sizedetect BLOCK(4K) : ALIGN(4K) {
+		*(.sizedetect)
+	}
 }

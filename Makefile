@@ -38,13 +38,10 @@ build: clean
 	fi; \
 
 	# Create ISO
-	mkdir -p ./iso/boot/grub; \
-	cp ./build/melvix.bin ./iso/boot/; \
-	cp ./src/bootloader/grub.cfg ./iso/boot/grub/; \
-	gcc ./src/bootloader/make_initrd.c -o ./build/make_initrd || exit; \
-	./build/make_initrd ./src/bootloader/test.txt test.txt || exit; \
-	mv initrd.img ./iso/boot/melvix.initrd || exit; \
-	grub-mkrescue -o ./build/melvix.iso ./iso/;
+	mkdir -p ./iso/boot/; \
+	mv ./build/melvix.bin ./iso/boot/kernel.bin; \
+	nasm ./src/bootloader/loader.asm -f bin -o ./iso/boot/boot.bin || exit; \
+	genisoimage -no-emul-boot -b boot/boot.bin -o ./build/melvix.iso ./iso; \
 
 cross:
 	@set -e; \
@@ -78,7 +75,7 @@ debug:
 	@rm -f qemu.log
 	@echo "Starting simulation"
 	@echo "[SERIAL OUTPUT]"
-	@qemu-system-x86_64 -no-reboot -soundhw pcspk -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -d cpu_reset -D qemu.log -m 512M -cdrom ./build/melvix.iso
+	@qemu-system-x86_64 -no-reboot -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -d cpu_reset -D qemu.log -m 512M -cdrom ./build/melvix.iso
 	@echo "[END OF CONNECTION]"
 
 .PHONY: build clean cross test debug

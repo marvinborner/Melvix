@@ -19,7 +19,7 @@ void paging_install() {
     // TODO: Calculate max memory
     paging_set_present(0, 0x1000000);
 
-    paging_set_used(0, ((uint32_t) end >> 12) + 1);
+    paging_set_used(0, ((uint32_t) ASM_KERNEL_END >> 12) + 1);
 
     paging_enable();
     vga_log("Installed paging", 4);
