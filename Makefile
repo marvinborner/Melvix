@@ -40,7 +40,9 @@ build: clean
 	# Create ISO
 	mkdir -p ./iso/boot/; \
 	mv ./build/melvix.bin ./iso/boot/kernel.bin; \
-	nasm ./src/bootloader/loader.asm -f bin -o ./iso/boot/boot.bin || exit; \
+	nasm ./src/bootloader/stage1.asm -f bin -o ./build/stage1.bin || exit; \
+	nasm ./src/bootloader/stage2.asm -f bin -o ./build/stage2.bin || exit; \
+	cat ./build/stage1.bin ./build/stage2.bin > ./iso/boot/boot.bin; \
 	genisoimage -no-emul-boot -b boot/boot.bin -o ./build/melvix.iso ./iso; \
 
 cross:
