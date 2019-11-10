@@ -26,7 +26,6 @@ build: clean
 		i686-elf-gcc -c ./"$${line}" -o ./build/"$${stripped}" -I ./src -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
 	done <./build/tmp; \
 	rm ./build/tmp; \
-
 	i686-elf-gcc -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin -std=gnu99 -ffreestanding -O2 -nostdlib ./build/*.o || exit; \
 
 	# Testing
@@ -40,9 +39,7 @@ build: clean
 	# Create ISO
 	mkdir -p ./iso/boot/; \
 	mv ./build/melvix.bin ./iso/boot/kernel.bin; \
-	nasm ./src/bootloader/stage1.asm -f bin -o ./build/stage1.bin || exit; \
-	nasm ./src/bootloader/stage2.asm -f bin -o ./build/stage2.bin || exit; \
-	cat ./build/stage1.bin ./build/stage2.bin > ./iso/boot/boot.bin; \
+	nasm ./src/bootloader/loader.asm -f bin -o ./iso/boot/boot.bin || exit; \
 	genisoimage -no-emul-boot -b boot/boot.bin -o ./build/melvix.iso ./iso; \
 
 cross:

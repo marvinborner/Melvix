@@ -5,7 +5,15 @@
 
 char *vga_buffer = (char *) 0x500;
 
+void vga_clear() {
+    uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
+    for (size_t y = 0; y < 25; y++)
+        for (size_t x = 0; x < 80; x++)
+            terminal_buffer[y * 80 + x] = 0 | (uint16_t) 0x700;
+}
+
 void vga_log(char *msg, int line) {
+    if (line == 0) vga_clear();
     uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
     for (size_t i = 0; i < strlen(msg); i++)
         terminal_buffer[line * 80 + i] = (uint16_t) msg[i] | (uint16_t) 0x700;

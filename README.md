@@ -25,7 +25,7 @@
   * texinfo
   * curl
   * nasm
-  * grub
+  * genisoimage
   * qemu
 
 * Build a cross compiler using `make cross`

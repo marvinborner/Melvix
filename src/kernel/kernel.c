@@ -6,14 +6,13 @@
 #include <kernel/paging/paging.h>
 #include <kernel/input/input.h>
 #include <kernel/acpi/acpi.h>
-#include <kernel/mutliboot.h>
 #include <kernel/fs/initrd.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/smbios/smbios.h>
 
 extern void switch_to_user();
 
-void kernel_main(struct multiboot *mboot_ptr) {
+void kernel_main() {
     vga_log("Installing basic features of Melvix...", 0);
     // Install features
     timer_install();
