@@ -20,7 +20,7 @@ void exec_command(char *command) {
         vesa_draw_string("pong!\n");
     else if (starts_with(command, "clear"))
         vesa_clear();
-    else if (starts_with(command, "shutdown"))
+    else if (starts_with(command, "shutdown") || starts_with(command, "exit"))
         acpi_poweroff();
     else if (starts_with(command, "zzz"))
         vesa_draw_string("Not implemented\n");
@@ -31,6 +31,6 @@ void exec_command(char *command) {
         write_time();
     else if (starts_with(command, "reboot"))
         reboot();
-    else
+    else if (command[0] != 0)
         vesa_draw_string("Command not found!\n");
 }

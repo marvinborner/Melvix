@@ -98,7 +98,7 @@ void set_optimal_resolution() {
 
     uint16_t highest = 0;
 
-    /*for (uint16_t *mode = video_modes; *mode != 0xFFFF; mode++) {
+    for (uint16_t *mode = video_modes; *mode != 0xFFFF; mode++) {
         struct vbe_mode_info *mode_info = vbe_get_mode_info(*mode);
 
         if (mode_info == 0 || (mode_info->attributes & 0x90) != 0x90 ||
@@ -125,7 +125,7 @@ void set_optimal_resolution() {
             vbe_bpl = mode_info->bpp >> 3;
             fb = (unsigned char *) mode_info->framebuffer;
         }
-    }*/
+    }
 
     if (highest == 0) {
         serial_write("Mode detection failed!\nTrying common modes...\n");

@@ -34,6 +34,9 @@ void kernel_main() {
     // Get hardware information
     get_smbios();
 
+    // Booting process complete - emulate newline key
+    vesa_keyboard_char('\n');
+
     // Setup initial ramdisk
     /*assert(mboot_ptr->mods_count > 0);
     uint32_t initrd_location = *((uint32_t *) mboot_ptr->mods_addr);

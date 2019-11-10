@@ -2,7 +2,7 @@
 #include <kernel/io/io.h>
 #include <kernel/graphics/vesa.h>
 
-int shift_pressed = 0;
+int shift_pressed;
 
 char keymap[128] = {
         0 /*E*/, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
@@ -101,5 +101,6 @@ void keyboard_rate() {
 void keyboard_install() {
     keyboard_rate();
     irq_install_handler(1, keyboard_handler);
+    shift_pressed = 0;
     info("Installed keyboard handler");
 }
