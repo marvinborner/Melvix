@@ -25,7 +25,7 @@ struct RSDPtr {
     uint32_t *rsdt_address;
 };
 
-struct FACP {
+struct FADT {
     char Signature[4];
     uint32_t Length;
     char unneded1[40 - 8];
@@ -43,6 +43,6 @@ struct FACP {
     char century;
 };
 
-extern struct FACP *facp;
+extern struct FADT *fadt;
 
 #endif

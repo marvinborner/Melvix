@@ -37,7 +37,7 @@ void read_rtc() {
     day = get_rtc_register(0x07);
     month = get_rtc_register(0x08);
     year = get_rtc_register(0x09);
-    century = get_rtc_register(facp->century);
+    century = get_rtc_register(fadt->century);
 
     // Try until the values are the same (fix for RTC updates)
     do {
@@ -56,7 +56,7 @@ void read_rtc() {
         day = get_rtc_register(0x07);
         month = get_rtc_register(0x08);
         year = get_rtc_register(0x09);
-        century = get_rtc_register(facp->century);
+        century = get_rtc_register(fadt->century);
     } while ((last_second != second) || (last_minute != minute) || (last_hour != hour) ||
              (last_day != day) || (last_month != month) || (last_year != year) ||
              (last_century != century));

@@ -1,3 +1,6 @@
+// Important specification: https://uefi.org/sites/default/files/resources/ACPI_6_2.pdf
+// HPET: https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/software-developers-hpet-spec-1-0a.pdf
+
 #include <kernel/io/io.h>
 #include <kernel/lib/lib.h>
 #include <kernel/timer/timer.h>
@@ -5,7 +8,7 @@
 #include <stddef.h>
 #include <kernel/system.h>
 
-struct FACP *facp;
+struct FADT *fadt;
 uint32_t *SMI_CMD;
 char ACPI_ENABLE;
 char ACPI_DISABLE;
@@ -61,21 +64,6 @@ unsigned int *acpi_get_rsd_ptr() {
     return NULL;
 }
 
-int acpi_check_header(unsigned int *ptr, char *sig) {
-    if (memcmp(ptr, sig, 4) == 0) {
-        char *checkPtr = (char *) ptr;
-        int len = *(ptr + 1);
-        char check = 0;
-        while (0 < len--) {
-            check += *checkPtr;
-            checkPtr++;
-        }
-        if (check == 0)
-            return 0;
-    }
-    return -1;
-}
-
 int acpi_enable() {
     if ((receive_w((unsigned int) PM1a_CNT) & SCI_EN) == 0) {
         if (SMI_CMD != 0 && ACPI_ENABLE != 0) {
@@ -96,12 +84,15 @@ int acpi_enable() {
             if (i < 300) {
                 return 0; // Successfully enabled ACPI
             } else {
+                serial_write("ACPI couldn't be enabled!\n");
                 return -1; // ACPI couldn't be enabled
             }
         } else {
+            serial_write("ACPI is not supported!\n");
             return -1; // ACPI is not supported
         }
     } else {
+        serial_write("ACPI was already enabled!\n");
         return 0; // ACPI was already enabled
     }
 }
@@ -109,24 +100,26 @@ int acpi_enable() {
 int acpi_install() {
     unsigned int *ptr = acpi_get_rsd_ptr();
 
-    if (ptr != NULL && acpi_check_header(ptr, "RSDT") == 0) {
-        int entrys = *(ptr + 1);
-        entrys = (entrys - 36) / 4;
+    int success = 0;
+
+    if (ptr != NULL && memcmp(ptr, "RSDT", 4) == 0) {
+        int entries = *(ptr + 1);
+        entries = (entries - 36) / 4;
         ptr += 36 / 4;
 
-        while (0 < entrys--) {
-            if (acpi_check_header((unsigned int *) *ptr, "FACP") == 0) {
-                entrys = -2;
-                facp = (struct FACP *) *ptr;
-                if (acpi_check_header((unsigned int *) facp->DSDT, "DSDT") == 0) {
-                    char *S5Addr = (char *) facp->DSDT + 36;
-                    int dsdt_length = *(facp->DSDT + 1) - 36;
+        while (0 < entries--) {
+            if (memcmp((unsigned int *) *ptr, "FACP", 4) == 0) {
+                fadt = (struct FADT *) *ptr;
+                if (memcmp((unsigned int *) fadt->DSDT, "DSDT", 4) == 0) {
+                    char *S5Addr = (char *) fadt->DSDT + 36;
+                    int dsdt_length = *(fadt->DSDT + 1) - 36;
                     while (0 < dsdt_length--) {
                         if (memcmp(S5Addr, "_S5_", 4) == 0)
                             break;
                         S5Addr++;
                     }
                     if (dsdt_length > 0) {
+                        // TODO: Implement device detection via DSDT ACPI (p199 -> AML)
                         if ((*(S5Addr - 1) == 0x08 || (*(S5Addr - 2) == 0x08 && *(S5Addr - 1) == '\\')) &&
                             *(S5Addr + 4) == 0x12) {
                             S5Addr += 5;
@@ -141,36 +134,42 @@ int acpi_install() {
                                 S5Addr++;
                             SLP_TYPb = *(S5Addr) << 10;
 
-                            SMI_CMD = facp->SMI_CMD;
+                            SMI_CMD = fadt->SMI_CMD;
 
-                            ACPI_ENABLE = facp->ACPI_ENABLE;
-                            ACPI_DISABLE = facp->ACPI_DISABLE;
+                            ACPI_ENABLE = fadt->ACPI_ENABLE;
+                            ACPI_DISABLE = fadt->ACPI_DISABLE;
 
-                            PM1a_CNT = facp->PM1a_CNT_BLK;
-                            PM1b_CNT = facp->PM1b_CNT_BLK;
+                            PM1a_CNT = fadt->PM1a_CNT_BLK;
+                            PM1b_CNT = fadt->PM1b_CNT_BLK;
 
-                            PM1_CNT_LEN = facp->PM1_CNT_LEN;
+                            PM1_CNT_LEN = fadt->PM1_CNT_LEN;
 
                             SLP_EN = 1 << 13;
                             SCI_EN = 1;
 
-                            vga_log("Installed ACPI", 5);
                             acpi_enable();
+                            vga_log("Installed ACPI", 5);
 
-                            return 0;
+                            success = 1;
                         } // Else: \_S5 parse error
                     } // Else: \_S5 not present
                 } // Else: DSDT invalid
             }
+            if (memcmp((unsigned int *) *ptr, "HPET", 4) == 0) {
+                serial_write("WHOA - found HPET!!!\n");
+            }
             ptr++;
-        } // Else: no valid FACP present
-    } // Else: No ACPI available
-    return -1;
+        } // Else: no valid FADT present
+    } else {
+        serial_write("ACPI is not supported!\n");
+    }
+
+    return success == 1 ? 0 : -1;
 }
 
 void acpi_poweroff() {
     if (SCI_EN == 0) {
-        serial_write("ACPI shutdown is not supported\n");
+        warn("ACPI shutdown is not supported\n");
         return;
     }
 
