@@ -8,7 +8,7 @@
     <a href="https://app.codacy.com/manual/marvin-borner/Melvix/dashboard" target="_blank">
         <img src="https://img.shields.io/codacy/grade/4ae29e218d7c439eaa549ea828ffcaac?style=for-the-badge" />
     </a>
-    <a href="https://marvinborner.de/melvix.iso" target="_blank">
+    <a href="https://marvinborner.de/melvix/" target="_blank">
         <img src="https://img.shields.io/badge/download-latest-brightgreen?style=for-the-badge" />
     </a>
 </p>
