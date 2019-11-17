@@ -156,7 +156,9 @@ int acpi_install() {
                 } // Else: DSDT invalid
             }
             if (memcmp((unsigned int *) *ptr, "HPET", 4) == 0) {
-                serial_write("WHOA - found HPET!!!\n");
+                hpet = (struct HPET *) *ptr;
+                serial_write(hpet->signature);
+                serial_write_hex((int) hpet->base_address);
             }
             ptr++;
         } // Else: no valid FADT present

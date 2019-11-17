@@ -18,16 +18,16 @@ void reboot();
 void acpi_poweroff();
 
 struct RSDPtr {
-    char Signature[8];
-    char CheckSum;
-    char OemID[6];
-    char Revision;
+    char signature[8];
+    char checksum;
+    char oem_id[6];
+    char revision;
     uint32_t *rsdt_address;
 };
 
 struct FADT {
-    char Signature[4];
-    uint32_t Length;
+    char signature[4];
+    uint32_t length;
     char unneded1[40 - 8];
     uint32_t *DSDT;
     char unneded2[48 - 44];
@@ -43,6 +43,14 @@ struct FADT {
     char century;
 };
 
-extern struct FADT *fadt;
+struct HPET {
+    char signature[4];
+    char unneeded[36];
+    char base_address[12];
+};
+
+struct FADT *fadt;
+
+struct HPET *hpet;
 
 #endif
