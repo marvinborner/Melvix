@@ -4,12 +4,12 @@
 #include <kernel/paging/paging.h>
 
 int liballoc_lock() {
-    asm volatile ("cli");
+    // asm volatile ("cli");
     return 0;
 }
 
 int liballoc_unlock() {
-    asm volatile ("sti");
+    // asm volatile ("sti");
     return 0;
 }
 

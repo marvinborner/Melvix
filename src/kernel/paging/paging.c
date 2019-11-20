@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <kernel/paging/paging.h>
 #include <kernel/system.h>
+#include <kernel/lib/lib.h>
 
 uint32_t page_directory[1024] __attribute__((aligned(4096)));
 uint32_t page_tables[1024][1024] __attribute__((aligned(4096)));
@@ -17,6 +18,7 @@ void paging_install() {
     }
 
     // TODO: Calculate max memory
+    // paging_set_present(0, memory_get_all() >> 2);
     paging_set_present(0, 0x1000000);
 
     paging_set_used(0, ((uint32_t) ASM_KERNEL_END >> 12) + 1);

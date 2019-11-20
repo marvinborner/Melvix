@@ -69,6 +69,8 @@ extern void isr30();
 
 extern void isr31();
 
+uint32_t ignored_isr[8] = {0};
+
 // Install ISRs in IDT
 void isrs_install() {
     idt_set_gate(0, (unsigned) isr0, 0x08, 0x8E);
@@ -151,7 +153,7 @@ const char *exception_messages[] = {
 
 // Master exception/interrupt/fault handler - halt via panic
 void fault_handler(struct regs *r) {
-    if (r->int_no < 32) {
+    if (r->int_no < 32 && !(ignored_isr[r->int_no / 32] & (1 << (r->int_no % 32)))) {
         uint32_t faulting_address;
         asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
 
@@ -176,3 +178,8 @@ void fault_handler(struct regs *r) {
         panic(message);
     }
 }
+
+
+void isr_ignore(uint8_t int_no) { ignored_isr[int_no / 32] |= 1 << (int_no % 32); }
+
+void isr_remember(uint8_t int_no) { ignored_isr[int_no / 32] &= ~(1 << (int_no % 32)); }

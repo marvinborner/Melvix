@@ -77,7 +77,7 @@ section .text
       pop  fs                                ; load fs from 16bit stack
       pop  es                                ; load es from 16bit stack
       pop  ds                                ; load ds from 16bit stack
-      sti                                    ; enable interrupts
+      ; sti                                    ; enable interrupts
       db 0xCD                                ; opcode of INT instruction with immediate byte
    ib: db 0x00
       cli                                    ; disable interrupts
@@ -113,7 +113,7 @@ section .text
       cld                                    ; clear direction flag (so we copy forward)
       rep  movsb                             ; do the actual copy (16bit stack to 32bit stack)
       popa                                   ; restore registers
-      sti                                    ; enable interrupts
+      ; sti                                    ; enable interrupts
       ret                                    ; return to caller
 
    resetpic:                                  ; reset's 8259 master and slave pic vectors

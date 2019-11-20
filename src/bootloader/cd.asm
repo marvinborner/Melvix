@@ -6,7 +6,6 @@ mov [bootDriveID], dl
 
 jmp start
 
-; The print function
 print:
     mov ah, 0x0E
     xor bh, bh

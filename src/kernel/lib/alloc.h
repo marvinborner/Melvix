@@ -1,6 +1,8 @@
 #ifndef MELVIX_ALLOC_H
 #define MELVIX_ALLOC_H
 
+#include <stddef.h>
+
 #define PREFIX(func) k ## func
 
 int liballoc_lock();

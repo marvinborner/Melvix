@@ -18,7 +18,7 @@ section .text
         mov esp, STACK_TOP
         push ebx
         push eax
-
+        cli
         call kernel_main
         cli
 

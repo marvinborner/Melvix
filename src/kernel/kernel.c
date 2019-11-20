@@ -6,15 +6,17 @@
 #include <kernel/paging/paging.h>
 #include <kernel/input/input.h>
 #include <kernel/acpi/acpi.h>
-#include <kernel/fs/initrd.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/smbios/smbios.h>
+#include <kernel/fs/install.h>
+#include <kernel/lib/lib.h>
 
 extern void switch_to_user();
 
 void kernel_main() {
     vga_log("Installing basic features of Melvix...", 0);
     // Install features
+    // memory_init();
     timer_install();
     gdt_install();
     init_serial();
@@ -36,6 +38,11 @@ void kernel_main() {
 
     // Booting process complete - emulate newline key
     vesa_keyboard_char('\n');
+
+    uint8_t boot_drive_id = (uint8_t) (*((uint8_t *) 0x9000));
+    if (boot_drive_id == 0xE0) {
+        install_melvix();
+    }
 
     // Setup initial ramdisk
     /*assert(mboot_ptr->mods_count > 0);

@@ -1,6 +1,8 @@
 #ifndef MELVIX_INTERRUPTS_H
 #define MELVIX_INTERRUPTS_H
 
+#include <stdint.h>
+
 /**
  * Initialize the Interrupt Descriptor Table with 256 entries
  */
@@ -19,6 +21,16 @@ void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, uns
  * Install 32 exception ISRs into the IDT
  */
 void isrs_install();
+
+/**
+ * Ignore interrupt
+ */
+void isr_ignore(uint8_t int_no);
+
+/**
+ * Un-ignore interrupt
+ */
+void isr_remember(uint8_t int_no);
 
 /**
  * Registers that get passed into an IRQ handler

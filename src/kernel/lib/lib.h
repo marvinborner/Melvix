@@ -2,6 +2,7 @@
 #define MELVIX_LIB_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 /**
  * Find the length of a string
@@ -66,5 +67,9 @@ void *memset(void *dest, char val, size_t count);
  * @return -1 if a < b, 0 if a = b and 1 if a > b
  */
 int memcmp(const void *a_ptr, const void *b_ptr, size_t size);
+
+void memory_init();
+
+uint32_t memory_get_all();
 
 #endif

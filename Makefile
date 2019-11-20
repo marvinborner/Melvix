@@ -28,19 +28,13 @@ build: clean
 	rm ./build/tmp; \
 	i686-elf-gcc -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin -std=gnu99 -ffreestanding -O2 -nostdlib ./build/*.o || exit; \
 
-	# Testing
-	if grub-file --is-x86-multiboot ./build/melvix.bin; then \
-		echo Multiboot confirmed; \
-	else \
-		echo Melvix has errors and won\'t be able to multi boot!; \
-		exit; \
-	fi; \
-
 	# Create ISO
 	mkdir -p ./iso/boot/; \
 	mv ./build/melvix.bin ./iso/boot/kernel.bin; \
-	nasm ./src/bootloader/loader.asm -f bin -o ./iso/boot/boot.bin || exit; \
-	genisoimage -no-emul-boot -b boot/boot.bin -o ./build/melvix.iso ./iso; \
+	nasm ./src/bootloader/cd.asm -f bin -o ./iso/boot/boot.bin || exit; \
+	nasm ./src/bootloader/hdd1.asm -f bin -o ./iso/boot/hdd1.bin || exit; \
+	nasm ./src/bootloader/hdd2.asm -f bin -o ./iso/boot/hdd2.bin || exit; \
+	genisoimage -no-emul-boot -b boot/boot.bin -o ./build/melvix.iso ./iso;
 
 cross:
 	@set -e; \
@@ -74,7 +68,8 @@ debug:
 	@rm -f qemu.log
 	@echo "Starting simulation"
 	@echo "[SERIAL OUTPUT]"
-	@qemu-system-x86_64 -no-reboot -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -d cpu_reset -D qemu.log -m 512M -cdrom ./build/melvix.iso
+	@head -c 10485760 /dev/zero > ./build/hdd10M.img
+	@qemu-system-x86_64 -no-reboot -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -d int,in_asm -D qemu.log -m 512M -cdrom ./build/melvix.iso -hda ./build/hdd10M.img
 	@echo "[END OF CONNECTION]"
 
 .PHONY: build clean cross test debug
