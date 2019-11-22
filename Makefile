@@ -18,7 +18,7 @@ build: clean
 	nasm -f elf ./src/kernel/boot.asm -o ./build/boot.o || exit; \
 
 	# Make all C files
-	find ./src/kernel/ ./src/userspace/ -name \*.c >./build/tmp; \
+	find ./src/kernel/ ./src/userspace/ ./src/mlibc/ -name \*.c >./build/tmp; \
 	while read -r line; do \
 		stripped=$$(echo "$${line}" | sed -r 's/\//_/g'); \
 		stripped=$${stripped#??????}; \
@@ -69,7 +69,7 @@ debug:
 	@echo "Starting simulation"
 	@echo "[SERIAL OUTPUT]"
 	@head -c 10485760 /dev/zero > ./build/hdd10M.img
-	@qemu-system-x86_64 -no-reboot -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -d int,in_asm -D qemu.log -m 512M -cdrom ./build/melvix.iso -hda ./build/hdd10M.img
+	@qemu-system-x86_64 -no-reboot -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -d int,in_asm -D qemu.log -m 128M -cdrom ./build/melvix.iso -hda ./build/hdd10M.img
 	@echo "[END OF CONNECTION]"
 
 .PHONY: build clean cross test debug
