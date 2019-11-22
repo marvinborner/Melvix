@@ -5,43 +5,6 @@
 #include <stdint.h>
 
 /**
- * Find the length of a string
- * @param str The string pointer which size should be calculated
- * @return The length of str
- */
-size_t strlen(const char *str);
-
-/**
- * Compare two strings
- * @param s1 The first string pointer
- * @param s2 The second string pointer
- * @return Non-zero if not equal
- */
-size_t strcmp(const char *s1, const char *s2);
-
-/**
- * Append the data of src to dest
- * @param dest The string destination pointer
- * @param src The string pointer that will get appended
- */
-void strcat(char *dest, const char *src);
-
-/**
- * Copy the data of src to dest
- * @param dest The copying destination pointer (gets replaced)
- * @param src The string pointer that will get copied
- */
-void strcpy(char *dest, const char *src);
-
-/**
- * Convert an integer to a char array (string)
- * @param i The integer
- * @param b The char array
- * @return The char pointer
- */
-char *itoa(int i, char b[]);
-
-/**
  * Copy n data from src to dest
  * @param dest The destination array pointer
  * @param src The source array pointer of the data

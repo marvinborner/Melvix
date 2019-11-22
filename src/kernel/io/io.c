@@ -2,6 +2,8 @@
 #include <kernel/lib/lib.h>
 #include <kernel/io/io.h>
 #include <kernel/system.h>
+#include <mlibc/string.h>
+#include <mlibc/stdlib.h>
 
 uint8_t receive_b(uint16_t port) {
     uint8_t value;
@@ -88,6 +90,6 @@ void serial_write_hex(int n) {
 }
 
 void serial_write_dec(int n) {
-    char string[16];
-    serial_write(itoa(n, string));
+    char *text = itoa(n);
+    serial_write(text);
 }

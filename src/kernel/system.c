@@ -1,7 +1,10 @@
 #include <kernel/timer/timer.h>
 #include <kernel/io/io.h>
 #include <kernel/graphics/vesa.h>
-#include <kernel/lib/lib.h>
+#include <mlibc/string.h>
+#include <mlibc/stdlib.h>
+#include <kernel/paging/paging.h>
+#include <kernel/interrupts/interrupts.h>
 
 char *vga_buffer = (char *) 0x500;
 
@@ -18,9 +21,8 @@ void vga_log(char *msg, int line) {
     for (size_t i = 0; i < strlen(msg); i++)
         terminal_buffer[line * 80 + i] = (uint16_t) msg[i] | (uint16_t) 0x700;
     char string[80];
-    char time[8];
     strcpy(string, "[");
-    strcat(string, itoa((int) get_time(), time));
+    strcat(string, itoa((int) get_time()));
     strcat(string, "] ");
     strcat(string, "INFORMATION: ");
     strcat(string, msg);
@@ -68,13 +70,24 @@ void panic(char *msg) {
     vesa_draw_string("PANIC: ");
     vesa_draw_string(msg);
     vesa_draw_string(" - System halted!\n");
-    loop:
-    asm volatile ("hlt");
-    goto loop;
+    halt_loop();
 }
 
 void assert(int x) {
     if (x == 0) {
         panic("Assertion failed");
     }
+}
+
+void halt_loop() {
+    serial_write("\n!!! HALT !!!\n");
+    loop:
+    asm volatile ("hlt");
+    goto loop;
+}
+
+void v86(uint8_t code, regs16_t *regs) {
+    paging_disable();
+    int32(code, regs);
+    paging_enable();
 }

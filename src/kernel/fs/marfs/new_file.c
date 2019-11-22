@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <kernel/fs/ata_pio.h>
-#include <kernel/lib/alloc.h>
-#include "marfs.h"
+#include <mlibc/stdlib.h>
+#include <kernel/fs/marfs/marfs.h>
 
 static uint8_t last_maxlevel = 0;
 

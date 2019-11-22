@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <kernel/fs/ata_pio.h>
-#include "marfs.h"
+#include <kernel/fs/marfs/marfs.h>
 
 void marfs_format(void) {
     // Create superblock

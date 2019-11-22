@@ -157,8 +157,8 @@ int acpi_install() {
             }
             if (memcmp((unsigned int *) *ptr, "HPET", 4) == 0) {
                 hpet = (struct HPET *) *ptr;
-                serial_write(hpet->signature);
-                serial_write_hex((int) hpet->base_address);
+                // serial_write(hpet->signature);
+                // serial_write_hex((int) hpet->base_address);
             }
             ptr++;
         } // Else: no valid FADT present
@@ -194,7 +194,5 @@ void reboot() {
     while (good & 0x02)
         good = receive_b(0x64);
     send_b(0x64, 0xFE);
-    loop:
-    asm volatile ("hlt");
-    goto loop;
+    halt_loop();
 }

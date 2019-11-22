@@ -1,9 +1,9 @@
 #include <kernel/graphics/vesa.h>
 #include <kernel/fs/ata_pio.h>
 #include <kernel/fs/marfs/marfs.h>
-#include <kernel/lib/alloc.h>
 #include <kernel/fs/iso9660/iso9660.h>
-#include "atapi_pio.h"
+#include <kernel/fs/atapi_pio.h>
+#include <mlibc/stdlib.h>
 
 void install_melvix() {
     info("You're booting from a CD, Melvix will only run after an install");

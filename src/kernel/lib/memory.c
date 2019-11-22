@@ -1,7 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <kernel/paging/paging.h>
-#include <kernel/io/io.h>
 
 void *memcpy(void *dest, const void *src, size_t count) {
     const char *sp = (const char *) src;
@@ -51,7 +50,6 @@ void memory_init() {
     }
     total_memory = maxbase + maxlength;
     total_memory /= 1024;
-    serial_write_dec(total_memory);
 }
 
 uint32_t memory_get_free() {

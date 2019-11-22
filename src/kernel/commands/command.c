@@ -4,6 +4,7 @@
 #include <kernel/graphics/vesa.h>
 #include <kernel/cmos/rtc.h>
 #include <kernel/timer/timer.h>
+#include <mlibc/string.h>
 
 int32_t starts_with(const char *a, const char *b) {
     size_t length_pre = strlen(b);
@@ -25,7 +26,7 @@ void exec_command(char *command) {
     else if (starts_with(command, "zzz"))
         vesa_draw_string("Not implemented\n");
     else if (starts_with(command, "time")) {
-        vesa_draw_number(get_time());
+        vesa_draw_number((int) get_time());
         vesa_draw_string("\n");
     } else if (starts_with(command, "date"))
         write_time();

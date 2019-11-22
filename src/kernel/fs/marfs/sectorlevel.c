@@ -1,7 +1,7 @@
 #include <stdint.h>
-#include <kernel/lib/alloc.h>
+#include <mlibc/stdlib.h>
 #include <kernel/fs/ata_pio.h>
-#include "marfs.h"
+#include <kernel/fs/marfs/marfs.h>
 
 uint8_t marfs_init(struct ATA_INTERFACE *_iface) {
     iface = _iface;

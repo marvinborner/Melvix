@@ -21,6 +21,8 @@
 #define PT_GLOBAL   1 << 8
 #define PT_USED     1 << 9
 
+int paging_enabled;
+
 void paging_install();
 
 void paging_enable();

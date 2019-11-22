@@ -4,7 +4,7 @@
 /**
  * The kernel end
  */
-extern void *ASM_KERNEL_END;
+extern void ASM_KERNEL_END();
 
 /**
  * Initialize the basic features of the OS
@@ -75,5 +75,17 @@ void panic(char *msg);
  * @param x The value
  */
 void assert(int x);
+
+/**
+ * Creates an infinite halt loop
+ */
+void halt_loop();
+
+/**
+ * Executes int32 with paging disable/enable
+ * @param code The interrupt code
+ * @param regs The registers
+ */
+void v86(uint8_t code, regs16_t *regs);
 
 #endif

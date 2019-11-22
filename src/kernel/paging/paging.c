@@ -1,8 +1,10 @@
 #include <stdint.h>
 #include <kernel/paging/paging.h>
 #include <kernel/system.h>
+#include <kernel/io/io.h>
 #include <kernel/lib/lib.h>
 
+int paging_enabled = 0;
 uint32_t page_directory[1024] __attribute__((aligned(4096)));
 uint32_t page_tables[1024][1024] __attribute__((aligned(4096)));
 
@@ -18,19 +20,12 @@ void paging_install() {
     }
 
     // TODO: Calculate max memory
-    // paging_set_present(0, memory_get_all() >> 2);
-    paging_set_present(0, 0x1000000);
-
-    paging_set_used(0, ((uint32_t) ASM_KERNEL_END >> 12) + 1);
+    paging_set_present(0, memory_get_all() >> 2); // /4
+    paging_set_used(0, ((uint32_t) ASM_KERNEL_END >> 12) + 1); // /4096
 
     paging_enable();
+    serial_write_dec(memory_get_all() / 1024);
     vga_log("Installed paging", 4);
-}
-
-int paging_enabled() {
-    uint32_t cr0;
-    asm volatile("mov %%cr0, %0": "=r"(cr0));
-    return (cr0 | 0x80000000) == cr0;
 }
 
 void paging_disable() {
@@ -38,6 +33,7 @@ void paging_disable() {
     asm volatile("mov %%cr0, %0": "=r"(cr0));
     cr0 &= 0x7fffffff;
     asm volatile("mov %0, %%cr0"::"r"(cr0));
+    paging_enabled = 0;
 }
 
 void paging_enable() {
@@ -46,6 +42,7 @@ void paging_enable() {
     asm volatile("mov %%cr0, %0": "=r"(cr0));
     cr0 |= 0x80000000;
     asm volatile("mov %0, %%cr0"::"r"(cr0));
+    paging_enabled = 1;
 }
 
 inline void invlpg(uint32_t addr) {

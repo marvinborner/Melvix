@@ -1,8 +1,7 @@
 #include <stdint.h>
 #include <kernel/fs/ata_pio.h>
-#include <kernel/lib/alloc.h>
-#include <kernel/lib/lib.h>
-#include "marfs.h"
+#include <mlibc/stdlib.h>
+#include <kernel/fs/marfs/marfs.h>
 
 uint32_t marfs_new_dir(uint32_t uid) { return marfs_new_file(0, 0, uid, 0, 1); }
 

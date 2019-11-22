@@ -19,9 +19,7 @@ void ATAPI_read(uint16_t nblocks, uint32_t lba) {
     regs.ds = 0;
     regs.si = ATAPI_PIO_DAPACK;
 
-    paging_disable();
-    int32(LBA_READ_INT, &regs);
-    paging_enable();
+    v86(LBA_READ_INT, &regs);
 }
 
 void ATAPI_granular_read(uint32_t nblocks, uint32_t lba, uint8_t *output) {

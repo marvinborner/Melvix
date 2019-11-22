@@ -3,6 +3,7 @@
 #include <kernel/lib/lib.h>
 #include <kernel/system.h>
 #include <kernel/io/io.h>
+#include <mlibc/string.h>
 
 // Defined in isr.asm
 extern void isr0();
@@ -175,6 +176,7 @@ void fault_handler(struct regs *r) {
         serial_write_hex(r->err_code);
         char *message = (char *) exception_messages[r->int_no];
         strcat(message, " Exception");
+        if (r->err_code == 2) halt_loop(); // Idk loop?
         panic(message);
     }
 }

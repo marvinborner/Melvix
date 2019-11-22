@@ -4,7 +4,7 @@
 #include <kernel/lib/lib.h>
 #include <kernel/paging/paging.h>
 #include <kernel/system.h>
-#include <kernel/lib/alloc.h>
+#include <mlibc/stdlib.h>
 #include <kernel/commands/command.h>
 
 void switch_to_vga() {
@@ -22,9 +22,7 @@ struct edid_data get_edid() {
     regs.bx = 0x1; // BL
     regs.es = 0;
     regs.di = 0x7E00;
-    paging_disable();
-    int32(0x10, &regs);
-    paging_enable();
+    v86(0x10, &regs);
 
     if ((regs.ax & 0xFF) != 0x4F) {
         warn("No EDID available!");
@@ -40,9 +38,7 @@ void vbe_set_mode(unsigned short mode) {
     regs.ax = 0x4F02;
     regs.bx = mode;
     regs.bx |= 0x4000;
-    paging_disable();
-    int32(0x10, &regs);
-    paging_enable();
+    v86(0x10, &regs);
 
     if (regs.ax != 0x004F)
         switch_to_vga();
@@ -57,9 +53,7 @@ uint16_t *vbe_get_modes() {
     regs.ax = 0x4F00;
     regs.es = 0;
     regs.di = 0x7E00;
-    paging_disable();
-    int32(0x10, &regs);
-    paging_enable();
+    v86(0x10, &regs);
 
     struct vbe_info *info = (struct vbe_info *) info_address;
 
@@ -79,9 +73,7 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
     regs.cx = mode;
     regs.es = 0;
     regs.di = 0x7E00;
-    paging_disable();
-    int32(0x10, &regs);
-    paging_enable();
+    v86(0x10, &regs);
 
     struct vbe_mode_info *mode_info = (struct vbe_mode_info *) 0x7E00;
 
@@ -337,8 +329,7 @@ void vesa_draw_string(const char *data) {
 }
 
 void vesa_draw_number(int n) {
-    char string[16];
-    vesa_draw_string(itoa(n, string));
+    vesa_draw_string(itoa(n));
 }
 
 char *prev = 0;

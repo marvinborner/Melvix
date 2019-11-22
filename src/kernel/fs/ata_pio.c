@@ -1,5 +1,5 @@
 #include <kernel/io/io.h>
-#include <kernel/lib/alloc.h>
+#include <mlibc/stdlib.h>
 #include <kernel/fs/ata_pio.h>
 #include <kernel/interrupts/interrupts.h>
 

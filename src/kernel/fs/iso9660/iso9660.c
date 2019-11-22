@@ -2,7 +2,7 @@
 #include <kernel/lib/lib.h>
 #include <kernel/fs/atapi_pio.h>
 #include <kernel/fs/iso9660/iso9660.h>
-#include <kernel/lib/alloc.h>
+#include <mlibc/stdlib.h>
 
 struct ISO9660_entity *ISO9660_get(char **dirs, uint8_t dirs_sz) {
     ATAPI_read(1, 0x10);
