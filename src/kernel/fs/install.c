@@ -60,6 +60,6 @@ void install_melvix() {
     kfree(kernel_e);
 
     info("Installation successful!");
-    serial_write("Installation successful!\nRebooting...\n\n");
+    serial_write("Installation successful!\nRebooting...\n");
     acpi_poweroff();
 }

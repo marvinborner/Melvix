@@ -67,9 +67,12 @@ test: build debug
 debug:
 	@rm -f qemu.log
 	@echo "Starting simulation"
-	@echo "[SERIAL OUTPUT]"
 	@head -c 10485760 /dev/zero > ./build/hdd10M.img
+	@echo "[SERIAL OUTPUT]"
 	@qemu-system-x86_64 -no-reboot -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -m 128M -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
+	@echo "[END OF CONNECTION]"
+	@printf "\n"
+	@echo "[SERIAL OUTPUT]"
 	@qemu-system-x86_64 -no-reboot -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -m 128M -drive file=./build/hdd10M.img,format=raw
 	@echo "[END OF CONNECTION]"
 

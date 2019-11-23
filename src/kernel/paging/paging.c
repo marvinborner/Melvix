@@ -19,12 +19,11 @@ void paging_install() {
         page_directory[i] = ((uint32_t) page_tables[i]) | PD_RW | PD_PRESENT;
     }
 
-    // TODO: Calculate max memory
     paging_set_present(0, memory_get_all() >> 2); // /4
     paging_set_used(0, ((uint32_t) ASM_KERNEL_END >> 12) + 1); // /4096
 
     paging_enable();
-    serial_write_dec(memory_get_all() / 1024);
+    serial_write_dec(memory_get_all() >> 10);
     vga_log("Installed paging", 5);
 }
 

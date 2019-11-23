@@ -170,6 +170,7 @@ int acpi_install() {
 }
 
 void acpi_poweroff() {
+    asm volatile ("cli");
     if (SCI_EN == 0) {
         warn("ACPI shutdown is not supported\n");
         return;
@@ -184,8 +185,6 @@ void acpi_poweroff() {
         send_w(0x604, 0x2000); // QEMU
         send_w(0x4004, 0x3400); // VirtualBox
     }
-
-    serial_write("Shutdown failed\n");
 }
 
 void reboot() {
