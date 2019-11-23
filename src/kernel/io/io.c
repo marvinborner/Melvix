@@ -90,6 +90,5 @@ void serial_write_hex(int n) {
 }
 
 void serial_write_dec(int n) {
-    char *text = itoa(n);
-    serial_write(text);
+    serial_write(itoa(n));
 }

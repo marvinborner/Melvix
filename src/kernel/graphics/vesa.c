@@ -64,6 +64,10 @@ uint16_t *vbe_get_modes() {
     size_t number_modes = 1;
     for (uint16_t *p = mode_ptr; *p != 0xFFFF; p++) number_modes++;
 
+    uint16_t *ret = kmalloc(sizeof(uint16_t) * number_modes);
+    for (size_t i = 0; i < number_modes; i++)
+        ret[i] = ((uint16_t *) info->video_modes)[i];
+
     return mode_ptr;
 }
 
@@ -74,12 +78,20 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
     regs.es = 0;
     regs.di = 0x7E00;
     v86(0x10, &regs);
-
-    struct vbe_mode_info *mode_info = (struct vbe_mode_info *) 0x7E00;
-
     if (regs.ax != 0x004f) return 0;
 
-    return mode_info;
+    struct vbe_mode_info_all *mode_info = (struct vbe_mode_info_all *) 0x7E00;
+
+    struct vbe_mode_info *ret = (struct vbe_mode_info *) kmalloc(sizeof(struct vbe_mode_info));
+    ret->attributes = mode_info->attributes;
+    ret->pitch = mode_info->pitch;
+    ret->width = mode_info->width;
+    ret->height = mode_info->height;
+    ret->bpp = mode_info->bpp;
+    ret->memory_model = mode_info->memory_model;
+    ret->framebuffer = mode_info->framebuffer;
+
+    return ret;
 }
 
 void set_optimal_resolution() {
@@ -94,8 +106,10 @@ void set_optimal_resolution() {
         struct vbe_mode_info *mode_info = vbe_get_mode_info(*mode);
 
         if (mode_info == 0 || (mode_info->attributes & 0x90) != 0x90 ||
-            (mode_info->memory_model != 4 && mode_info->memory_model != 6))
+            (mode_info->memory_model != 4 && mode_info->memory_model != 6)) {
+            kfree(mode_info);
             continue;
+        }
 
         serial_write("Found mode: (");
         serial_write_hex(*mode);
@@ -117,7 +131,10 @@ void set_optimal_resolution() {
             vbe_bpl = mode_info->bpp >> 3;
             fb = (unsigned char *) mode_info->framebuffer;
         }
+        kfree(mode_info);
     }
+
+    kfree(video_modes);
 
     if (highest == 0) {
         serial_write("Mode detection failed!\nTrying common modes...\n");
@@ -142,11 +159,12 @@ void set_optimal_resolution() {
         for (size_t i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
             mode_info = vbe_get_mode_info(modes[i]);
             if (mode_info == 0 || (mode_info->attributes & 0x90) != 0x90 ||
-                (mode_info->memory_model != 4 && mode_info->memory_model != 6))
+                (mode_info->memory_model != 4 && mode_info->memory_model != 6)) {
+                kfree(mode_info);
                 continue;
+            }
 
-            if ((mode_info->width > vbe_width ||
-                 (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl))) {
+            if ((mode_info->width > vbe_width || (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl))) {
                 highest = modes[i];
                 vbe_width = mode_info->width;
                 vbe_height = mode_info->height;
@@ -154,6 +172,7 @@ void set_optimal_resolution() {
                 vbe_bpl = mode_info->bpp >> 3;
                 fb = (unsigned char *) mode_info->framebuffer;
             }
+            kfree(mode_info);
         }
 
         // Everything else failed :(
@@ -162,6 +181,10 @@ void set_optimal_resolution() {
     } else vga_log("Mode detection succeeded", 11);
 
     vbe_set_mode(highest);
+
+    uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
+    for (uint32_t z = 0; z < fb_size; z += 4096)
+        paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
 
     if (vbe_height > 1440) vesa_set_font(32);
     else if (vbe_height > 720) vesa_set_font(24);
@@ -183,11 +206,6 @@ void set_optimal_resolution() {
     vesa_draw_number(vbe_height);
     vesa_draw_string("x");
     vesa_draw_number(vbe_bpl << 3);
-
-    uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
-    for (uint32_t z = 0; z < fb_size; z += 4096)
-        paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
-
 }
 
 const uint32_t default_text_color = vesa_white;

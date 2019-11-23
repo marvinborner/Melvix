@@ -53,7 +53,7 @@ void memory_init() {
 }
 
 uint32_t memory_get_free() {
-    return (total_memory) - paging_get_used_pages() * 4;
+    return total_memory - paging_get_used_pages() * 4;
 }
 
 uint32_t memory_get_all() { return total_memory; }
