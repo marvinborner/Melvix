@@ -25,7 +25,7 @@ void paging_install() {
 
     paging_enable();
     serial_write_dec(memory_get_all() / 1024);
-    vga_log("Installed paging", 4);
+    vga_log("Installed paging", 5);
 }
 
 void paging_disable() {

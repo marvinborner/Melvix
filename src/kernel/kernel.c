@@ -19,8 +19,8 @@ void kernel_main() {
     memory_init();
     gdt_install();
     init_serial();
+    acpi_install();
     paging_install();
-    // acpi_install();
     idt_install();
     isrs_install();
     irq_install();
@@ -62,5 +62,7 @@ void kernel_main() {
     */
 
     // asm volatile  ("div %0" :: "r"(0)); // Exception testing x/0
-    halt_loop();
+    loop:
+    asm volatile ("hlt");
+    goto loop;
 }

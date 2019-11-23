@@ -4,6 +4,8 @@
 #include <kernel/fs/iso9660/iso9660.h>
 #include <kernel/fs/atapi_pio.h>
 #include <mlibc/stdlib.h>
+#include <kernel/acpi/acpi.h>
+#include <kernel/io/io.h>
 
 void install_melvix() {
     info("You're booting from a CD, Melvix will only run after an install");
@@ -58,4 +60,6 @@ void install_melvix() {
     kfree(kernel_e);
 
     info("Installation successful!");
+    serial_write("Installation successful!\nRebooting...\n\n");
+    acpi_poweroff();
 }

@@ -268,7 +268,7 @@ void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const uint32_t color[3]
 }
 
 void vesa_clear() {
-    vesa_draw_rectangle(0, 0, vbe_width, vbe_height, terminal_background);
+    vesa_draw_rectangle(0, 0, vbe_width - 1, vbe_height - 1, terminal_background);
     terminal_x = 0;
     terminal_y = 0;
 }
