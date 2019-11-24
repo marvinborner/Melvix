@@ -31,10 +31,10 @@ build: clean
 	# Create ISO
 	mkdir -p ./iso/boot/; \
 	mv ./build/melvix.bin ./iso/boot/kernel.bin; \
-	nasm ./src/bootloader/cd.asm -f bin -o ./iso/boot/boot.bin || exit; \
+	nasm ./src/bootloader/cd.asm -f bin -o ./iso/boot/cd.bin || exit; \
 	nasm ./src/bootloader/hdd1.asm -f bin -o ./iso/boot/hdd1.bin || exit; \
 	nasm ./src/bootloader/hdd2.asm -f bin -o ./iso/boot/hdd2.bin || exit; \
-	genisoimage -no-emul-boot -b boot/boot.bin -o ./build/melvix.iso ./iso;
+	genisoimage -no-emul-boot -b boot/cd.bin -o ./build/melvix.iso ./iso;
 
 cross:
 	@set -e; \
@@ -64,16 +64,31 @@ cross:
 
 test: build debug
 
+QEMU_OPTIONS := -no-reboot -vga std -smp $$(nproc) -serial stdio -rtc base=localtime -m 256M
+
 debug:
-	@rm -f qemu.log
-	@echo "Starting simulation"
+	@echo "Starting simulation..."
 	@head -c 10485760 /dev/zero > ./build/hdd10M.img
 	@echo "[SERIAL OUTPUT]"
-	@qemu-system-x86_64 -no-reboot -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -m 128M -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
+	@qemu-system-x86_64 ${QEMU_OPTIONS} -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
 	@echo "[END OF CONNECTION]"
 	@printf "\n"
 	@echo "[SERIAL OUTPUT]"
-	@qemu-system-x86_64 -no-reboot -M accel=kvm:tcg -vga std -serial stdio -rtc base=localtime -m 128M -drive file=./build/hdd10M.img,format=raw
+	@qemu-system-x86_64 ${QEMU_OPTIONS} -drive file=./build/hdd10M.img,format=raw
 	@echo "[END OF CONNECTION]"
 
-.PHONY: build clean cross test debug
+debugHDD:
+	@echo "Starting simulation..."
+	@echo "[SERIAL OUTPUT]"
+	@qemu-system-x86_64 ${QEMU_OPTIONS} -drive file=./build/hdd10M.img,format=raw
+	@echo "[END OF CONNECTION]"
+
+bochs: build
+	@head -c 10485760 /dev/zero > ./build/hdd10M.img
+	@qemu-system-x86_64 ${QEMU_OPTIONS} -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
+	@bochs -f bochs.txt
+
+bochsHDD:
+	@bochs -f bochs.txt
+
+.PHONY: build clean cross test debug debugHDD bochs bochsHDD
