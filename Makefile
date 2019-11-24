@@ -8,10 +8,11 @@ export PATH := $(PREFIX)/bin:$(PATH)
 
 clean:
 	@-rm -rf ./build ./iso
-	@echo Cleaned build directory
+	@echo "Cleaned build directory"
 
 build: clean
 	@set -e; \
+	echo "Building..."; \
 	mkdir ./build/; \
 
 	# Assemble ASM files
@@ -34,7 +35,7 @@ build: clean
 	nasm ./src/bootloader/cd.asm -f bin -o ./iso/boot/cd.bin || exit; \
 	nasm ./src/bootloader/hdd1.asm -f bin -o ./iso/boot/hdd1.bin || exit; \
 	nasm ./src/bootloader/hdd2.asm -f bin -o ./iso/boot/hdd2.bin || exit; \
-	genisoimage -no-emul-boot -b boot/cd.bin -o ./build/melvix.iso ./iso;
+	genisoimage -quiet -input-charset utf-8 -no-emul-boot -b boot/cd.bin -o ./build/melvix.iso ./iso;
 
 cross:
 	@set -e; \

@@ -3,13 +3,14 @@
 #include <kernel/system.h>
 #include <kernel/paging/paging.h>
 
-void ATAPI_read(uint16_t nblocks, uint32_t lba) {
+void ATAPI_read(uint16_t nblocks, uint32_t lba)
+{
     struct dapack *d = (struct dapack *) ATAPI_PIO_DAPACK;
     d->size = 0x10;
     d->null = 0x00;
-    d->blkcount = nblocks;
-    d->boffset = ATAPI_PIO_BUFFER;
-    d->bsegment = 0x0000;
+    d->blk_count = nblocks;
+    d->b_offset = ATAPI_PIO_BUFFER;
+    d->b_segment = 0x0000;
     d->start = lba;
     d->upper_lba_bits = 0x00000000;
 
@@ -22,7 +23,8 @@ void ATAPI_read(uint16_t nblocks, uint32_t lba) {
     v86(LBA_READ_INT, &regs);
 }
 
-void ATAPI_granular_read(uint32_t nblocks, uint32_t lba, uint8_t *output) {
+void ATAPI_granular_read(uint32_t nblocks, uint32_t lba, uint8_t *output)
+{
     for (uint32_t i = 0; i < nblocks; i++) {
         ATAPI_read(1, lba + i);
         for (uint16_t j = 0; j < ATAPI_SECTOR_SIZE; j++) output[j + (2048 * i)] = ((uint8_t *) ATAPI_PIO_BUFFER)[j];

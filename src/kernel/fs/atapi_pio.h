@@ -12,9 +12,9 @@
 struct dapack {
     uint8_t size;
     uint8_t null;
-    uint16_t blkcount;
-    uint16_t boffset;
-    uint16_t bsegment;
+    uint16_t blk_count;
+    uint16_t b_offset;
+    uint16_t b_segment;
     uint32_t start;
     uint32_t upper_lba_bits;
 } __attribute__((packed));

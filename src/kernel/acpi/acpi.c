@@ -20,16 +20,17 @@ int SLP_EN;
 int SCI_EN;
 char PM1_CNT_LEN;
 
-unsigned int *acpi_check_rsd_ptr(unsigned int *ptr) {
+unsigned int *acpi_check_rsd_ptr(unsigned int *ptr)
+{
     char *sig = "RSD PTR ";
-    struct RSDPtr *rsdp = (struct RSDPtr *) ptr;
+    struct RSD_ptr *rsdp = (struct RSD_ptr *) ptr;
     char *bptr;
     char check = 0;
     unsigned int i;
 
     if (memcmp(sig, rsdp, 8) == 0) {
         bptr = (char *) ptr;
-        for (i = 0; i < sizeof(struct RSDPtr); i++) {
+        for (i = 0; i < sizeof(struct RSD_ptr); i++) {
             check += *bptr;
             bptr++;
         }
@@ -42,7 +43,8 @@ unsigned int *acpi_check_rsd_ptr(unsigned int *ptr) {
     return NULL;
 }
 
-unsigned int *acpi_get_rsd_ptr() {
+unsigned int *acpi_get_rsd_ptr()
+{
     unsigned int *addr;
     unsigned int *rsdp;
 
@@ -64,20 +66,21 @@ unsigned int *acpi_get_rsd_ptr() {
     return NULL;
 }
 
-int acpi_enable() {
-    if ((receive_w((unsigned int) PM1a_CNT) & SCI_EN) == 0) {
+int acpi_enable()
+{
+    if ((inw((unsigned int) PM1a_CNT) & SCI_EN) == 0) {
         if (SMI_CMD != 0 && ACPI_ENABLE != 0) {
-            send_b((unsigned int) SMI_CMD, ACPI_ENABLE); // Enable ACPI
+            outb((unsigned int) SMI_CMD, ACPI_ENABLE); // Enable ACPI
             // Try 3s until ACPI is enabled
             int i;
             for (i = 0; i < 300; i++) {
-                if ((receive_w((unsigned int) PM1a_CNT) & SCI_EN) == 1)
+                if ((inw((unsigned int) PM1a_CNT) & SCI_EN) == 1)
                     break;
                 timer_wait(1);
             }
             if (PM1b_CNT != 0)
                 for (; i < 300; i++) {
-                    if ((receive_w((unsigned int) PM1b_CNT) & SCI_EN) == 1)
+                    if ((inw((unsigned int) PM1b_CNT) & SCI_EN) == 1)
                         break;
                     timer_wait(1);
                 }
@@ -97,7 +100,8 @@ int acpi_enable() {
     }
 }
 
-int acpi_install() {
+int acpi_install()
+{
     unsigned int *ptr = acpi_get_rsd_ptr();
 
     int success = 0;
@@ -109,7 +113,7 @@ int acpi_install() {
 
         while (0 < entries--) {
             if (memcmp((unsigned int *) *ptr, "FACP", 4) == 0) {
-                fadt = (struct FADT *) *ptr;
+                fadt = (struct FADT *) *ptr; // TODO: Allocate ACPI tables after paging (page fault)!
                 if (memcmp((unsigned int *) fadt->DSDT, "DSDT", 4) == 0) {
                     char *S5Addr = (char *) fadt->DSDT + 36;
                     int dsdt_length = *(fadt->DSDT + 1) - 36;
@@ -148,7 +152,7 @@ int acpi_install() {
                             SCI_EN = 1;
 
                             acpi_enable();
-                            vga_log("Installed ACPI", 4);
+                            vga_log("Installed ACPI", 3);
 
                             success = 1;
                         } // Else: \_S5 parse error
@@ -169,29 +173,31 @@ int acpi_install() {
     return success == 1 ? 0 : -1;
 }
 
-void acpi_poweroff() {
-    asm volatile ("cli");
+void acpi_poweroff()
+{
+    asm ("cli");
     if (SCI_EN == 0) {
         warn("ACPI shutdown is not supported\n");
         return;
     }
 
     // Send shutdown command
-    send_w((unsigned int) PM1a_CNT, SLP_TYPa | SLP_EN);
+    outw((unsigned int) PM1a_CNT, SLP_TYPa | SLP_EN);
     if (PM1b_CNT != 0)
-        send_w((unsigned int) PM1b_CNT, SLP_TYPb | SLP_EN);
+        outw((unsigned int) PM1b_CNT, SLP_TYPb | SLP_EN);
     else {
-        send_w(0xB004, 0x2000); // Bochs
-        send_w(0x604, 0x2000); // QEMU
-        send_w(0x4004, 0x3400); // VirtualBox
+        outw(0xB004, 0x2000); // Bochs
+        outw(0x604, 0x2000); // QEMU
+        outw(0x4004, 0x3400); // VirtualBox
     }
 }
 
-void reboot() {
-    asm volatile ("cli");
+void reboot()
+{
+    asm ("cli");
     uint8_t good = 0x02;
     while (good & 0x02)
-        good = receive_b(0x64);
-    send_b(0x64, 0xFE);
+        good = inb(0x64);
+    outb(0x64, 0xFE);
     halt_loop();
 }

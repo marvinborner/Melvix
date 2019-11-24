@@ -9,18 +9,21 @@ unsigned char day;
 unsigned char month;
 unsigned int year;
 
-int get_update_in_progress_flag() {
-    send_b(0x70, 0x0A);
-    return (receive_b(0x71) & 0x80);
+int get_update_in_progress_flag()
+{
+    outb(0x70, 0x0A);
+    return (inb(0x71) & 0x80);
 }
 
-unsigned char get_rtc_register(int reg) {
-    send_b(0x70, reg);
-    return receive_b(0x71);
+unsigned char get_rtc_register(int reg)
+{
+    outb(0x70, reg);
+    return inb(0x71);
 }
 
-void read_rtc() {
-    unsigned int century;
+void read_rtc()
+{
+    unsigned int century = 20; // ...
     unsigned char last_second;
     unsigned char last_minute;
     unsigned char last_hour;
@@ -37,7 +40,7 @@ void read_rtc() {
     day = get_rtc_register(0x07);
     month = get_rtc_register(0x08);
     year = get_rtc_register(0x09);
-    century = get_rtc_register(fadt->century);
+    // century = get_rtc_register(fadt->century); // TODO: Fix fadt table (page fault!)
 
     // Try until the values are the same (fix for RTC updates)
     do {
@@ -56,7 +59,7 @@ void read_rtc() {
         day = get_rtc_register(0x07);
         month = get_rtc_register(0x08);
         year = get_rtc_register(0x09);
-        century = get_rtc_register(fadt->century);
+        // century = get_rtc_register(fadt->century);
     } while ((last_second != second) || (last_minute != minute) || (last_hour != hour) ||
              (last_day != day) || (last_month != month) || (last_year != year) ||
              (last_century != century));
@@ -70,7 +73,7 @@ void read_rtc() {
         day = (day & 0x0F) + ((day / 16) * 10);
         month = (month & 0x0F) + ((month / 16) * 10);
         year = (year & 0x0F) + ((year / 16) * 10);
-        century = (century & 0x0F) + ((century / 16) * 10);
+        // century = (century & 0x0F) + ((century / 16) * 10);
     }
 
     year += century * 100;
@@ -81,7 +84,8 @@ void read_rtc() {
     }
 }
 
-void write_time() {
+void write_time()
+{
     read_rtc();
     vesa_draw_string("Current time: ");
     vesa_draw_number(hour);

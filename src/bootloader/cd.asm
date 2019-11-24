@@ -159,7 +159,7 @@ checkA20:
         ret
 
 welcome db "Melvix", 0x0A, 0x0D, 0x00
-nolba db "BIOS lacks support for LBA addressing.", 0x00
+nolba db "BIOS lacks support for lba addressing.", 0x00
 noboot db "Boot directory could not be found.", 0x00
 noa20 db "A20 could not be enabled.", 0
 loading db "Loading kernel...", 0x0A, 0x0D, 0x00
@@ -169,7 +169,7 @@ nomem db "BIOS does not support memory detection!", 0
 memno20 db "BIOS returns memory detection with 24 bytes. This has never been seen!", 0
 
 start:
-    ; Check if LBA is supported by the BIOS.
+    ; Check if lba is supported by the BIOS.
     mov ah, 0x41
     mov bx, 0x55AA
     int 0x13

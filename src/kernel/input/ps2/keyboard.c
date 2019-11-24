@@ -64,12 +64,13 @@ char shift_keymap[128] = {
         0, // Other keys
 };
 
-void keyboard_handler(struct regs *r) {
+void keyboard_handler(struct regs *r)
+{
     unsigned char scan_code;
     char *current_keymap = keymap;
     if (shift_pressed) current_keymap = shift_keymap;
 
-    scan_code = receive_b(0x60);
+    scan_code = inb(0x60);
 
     if ((scan_code & 0x80) == 0) { // PRESS
         // TODO: Fix caps lock deactivation when pressing shift while shifted
@@ -87,18 +88,21 @@ void keyboard_handler(struct regs *r) {
     }
 }
 
-void keyboard_acknowledge() {
-    while (receive_b(0x60) != 0xfa);
+void keyboard_acknowledge()
+{
+    while (inb(0x60) != 0xfa);
 }
 
-void keyboard_rate() {
-    send_b(0x60, 0xF3);
+void keyboard_rate()
+{
+    outb(0x60, 0xF3);
     keyboard_acknowledge();
-    send_b(0x60, 0x0); // Rate{00000} Delay{00} 0
+    outb(0x60, 0x0); // Rate{00000} Delay{00} 0
 }
 
 // Installs the keyboard handler into IRQ1
-void keyboard_install() {
+void keyboard_install()
+{
     keyboard_rate();
     irq_install_handler(1, keyboard_handler);
     shift_pressed = 0;

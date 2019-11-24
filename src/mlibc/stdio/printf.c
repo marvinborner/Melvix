@@ -4,11 +4,13 @@
 #include <mlibc/string.h>
 #include <mlibc/stdlib.h>
 
-void __writes(const char *data) {
+void __writes(const char *data)
+{
     for (size_t i = 0; i < strlen(data); i++) writec(data[i]);
 }
 
-void printf(const char *fmt, ...) {
+void printf(const char *fmt, ...)
+{
     va_list args;
     va_start(args, fmt);
 

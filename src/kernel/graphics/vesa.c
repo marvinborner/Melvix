@@ -7,7 +7,8 @@
 #include <mlibc/stdlib.h>
 #include <kernel/commands/command.h>
 
-void switch_to_vga() {
+void switch_to_vga()
+{
     serial_write("Force switch to VGA!\n");
     uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
     char *error = "Melvix does not support this graphics hardware!";
@@ -16,7 +17,8 @@ void switch_to_vga() {
     panic("No VESA support!");
 }
 
-struct edid_data get_edid() {
+struct edid_data get_edid()
+{
     regs16_t regs;
     regs.ax = 0x4F15;
     regs.bx = 0x1; // BL
@@ -33,7 +35,8 @@ struct edid_data get_edid() {
     return *(struct edid_data *) edid;
 }
 
-void vbe_set_mode(unsigned short mode) {
+void vbe_set_mode(unsigned short mode)
+{
     regs16_t regs;
     regs.ax = 0x4F02;
     regs.bx = mode;
@@ -44,7 +47,8 @@ void vbe_set_mode(unsigned short mode) {
         switch_to_vga();
 }
 
-uint16_t *vbe_get_modes() {
+uint16_t *vbe_get_modes()
+{
     char *info_address = (char *) 0x7E00;
     strcpy(info_address, "VBE2");
     for (int i = 4; i < 512; i++) *(info_address + i) = 0;
@@ -71,7 +75,8 @@ uint16_t *vbe_get_modes() {
     return mode_ptr;
 }
 
-struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
+struct vbe_mode_info *vbe_get_mode_info(uint16_t mode)
+{
     regs16_t regs;
     regs.ax = 0x4F01;
     regs.cx = mode;
@@ -94,10 +99,11 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode) {
     return ret;
 }
 
-void set_optimal_resolution() {
-    asm volatile ("sti");
-    vga_log("Switching to graphics mode", 9);
-    vga_log("Trying to detect available modes", 10);
+void set_optimal_resolution()
+{
+    asm ("sti");
+    vga_log("Switching to graphics mode", 8);
+    vga_log("Trying to detect available modes", 9);
     uint16_t *video_modes = vbe_get_modes();
 
     uint16_t highest = 0;
@@ -217,12 +223,14 @@ uint16_t terminal_y = 0;
 int font_width;
 int font_height;
 
-void vesa_set_font(int height) {
+void vesa_set_font(int height)
+{
     font_width = height / 2;
     font_height = height;
 }
 
-void vesa_convert_color(uint32_t *color_array, uint32_t color) {
+void vesa_convert_color(uint32_t *color_array, uint32_t color)
+{
     uint8_t red = (color >> 16) & 255;
     uint8_t green = (color >> 8) & 255;
     uint8_t blue = color & 255;
@@ -246,7 +254,8 @@ void vesa_convert_color(uint32_t *color_array, uint32_t color) {
     }
 }
 
-void vesa_set_pixel(uint16_t x, uint16_t y, const uint32_t color[3]) {
+void vesa_set_pixel(uint16_t x, uint16_t y, const uint32_t color[3])
+{
     unsigned pos = x * vbe_bpl + y * vbe_pitch;
     char *draw = (char *) &fb[pos];
     draw[pos] = color[2];
@@ -254,7 +263,8 @@ void vesa_set_pixel(uint16_t x, uint16_t y, const uint32_t color[3]) {
     draw[pos + 2] = color[0];
 }
 
-void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const uint32_t color[3]) {
+void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const uint32_t color[3])
+{
     int pos1 = x1 * vbe_bpl + y1 * vbe_pitch;
     char *draw = (char *) &fb[pos1];
     for (int i = 0; i <= y2 - y1; i++) {
@@ -267,13 +277,15 @@ void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const uint32_t color[3]
     }
 }
 
-void vesa_clear() {
+void vesa_clear()
+{
     vesa_draw_rectangle(0, 0, vbe_width - 1, vbe_height - 1, terminal_background);
     terminal_x = 0;
     terminal_y = 0;
 }
 
-void vesa_draw_char(char ch) {
+void vesa_draw_char(char ch)
+{
     if (ch >= ' ') {
         int pos = terminal_x * vbe_bpl + terminal_y * vbe_pitch;
         char *draw = (char *) &fb[pos];
@@ -311,7 +323,8 @@ void vesa_draw_char(char ch) {
     }
 }
 
-void vesa_keyboard_char(char ch) {
+void vesa_keyboard_char(char ch)
+{
     vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + font_width, terminal_y + font_height,
                         terminal_background);
 
@@ -338,7 +351,8 @@ void vesa_keyboard_char(char ch) {
                         terminal_color);
 }
 
-void vesa_draw_string(const char *data) {
+void vesa_draw_string(const char *data)
+{
     int i = 0;
     while (data[i] != '\0') {
         vesa_draw_char(data[i]);
@@ -346,14 +360,16 @@ void vesa_draw_string(const char *data) {
     }
 }
 
-void vesa_draw_number(int n) {
+void vesa_draw_number(int n)
+{
     vesa_draw_string(itoa(n));
 }
 
 char *prev = 0;
 int prev_coords[2] = {};
 
-void vesa_draw_cursor(int x, int y) {
+void vesa_draw_cursor(int x, int y)
+{
     // Reset previous area
     if (prev != 0) {
         char *reset = (char *) &fb[prev_coords[0] * vbe_bpl + prev_coords[1] * vbe_pitch];
@@ -394,7 +410,8 @@ void vesa_draw_cursor(int x, int y) {
     }
 }
 
-void vesa_set_color(uint32_t color) {
+void vesa_set_color(uint32_t color)
+{
     vesa_convert_color(terminal_color, color);
     vesa_convert_color(terminal_background, default_background_color);
 }

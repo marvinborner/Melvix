@@ -73,7 +73,8 @@ extern void isr31();
 uint32_t ignored_isr[8] = {0};
 
 // Install ISRs in IDT
-void isrs_install() {
+void isrs_install()
+{
     idt_set_gate(0, (unsigned) isr0, 0x08, 0x8E);
     idt_set_gate(1, (unsigned) isr1, 0x08, 0x8E);
     idt_set_gate(2, (unsigned) isr2, 0x08, 0x8E);
@@ -110,7 +111,7 @@ void isrs_install() {
     idt_set_gate(30, (unsigned) isr30, 0x08, 0x8E);
     idt_set_gate(31, (unsigned) isr31, 0x08, 0x8E);
 
-    vga_log("Installed Interrupt Service Routines", 7);
+    vga_log("Installed Interrupt Service Routines", 6);
 }
 
 // Error exception messages
@@ -153,10 +154,11 @@ const char *exception_messages[] = {
 };
 
 // Master exception/interrupt/fault handler - halt via panic
-void fault_handler(struct regs *r) {
+void fault_handler(struct regs *r)
+{
     if (r->int_no < 32 && !(ignored_isr[r->int_no / 32] & (1 << (r->int_no % 32)))) {
         uint32_t faulting_address;
-        asm volatile("mov %%cr2, %0" : "=r" (faulting_address));
+        asm ("mov %%cr2, %0" : "=r" (faulting_address));
 
         serial_write("\n[DEBUG]\nEIP: ");
         serial_write_hex(r->eip);
@@ -174,14 +176,22 @@ void fault_handler(struct regs *r) {
         serial_write_hex(r->eflags);
         serial_write("\nError code: ");
         serial_write_hex(r->err_code);
+        serial_write("\nInterrupt code: ");
+        serial_write_hex(r->int_no);
+        halt_loop(); // Idk loop?
         char *message = (char *) exception_messages[r->int_no];
         strcat(message, " Exception");
-        if (r->err_code == 2) halt_loop(); // Idk loop?
         panic(message);
     }
 }
 
 
-void isr_ignore(uint8_t int_no) { ignored_isr[int_no / 32] |= 1 << (int_no % 32); }
+void isr_ignore(uint8_t int_no)
+{
+    ignored_isr[int_no / 32] |= 1 << (int_no % 32);
+}
 
-void isr_remember(uint8_t int_no) { ignored_isr[int_no / 32] &= ~(1 << (int_no % 32)); }
+void isr_remember(uint8_t int_no)
+{
+    ignored_isr[int_no / 32] &= ~(1 << (int_no % 32));
+}

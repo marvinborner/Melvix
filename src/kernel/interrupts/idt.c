@@ -21,7 +21,8 @@ struct idt_ptr idtp;
 // Defined in idt.asm
 extern void idt_load();
 
-void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags) {
+void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags)
+{
     // Specify the interrupt routine's base address
     idt[num].base_lo = (base & 0xFFFF);
     idt[num].base_hi = (base >> 16) & 0xFFFF;
@@ -33,7 +34,8 @@ void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, uns
 }
 
 // Install IDT
-void idt_install() {
+void idt_install()
+{
     // Set IDT pointer and limit
     idtp.limit = (sizeof(struct idt_entry) * 256) - 1;
     idtp.base = &idt;
@@ -42,5 +44,5 @@ void idt_install() {
     memset(&idt, 0, sizeof(struct idt_entry) * 256);
 
     idt_load();
-    vga_log("Installed Interrupt Descriptor Table", 6);
+    vga_log("Installed Interrupt Descriptor Table", 5);
 }

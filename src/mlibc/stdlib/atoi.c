@@ -3,7 +3,8 @@
 #include <stdint.h>
 #include <mlibc/string.h>
 
-int atoi(char *str) {
+int atoi(char *str)
+{
     size_t s_str = strlen(str);
     if (!s_str) return 0;
 

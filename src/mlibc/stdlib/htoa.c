@@ -4,7 +4,8 @@
 
 static const char __HTOA_TABLE[] = "0123456789ABCDEF";
 
-char *htoa(uint32_t n) {
+char *htoa(uint32_t n)
+{
     char *ret = kmalloc(10);
 
     int i = 0;

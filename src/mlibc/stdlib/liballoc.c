@@ -3,22 +3,26 @@
 #include <kernel/paging/paging.h>
 #include <mlibc/stdlib/liballoc.h>
 
-int liballoc_lock() {
-    // asm volatile ("cli");
+int liballoc_lock()
+{
+    // asm ("cli");
     return 0;
 }
 
-int liballoc_unlock() {
-    // asm volatile ("sti");
+int liballoc_unlock()
+{
+    // asm ("sti");
     return 0;
 }
 
-void *liballoc_alloc(size_t p) {
+void *liballoc_alloc(size_t p)
+{
     uint32_t ptr = paging_alloc_pages((uint32_t) p);
     return (void *) ptr;
 }
 
-int liballoc_free(void *ptr, size_t p) {
+int liballoc_free(void *ptr, size_t p)
+{
     paging_set_free((uint32_t) ptr, (uint32_t) p);
     return 0;
 }
@@ -52,8 +56,8 @@ int liballoc_free(void *ptr, size_t p) {
             } \
         }
 
-#define LIBALLOC_MAGIC 0xc001c0de
-#define LIBALLOC_DEAD 0xdeaddead
+#define LIBALLOC_MAGIC 0x900df00d
+#define LIBALLOC_DEAD 0xbaadf00d
 
 struct liballoc_major {
     struct liballoc_major *prev;
@@ -85,7 +89,8 @@ static long long l_warningCount = 0;
 static long long l_errorCount = 0;
 static long long l_possibleOverruns = 0;
 
-static void *liballoc_memset(void *s, int c, size_t n) {
+static void *liballoc_memset(void *s, int c, size_t n)
+{
     unsigned int i;
     for (i = 0; i < n; i++)
         ((char *) s)[i] = c;
@@ -93,7 +98,8 @@ static void *liballoc_memset(void *s, int c, size_t n) {
     return s;
 }
 
-static void *liballoc_memcpy(void *s1, const void *s2, size_t n) {
+static void *liballoc_memcpy(void *s1, const void *s2, size_t n)
+{
     char *cdest;
     char *csrc;
     unsigned int *ldest = (unsigned int *) s1;
@@ -114,7 +120,8 @@ static void *liballoc_memcpy(void *s1, const void *s2, size_t n) {
     return s1;
 }
 
-static struct liballoc_major *allocate_new_page(unsigned int size) {
+static struct liballoc_major *allocate_new_page(unsigned int size)
+{
     unsigned int st;
     struct liballoc_major *maj;
 
@@ -147,7 +154,8 @@ static struct liballoc_major *allocate_new_page(unsigned int size) {
     return maj;
 }
 
-void *PREFIX(malloc)(size_t req_size) {
+void *PREFIX(malloc)(size_t req_size)
+{
     int startedBet = 0;
     unsigned long long bestSize = 0;
     void *p = NULL;
@@ -334,7 +342,8 @@ void *PREFIX(malloc)(size_t req_size) {
     return NULL;
 }
 
-void PREFIX(free)(void *ptr) {
+void PREFIX(free)(void *ptr)
+{
     struct liballoc_minor *min;
     struct liballoc_major *maj;
 
@@ -386,7 +395,8 @@ void PREFIX(free)(void *ptr) {
     liballoc_unlock();
 }
 
-void *PREFIX(calloc)(size_t nobj, size_t size) {
+void *PREFIX(calloc)(size_t nobj, size_t size)
+{
     int real_size;
     void *p;
 
@@ -399,7 +409,8 @@ void *PREFIX(calloc)(size_t nobj, size_t size) {
     return p;
 }
 
-void *PREFIX(realloc)(void *p, size_t size) {
+void *PREFIX(realloc)(void *p, size_t size)
+{
     void *ptr;
     struct liballoc_minor *min;
     unsigned int real_size;

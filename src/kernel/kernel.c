@@ -13,7 +13,8 @@
 
 extern void switch_to_user();
 
-void kernel_main() {
+void kernel_main()
+{
     vga_log("Installing basic features of Melvix...", 0);
     // Install features
     memory_init();
@@ -27,11 +28,11 @@ void kernel_main() {
     set_optimal_resolution();
 
     // Install drivers
-    asm volatile ("cli");
+    asm ("cli");
     mouse_install();
     keyboard_install();
     timer_install();
-    asm volatile ("sti");
+    asm ("sti");
 
     // Get hardware information
     get_smbios();
@@ -44,14 +45,6 @@ void kernel_main() {
         install_melvix();
     }
 
-    // Setup initial ramdisk
-    /*assert(mboot_ptr->mods_count > 0);
-    uint32_t initrd_location = *((uint32_t *) mboot_ptr->mods_addr);
-    uint32_t initrd_end = *(uint32_t *) (mboot_ptr->mods_addr + 4);
-    paging_set_used(0, (initrd_end >> 12) + 1);
-    fs_root = initialise_initrd(initrd_location);
-    initrd_test();*/
-
     // User mode!
     /* COMMENTED FOR DEVELOPMENT OF KERNEL
     info("Switching to user mode...");
@@ -61,8 +54,8 @@ void kernel_main() {
     panic("This should NOT happen!");
     */
 
-    // asm volatile  ("div %0" :: "r"(0)); // Exception testing x/0
+    // asm ("div %0" :: "r"(0)); // Exception testing x/0
     loop:
-    asm volatile ("hlt");
+    asm ("hlt");
     goto loop;
 }

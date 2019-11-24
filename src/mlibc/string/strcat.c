@@ -1,6 +1,7 @@
 #include <mlibc/string.h>
 
-void strcat(char *dest, const char *orig) {
+void strcat(char *dest, const char *orig)
+{
     size_t s_dest = strlen(dest);
     size_t s_orig = strlen(orig);
 

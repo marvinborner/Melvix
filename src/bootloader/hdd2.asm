@@ -48,17 +48,17 @@ checkA20:
     popf
     ret
 
-last_maxlevel db 0
+last_max_level db 0
 getrecursive:
     push edi
     push esi
     push ecx
 
     mov eax, edi
-    cmp al, byte [last_maxlevel]
-    jna .last_maxlevel_updated
-    mov byte [last_maxlevel], al
-    .last_maxlevel_updated:
+    cmp al, byte [last_max_level]
+    jna .last_max_level_updated
+    mov byte [last_max_level], al
+    .last_max_level_updated:
 
     mov eax, esi
     call 0x7c26
@@ -66,19 +66,19 @@ getrecursive:
     mov eax, dword [esp]
     sub eax, 10
 
-    cmp byte [last_maxlevel], 1
+    cmp byte [last_max_level], 1
     jna .check1
     mov ebx, 1
     shl ebx, 7
     sub eax, ebx
     .check1:
-        cmp byte [last_maxlevel], 2
+        cmp byte [last_max_level], 2
         jna .check2
         mov ebx, 1
         shl ebx, 14
         sub eax, ebx
     .check2:
-        cmp byte [last_maxlevel], 3
+        cmp byte [last_max_level], 3
         jna .check3
         mov ebx, 1
         shl ebx, 21
@@ -102,7 +102,7 @@ getrecursive:
         mov ecx, [esp]
         call getrecursive
     .finish_recursion:
-        mov byte [last_maxlevel], 0
+        mov byte [last_max_level], 0
 
         pop ecx
         pop esi

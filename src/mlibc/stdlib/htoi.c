@@ -2,7 +2,8 @@
 #include <stddef.h>
 #include <mlibc/string.h>
 
-int htoi(char *str) {
+int htoi(char *str)
+{
     size_t s_str = strlen(str);
 
     size_t i = 0;

@@ -6,7 +6,8 @@
 
 static const char __ITOA_TABLE[] = "0123456789";
 
-char *itoa(int n) {
+char *itoa(int n)
+{
     if (paging_enabled == 0)
         return "0"; // kmalloc isn't available
 

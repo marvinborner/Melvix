@@ -17,7 +17,7 @@ void reboot();
  */
 void acpi_poweroff();
 
-struct RSDPtr {
+struct RSD_ptr {
     char signature[8];
     char checksum;
     char oem_id[6];

@@ -57,7 +57,8 @@ extern void gdt_flush();
 
 extern void tss_flush();
 
-void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
+void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
+{
     // Set descriptor base address
     gdt[num].base_low = (base & 0xFFFF);
     gdt[num].base_middle = (base >> 16) & 0xFF;
@@ -72,7 +73,8 @@ void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, ui
     gdt[num].access = access;
 }
 
-void gdt_install() {
+void gdt_install()
+{
     // Set GDT pointer and limit
     gp.limit = (sizeof(struct gdt_entry) * 6) - 1;
     gp.base = &gdt;
@@ -99,10 +101,11 @@ void gdt_install() {
     gdt_flush();
     tss_flush();
 
-    vga_log("Installed Global Descriptor Table", 2);
+    vga_log("Installed Global Descriptor Table", 1);
 }
 
-void tss_write(int32_t num, uint16_t ss0, uint32_t esp0) {
+void tss_write(int32_t num, uint16_t ss0, uint32_t esp0)
+{
     uint32_t base = (uint32_t) &tss_entry;
     uint32_t limit = base + sizeof(tss_entry);
 
@@ -117,6 +120,7 @@ void tss_write(int32_t num, uint16_t ss0, uint32_t esp0) {
     tss_entry.ss = tss_entry.ds = tss_entry.es = tss_entry.fs = tss_entry.gs = 0x13;
 }
 
-void set_kernel_stack(uint32_t stack) {
+void set_kernel_stack(uint32_t stack)
+{
     tss_entry.esp0 = stack;
 }

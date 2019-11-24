@@ -72,7 +72,7 @@ readwholefile:
     ret
 
 welcome db "Melvix", 0x0A, 0x0D, 0x00
-nolba db "BIOS lacks support for LBA addressing.", 0x00
+nolba db "BIOS lacks support for lba addressing.", 0x00
 signaturebad db "Bad disk signature.", 0x00
 
 start:

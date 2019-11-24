@@ -17,7 +17,8 @@ static void *syscalls[3] = {
 };
 uint32_t num_syscalls = 3;
 
-void syscall_handler(struct regs *r) {
+void syscall_handler(struct regs *r)
+{
     serial_write("SYSCALL");
     if (r->eax >= num_syscalls)
         return;
@@ -25,7 +26,7 @@ void syscall_handler(struct regs *r) {
     void *location = syscalls[r->eax];
 
     int ret;
-    asm volatile (" \
+    asm (" \
      push %1; \
      push %2; \
      push %3; \
@@ -41,6 +42,7 @@ void syscall_handler(struct regs *r) {
     r->eax = ret;
 }
 
-void syscalls_install() {
+void syscalls_install()
+{
     irq_install_handler(0x80, syscall_handler);
 }

@@ -41,35 +41,40 @@ void *irq_routines[16] = {
 };
 
 // Install custom IRQ handler
-void irq_install_handler(int irq, void (*handler)(struct regs *r)) {
+void irq_install_handler(int irq, void (*handler)(struct regs *r))
+{
     irq_routines[irq] = handler;
 }
 
 // Removes the custom IRQ handler
-void irq_uninstall_handler(int irq) {
+void irq_uninstall_handler(int irq)
+{
     irq_routines[irq] = 0;
 }
 
-int irq_is_installed(int irq) {
+int irq_is_installed(int irq)
+{
     return irq_routines[irq] != 0;
 }
 
 // Remap IRQs for protected mode compatibility via the PIC
-void irq_remap(void) {
-    send_b(0x20, 0x11);
-    send_b(0xA0, 0x11);
-    send_b(0x21, 0x20);
-    send_b(0xA1, 0x28);
-    send_b(0x21, 0x04);
-    send_b(0xA1, 0x02);
-    send_b(0x21, 0x01);
-    send_b(0xA1, 0x01);
-    send_b(0x21, 0x0);
-    send_b(0xA1, 0x0);
+void irq_remap(void)
+{
+    outb(0x20, 0x11);
+    outb(0xA0, 0x11);
+    outb(0x21, 0x20);
+    outb(0xA1, 0x28);
+    outb(0x21, 0x04);
+    outb(0xA1, 0x02);
+    outb(0x21, 0x01);
+    outb(0xA1, 0x01);
+    outb(0x21, 0x0);
+    outb(0xA1, 0x0);
 }
 
 // Map ISRs to the correct entries in the IDT
-void irq_install() {
+void irq_install()
+{
     irq_remap();
     idt_set_gate(32, (unsigned) irq0, 0x08, 0x8E);
     idt_set_gate(33, (unsigned) irq1, 0x08, 0x8E);
@@ -87,11 +92,12 @@ void irq_install() {
     idt_set_gate(45, (unsigned) irq13, 0x08, 0x8E);
     idt_set_gate(46, (unsigned) irq14, 0x08, 0x8E);
     idt_set_gate(47, (unsigned) irq15, 0x08, 0x8E);
-    vga_log("Installed Interrupt Requests", 8);
+    vga_log("Installed Interrupt Requests", 7);
 }
 
 // Handle IRQ ISRs
-void irq_handler(struct regs *r) {
+void irq_handler(struct regs *r)
+{
     void (*handler)(struct regs *r);
 
     // Execute custom handler if exists
@@ -102,9 +108,9 @@ void irq_handler(struct regs *r) {
 
     // Send end of interrupt to second (slave) IRQ controller
     if (r->int_no >= 40) {
-        send_b(0xA0, 0x20);
+        outb(0xA0, 0x20);
     }
 
     // Send end of interrupt to master interrupt controller
-    send_b(0x20, 0x20);
+    outb(0x20, 0x20);
 }

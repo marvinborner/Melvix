@@ -8,14 +8,16 @@
 
 char *vga_buffer = (char *) 0x500;
 
-void vga_clear() {
+void vga_clear()
+{
     uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
     for (size_t y = 0; y < 25; y++)
         for (size_t x = 0; x < 80; x++)
             terminal_buffer[y * 80 + x] = 0 | (uint16_t) 0x700;
 }
 
-void vga_log(char *msg, int line) {
+void vga_log(char *msg, int line)
+{
     if (line == 0) vga_clear();
     uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
     for (size_t i = 0; i < strlen(msg); i++)
@@ -30,21 +32,24 @@ void vga_log(char *msg, int line) {
     strcat(vga_buffer, string);
 }
 
-void kernel_time() {
+void kernel_time()
+{
     vesa_draw_string("\n");
     vesa_draw_string("[");
     vesa_draw_number((int) get_time());
     vesa_draw_string("] ");
 }
 
-void log(char *msg) {
+void log(char *msg)
+{
     vesa_set_color(vesa_dark_white);
     kernel_time();
     vesa_draw_string(msg);
     vesa_set_color(default_text_color);
 }
 
-void info(char *msg) {
+void info(char *msg)
+{
     vesa_set_color(vesa_blue);
     kernel_time();
     vesa_draw_string("INFORMATION: ");
@@ -52,7 +57,8 @@ void info(char *msg) {
     vesa_set_color(default_text_color);
 }
 
-void warn(char *msg) {
+void warn(char *msg)
+{
     vesa_set_color(vesa_dark_yellow);
     kernel_time();
     vesa_draw_string("WARNING: ");
@@ -60,8 +66,9 @@ void warn(char *msg) {
     vesa_set_color(default_text_color);
 }
 
-void panic(char *msg) {
-    asm volatile ("cli");
+void panic(char *msg)
+{
+    asm ("cli");
     vesa_set_color(vesa_dark_red);
     kernel_time();
     serial_write("\nPANIC: ");
@@ -73,20 +80,23 @@ void panic(char *msg) {
     halt_loop();
 }
 
-void assert(int x) {
+void assert(int x)
+{
     if (x == 0) {
         panic("Assertion failed");
     }
 }
 
-void halt_loop() {
+void halt_loop()
+{
     serial_write("\n!!! HALT !!!\n");
     loop:
-    asm volatile ("hlt");
+    asm ("hlt");
     goto loop;
 }
 
-void v86(uint8_t code, regs16_t *regs) {
+void v86(uint8_t code, regs16_t *regs)
+{
     paging_disable();
     int32(code, regs);
     paging_enable();
