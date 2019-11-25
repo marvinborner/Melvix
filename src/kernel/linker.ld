@@ -4,7 +4,7 @@ SECTIONS {
 	. = 1M;
 
 	.text BLOCK(4K) : ALIGN(4K) {
-		*(.start_location)
+		*(.start_section)
 		*(.text)
 	}
 
@@ -21,7 +21,7 @@ SECTIONS {
 		*(.bss)
 	}
 
-	.sizedetect BLOCK(4K) : ALIGN(4K) {
-		*(.sizedetect)
+	.end_section BLOCK(4K) : ALIGN(4K) {
+		*(.end_section)
 	}
 }

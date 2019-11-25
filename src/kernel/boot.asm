@@ -1,4 +1,4 @@
-section .start_location
+section .start_section
     dd _start
 
 ; Initialize stack
@@ -54,7 +54,7 @@ section .text
         push test_user
         iret
 
-section .sizedetect
+section .end_section
     global ASM_KERNEL_END
     ASM_KERNEL_END:
         ; Kernel size detection

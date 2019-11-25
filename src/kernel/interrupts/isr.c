@@ -156,7 +156,7 @@ const char *exception_messages[] = {
 // Master exception/interrupt/fault handler - halt via panic
 void fault_handler(struct regs *r)
 {
-    if (r->int_no < 32 && !(ignored_isr[r->int_no / 32] & (1 << (r->int_no % 32)))) {
+    if (r->int_no < 32) {
         uint32_t faulting_address;
         asm ("mov %%cr2, %0" : "=r" (faulting_address));
 
@@ -178,20 +178,11 @@ void fault_handler(struct regs *r)
         serial_write_hex(r->err_code);
         serial_write("\nInterrupt code: ");
         serial_write_hex(r->int_no);
+        serial_write("\nInterrupt message: ");
+        serial_write(exception_messages[r->int_no]);
         halt_loop(); // Idk loop?
         char *message = (char *) exception_messages[r->int_no];
         strcat(message, " Exception");
         panic(message);
     }
-}
-
-
-void isr_ignore(uint8_t int_no)
-{
-    ignored_isr[int_no / 32] |= 1 << (int_no % 32);
-}
-
-void isr_remember(uint8_t int_no)
-{
-    ignored_isr[int_no / 32] &= ~(1 << (int_no % 32));
 }

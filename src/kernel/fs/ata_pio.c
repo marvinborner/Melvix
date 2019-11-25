@@ -18,9 +18,6 @@ struct ata_interface *new_ata(uint8_t master, uint16_t port_base)
     ret->command_port = port_base + 0x7;
     ret->control_port = port_base + 0x206;
 
-    // isr_ignore(0x2E);
-    // isr_ignore(0x2F);
-
     return ret;
 }
 

@@ -23,16 +23,6 @@ void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, uns
 void isrs_install();
 
 /**
- * Ignore interrupt
- */
-void isr_ignore(uint8_t int_no);
-
-/**
- * Un-ignore interrupt
- */
-void isr_remember(uint8_t int_no);
-
-/**
  * Registers that get passed into an IRQ handler
  */
 struct regs {
