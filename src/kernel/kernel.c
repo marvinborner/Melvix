@@ -29,9 +29,9 @@ void kernel_main()
 
     // Install drivers
     asm ("cli");
+    timer_install();
     mouse_install();
     keyboard_install();
-    timer_install();
     asm ("sti");
 
     // Get hardware information
@@ -42,7 +42,7 @@ void kernel_main()
 
     uint8_t boot_drive_id = (uint8_t) (*((uint8_t *) 0x9000));
     if (boot_drive_id == 0xE0) {
-        install_melvix();
+        // install_melvix();
     }
 
     // User mode!

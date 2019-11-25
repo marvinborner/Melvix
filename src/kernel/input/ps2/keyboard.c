@@ -3,11 +3,12 @@
 #include <kernel/graphics/vesa.h>
 
 int shift_pressed;
+int control_pressed;
 
 char keymap[128] = {
         0 /*E*/, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
         '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
-        0 /*C*/, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 14 /*LS*/,
+        17 /*C*/, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 14 /*LS*/,
         '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 14 /*RS*/, '*',
         0, // Alt key
         ' ', // Space bar
@@ -37,7 +38,7 @@ char keymap[128] = {
 char shift_keymap[128] = {
         0 /*E*/, 27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',
         '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',
-        0 /*C*/, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', 14 /*LS*/,
+        17 /*C*/, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', 14 /*LS*/,
         '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 14 /*RS*/, '*',
         0, // Alt key
         ' ', // Space bar
@@ -64,27 +65,47 @@ char shift_keymap[128] = {
         0, // Other keys
 };
 
-void keyboard_handler(struct regs *r)
+char *handle_shift(int scan_code)
 {
-    unsigned char scan_code;
     char *current_keymap = keymap;
     if (shift_pressed) current_keymap = shift_keymap;
 
-    scan_code = inb(0x60);
-
     if ((scan_code & 0x80) == 0) { // PRESS
-        // TODO: Fix caps lock deactivation when pressing shift while shifted
+        // TODO: Fix caps lock deactivation when pressing shift while (locked) shifted
         if (current_keymap[scan_code] == 14 || (current_keymap[scan_code] == 15 && !shift_pressed)) {
             shift_pressed = 1;
-            return;
         } else if (current_keymap[scan_code] == 15 && shift_pressed) {
             shift_pressed = 0;
-            return;
         }
-        vesa_keyboard_char(current_keymap[scan_code]);
     } else { // RELEASE
         char key = current_keymap[scan_code];
         if (key == 14) shift_pressed = 0;
+    }
+
+    return current_keymap;
+}
+
+void keyboard_handler(struct regs *r)
+{
+    unsigned char scan_code;
+
+    scan_code = inb(0x60);
+    char *current_keymap = handle_shift(scan_code);
+
+    if ((scan_code & 0x80) == 0) { // PRESS
+        if (current_keymap[scan_code] == 17)
+            control_pressed = 1;
+
+        if (control_pressed && current_keymap[scan_code] == 'l') {
+            vesa_clear();
+            return;
+        }
+
+        vesa_keyboard_char(current_keymap[scan_code]);
+    } else { // RELEASE
+        // TODO: Fix control release
+        if (current_keymap[scan_code] == 17)
+            control_pressed = 0;
     }
 }
 

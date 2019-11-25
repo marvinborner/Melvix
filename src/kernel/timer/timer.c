@@ -39,4 +39,5 @@ void timer_install()
 {
     timer_phase(1000);
     irq_install_handler(0, timer_handler);
+    info("Installed timer");
 }
