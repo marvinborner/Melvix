@@ -103,8 +103,7 @@ void keyboard_handler(struct regs *r)
 
         vesa_keyboard_char(current_keymap[scan_code]);
     } else { // RELEASE
-        // TODO: Fix control release
-        if (current_keymap[scan_code] == 17)
+        if (current_keymap[scan_code] == -107) // TODO: IDK WHY -107?!
             control_pressed = 0;
     }
 }
