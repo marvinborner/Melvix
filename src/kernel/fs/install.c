@@ -61,6 +61,18 @@ void install_melvix()
     kfree(kernel);
     kfree(kernel_e);
 
+    info("Copying font... ");
+    char* font_p[] = {"FONT.BIN"};
+    struct iso9660_entity* font_e = ISO9660_get(font_p, 1);
+    if(!font_e)
+        panic("Font not found!");
+    uint8_t *font = kmalloc(font_e->length + 2048);
+    serial_write_hex(font_e->length + 2048);
+    ATAPI_granular_read(1 + (font_e->length / 2048), font_e->lba, font);
+    marfs_new_file(font_e->length, font, 0, 0, 0);
+    kfree(font);
+    kfree(font_e);
+
     info("Installation successful!");
     serial_write("Installation successful!\nRebooting...\n");
     timer_wait(200);

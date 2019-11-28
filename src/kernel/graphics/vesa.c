@@ -101,7 +101,6 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode)
 
 void set_optimal_resolution()
 {
-    asm ("sti");
     vga_log("Switching to graphics mode", 8);
     vga_log("Trying to detect available modes", 9);
     uint16_t *video_modes = vbe_get_modes();
