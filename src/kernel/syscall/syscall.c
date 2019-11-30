@@ -1,42 +1,19 @@
 #include <stdint.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/interrupts/interrupts.h>
-#include <kernel/graphics/vesa.h>
-#include <kernel/io/io.h>
-
-DEFN_SYSCALL1(serial_write, 0, const char *);
-
-static void *syscalls[3] = {
-        &serial_write
-};
-uint32_t num_syscalls = 3;
-
-void syscall_handler(struct regs *r)
-{
-    serial_write("SYSCALL");
-    if (r->eax >= num_syscalls)
-        return;
-
-    void *location = syscalls[r->eax];
-
-    int ret;
-    asm (" \
-     push %1; \
-     push %2; \
-     push %3; \
-     push %4; \
-     push %5; \
-     call *%6; \
-     pop %%ebx; \
-     pop %%ebx; \
-     pop %%ebx; \
-     pop %%ebx; \
-     pop %%ebx; \
-   " : "=a" (ret) : "r" (r->edi), "r" (r->esi), "r" (r->edx), "r" (r->ecx), "r" (r->ebx), "r" (location));
-    r->eax = ret;
-}
 
 void syscalls_install()
 {
-    irq_install_handler(0x80, syscall_handler);
+    // 11100111
+    idt_set_gate(0x80, (unsigned) idt_syscall, 0x08, 0xEE);
+}
+
+uint32_t syscall_handler(uint32_t id, uint32_t arg0, uint32_t arg1, uint32_t arg2)
+{
+    switch (id) {
+        case 1:
+            return sys_write((char *) arg0, arg1);
+    }
+
+    return -1;
 }

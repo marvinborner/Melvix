@@ -16,7 +16,7 @@ void font_install()
     if (boot_drive_id != 0xE0) {
         struct ata_interface *primary_master = new_ata(1, 0x1F0);
         marfs_init(primary_master);
-        marfs_read_whole_file(4, (uint8_t *) font);
+        marfs_read_whole_file(5, (uint8_t *) font);
     } else {
         char *font_p[] = {"FONT.BIN"};
         struct iso9660_entity *font_e = ISO9660_get(font_p, 1);

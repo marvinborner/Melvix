@@ -36,10 +36,10 @@ section .text
 
     %include "src/kernel/interact.asm"
 
-    global switch_to_user
-    extern test_user
-    switch_to_user:
-        sti
+    global jump_userspace
+    jump_userspace:
+        mov ebx, dword [esp+4]
+
         mov ax, 0x23
         mov ds, ax
         mov es, ax
@@ -50,8 +50,10 @@ section .text
         push 0x23
         push eax
         pushf
+
         push 0x1B
-        push test_user
+        push ebx
+        mov ebp, ebx
         iret
 
 section .end_section

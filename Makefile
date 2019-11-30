@@ -19,7 +19,7 @@ build: clean
 	nasm -f elf ./src/kernel/boot.asm -o ./build/boot.o || exit; \
 
 	# Make all C files
-	find ./src/kernel/ ./src/userspace/ ./src/mlibc/ -name \*.c >./build/tmp; \
+	find ./src/kernel/ ./src/mlibc/ -name \*.c >./build/tmp; \
 	while read -r line; do \
 		stripped=$$(echo "$${line}" | sed -r 's/\//_/g'); \
 		stripped=$${stripped#??????}; \
@@ -40,6 +40,7 @@ build: clean
 	nasm ./src/bootloader/cd.asm -f bin -o ./iso/boot/cd.bin || exit; \
 	nasm ./src/bootloader/hdd1.asm -f bin -o ./iso/boot/hdd1.bin || exit; \
 	nasm ./src/bootloader/hdd2.asm -f bin -o ./iso/boot/hdd2.bin || exit; \
+	nasm ./src/userspace/main.asm -f bin -o ./iso/user.bin || exit; \
 	cp ./build/font.bin ./iso/font.bin || exit; \
 	genisoimage -quiet -input-charset utf-8 -no-emul-boot -b boot/cd.bin -o ./build/melvix.iso ./iso;
 

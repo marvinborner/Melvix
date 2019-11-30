@@ -170,6 +170,8 @@ void fault_handler(struct regs *r)
         serial_write_hex(r->ecx);
         serial_write("\nEDX: ");
         serial_write_hex(r->edx);
+        serial_write("\nESP: ");
+        serial_write_hex(r->esp);
         serial_write("\nFaulting address: ");
         serial_write_hex(faulting_address);
         serial_write("\nError flags: ");
@@ -180,7 +182,7 @@ void fault_handler(struct regs *r)
         serial_write_hex(r->int_no);
         serial_write("\nInterrupt message: ");
         serial_write(exception_messages[r->int_no]);
-        halt_loop(); // Idk loop?
+        // halt_loop(); // Idk loop?
         char *message = (char *) exception_messages[r->int_no];
         strcat(message, " Exception");
         panic(message);

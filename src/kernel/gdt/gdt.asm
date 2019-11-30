@@ -9,12 +9,6 @@ gdt_flush:
     mov fs, ax
     mov gs, ax
     mov ss, ax
-    jmp 0x08:flush2 ; Code segment offset
-flush2:
+    jmp 0x08:flush ; Code segment offset
+flush:
     ret ; Returns to C code
-
-global tss_flush
-tss_flush:
-    mov ax, 0x2B
-    ltr ax
-    ret

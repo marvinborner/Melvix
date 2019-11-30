@@ -50,7 +50,7 @@ void install_melvix()
     kfree(stage2_e);
 
     // Copy the kernel
-    info("Copying the kernel... ");
+    info("Copying the kernel...");
     char *kernel_p[] = {"BOOT", "KERNEL.BIN"};
     struct iso9660_entity *kernel_e = ISO9660_get(kernel_p, 2);
     if (!kernel_e)
@@ -61,6 +61,17 @@ void install_melvix()
     kfree(kernel);
     kfree(kernel_e);
 
+    // Copy the userspace binary
+    info("Copying userspace... ");
+    char *userspace_p[] = {"USER.BIN"};
+    struct iso9660_entity *userspace_e = ISO9660_get(userspace_p, 1);
+    if (!userspace_e)
+        panic("Userspace not found!");
+    uint8_t *userspace = ISO9660_read(userspace_e);
+    marfs_new_file(userspace_e->length, userspace, 0, 0, 0);
+    kfree(userspace_e);
+
+    // Copy the global font binary
     info("Copying font... ");
     char *font_p[] = {"FONT.BIN"};
     struct iso9660_entity *font_e = ISO9660_get(font_p, 1);
@@ -77,4 +88,5 @@ void install_melvix()
     serial_write("Installation successful!\nRebooting...\n");
     timer_wait(200);
     acpi_poweroff();
+    halt_loop();
 }
