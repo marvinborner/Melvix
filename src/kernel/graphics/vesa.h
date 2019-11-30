@@ -185,6 +185,8 @@ void vesa_draw_cursor(int x, int y);
  */
 void vesa_set_color(uint32_t color);
 
+void font_install();
+
 /**
  * An enum with vesa colors
  * From https://github.com/joshdick/onedark.vim/ License: MIT

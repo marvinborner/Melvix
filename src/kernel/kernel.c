@@ -25,6 +25,7 @@ void kernel_main()
     idt_install();
     isrs_install();
     irq_install();
+    font_install();
     set_optimal_resolution();
 
     // Install drivers
@@ -42,7 +43,7 @@ void kernel_main()
 
     uint8_t boot_drive_id = (uint8_t) (*((uint8_t *) 0x9000));
     if (boot_drive_id == 0xE0) {
-        // install_melvix();
+        install_melvix();
     }
 
     // User mode!

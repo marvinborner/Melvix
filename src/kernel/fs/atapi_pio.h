@@ -5,9 +5,9 @@
 
 #define ATAPI_PIO_DRIVE 0xE0
 #define LBA_READ_INT 0x13
-#define ATAPI_PIO_DAPACK 0x7E00
-#define ATAPI_PIO_BUFFER 0x8000
-#define ATAPI_SECTOR_SIZE 0x800
+#define ATAPI_PIO_DAPACK 32256
+#define ATAPI_PIO_BUFFER 32768
+#define ATAPI_SECTOR_SIZE 2048
 
 struct dapack {
     uint8_t size;

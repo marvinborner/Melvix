@@ -27,6 +27,7 @@ void ATAPI_granular_read(uint32_t nblocks, uint32_t lba, uint8_t *output)
 {
     for (uint32_t i = 0; i < nblocks; i++) {
         ATAPI_read(1, lba + i);
-        for (uint16_t j = 0; j < ATAPI_SECTOR_SIZE; j++) output[j + (2048 * i)] = ((uint8_t *) ATAPI_PIO_BUFFER)[j];
+        for (uint16_t j = 0; j < ATAPI_SECTOR_SIZE; j++)
+            output[j + (2048 * i)] = ((uint8_t *) ATAPI_PIO_BUFFER)[j];
     }
 }
