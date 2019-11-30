@@ -26,6 +26,7 @@ void paging_install()
     paging_enable();
     serial_write_dec(memory_get_all() >> 10);
 
+
     vga_log("Installed paging", 4);
 }
 

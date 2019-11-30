@@ -67,12 +67,13 @@ uint16_t *vbe_get_modes()
     uint16_t *mode_ptr = (uint16_t *) info->video_modes;
     size_t number_modes = 1;
     for (uint16_t *p = mode_ptr; *p != 0xFFFF; p++) number_modes++;
+    serial_write_dec(number_modes);
 
     uint16_t *ret = kmalloc(sizeof(uint16_t) * number_modes);
     for (size_t i = 0; i < number_modes; i++)
         ret[i] = ((uint16_t *) info->video_modes)[i];
 
-    return mode_ptr;
+    return ret;
 }
 
 struct vbe_mode_info *vbe_get_mode_info(uint16_t mode)

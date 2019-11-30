@@ -62,9 +62,9 @@ void install_melvix()
     kfree(kernel_e);
 
     info("Copying font... ");
-    char* font_p[] = {"FONT.BIN"};
-    struct iso9660_entity* font_e = ISO9660_get(font_p, 1);
-    if(!font_e)
+    char *font_p[] = {"FONT.BIN"};
+    struct iso9660_entity *font_e = ISO9660_get(font_p, 1);
+    if (!font_e)
         panic("Font not found!");
     uint8_t *font = kmalloc(font_e->length + 2048);
     serial_write_hex(font_e->length + 2048);
