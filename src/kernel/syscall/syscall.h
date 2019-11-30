@@ -35,10 +35,6 @@ int syscall_##fn(P1 p1, P2 p2) { \
  return a; \
 }
 
-DECL_SYSCALL1(vesa_draw_string, const char *)
-
-DECL_SYSCALL1(vesa_draw_number, int)
-
 DECL_SYSCALL1(serial_write, const char *)
 
 #endif

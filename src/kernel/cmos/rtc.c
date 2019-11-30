@@ -1,6 +1,7 @@
 #include <kernel/io/io.h>
 #include <kernel/graphics/vesa.h>
 #include <kernel/acpi/acpi.h>
+#include <mlibc/stdio.h>
 
 unsigned char second;
 unsigned char minute;
@@ -87,17 +88,5 @@ void read_rtc()
 void write_time()
 {
     read_rtc();
-    vesa_draw_string("Current time: ");
-    vesa_draw_number(hour);
-    vesa_draw_string(":");
-    vesa_draw_number(minute);
-    vesa_draw_string(":");
-    vesa_draw_number(second);
-    vesa_draw_string(" ");
-    vesa_draw_number(month);
-    vesa_draw_string("/");
-    vesa_draw_number(day);
-    vesa_draw_string("/");
-    vesa_draw_number(year);
-    vesa_draw_string("\n");
+    printf("Current time: %d:%d:%d %d/%d/%d\n", hour, minute, second, month, day, year);
 }

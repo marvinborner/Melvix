@@ -10,12 +10,14 @@
 #include <kernel/smbios/smbios.h>
 #include <kernel/fs/install.h>
 #include <kernel/lib/lib.h>
+#include <mlibc/stdio.h>
 
 extern void switch_to_user();
 
 void kernel_main()
 {
     vga_log("Installing basic features of Melvix...", 0);
+
     // Install features
     memory_init();
     gdt_install();
@@ -38,8 +40,8 @@ void kernel_main()
     // Get hardware information
     get_smbios();
 
-    // Booting process complete - emulate newline key
-    vesa_keyboard_char('\n');
+    // Print total memory
+    info("Total memory found: %dMiB", memory_get_all() >> 10);
 
     uint8_t boot_drive_id = (uint8_t) (*((uint8_t *) 0x9000));
     if (boot_drive_id == 0xE0) {

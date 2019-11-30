@@ -24,8 +24,6 @@ void paging_install()
     paging_set_used(0, ((uint32_t) ASM_KERNEL_END >> 12) + 1); // /4096
 
     paging_enable();
-    serial_write_dec(memory_get_all() >> 10);
-
 
     vga_log("Installed paging", 4);
 }

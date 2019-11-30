@@ -4,16 +4,10 @@
 #include <kernel/graphics/vesa.h>
 #include <kernel/io/io.h>
 
-DEFN_SYSCALL1(vesa_draw_string, 0, const char *);
-
-DEFN_SYSCALL1(vesa_draw_number, 1, int);
-
-DEFN_SYSCALL1(serial_write, 2, const char *);
+DEFN_SYSCALL1(serial_write, 0, const char *);
 
 static void *syscalls[3] = {
-        &vesa_draw_string,
-        &vesa_draw_number,
-        &serial_write,
+        &serial_write
 };
 uint32_t num_syscalls = 3;
 

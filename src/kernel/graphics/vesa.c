@@ -6,6 +6,7 @@
 #include <kernel/system.h>
 #include <mlibc/stdlib.h>
 #include <kernel/commands/command.h>
+#include <mlibc/stdio.h>
 
 void switch_to_vga()
 {
@@ -67,7 +68,6 @@ uint16_t *vbe_get_modes()
     uint16_t *mode_ptr = (uint16_t *) info->video_modes;
     size_t number_modes = 1;
     for (uint16_t *p = mode_ptr; *p != 0xFFFF; p++) number_modes++;
-    serial_write_dec(number_modes);
 
     uint16_t *ret = kmalloc(sizeof(uint16_t) * number_modes);
     for (size_t i = 0; i < number_modes; i++)
@@ -199,19 +199,14 @@ void set_optimal_resolution()
     vesa_clear();
 
     vesa_set_color(vesa_blue);
-    vesa_draw_string(vga_buffer);
+    printf(vga_buffer);
     vesa_set_color(default_text_color);
 
     info("Successfully switched to video mode!");
 
     serial_write("Using mode: ");
     serial_write_hex(highest);
-    log("Using mode: ");
-    vesa_draw_number(vbe_width);
-    vesa_draw_string("x");
-    vesa_draw_number(vbe_height);
-    vesa_draw_string("x");
-    vesa_draw_number(vbe_bpl << 3);
+    debug("Using mode: %dx%dx%d", vbe_width, vbe_height, vbe_bpl << 3);
 }
 
 const uint32_t default_text_color = vesa_white;
@@ -336,12 +331,12 @@ void vesa_keyboard_char(char ch)
     } else if (ch == '\r') {
         terminal_x = 0;
     } else if (ch == '\n') {
-        vesa_draw_char(ch);
+        writec(ch);
         exec_command(text);
         memset(text, 0, sizeof(text));
         // terminal_scroll();
     } else if (ch >= ' ') {
-        vesa_draw_char(ch);
+        writec(ch);
         char tmp[2] = {ch};
         strcat(text, tmp);
     }
@@ -349,20 +344,6 @@ void vesa_keyboard_char(char ch)
     // terminal_scroll();
     vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + font_width, terminal_y + font_height,
                         terminal_color);
-}
-
-void vesa_draw_string(const char *data)
-{
-    int i = 0;
-    while (data[i] != '\0') {
-        vesa_draw_char(data[i]);
-        i++;
-    }
-}
-
-void vesa_draw_number(int n)
-{
-    vesa_draw_string(itoa(n));
 }
 
 char *prev = 0;

@@ -47,20 +47,20 @@ void kernel_time();
  * Display a general log message
  * @param msg The message
  */
-void log(char *msg);
+void debug(const char *fmt, ...);
 
 /**
  * Display an information message
  * @param msg The information
  */
-void info(char *msg);
+void info(const char *fmt, ...);
 
 /**
  * Display a warning message
  * TODO: Add line number and file name
  * @param msg The warning cause/reason
  */
-void warn(char *msg);
+void warn(const char *fmt, ...);
 
 /**
  * Halt the entire system and display a message

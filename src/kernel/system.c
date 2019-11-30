@@ -5,6 +5,8 @@
 #include <mlibc/stdlib.h>
 #include <kernel/paging/paging.h>
 #include <kernel/interrupts/interrupts.h>
+#include <mlibc/stdio.h>
+#include <stdarg.h>
 
 char *vga_buffer = (char *) 0x500;
 
@@ -26,7 +28,7 @@ void vga_log(char *msg, int line)
     strcpy(string, "[");
     strcat(string, itoa((int) get_time()));
     strcat(string, "] ");
-    strcat(string, "INFORMATION: ");
+    strcat(string, "INFO: ");
     strcat(string, msg);
     strcat(string, "\n");
     strcat(vga_buffer, string);
@@ -34,36 +36,52 @@ void vga_log(char *msg, int line)
 
 void kernel_time()
 {
-    vesa_draw_string("\n");
-    vesa_draw_string("[");
-    vesa_draw_number((int) get_time());
-    vesa_draw_string("] ");
+    printf("[%d] ", (int) get_time());
 }
 
-void log(char *msg)
+void debug(const char *fmt, ...)
 {
     vesa_set_color(vesa_dark_white);
     kernel_time();
-    vesa_draw_string(msg);
+    printf("DEBG: ");
+
+    va_list args;
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+
     vesa_set_color(default_text_color);
+    writec('\n');
 }
 
-void info(char *msg)
+void info(const char *fmt, ...)
 {
     vesa_set_color(vesa_blue);
     kernel_time();
-    vesa_draw_string("INFORMATION: ");
-    vesa_draw_string(msg);
+    printf("INFO: ");
+
+    va_list args;
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+
     vesa_set_color(default_text_color);
+    writec('\n');
 }
 
-void warn(char *msg)
+void warn(const char *fmt, ...)
 {
     vesa_set_color(vesa_dark_yellow);
     kernel_time();
-    vesa_draw_string("WARNING: ");
-    vesa_draw_string(msg);
+    printf("WARN: ");
+
+    va_list args;
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+
     vesa_set_color(default_text_color);
+    writec('\n');
 }
 
 void panic(char *msg)
@@ -74,9 +92,7 @@ void panic(char *msg)
     serial_write("\nPANIC: ");
     serial_write(msg);
     serial_write(" - System halted!\n");
-    vesa_draw_string("PANIC: ");
-    vesa_draw_string(msg);
-    vesa_draw_string(" - System halted!\n");
+    printf("PANIC: %s - System halted!\n", msg);
     halt_loop();
 }
 

@@ -5,6 +5,7 @@
 #include <kernel/cmos/rtc.h>
 #include <kernel/timer/timer.h>
 #include <mlibc/string.h>
+#include <mlibc/stdio.h>
 
 int32_t starts_with(const char *a, const char *b)
 {
@@ -16,24 +17,23 @@ int32_t starts_with(const char *a, const char *b)
 void exec_command(char *command)
 {
     if (starts_with(command, "ls"))
-        vesa_draw_string("Listing files\n");
+        printf("Listing files\n");
     else if (starts_with(command, "help"))
-        vesa_draw_string("I can't help you write now\n");
+        printf("I can't help you write now\n");
     else if (starts_with(command, "ping"))
-        vesa_draw_string("pong!\n");
+        printf("pong!\n");
     else if (starts_with(command, "clear"))
         vesa_clear();
     else if (starts_with(command, "shutdown") || starts_with(command, "exit"))
         acpi_poweroff();
     else if (starts_with(command, "zzz"))
-        vesa_draw_string("Not implemented\n");
-    else if (starts_with(command, "time")) {
-        vesa_draw_number((int) get_time());
-        vesa_draw_string("\n");
-    } else if (starts_with(command, "date"))
+        printf("Not implemented\n");
+    else if (starts_with(command, "time"))
+        printf("%d\n", (int) get_time());
+    else if (starts_with(command, "date"))
         write_time();
     else if (starts_with(command, "reboot"))
         reboot();
     else if (command[0] != 0)
-        vesa_draw_string("Command not found!\n");
+        warn("Command not found!");
 }
