@@ -30,7 +30,7 @@ build: clean
 	i686-elf-gcc -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin -std=gnu99 -ffreestanding -O2 -nostdlib ./build/*.o || exit; \
 
 	# Modules
-	i686-elf-gcc -c ./src/assets/font.c -o ./build/font.o -I ./src -std=gnu99 -ffreestanding -O2 -nostdlib; \
+	i686-elf-gcc -c ./src/resources/font.c -o ./build/font.o -I ./src -std=gnu99 -ffreestanding -O2 -nostdlib; \
 	objcopy -O binary ./build/font.o ./build/font.bin; \
 	rm ./build/font.o; \
 
