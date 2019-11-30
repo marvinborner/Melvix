@@ -31,7 +31,7 @@ build: clean
 
 	# Modules
 	i686-elf-gcc -c ./src/resources/font.c -o ./build/font.o -I ./src -std=gnu99 -ffreestanding -O2 -nostdlib; \
-	objcopy -O binary ./build/font.o ./build/font.bin; \
+	i686-elf-objcopy -O binary ./build/font.o ./build/font.bin; \
 	rm ./build/font.o; \
 
 	# Create ISO
