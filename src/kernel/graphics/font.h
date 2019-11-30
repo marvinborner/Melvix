@@ -7,16 +7,13 @@
 
 #include <stdint.h>
 
-uint16_t cursor[19] = {
-};
+struct font *font;
 
-uint8_t font_16[758][16] = {
-};
-
-uint16_t font_24[758][24] = {
-};
-
-uint16_t font_32[758][32] = {
+struct font {
+    uint16_t font_32[758][32];
+    uint16_t font_24[758][24];
+    uint8_t font_16[758][16];
+    uint16_t cursor[19];
 };
 
 #endif

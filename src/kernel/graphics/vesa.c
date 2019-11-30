@@ -291,9 +291,9 @@ void vesa_draw_char(char ch)
         uint16_t bitmap = 0;
 
         for (int cy = 0; cy <= font_height; cy++) {
-            if (font_height == 16) bitmap = font_16[ch - 32][cy];
-            else if (font_height == 24) bitmap = font_24[ch - 32][cy] >> 4;
-            else if (font_height == 32) bitmap = font_32[ch - 32][cy];
+            if (font_height == 16) bitmap = font->font_16[ch - 32][cy];
+            else if (font_height == 24) bitmap = font->font_24[ch - 32][cy] >> 4;
+            else if (font_height == 32) bitmap = font->font_32[ch - 32][cy];
             for (int cx = 0; cx <= font_width + 1; cx++) {
                 if (bitmap & ((1 << font_width) >> cx)) { // Side effect: Smoothness factor!
                     draw[vbe_bpl * cx] = terminal_color[2];
@@ -395,7 +395,7 @@ void vesa_draw_cursor(int x, int y)
             prev[vbe_bpl * cx] = draw[vbe_bpl * cx];
             prev[vbe_bpl * cx + 1] = draw[vbe_bpl * cx + 1];
             prev[vbe_bpl * cx + 2] = draw[vbe_bpl * cx + 2];
-            if (cursor[cy] & ((1 << 12) >> cx)) {
+            if (font->cursor[cy] & ((1 << 12) >> cx)) {
                 draw[vbe_bpl * cx] = terminal_color[2];
                 draw[vbe_bpl * cx + 1] = terminal_color[1];
                 draw[vbe_bpl * cx + 2] = terminal_color[0];
