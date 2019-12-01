@@ -78,7 +78,6 @@ void install_melvix()
     if (!font_e)
         panic("Font not found!");
     uint8_t *font = kmalloc(font_e->length + 2048);
-    serial_write_hex(font_e->length + 2048);
     ATAPI_granular_read(1 + (font_e->length / 2048), font_e->lba, font);
     marfs_new_file(font_e->length, font, 0, 0, 0);
     kfree(font);

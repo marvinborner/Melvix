@@ -34,13 +34,19 @@ build: clean
 	i686-elf-objcopy -O binary ./build/font.o ./build/font.bin; \
 	rm ./build/font.o; \
 
+	# Userspace
+	nasm -f elf ./src/userspace/start.asm -o ./build/user_start.o || exit; \
+	i686-elf-gcc -c ./src/userspace/main.c -o ./build/user_main.o -I ./src/mlibc -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
+	i686-elf-gcc -I ./src/mlibc -o ./build/user.o -std=gnu99 -ffreestanding -O2 -nostdlib ./build/user_start.o ./build/user_main.o || exit; \
+	i686-elf-objcopy -O binary ./build/user.o ./build/user.bin; \
+
 	# Create ISO
 	mkdir -p ./iso/boot/; \
 	mv ./build/melvix.bin ./iso/boot/kernel.bin; \
 	nasm ./src/bootloader/cd.asm -f bin -o ./iso/boot/cd.bin || exit; \
 	nasm ./src/bootloader/hdd1.asm -f bin -o ./iso/boot/hdd1.bin || exit; \
 	nasm ./src/bootloader/hdd2.asm -f bin -o ./iso/boot/hdd2.bin || exit; \
-	nasm ./src/userspace/main.asm -f bin -o ./iso/user.bin || exit; \
+	cp ./build/user.bin ./iso/user.bin || exit; \
 	cp ./build/font.bin ./iso/font.bin || exit; \
 	genisoimage -quiet -input-charset utf-8 -no-emul-boot -b boot/cd.bin -o ./build/melvix.iso ./iso;
 

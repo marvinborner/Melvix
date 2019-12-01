@@ -51,8 +51,8 @@ void kernel_main()
     info("Switching to user mode...");
     syscalls_install();
     tss_flush();
-    uint32_t userspace = paging_alloc_pages(2);
-    paging_set_user(userspace, 2);
+    uint32_t userspace = paging_alloc_pages(10);
+    paging_set_user(userspace, 10);
     marfs_read_whole_file(4, (uint8_t *) (userspace + 4096));
     jump_userspace(userspace + 4096);
 
