@@ -36,8 +36,8 @@ build: clean
 
 	# Userspace
 	nasm -f elf ./src/userspace/start.asm -o ./build/user_start.o || exit; \
-	i686-elf-gcc -c ./src/userspace/main.c -o ./build/user_main.o -I ./src/mlibc -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
-	i686-elf-gcc -I ./src/mlibc -o ./build/user.o -std=gnu99 -ffreestanding -O2 -nostdlib ./build/user_start.o ./build/user_main.o || exit; \
+	i686-elf-gcc -c ./src/userspace/main.c -o ./build/user_main.o -I ./src/mlibc -I ./src/userspace -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
+	i686-elf-gcc -I ./src/mlibc -I ./src/userspace -o ./build/user.o -std=gnu99 -ffreestanding -O2 -nostdlib ./build/user_start.o ./build/user_main.o || exit; \
 	i686-elf-objcopy -O binary ./build/user.o ./build/user.bin; \
 
 	# Create ISO
