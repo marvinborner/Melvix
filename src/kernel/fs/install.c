@@ -85,7 +85,7 @@ void install_melvix()
 
     info("Installation successful!");
     serial_write("Installation successful!\nRebooting...\n");
-    timer_wait(200);
+    // timer_wait(200);
     acpi_poweroff();
     halt_loop();
 }

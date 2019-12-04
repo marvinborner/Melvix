@@ -2,10 +2,11 @@
 #include <mlibc/stdio.h>
 #include <kernel/io/io.h>
 
-uint32_t sys_write(char *buf, uint32_t count)
+uint32_t sys_write(unsigned int buf, unsigned int count)
 {
-    serial_write("WRITE");
-    for (uint32_t i = 0; i < count; i++)
-        writec(*(buf++));
+    serial_write("\n");
+    serial_write_dec(count);
+    serial_write("WRITE: \n");
+    serial_write((const char *) buf);
     return count;
 }

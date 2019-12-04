@@ -5,73 +5,6 @@
 #include <kernel/io/io.h>
 #include <mlibc/string.h>
 
-// Defined in isr.asm
-extern void isr0();
-
-extern void isr1();
-
-extern void isr2();
-
-extern void isr3();
-
-extern void isr4();
-
-extern void isr5();
-
-extern void isr6();
-
-extern void isr7();
-
-extern void isr8();
-
-extern void isr9();
-
-extern void isr10();
-
-extern void isr11();
-
-extern void isr12();
-
-extern void isr13();
-
-extern void isr14();
-
-extern void isr15();
-
-extern void isr16();
-
-extern void isr17();
-
-extern void isr18();
-
-extern void isr19();
-
-extern void isr20();
-
-extern void isr21();
-
-extern void isr22();
-
-extern void isr23();
-
-extern void isr24();
-
-extern void isr25();
-
-extern void isr26();
-
-extern void isr27();
-
-extern void isr28();
-
-extern void isr29();
-
-extern void isr30();
-
-extern void isr31();
-
-uint32_t ignored_isr[8] = {0};
-
 // Install ISRs in IDT
 void isrs_install()
 {
@@ -111,7 +44,23 @@ void isrs_install()
     idt_set_gate(30, (unsigned) isr30, 0x08, 0x8E);
     idt_set_gate(31, (unsigned) isr31, 0x08, 0x8E);
 
+    idt_set_gate(0x80, (unsigned) isr128, 0x08, 0xEE);
+
     vga_log("Installed Interrupt Service Routines", 6);
+}
+
+irq_handler_t isr_routines[256] = {0};
+
+// Install custom IRQ handler
+void isr_install_handler(size_t isr, irq_handler_t handler)
+{
+    isr_routines[isr] = handler;
+}
+
+// Removes the custom IRQ handler
+void isr_uninstall_handler(size_t isr)
+{
+    isr_routines[isr] = 0;
 }
 
 // Error exception messages
@@ -156,7 +105,10 @@ const char *exception_messages[] = {
 // Master exception/interrupt/fault handler - halt via panic
 void fault_handler(struct regs *r)
 {
-    if (r->int_no < 32) {
+    irq_handler_t handler = isr_routines[r->int_no];
+    if (handler) {
+        handler(r);
+    } else {
         uint32_t faulting_address;
         asm ("mov %%cr2, %0" : "=r" (faulting_address));
 

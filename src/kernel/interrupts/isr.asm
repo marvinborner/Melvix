@@ -47,28 +47,33 @@ ISR_NOERRCODE 28
 ISR_NOERRCODE 29
 ISR_NOERRCODE 30
 ISR_NOERRCODE 31
+ISR_NOERRCODE 128
 
 extern fault_handler
 isr_common_stub:
-push ds
+    pusha
+
+    push ds
     push es
     push fs
 	push gs
-	pusha
 
 	mov ax, 0x10
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
 	mov gs, ax
+	cld
 
 	push esp
 	call fault_handler
 	add esp, 4
 
-	popa
 	pop gs
     pop fs
     pop es
 	pop ds
+    popa
+
+    add esp, 8
 	iret

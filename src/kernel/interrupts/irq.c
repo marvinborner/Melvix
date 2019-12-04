@@ -102,14 +102,12 @@ void irq_handler(struct regs *r)
 
     // Execute custom handler if exists
     handler = irq_routines[r->int_no - 32];
-    if (handler) {
+    if (handler)
         handler(r);
-    }
 
     // Send end of interrupt to second (slave) IRQ controller
-    if (r->int_no >= 40) {
+    if (r->int_no >= 40)
         outb(0xA0, 0x20);
-    }
 
     // Send end of interrupt to master interrupt controller
     outb(0x20, 0x20);

@@ -50,11 +50,17 @@ section .text
         push 0x23
         push eax
         pushf
+        pop eax
 
+        or eax, 0x200
+        push eax
         push 0x1B
+
         push ebx
         mov ebp, ebx
         iret
+        pop ebp
+        ret
 
 section .end_section
     global ASM_KERNEL_END
