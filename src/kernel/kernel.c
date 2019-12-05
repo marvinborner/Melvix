@@ -11,6 +11,9 @@
 #include <kernel/lib/lib.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/fs/marfs/marfs.h>
+#include <kernel/fs/iso9660/iso9660.h>
+#include <kernel/fs/atapi_pio.h>
+#include <mlibc/stdlib/liballoc.h>
 
 extern void jump_userspace();
 
@@ -44,17 +47,25 @@ void kernel_main()
     info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
 
     uint8_t boot_drive_id = (uint8_t) (*((uint8_t *) 0x9000));
-    if (boot_drive_id == 0xE0)
-        install_melvix();
+    // if (boot_drive_id == 0xE0) {
+    // install_melvix();
 
-    // User mode!
     info("Switching to user mode...");
     syscalls_install();
     tss_flush();
     uint32_t userspace = paging_alloc_pages(10);
     paging_set_user(userspace, 10);
-    marfs_read_whole_file(4, (uint8_t *) (userspace + 4096));
-    jump_userspace(userspace + 4096);
+    if (boot_drive_id == 0xE0) {
+        char *user_p[] = {"USER.BIN"};
+        struct iso9660_entity *user_e = ISO9660_get(user_p, 1);
+        if (!user_e) panic("Userspace binary not found!");
+        ATAPI_granular_read(1 + (user_e->length / 2048), user_e->lba, (uint8_t *) (userspace + 4096));
+        kfree(user_e);
+        jump_userspace(userspace + 4096);
+    } else {
+        marfs_read_whole_file(4, (uint8_t *) (userspace + 4096));
+        jump_userspace(userspace + 4096);
+    }
 
     panic("This should NOT happen!");
 
