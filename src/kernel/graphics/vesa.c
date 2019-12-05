@@ -209,6 +209,7 @@ void set_optimal_resolution()
 
     serial_write("Using mode: ");
     serial_write_hex(highest);
+    serial_write("\n");
     debug("Using mode: %dx%dx%d", vbe_width, vbe_height, vbe_bpl << 3);
 }
 
@@ -350,20 +351,24 @@ void vesa_keyboard_char(char ch)
 }
 
 int prev_coords[2] = {};
+int first = 1; // TODO: Better initial cursor buffer solution
 void vesa_draw_cursor(int x, int y)
 {
     // Reset previous area
     char *reset = (char *) &fb[prev_coords[0] * vbe_bpl + prev_coords[1] * vbe_pitch];
     char *prev = (char *) &cursor_buffer[prev_coords[0] * vbe_bpl + prev_coords[1] * vbe_pitch];
-    for (int cy = 0; cy <= 19; cy++) {
-        for (int cx = 0; cx <= 12; cx++) {
-            reset[vbe_bpl * cx] = prev[vbe_bpl * cx];
-            reset[vbe_bpl * cx + 1] = prev[vbe_bpl * cx + 1];
-            reset[vbe_bpl * cx + 2] = prev[vbe_bpl * cx + 2];
+    if (!first) {
+        for (int cy = 0; cy <= 19; cy++) {
+            for (int cx = 0; cx <= 12; cx++) {
+                reset[vbe_bpl * cx] = prev[vbe_bpl * cx];
+                reset[vbe_bpl * cx + 1] = prev[vbe_bpl * cx + 1];
+                reset[vbe_bpl * cx + 2] = prev[vbe_bpl * cx + 2];
+            }
+            reset += vbe_pitch;
+            prev += vbe_pitch;
         }
-        reset += vbe_pitch;
-        prev += vbe_pitch;
     }
+    first = 0;
 
     // Draw cursor
     prev_coords[0] = x;
@@ -380,10 +385,6 @@ void vesa_draw_cursor(int x, int y)
                 draw[vbe_bpl * cx] = terminal_color[2];
                 draw[vbe_bpl * cx + 1] = terminal_color[1];
                 draw[vbe_bpl * cx + 2] = terminal_color[0];
-            } else {
-                draw[vbe_bpl * cx] = terminal_background[2];
-                draw[vbe_bpl * cx + 1] = terminal_background[1];
-                draw[vbe_bpl * cx + 2] = terminal_background[0];
             }
         }
         draw += vbe_pitch;

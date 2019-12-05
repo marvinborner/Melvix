@@ -84,15 +84,64 @@ void mouse_install()
     mouse_wait(1);
     outb(0x64, 0x20);
     mouse_wait(0);
-    status = (inb(0x60) | 2);
+    status = (inb(0x60) | 3);
     mouse_wait(1);
     outb(0x64, 0x60);
     mouse_wait(1);
     outb(0x60, status);
 
-    // Use default settings
-    mouse_write(0xF6);
+    // Enable mousewheel
+    mouse_write(0xF2);
     mouse_read();
+    mouse_read();
+    mouse_write(0xF3);
+    mouse_read();
+    mouse_write(200);
+    mouse_read();
+    mouse_write(0xF3);
+    mouse_read();
+    mouse_write(100);
+    mouse_read();
+    mouse_write(0xF3);
+    mouse_read();
+    mouse_write(80);
+    mouse_read();
+    mouse_write(0xF2);
+    mouse_read();
+    status = mouse_read();
+    if (status == 3) serial_write("Scrollwheel support!\n");
+
+    // Activate 4th and 5th mouse buttons
+    mouse_write(0xF2);
+    mouse_read();
+    mouse_read();
+    mouse_write(0xF3);
+    mouse_read();
+    mouse_write(200);
+    mouse_read();
+    mouse_write(0xF3);
+    mouse_read();
+    mouse_write(200);
+    mouse_read();
+    mouse_write(0xF3);
+    mouse_read();
+    mouse_write(80);
+    mouse_read();
+    mouse_write(0xF2);
+    mouse_read();
+    status = mouse_read();
+    if (status == 4) serial_write("4th and 5th mouse button support!\n");
+
+    /* TODO: Fix mouse laggyness
+    mouse_write(0xE8);
+    mouse_read();
+    mouse_write(0x03);
+    mouse_read();
+
+    mouse_write(0xF3);
+    mouse_read();
+    mouse_write(200);
+    mouse_read(); */
 
     // Enable mouse
     mouse_write(0xF4);
