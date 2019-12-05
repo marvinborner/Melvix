@@ -70,7 +70,4 @@ void kernel_main()
     panic("This should NOT happen!");
 
     // asm ("div %0" :: "r"(0)); // Exception testing x/0
-    loop:
-    asm ("hlt");
-    goto loop;
 }

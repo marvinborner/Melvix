@@ -255,4 +255,6 @@ int vbe_bpl;
  */
 unsigned char *fb;
 
+unsigned char *cursor_buffer;
+
 #endif

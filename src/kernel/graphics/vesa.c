@@ -189,8 +189,11 @@ void set_optimal_resolution()
     vbe_set_mode(highest);
 
     uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
-    for (uint32_t z = 0; z < fb_size; z += 4096)
+    cursor_buffer = kmalloc(fb_size);
+    for (uint32_t z = 0; z < fb_size; z += 4096) {
         paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
+        paging_map((uint32_t) cursor_buffer + z, (uint32_t) cursor_buffer + z, PT_PRESENT | PT_RW | PT_USED);
+    }
 
     if (vbe_height > 1440) vesa_set_font(32);
     else if (vbe_height > 720) vesa_set_font(24);
@@ -346,31 +349,27 @@ void vesa_keyboard_char(char ch)
                         terminal_color);
 }
 
-char *prev = 0;
 int prev_coords[2] = {};
-
 void vesa_draw_cursor(int x, int y)
 {
     // Reset previous area
-    if (prev != 0) {
-        char *reset = (char *) &fb[prev_coords[0] * vbe_bpl + prev_coords[1] * vbe_pitch];
-        for (int cy = 0; cy <= 19; cy++) {
-            for (int cx = 0; cx <= 12; cx++) {
-                reset[vbe_bpl * cx] = prev[vbe_bpl * cx];
-                reset[vbe_bpl * cx + 1] = prev[vbe_bpl * cx + 1];
-                reset[vbe_bpl * cx + 2] = prev[vbe_bpl * cx + 2];
-            }
-            reset += vbe_pitch;
+    char *reset = (char *) &fb[prev_coords[0] * vbe_bpl + prev_coords[1] * vbe_pitch];
+    char *prev = (char *) &cursor_buffer[prev_coords[0] * vbe_bpl + prev_coords[1] * vbe_pitch];
+    for (int cy = 0; cy <= 19; cy++) {
+        for (int cx = 0; cx <= 12; cx++) {
+            reset[vbe_bpl * cx] = prev[vbe_bpl * cx];
+            reset[vbe_bpl * cx + 1] = prev[vbe_bpl * cx + 1];
+            reset[vbe_bpl * cx + 2] = prev[vbe_bpl * cx + 2];
         }
-        kfree(prev);
+        reset += vbe_pitch;
+        prev += vbe_pitch;
     }
 
-    prev = kmalloc(19 * 12 * vbe_bpl);
-
     // Draw cursor
-    char *draw = (char *) &fb[x * vbe_bpl + y * vbe_pitch];
     prev_coords[0] = x;
     prev_coords[1] = y;
+    prev = (char *) &cursor_buffer[x * vbe_bpl + y * vbe_pitch];
+    char *draw = (char *) &fb[x * vbe_bpl + y * vbe_pitch];
     for (int cy = 0; cy <= 19; cy++) {
         for (int cx = 0; cx <= 12; cx++) {
             // Performance issue?
@@ -388,6 +387,7 @@ void vesa_draw_cursor(int x, int y)
             }
         }
         draw += vbe_pitch;
+        prev += vbe_pitch;
     }
 }
 
