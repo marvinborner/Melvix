@@ -4,8 +4,8 @@
 #include <kernel/graphics/vesa.h>
 #include <kernel/cmos/rtc.h>
 #include <kernel/timer/timer.h>
-#include <mlibc/string.h>
-#include <mlibc/stdio.h>
+#include <kernel/lib/string.h>
+#include <kernel/lib/stdio.h>
 
 int32_t starts_with(const char *a, const char *b)
 {

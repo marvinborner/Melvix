@@ -12,4 +12,8 @@ void mouse_install();
  */
 void keyboard_install();
 
+void keyboard_clear_buffer();
+
+char *keyboard_buffer;
+
 #endif

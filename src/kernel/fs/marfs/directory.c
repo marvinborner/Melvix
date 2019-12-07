@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <kernel/fs/ata_pio.h>
-#include <mlibc/stdlib.h>
+#include <kernel/lib/stdlib.h>
 #include <kernel/fs/marfs/marfs.h>
 
 uint32_t marfs_new_dir(uint32_t uid)

@@ -1,9 +1,11 @@
 #include <stdint-gcc.h>
-#include <mlibc/stdio.h>
+#include <kernel/lib/stdio.h>
+#include <kernel/lib/string.h>
+#include <kernel/io/io.h>
 
-uint32_t sys_write(unsigned int fd, unsigned int buf, unsigned int count)
+uint32_t sys_write(unsigned int buf)
 {
-    for (uint32_t i = 0; i < count; i++)
-        writec(*((char *) buf++));
-    return count;
+    serial_put(((char *) buf)[0]);
+    printf((const char *) buf);
+    return strlen((const char *) buf);
 }

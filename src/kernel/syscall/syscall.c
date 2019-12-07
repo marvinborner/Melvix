@@ -6,11 +6,14 @@
 typedef uint32_t (*syscall_func)(unsigned int, ...);
 
 uint32_t (*syscalls[])() = {
-        [1] = sys_write
+        [1] = sys_write,
+        [2] = sys_read
 };
 
 void syscall_handler(struct regs *r)
 {
+    serial_write("Received syscall!\n");
+
     if (r->eax >= sizeof(syscalls) / sizeof(*syscalls))
         return;
 
@@ -18,7 +21,6 @@ void syscall_handler(struct regs *r)
     if (!location)
         return;
 
-    serial_write("Received syscall!\n");
     location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
 }
 

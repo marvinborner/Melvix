@@ -14,7 +14,7 @@ void marfs_format(void)
     sb.s_first_chunk = 2 + sb.n_inodes;
 
     // Write to disk
-    marfs_writeSB(&sb);
+    marfs_write_superblock(&sb);
 
     // Initialize the inodes
     for (uint32_t i = 0; i < sb.n_inodes; i++) ata_clear28(interface, 2 + i);

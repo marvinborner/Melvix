@@ -4,9 +4,9 @@
 #include <kernel/lib/lib.h>
 #include <kernel/paging/paging.h>
 #include <kernel/system.h>
-#include <mlibc/stdlib.h>
+#include <kernel/lib/stdlib.h>
 #include <kernel/commands/command.h>
-#include <mlibc/stdio.h>
+#include <kernel/lib/stdio.h>
 
 void switch_to_vga()
 {

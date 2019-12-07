@@ -1,6 +1,11 @@
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/io/io.h>
 #include <kernel/graphics/vesa.h>
+#include <kernel/input/input.h>
+#include <kernel/lib/stdlib/liballoc.h>
+#include <kernel/lib/string.h>
+#include <kernel/paging/paging.h>
+#include <kernel/lib/lib.h>
 
 int shift_pressed;
 int control_pressed;
@@ -101,7 +106,7 @@ void keyboard_handler(struct regs *r)
             return;
         }
 
-        vesa_keyboard_char(current_keymap[scan_code]);
+        keyboard_buffer[strlen(keyboard_buffer)] = current_keymap[scan_code];
     } else { // RELEASE
         if (current_keymap[scan_code] == -107) // TODO: IDK WHY -107?!
             control_pressed = 0;
@@ -120,9 +125,17 @@ void keyboard_rate()
     outb(0x60, 0x0); // Rate{00000} Delay{00} 0
 }
 
+void keyboard_clear_buffer()
+{
+    memset(keyboard_buffer, 0, 4096);
+}
+
 // Installs the keyboard handler into IRQ1
 void keyboard_install()
 {
+    keyboard_buffer = (char *) paging_alloc_pages(1); // 4KiB
+    paging_set_user((uint32_t) keyboard_buffer, 1);
+
     keyboard_rate();
     irq_install_handler(1, keyboard_handler);
     shift_pressed = 0;

@@ -5,6 +5,8 @@ extern void idt_syscall();
 
 void syscalls_install();
 
-uint32_t sys_write(unsigned int buf, unsigned int count);
+uint32_t sys_write(unsigned int buf);
+
+uint32_t sys_read();
 
 #endif

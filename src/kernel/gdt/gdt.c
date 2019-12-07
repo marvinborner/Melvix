@@ -2,7 +2,7 @@
 #include <kernel/gdt/gdt.h>
 #include <kernel/system.h>
 #include <kernel/lib/lib.h>
-#include <mlibc/stdlib/liballoc.h>
+#include <kernel/lib/stdlib/liballoc.h>
 
 struct gdt_entry {
     unsigned short limit_low;

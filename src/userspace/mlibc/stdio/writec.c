@@ -1,0 +1,4 @@
+void writec(char c)
+{
+    //
+}

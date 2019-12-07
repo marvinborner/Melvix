@@ -2,8 +2,8 @@
 #include <kernel/lib/lib.h>
 #include <kernel/io/io.h>
 #include <kernel/system.h>
-#include <mlibc/string.h>
-#include <mlibc/stdlib.h>
+#include <kernel/lib/string.h>
+#include <kernel/lib/stdlib.h>
 
 uint8_t inb(uint16_t port)
 {

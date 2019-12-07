@@ -42,7 +42,7 @@ uint8_t marfs_write_mbr(uint8_t *mbr);
 
 struct marfs_superblock *marfs_read_superblock();
 
-uint8_t marfs_writeSB(struct marfs_superblock *sb);
+uint8_t marfs_write_superblock(struct marfs_superblock *sb);
 
 uint32_t marfs_get_free_lba_block(void);
 

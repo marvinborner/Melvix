@@ -62,11 +62,15 @@
 /**
  * DECLARATIONS
  */
-DECL_SYSCALL3(write, int, const char *, int);
+DECL_SYSCALL1(write, char *);
+
+DECL_SYSCALL0(read);
 
 /**
  * DEFINITIONS
  */
-DEFN_SYSCALL3(write, 1, int, const char *, int);
+DEFN_SYSCALL1(write, 1, char *);
+
+DEFN_SYSCALL0(read, 2);
 
 #endif

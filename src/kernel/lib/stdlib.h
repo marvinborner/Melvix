@@ -5,13 +5,13 @@
 
 #ifndef MELVIX_ALLOC_H
 
-#include <mlibc/stdlib/liballoc.h>
+#include <kernel/lib/stdlib/liballoc.h>
 
 #endif
 
 #ifndef MELVIX_STRING_H
 
-#include <mlibc/string.h>
+#include <kernel/lib/string.h>
 
 #endif
 

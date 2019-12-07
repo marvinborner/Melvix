@@ -13,7 +13,7 @@
 #include <kernel/fs/marfs/marfs.h>
 #include <kernel/fs/iso9660/iso9660.h>
 #include <kernel/fs/atapi_pio.h>
-#include <mlibc/stdlib/liballoc.h>
+#include <kernel/lib/stdlib/liballoc.h>
 
 extern void jump_userspace();
 

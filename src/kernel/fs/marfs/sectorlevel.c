@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <mlibc/stdlib.h>
+#include <kernel/lib/stdlib.h>
 #include <kernel/fs/ata_pio.h>
 #include <kernel/fs/marfs/marfs.h>
 
@@ -29,7 +29,7 @@ struct marfs_superblock *marfs_read_superblock()
     return p;
 }
 
-uint8_t marfs_writeSB(struct marfs_superblock *sb)
+uint8_t marfs_write_superblock(struct marfs_superblock *sb)
 {
     sb_cache = *sb;
     return ata_write28(interface, 1, (uint8_t *) sb);

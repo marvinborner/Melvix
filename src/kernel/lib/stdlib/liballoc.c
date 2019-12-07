@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <kernel/paging/paging.h>
-#include <mlibc/stdlib/liballoc.h>
+#include <kernel/lib/stdlib/liballoc.h>
 
 int liballoc_lock()
 {

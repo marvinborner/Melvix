@@ -13,21 +13,21 @@ clean:
 build: clean
 	@set -e; \
 	echo "Building..."; \
-	mkdir ./build/; \
+	mkdir -p ./build/kernel && mkdir -p ./build/userspace; \
 
 	# Assemble ASM files
-	nasm -f elf ./src/kernel/boot.asm -o ./build/boot.o || exit; \
+	nasm -f elf ./src/kernel/boot.asm -o ./build/kernel/boot.o || exit; \
 
-	# Make all C files
-	find ./src/kernel/ ./src/mlibc/ -name \*.c >./build/tmp; \
+	# Make all kernel C files
+	find ./src/kernel/ -name \*.c >./build/tmp; \
 	while read -r line; do \
 		stripped=$$(echo "$${line}" | sed -r 's/\//_/g'); \
 		stripped=$${stripped#??????}; \
 		stripped=$${stripped%%?}o; \
-		i686-elf-gcc -c ./"$${line}" -o ./build/"$${stripped}" -I ./src -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
+		i686-elf-gcc -c ./"$${line}" -o ./build/kernel/"$${stripped}" -I ./src -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
 	done <./build/tmp; \
 	rm ./build/tmp; \
-	i686-elf-gcc -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin -std=gnu99 -ffreestanding -O2 -nostdlib ./build/*.o || exit; \
+	i686-elf-gcc -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin -std=gnu99 -ffreestanding -O2 -nostdlib ./build/kernel/*.o || exit; \
 
 	# Modules
 	i686-elf-gcc -c ./src/resources/font.c -o ./build/font.o -I ./src -std=gnu99 -ffreestanding -O2 -nostdlib; \
@@ -35,9 +35,16 @@ build: clean
 	rm ./build/font.o; \
 
 	# Userspace
-	nasm -f elf ./src/userspace/start.asm -o ./build/user_start.o || exit; \
-	i686-elf-gcc -c ./src/userspace/main.c -o ./build/user_main.o -I ./src/mlibc -I ./src/userspace -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
-	i686-elf-gcc -I ./src/mlibc -I ./src/userspace -o ./build/user.o -std=gnu99 -ffreestanding -O2 -nostdlib ./build/user_start.o ./build/user_main.o || exit; \
+	nasm -f elf ./src/userspace/start.asm -o ./build/userspace/start.o || exit; \
+	find ./src/userspace/ -name \*.c >./build/tmp; \
+	while read -r line; do \
+		stripped=$$(echo "$${line}" | sed -r 's/\//_/g'); \
+		stripped=$${stripped#??????}; \
+		stripped=$${stripped%%?}o; \
+		i686-elf-gcc -c ./"$${line}" -o ./build/userspace/"$${stripped}" -I ./src/userspace -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
+	done <./build/tmp; \
+	rm ./build/tmp; \
+	i686-elf-gcc -I ./src/userspace -o ./build/user.o -std=gnu99 -ffreestanding -O2 -nostdlib ./build/userspace/*.o|| exit; \
 	i686-elf-objcopy -O binary ./build/user.o ./build/user.bin; \
 
 	# Create ISO

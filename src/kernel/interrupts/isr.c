@@ -3,7 +3,7 @@
 #include <kernel/lib/lib.h>
 #include <kernel/system.h>
 #include <kernel/io/io.h>
-#include <mlibc/string.h>
+#include <kernel/lib/string.h>
 
 // Install ISRs in IDT
 void isrs_install()

@@ -2,7 +2,7 @@
 #include <kernel/paging/paging.h>
 #include <kernel/io/io.h>
 #include <kernel/graphics/font.h>
-#include <mlibc/stdlib/liballoc.h>
+#include <kernel/lib/stdlib/liballoc.h>
 #include <kernel/fs/ata_pio.h>
 #include <kernel/fs/atapi_pio.h>
 #include <kernel/system.h>

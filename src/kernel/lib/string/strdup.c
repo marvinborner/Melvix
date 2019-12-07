@@ -1,5 +1,5 @@
-#include <mlibc/string.h>
-#include <mlibc/stdlib.h>
+#include <kernel/lib/string.h>
+#include <kernel/lib/stdlib.h>
 
 char *strdup(const char *orig)
 {

@@ -1,11 +1,11 @@
 #include <kernel/timer/timer.h>
 #include <kernel/io/io.h>
 #include <kernel/graphics/vesa.h>
-#include <mlibc/string.h>
-#include <mlibc/stdlib.h>
+#include <kernel/lib/string.h>
+#include <kernel/lib/stdlib.h>
 #include <kernel/paging/paging.h>
 #include <kernel/interrupts/interrupts.h>
-#include <mlibc/stdio.h>
+#include <kernel/lib/stdio.h>
 #include <stdarg.h>
 
 char *vga_buffer = (char *) 0x500;

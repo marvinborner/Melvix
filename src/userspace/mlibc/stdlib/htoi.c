@@ -1,5 +1,5 @@
-#include <mlibc/math.h>
 #include <stddef.h>
+#include <mlibc/math.h>
 #include <mlibc/string.h>
 
 int htoi(char *str)

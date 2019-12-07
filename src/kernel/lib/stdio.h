@@ -1,9 +1,11 @@
 #ifndef MELVIX_STDIO_H
 #define MELVIX_STDIO_H
 
-// TODO: Input methods
-
 #include <stdarg.h>
+
+char getch();
+
+char *readline();
 
 void writec(char c);
 

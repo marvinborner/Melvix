@@ -1,8 +1,8 @@
 #include <stdarg.h>
 #include <stdint.h>
-#include <mlibc/stdio.h>
-#include <mlibc/string.h>
-#include <mlibc/stdlib.h>
+#include <kernel/lib/stdio.h>
+#include <kernel/lib/string.h>
+#include <kernel/lib/stdlib.h>
 
 void __writes(const char *data)
 {
