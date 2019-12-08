@@ -15,6 +15,8 @@
 #include <kernel/fs/atapi_pio.h>
 #include <kernel/lib/stdlib/liballoc.h>
 #include <kernel/lib/stdio.h>
+#include <kernel/pci/pci.h>
+#include <kernel/net/network.h>
 
 extern void jump_userspace();
 
@@ -39,6 +41,8 @@ void kernel_main()
     timer_install();
     mouse_install();
     keyboard_install();
+    pci_remap();
+    network_install();
     asm ("sti");
 
     // Get hardware information

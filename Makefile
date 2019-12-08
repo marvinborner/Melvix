@@ -5,6 +5,7 @@ DIR := $(shell pwd)/cross
 export PREFIX := $(DIR)/opt
 export TARGET := i686-elf
 export PATH := $(PREFIX)/bin:$(PATH)
+export NETWORK := rtl8139
 
 clean:
 	@-rm -rf ./build ./iso
@@ -24,7 +25,7 @@ build: clean
 		stripped=$$(echo "$${line}" | sed -r 's/\//_/g'); \
 		stripped=$${stripped#??????}; \
 		stripped=$${stripped%%?}o; \
-		i686-elf-gcc -c ./"$${line}" -o ./build/kernel/"$${stripped}" -I ./src -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
+		i686-elf-gcc -c ./"$${line}" -o ./build/kernel/"$${stripped}" -I ./src -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter -D ${NETWORK} || exit; \
 	done <./build/tmp; \
 	rm ./build/tmp; \
 	i686-elf-gcc -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin -std=gnu99 -ffreestanding -O2 -nostdlib ./build/kernel/*.o || exit; \
@@ -85,7 +86,7 @@ cross:
 
 test: build debug
 
-QEMU_OPTIONS := -no-reboot -vga std -smp $$(nproc) -serial stdio -rtc base=localtime -m 256M
+QEMU_OPTIONS := -no-reboot -vga std -smp $$(nproc) -serial stdio -rtc base=localtime -m 256M -net nic,model=rtl8139,macaddr=42:42:42:42:42:42 -net user
 
 debug:
 	@echo "Starting simulation..."

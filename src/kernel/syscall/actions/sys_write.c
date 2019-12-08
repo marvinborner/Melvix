@@ -1,4 +1,4 @@
-#include <stdint-gcc.h>
+#include <stdint.h>
 #include <kernel/lib/stdio.h>
 #include <kernel/lib/string.h>
 #include <kernel/io/io.h>
