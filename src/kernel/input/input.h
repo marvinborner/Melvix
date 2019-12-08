@@ -14,6 +14,8 @@ void keyboard_install();
 
 void keyboard_clear_buffer();
 
+char keyboard_char_buffer;
+
 char *keyboard_buffer;
 
 #endif

@@ -64,13 +64,13 @@
  */
 DECL_SYSCALL1(write, char *);
 
-DECL_SYSCALL0(read);
+DECL_SYSCALL1(read, char *);
 
 /**
  * DEFINITIONS
  */
 DEFN_SYSCALL1(write, 1, char *);
 
-DEFN_SYSCALL0(read, 2);
+DEFN_SYSCALL1(read, 2, char *);
 
 #endif

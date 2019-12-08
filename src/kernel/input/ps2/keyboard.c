@@ -106,7 +106,8 @@ void keyboard_handler(struct regs *r)
             return;
         }
 
-        keyboard_buffer[strlen(keyboard_buffer)] = current_keymap[scan_code];
+        keyboard_char_buffer = current_keymap[scan_code];
+        keyboard_buffer[strlen(keyboard_buffer)] = keyboard_char_buffer;
     } else { // RELEASE
         if (current_keymap[scan_code] == -107) // TODO: IDK WHY -107?!
             control_pressed = 0;
@@ -127,15 +128,15 @@ void keyboard_rate()
 
 void keyboard_clear_buffer()
 {
-    memset(keyboard_buffer, 0, 4096);
+    kfree(keyboard_buffer);
+    keyboard_buffer = (char *) paging_alloc_pages(1); // 4KiB
+    paging_set_user((uint32_t) keyboard_buffer, 1);
 }
 
 // Installs the keyboard handler into IRQ1
 void keyboard_install()
 {
-    keyboard_buffer = (char *) paging_alloc_pages(1); // 4KiB
-    paging_set_user((uint32_t) keyboard_buffer, 1);
-
+    keyboard_clear_buffer();
     keyboard_rate();
     irq_install_handler(1, keyboard_handler);
     shift_pressed = 0;

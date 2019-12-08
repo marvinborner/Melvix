@@ -14,6 +14,7 @@
 #include <kernel/fs/iso9660/iso9660.h>
 #include <kernel/fs/atapi_pio.h>
 #include <kernel/lib/stdlib/liballoc.h>
+#include <kernel/lib/stdio.h>
 
 extern void jump_userspace();
 

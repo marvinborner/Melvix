@@ -1,9 +1,11 @@
 #include <kernel/input/input.h>
-#include <kernel/lib/string.h>
+#include <kernel/timer/timer.h>
 
 char getch()
 {
-    keyboard_clear_buffer();
-    while (strlen(keyboard_buffer) == 0) {}
-    return keyboard_buffer[0];
+    keyboard_char_buffer = 0;
+    while (keyboard_char_buffer == 0) {
+        timer_wait(1); // IDK why!
+    }
+    return keyboard_char_buffer;
 }
