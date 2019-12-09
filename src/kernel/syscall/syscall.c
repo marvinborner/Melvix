@@ -7,7 +7,9 @@ typedef uint32_t (*syscall_func)(unsigned int, ...);
 
 uint32_t (*syscalls[])() = {
         [1] = sys_write,
-        [2] = sys_read
+        [2] = sys_read,
+        [3] = (uint32_t (*)()) sys_writec,
+        [4] = sys_readc
 };
 
 void syscall_handler(struct regs *r)

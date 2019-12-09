@@ -8,3 +8,13 @@ uint32_t sys_write(char *buf)
     printf(buf);
     return strlen((const char *) buf);
 }
+
+uint32_t sys_writec(char ch)
+{
+    serial_write_hex(ch);
+    serial_write("\n");
+    serial_put(ch);
+    serial_write("\n\n");
+    writec(ch);
+    return 0;
+}

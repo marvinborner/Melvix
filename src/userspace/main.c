@@ -6,8 +6,7 @@ void user_main()
     syscall_write(hello);
 
     while (1) {
-        char buffer[20] = {'\0'};
-        syscall_read(buffer);
-        syscall_write(buffer);
+        char ch = (char) syscall_readc();
+        syscall_writec(ch);
     };
 }
