@@ -1,29 +1,26 @@
 #include <stddef.h>
 #include <stdint.h>
-#include <kernel/paging/paging.h>
-#include <kernel/lib/stdlib/liballoc.h>
+#include <syscall.h>
 
 int liballoc_lock()
 {
-    // asm ("cli");
     return 0;
 }
 
 int liballoc_unlock()
 {
-    // asm ("sti");
     return 0;
 }
 
 void *liballoc_alloc(size_t p)
 {
-    uint32_t ptr = paging_alloc_pages((uint32_t) p);
+    uint32_t ptr = syscall_paging_alloc((uint32_t) p);
     return (void *) ptr;
 }
 
 int liballoc_free(void *ptr, size_t p)
 {
-    paging_set_free((uint32_t) ptr, (uint32_t) p);
+    syscall_paging_free((uint32_t) ptr, (uint32_t) p);
     return 0;
 }
 
@@ -154,7 +151,7 @@ static struct liballoc_major *allocate_new_page(unsigned int size)
     return maj;
 }
 
-void *PREFIX(malloc)(size_t req_size)
+void *malloc(size_t req_size)
 {
     int startedBet = 0;
     unsigned long long bestSize = 0;
@@ -174,7 +171,7 @@ void *PREFIX(malloc)(size_t req_size)
     if (size == 0) {
         l_warningCount += 1;
         liballoc_unlock();
-        return PREFIX(malloc)(1);
+        // return malloc(1);
     }
 
     if (l_memRoot == NULL) {
@@ -342,7 +339,7 @@ void *PREFIX(malloc)(size_t req_size)
     return NULL;
 }
 
-void PREFIX(free)(void *ptr)
+void free(void *ptr)
 {
     struct liballoc_minor *min;
     struct liballoc_major *maj;
@@ -395,32 +392,32 @@ void PREFIX(free)(void *ptr)
     liballoc_unlock();
 }
 
-void *PREFIX(calloc)(size_t nobj, size_t size)
+void *calloc(size_t nobj, size_t size)
 {
     int real_size;
     void *p;
 
     real_size = nobj * size;
 
-    p = PREFIX(malloc)(real_size);
+    p = malloc(real_size);
 
     liballoc_memset(p, 0, real_size);
 
     return p;
 }
 
-void *PREFIX(realloc)(void *p, size_t size)
+void *realloc(void *p, size_t size)
 {
     void *ptr;
     struct liballoc_minor *min;
     unsigned int real_size;
 
     if (size == 0) {
-        PREFIX(free)(p);
+        free(p);
         return NULL;
     }
 
-    if (p == NULL) return PREFIX(malloc)(size);
+    if (p == NULL) return malloc(size);
 
     ptr = p;
     UNALIGN(ptr);
@@ -449,9 +446,9 @@ void *PREFIX(realloc)(void *p, size_t size)
 
     liballoc_unlock();
 
-    ptr = PREFIX(malloc)(size);
+    ptr = malloc(size);
     liballoc_memcpy(ptr, p, real_size);
-    PREFIX(free)(p);
+    free(p);
 
     return ptr;
 }

@@ -7,10 +7,14 @@ void syscalls_install();
 
 uint32_t sys_write(char *buf);
 
-uint32_t sys_writec(char ch);
+uint32_t sys_writec(char *ch);
 
 uint32_t sys_read(char *buf);
 
-uint32_t sys_readc();
+uint32_t sys_readc(char *ch);
+
+uint32_t sys_paging_alloc(uint32_t count);
+
+uint32_t sys_paging_free(uint32_t virt, uint32_t count);
 
 #endif

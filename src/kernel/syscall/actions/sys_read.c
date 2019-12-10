@@ -3,6 +3,7 @@
 #include <kernel/input/input.h>
 #include <kernel/lib/lib.h>
 #include <kernel/lib/string.h>
+#include <kernel/io/io.h>
 
 uint32_t sys_read(char *buf)
 {
@@ -15,7 +16,10 @@ uint32_t sys_read(char *buf)
     return strlen(buf);
 }
 
-uint32_t sys_readc()
+uint32_t sys_readc(char *ch)
 {
-    return getch();
+    char buf = getch();
+    ch = &buf;
+    serial_put(*ch);
+    return (uint32_t) ch;
 }

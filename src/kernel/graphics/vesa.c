@@ -194,6 +194,9 @@ void set_optimal_resolution()
         paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
         paging_map((uint32_t) cursor_buffer + z, (uint32_t) cursor_buffer + z, PT_PRESENT | PT_RW | PT_USED);
     }
+    paging_set_user((uint32_t) fb, fb_size);
+    serial_write_hex((int) &fb);
+    serial_write("\n");
 
     if (vbe_height > 1440) vesa_set_font(32);
     else if (vbe_height > 720) vesa_set_font(24);

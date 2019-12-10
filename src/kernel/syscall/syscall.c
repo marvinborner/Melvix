@@ -2,14 +2,19 @@
 #include <kernel/syscall/syscall.h>
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/io/io.h>
+#include <kernel/paging/paging.h>
+#include <kernel/system.h>
 
 typedef uint32_t (*syscall_func)(unsigned int, ...);
 
 uint32_t (*syscalls[])() = {
+        [0] = (uint32_t (*)()) halt_loop, // DEBUG!
         [1] = sys_write,
         [2] = sys_read,
-        [3] = (uint32_t (*)()) sys_writec,
-        [4] = sys_readc
+        [3] = sys_writec,
+        [4] = sys_readc,
+        [5] = sys_paging_alloc,
+        [6] = sys_paging_free
 };
 
 void syscall_handler(struct regs *r)
