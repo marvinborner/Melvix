@@ -10,7 +10,8 @@
 
 void font_install()
 {
-    font = (struct font *) kmalloc(100000);; // High quality shit
+    font = (struct font *) paging_alloc_pages(25);; // High quality shit
+    paging_set_user((uint32_t) font, 25);
 
     uint8_t boot_drive_id = (uint8_t) (*((uint8_t *) 0x9000));
     if (boot_drive_id != 0xE0) {

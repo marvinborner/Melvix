@@ -74,6 +74,8 @@ DECL_SYSCALL1(writec, char *);
 
 DECL_SYSCALL1(readc, char *);
 
+DECL_SYSCALL0(get_pointers);
+
 DECL_SYSCALL1(paging_alloc, uint32_t);
 
 DECL_SYSCALL2(paging_free, uint32_t, uint32_t);

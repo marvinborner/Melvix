@@ -13,8 +13,9 @@ uint32_t (*syscalls[])() = {
         [2] = sys_read,
         [3] = sys_writec,
         [4] = sys_readc,
-        [5] = sys_paging_alloc,
-        [6] = sys_paging_free
+        [5] = sys_get_pointers,
+        [6] = sys_paging_alloc,
+        [7] = sys_paging_free
 };
 
 void syscall_handler(struct regs *r)

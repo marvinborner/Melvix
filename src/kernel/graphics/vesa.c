@@ -190,11 +190,11 @@ void set_optimal_resolution()
 
     uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
     cursor_buffer = kmalloc(fb_size);
+    paging_set_user((uint32_t) fb, fb_size / 4096);
     for (uint32_t z = 0; z < fb_size; z += 4096) {
-        paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
+        paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED | PT_ALL_PRIV);
         paging_map((uint32_t) cursor_buffer + z, (uint32_t) cursor_buffer + z, PT_PRESENT | PT_RW | PT_USED);
     }
-    paging_set_user((uint32_t) fb, fb_size);
     serial_write_hex((int) &fb);
     serial_write("\n");
 
