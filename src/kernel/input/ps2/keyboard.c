@@ -128,9 +128,8 @@ void keyboard_rate()
 
 void keyboard_clear_buffer()
 {
-    kfree(keyboard_buffer);
-    keyboard_buffer = (char *) paging_alloc_pages(1); // 4KiB
-    paging_set_user((uint32_t) keyboard_buffer, 1);
+    ufree(keyboard_buffer);
+    keyboard_buffer = (char *) umalloc(4096); // 4KiB
 }
 
 // Installs the keyboard handler into IRQ1

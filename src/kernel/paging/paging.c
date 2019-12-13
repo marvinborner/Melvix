@@ -22,6 +22,7 @@ void paging_install()
 
     paging_set_present(0, memory_get_all() >> 2); // /4
     paging_set_used(0, ((uint32_t) ASM_KERNEL_END >> 12) + 1); // /4096
+    // paging_set_user(0, memory_get_all() >> 2);
 
     paging_enable();
 
@@ -60,7 +61,7 @@ void paging_map(uint32_t phy, uint32_t virt, uint16_t flags)
     invlpg(virt);
 }
 
-uint32_t paging_get_physical_addr(uint32_t virt)
+uint32_t paging_get_phys(uint32_t virt)
 {
     uint32_t pdi = virt >> 22;
     uint32_t pti = (virt >> 12) & 0x03FF;
