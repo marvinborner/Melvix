@@ -41,13 +41,6 @@ void init_framebuffer()
     struct userspace_pointers *pointers = (struct userspace_pointers *) syscall_get_pointers();
     fb = (unsigned char *) 0xfd000000;
 
-    uint32_t color[3] = {0xab, 0xb2, 0xbf};
-    vesa_set_pixel(50, 50, color);
-    vesa_set_pixel(50, 51, color);
-    vesa_set_pixel(50, 52, color);
-    vesa_set_pixel(50, 53, color);
-    vesa_set_pixel(50, 54, color);
-    vesa_set_pixel(50, 55, color);
-    vesa_set_pixel(50, 56, color);
-    vesa_set_pixel(50, 57, color);
+    uint32_t color[3] = {0xff, 0x00, 0x00};
+    vesa_set_pixel(0, 0, color);
 }

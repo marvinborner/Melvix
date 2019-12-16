@@ -78,14 +78,21 @@ struct liballoc_minor {
 static struct liballoc_major *l_mem_root = NULL;
 static struct liballoc_major *l_best_bet = NULL;
 
-static unsigned int l_pageSize = 4096;
-static unsigned int l_pageCount = 16;
+static unsigned int l_page_size = 4096;
+static unsigned int l_page_count = 16;
 static unsigned long long l_allocated = 0;
-static unsigned long long l_inuse = 0;
-
+static unsigned long long l_in_use = 0;
 static long long l_warning_count = 0;
 static long long l_error_count = 0;
 static long long l_possible_overruns = 0;
+static struct liballoc_major *l_mem_root_user = NULL;
+static struct liballoc_major *l_best_bet_user = NULL;
+
+static unsigned long long l_allocated_user = 0;
+static unsigned long long l_in_use_user = 0;
+static long long l_warning_count_user = 0;
+static long long l_error_count_user = 0;
+static long long l_possible_overruns_user = 0;
 
 static void *liballoc_memset(void *s, int c, size_t n)
 {
@@ -126,29 +133,35 @@ static struct liballoc_major *allocate_new_page(unsigned int size, unsigned int 
     st = size + sizeof(struct liballoc_major);
     st += sizeof(struct liballoc_minor);
 
-    if ((st % l_pageSize) == 0)
-        st = st / (l_pageSize);
+    if ((st % l_page_size) == 0)
+        st = st / (l_page_size);
     else
-        st = st / (l_pageSize) + 1;
+        st = st / (l_page_size) + 1;
 
-    if (st < l_pageCount) st = l_pageCount;
+    if (st < l_page_count) st = l_page_count;
 
     maj = (struct liballoc_major *) liballoc_alloc(st);
     if (shared == 1) paging_set_user((uint32_t) maj, st);
 
     if (maj == NULL) {
-        l_warning_count += 1;
+        if (shared == 1)
+            l_warning_count_user += 1;
+        else
+            l_warning_count += 1;
         return NULL;
     }
 
     maj->prev = NULL;
     maj->next = NULL;
     maj->pages = st;
-    maj->size = st * l_pageSize;
+    maj->size = st * l_page_size;
     maj->usage = sizeof(struct liballoc_major);
     maj->first = NULL;
 
-    l_allocated += maj->size;
+    if (shared == 1)
+        l_allocated_user += maj->size;
+    else
+        l_allocated += maj->size;
 
     return maj;
 }
@@ -237,7 +250,7 @@ void *kmalloc(size_t req_size)
             maj->first->size = size;
             maj->first->req_size = req_size;
             maj->usage += size + sizeof(struct liballoc_minor);
-            l_inuse += size;
+            l_in_use += size;
             p = (void *) ((uintptr_t) (maj->first) + sizeof(struct liballoc_minor));
             ALIGN(p);
             liballoc_unlock();
@@ -259,7 +272,7 @@ void *kmalloc(size_t req_size)
             maj->first->size = size;
             maj->first->req_size = req_size;
             maj->usage += size + sizeof(struct liballoc_minor);
-            l_inuse += size;
+            l_in_use += size;
             p = (void *) ((uintptr_t) (maj->first) + sizeof(struct liballoc_minor));
             ALIGN(p);
             liballoc_unlock();
@@ -284,7 +297,7 @@ void *kmalloc(size_t req_size)
                     min->size = size;
                     min->req_size = req_size;
                     maj->usage += size + sizeof(struct liballoc_minor);
-                    l_inuse += size;
+                    l_in_use += size;
                     p = (void *) ((uintptr_t) min + sizeof(struct liballoc_minor));
                     ALIGN(p);
                     liballoc_unlock();
@@ -309,7 +322,7 @@ void *kmalloc(size_t req_size)
                     min->next->prev = new_min;
                     min->next = new_min;
                     maj->usage += size + sizeof(struct liballoc_minor);
-                    l_inuse += size;
+                    l_in_use += size;
                     p = (void *) ((uintptr_t) new_min + sizeof(struct liballoc_minor));
                     ALIGN(p);
                     liballoc_unlock();
@@ -368,7 +381,7 @@ void kfree(void *ptr)
     }
 
     maj = min->block;
-    l_inuse -= min->size;
+    l_in_use -= min->size;
     maj->usage -= (min->size + sizeof(struct liballoc_minor));
     min->magic = LIBALLOC_DEAD;
 
@@ -475,27 +488,27 @@ void *umalloc(size_t req_size)
     liballoc_lock();
 
     if (size == 0) {
-        l_warning_count += 1;
+        l_warning_count_user += 1;
         liballoc_unlock();
         return umalloc(1);
     }
 
-    if (l_mem_root == NULL) {
-        l_mem_root = allocate_new_page(size, 1);
-        if (l_mem_root == NULL) {
+    if (l_mem_root_user == NULL) {
+        l_mem_root_user = allocate_new_page(size, 1);
+        if (l_mem_root_user == NULL) {
             liballoc_unlock();
             return NULL;
         }
     }
 
-    maj = l_mem_root;
+    maj = l_mem_root_user;
     started_bet = 0;
 
-    if (l_best_bet != NULL) {
-        best_size = l_best_bet->size - l_best_bet->usage;
+    if (l_best_bet_user != NULL) {
+        best_size = l_best_bet_user->size - l_best_bet_user->usage;
 
         if (best_size > (size + sizeof(struct liballoc_minor))) {
-            maj = l_best_bet;
+            maj = l_best_bet_user;
             started_bet = 1;
         }
     }
@@ -503,7 +516,7 @@ void *umalloc(size_t req_size)
     while (maj != NULL) {
         diff = maj->size - maj->usage;
         if (best_size < diff) {
-            l_best_bet = maj;
+            l_best_bet_user = maj;
             best_size = diff;
         }
 
@@ -515,7 +528,7 @@ void *umalloc(size_t req_size)
             }
 
             if (started_bet == 1) {
-                maj = l_mem_root;
+                maj = l_mem_root_user;
                 started_bet = 0;
                 continue;
             }
@@ -537,7 +550,7 @@ void *umalloc(size_t req_size)
             maj->first->size = size;
             maj->first->req_size = req_size;
             maj->usage += size + sizeof(struct liballoc_minor);
-            l_inuse += size;
+            l_in_use_user += size;
             p = (void *) ((uintptr_t) (maj->first) + sizeof(struct liballoc_minor));
             ALIGN(p);
             liballoc_unlock();
@@ -559,7 +572,7 @@ void *umalloc(size_t req_size)
             maj->first->size = size;
             maj->first->req_size = req_size;
             maj->usage += size + sizeof(struct liballoc_minor);
-            l_inuse += size;
+            l_in_use_user += size;
             p = (void *) ((uintptr_t) (maj->first) + sizeof(struct liballoc_minor));
             ALIGN(p);
             liballoc_unlock();
@@ -584,7 +597,7 @@ void *umalloc(size_t req_size)
                     min->size = size;
                     min->req_size = req_size;
                     maj->usage += size + sizeof(struct liballoc_minor);
-                    l_inuse += size;
+                    l_in_use_user += size;
                     p = (void *) ((uintptr_t) min + sizeof(struct liballoc_minor));
                     ALIGN(p);
                     liballoc_unlock();
@@ -609,7 +622,7 @@ void *umalloc(size_t req_size)
                     min->next->prev = new_min;
                     min->next = new_min;
                     maj->usage += size + sizeof(struct liballoc_minor);
-                    l_inuse += size;
+                    l_in_use_user += size;
                     p = (void *) ((uintptr_t) new_min + sizeof(struct liballoc_minor));
                     ALIGN(p);
                     liballoc_unlock();
@@ -623,7 +636,7 @@ void *umalloc(size_t req_size)
         // Use-case 5
         if (maj->next == NULL) {
             if (started_bet == 1) {
-                maj = l_mem_root;
+                maj = l_mem_root_user;
                 started_bet = 0;
                 continue;
             }
@@ -645,7 +658,7 @@ void ufree(void *ptr)
     struct liballoc_major *maj;
 
     if (ptr == NULL) {
-        l_warning_count += 1;
+        l_warning_count_user += 1;
         return;
     }
 
@@ -655,12 +668,12 @@ void ufree(void *ptr)
     min = (struct liballoc_minor *) ((uintptr_t) ptr - sizeof(struct liballoc_minor));
 
     if (min->magic != LIBALLOC_MAGIC) {
-        l_error_count += 1;
+        l_error_count_user += 1;
 
         if (((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) ||
             ((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) ||
             ((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF))) {
-            l_possible_overruns += 1;
+            l_possible_overruns_user += 1;
         }
 
         liballoc_unlock();
@@ -668,7 +681,7 @@ void ufree(void *ptr)
     }
 
     maj = min->block;
-    l_inuse -= min->size;
+    l_in_use_user -= min->size;
     maj->usage -= (min->size + sizeof(struct liballoc_minor));
     min->magic = LIBALLOC_DEAD;
 
@@ -676,17 +689,17 @@ void ufree(void *ptr)
     if (min->prev != NULL) min->prev->next = min->next;
     if (min->prev == NULL) maj->first = min->next;
     if (maj->first == NULL) {
-        if (l_mem_root == maj) l_mem_root = maj->next;
-        if (l_best_bet == maj) l_best_bet = NULL;
+        if (l_mem_root_user == maj) l_mem_root_user = maj->next;
+        if (l_best_bet_user == maj) l_best_bet_user = NULL;
         if (maj->prev != NULL) maj->prev->next = maj->next;
         if (maj->next != NULL) maj->next->prev = maj->prev;
-        l_allocated -= maj->size;
+        l_allocated_user -= maj->size;
         liballoc_free(maj, maj->pages);
     } else {
-        if (l_best_bet != NULL) {
-            int best_size = l_best_bet->size - l_best_bet->usage;
+        if (l_best_bet_user != NULL) {
+            int best_size = l_best_bet_user->size - l_best_bet_user->usage;
             int majSize = maj->size - maj->usage;
-            if (majSize > best_size) l_best_bet = maj;
+            if (majSize > best_size) l_best_bet_user = maj;
         }
     }
     liballoc_unlock();
@@ -725,11 +738,11 @@ void *urealloc(void *p, size_t size)
     min = (struct liballoc_minor *) ((uintptr_t) ptr - sizeof(struct liballoc_minor));
 
     if (min->magic != LIBALLOC_MAGIC) {
-        l_error_count += 1;
+        l_error_count_user += 1;
         if (((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) ||
             ((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) ||
             ((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF))) {
-            l_possible_overruns += 1;
+            l_possible_overruns_user += 1;
         }
 
         liballoc_unlock();

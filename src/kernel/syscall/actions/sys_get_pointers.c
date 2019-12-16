@@ -1,8 +1,6 @@
 #include <stdint.h>
 #include <kernel/graphics/vesa.h>
 #include <kernel/graphics/font.h>
-#include <kernel/paging/paging.h>
-#include <kernel/io/io.h>
 #include <kernel/lib/stdlib/liballoc.h>
 
 struct userspace_pointers {

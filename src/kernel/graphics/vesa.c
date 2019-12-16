@@ -191,11 +191,11 @@ void set_optimal_resolution()
     uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
     cursor_buffer = umalloc(fb_size);
     for (uint32_t z = 0; z < fb_size; z += 4096) {
+        paging_set_user((uint32_t) fb + z, 1);
         paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED | PT_ALL_PRIV);
         paging_map((uint32_t) cursor_buffer + z, (uint32_t) cursor_buffer + z, PT_PRESENT | PT_RW | PT_USED);
     }
-    paging_set_user((uint32_t) paging_get_phys((uint32_t) fb), fb_size / 4096);
-    serial_write_hex((int) cursor_buffer);
+    serial_write_hex((int) &fb);
     serial_write("\n");
 
     if (vbe_height > 1440) vesa_set_font(32);

@@ -22,7 +22,7 @@ void paging_install()
 
     paging_set_present(0, memory_get_all() >> 2); // /4
     paging_set_used(0, ((uint32_t) ASM_KERNEL_END >> 12) + 1); // /4096
-    // paging_set_user(0, memory_get_all() >> 2);
+    paging_set_user(0, memory_get_all() >> 2); // TODO: Fix major security issue (all memory = shared)
 
     paging_enable();
 
