@@ -9,10 +9,8 @@ uint32_t sys_write(char *buf)
     return strlen((const char *) buf);
 }
 
-uint32_t sys_writec(char *ch)
+uint32_t sys_writec(char ch)
 {
-    serial_write_hex(*ch);
-    serial_write("\n\n");
-    writec((char) *ch);
+    writec((char) ch);
     return 0;
 }

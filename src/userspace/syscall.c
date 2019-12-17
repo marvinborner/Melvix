@@ -9,9 +9,9 @@ DEFN_SYSCALL1(write, 1, char *);
 
 DEFN_SYSCALL1(read, 2, char *);
 
-DEFN_SYSCALL1(writec, 3, char *);
+DEFN_SYSCALL1(writec, 3, char);
 
-DEFN_SYSCALL1(readc, 4, char *);
+DEFN_SYSCALL0(readc, 4);
 
 DEFN_SYSCALL0(get_pointers, 5);
 

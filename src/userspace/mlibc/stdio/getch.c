@@ -1,7 +1,6 @@
-// #include <syscall.h>
+#include <syscall.h>
 
 char getch()
 {
-    // return ((char *) syscall_read())[0];
-    return 0;
+    return (char) syscall_readc();
 }

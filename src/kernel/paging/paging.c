@@ -124,17 +124,17 @@ void paging_set_user(uint32_t virt, uint32_t count)
 
 uint32_t paging_find_pages(uint32_t count)
 {
-    uint32_t continous = 0;
+    uint32_t continuous = 0;
     uint32_t startDir = 0;
     uint32_t startPage = 0;
     for (uint32_t i = 0; i < 1024; i++) {
         for (uint32_t j = 0; j < 1024; j++) {
             if (!(page_tables[i][j] & PT_PRESENT) || (page_tables[i][j] & PT_USED)) {
-                continous = 0;
+                continuous = 0;
                 startDir = i;
                 startPage = j + 1;
             } else {
-                if (++continous == count)
+                if (++continuous == count)
                     return (startDir * 0x400000) + (startPage * 0x1000);
             }
         }

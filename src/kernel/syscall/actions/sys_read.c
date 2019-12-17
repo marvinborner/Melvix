@@ -16,10 +16,7 @@ uint32_t sys_read(char *buf)
     return strlen(buf);
 }
 
-uint32_t sys_readc(char *ch)
+uint32_t sys_readc()
 {
-    char buf = getch();
-    ch = &buf;
-    serial_put(*ch);
-    return (uint32_t) ch;
+    return (uint32_t) getch();
 }

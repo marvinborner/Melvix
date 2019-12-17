@@ -70,9 +70,9 @@ DECL_SYSCALL1(write, char *);
 
 DECL_SYSCALL1(read, char *);
 
-DECL_SYSCALL1(writec, char *);
+DECL_SYSCALL1(writec, char);
 
-DECL_SYSCALL1(readc, char *);
+DECL_SYSCALL0(readc);
 
 DECL_SYSCALL0(get_pointers);
 

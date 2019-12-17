@@ -11,7 +11,7 @@ uint32_t (*syscalls[])() = {
         [0] = (uint32_t (*)()) halt_loop, // DEBUG!
         [1] = sys_write,
         [2] = sys_read,
-        [3] = sys_writec,
+        [3] = (uint32_t (*)()) sys_writec,
         [4] = sys_readc,
         [5] = sys_get_pointers,
         [6] = sys_paging_alloc,
@@ -29,7 +29,8 @@ void syscall_handler(struct regs *r)
     if (!location)
         return;
 
-    location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
+    uint32_t ret = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
+    r->eax = ret;
 }
 
 void syscalls_install()
