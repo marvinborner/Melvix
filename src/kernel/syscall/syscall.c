@@ -29,8 +29,7 @@ void syscall_handler(struct regs *r)
     if (!location)
         return;
 
-    uint32_t ret = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
-    r->eax = ret;
+    r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
 }
 
 void syscalls_install()

@@ -19,4 +19,10 @@ char *strdup(const char *orig);
 
 void strinv(char *str);
 
+void *memcpy(void *dest, const void *src, size_t count);
+
+void *memset(void *dest, char val, size_t count);
+
+int memcmp(const void *a_ptr, const void *b_ptr, size_t size);
+
 #endif
