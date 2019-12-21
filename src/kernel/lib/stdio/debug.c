@@ -1,15 +1,19 @@
 #include <stdarg.h>
 #include <stdint.h>
-#include <mlibc/stdio.h>
-#include <mlibc/stdlib.h>
+#include <kernel/lib/string.h>
+#include <kernel/lib/stdlib.h>
+#include <kernel/io/io.h>
 
-void _writes(const char *data)
+void _write_serial(const char *data)
 {
-    for (size_t i = 0; i < strlen(data); i++) writec(data[i]);
+    for (size_t i = 0; i < strlen(data); i++) serial_put(data[i]);
 }
 
-void vprintf(const char *fmt, va_list args)
+void serial_printf(const char *fmt, ...)
 {
+    va_list args;
+    va_start(args, fmt);
+
     uint8_t readyToFormat = 0;
 
     char buff = 0;
@@ -17,7 +21,7 @@ void vprintf(const char *fmt, va_list args)
     for (; *fmt; fmt++) {
         if (readyToFormat) {
             if (*fmt == '%') {
-                writec('%');
+                serial_put('%');
                 readyToFormat = 0;
                 continue;
             }
@@ -25,27 +29,31 @@ void vprintf(const char *fmt, va_list args)
             buff = *fmt;
             if (buff == 's') {
                 const char *str = va_arg(args, const char*);
-                _writes(str);
+                _write_serial(str);
                 readyToFormat = 0;
             } else if (buff == 'x') {
                 char *p = htoa((uint32_t) va_arg(args, int));
-                _writes(p);
-                free(p);
+                _write_serial(p);
+                kfree(p);
                 readyToFormat = 0;
             } else if (buff == 'd') {
                 char *p = itoa(va_arg(args, int));
-                _writes(p);
-                free(p);
+                _write_serial(p);
+                kfree(p);
                 readyToFormat = 0;
             } else if (buff == 'c') {
-                writec((char) va_arg(args, int));
+                serial_put((char) va_arg(args, int));
                 readyToFormat = 0;
             }
         } else {
             if (*fmt == '%')
                 readyToFormat = 1;
             else
-                writec(*fmt);
+                serial_put(*fmt);
         }
     }
+
+    serial_put('\n');
+
+    va_end(args);
 }

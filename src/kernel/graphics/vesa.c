@@ -1,6 +1,5 @@
 #include <kernel/graphics/vesa.h>
 #include <kernel/graphics/font.h>
-#include <kernel/io/io.h>
 #include <kernel/lib/lib.h>
 #include <kernel/paging/paging.h>
 #include <kernel/system.h>
@@ -10,7 +9,7 @@
 
 void switch_to_vga()
 {
-    serial_write("Force switch to VGA!\n");
+    serial_printf("Force switch to VGA!");
     uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
     char *error = "Melvix does not support this graphics hardware!";
     for (size_t i = 0; i < strlen(error); i++)
@@ -117,15 +116,7 @@ void set_optimal_resolution()
             continue;
         }
 
-        serial_write("Found mode: (");
-        serial_write_hex(*mode);
-        serial_write(") ");
-        serial_write_dec(mode_info->width);
-        serial_write("x");
-        serial_write_dec(mode_info->height);
-        serial_write("x");
-        serial_write_dec(mode_info->bpp);
-        serial_write("\n");
+        serial_printf("Found mode: (0x%x) %dx%dx%d", *mode, mode_info->width, mode_info->height, mode_info->bpp);
 
         if (mode_info->width > vbe_width || (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl)) {
             // if (mode_info->bpp == 32) { // Force specific bpp for debugging
@@ -143,7 +134,7 @@ void set_optimal_resolution()
     kfree(video_modes);
 
     if (highest == 0) {
-        serial_write("Mode detection failed!\nTrying common modes...\n");
+        serial_printf("Mode detection failed!\nTrying common modes...");
         vga_log("Mode detection failed!", 11);
         vga_log("Trying common modes...", 12);
         struct vbe_mode_info *mode_info;
@@ -195,8 +186,6 @@ void set_optimal_resolution()
         paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED | PT_ALL_PRIV);
         paging_map((uint32_t) cursor_buffer + z, (uint32_t) cursor_buffer + z, PT_PRESENT | PT_RW | PT_USED);
     }
-    serial_write_hex((int) &fb);
-    serial_write("\n");
 
     if (vbe_height > 1440) vesa_set_font(32);
     else if (vbe_height > 720) vesa_set_font(24);
@@ -210,9 +199,7 @@ void set_optimal_resolution()
 
     info("Successfully switched to video mode!");
 
-    serial_write("Using mode: ");
-    serial_write_hex(highest);
-    serial_write("\n");
+    serial_printf("Using mode: (0x%x) %dx%dx%d", highest, vbe_width, vbe_height, vbe_bpl << 3);
     debug("Using mode: %dx%dx%d", vbe_width, vbe_height, vbe_bpl << 3);
 }
 

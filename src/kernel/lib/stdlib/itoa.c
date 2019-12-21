@@ -4,7 +4,7 @@
 #include <kernel/lib/stdlib.h>
 #include <kernel/paging/paging.h>
 
-static const char __ITOA_TABLE[] = "0123456789";
+static const char ITOA_TABLE[] = "0123456789";
 
 char *itoa(int n)
 {
@@ -27,7 +27,7 @@ char *itoa(int n)
 
     for (int i = 0; i < sz; i++) {
         int digit = (n % pow(10, i + 1)) / pow(10, i);
-        ret[i] = __ITOA_TABLE[digit];
+        ret[i] = ITOA_TABLE[digit];
     }
     ret[sz] = 0;
 

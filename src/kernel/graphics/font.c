@@ -1,6 +1,5 @@
 #include <kernel/fs/marfs/marfs.h>
 #include <kernel/paging/paging.h>
-#include <kernel/io/io.h>
 #include <kernel/graphics/font.h>
 #include <kernel/lib/stdlib/liballoc.h>
 #include <kernel/fs/ata_pio.h>

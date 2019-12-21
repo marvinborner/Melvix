@@ -9,8 +9,10 @@ char *readline();
 
 void writec(char c);
 
-void vprintf(const char *format, va_list args);
+void vprintf(const char *fmt, va_list args);
 
-void printf(const char *format, ...);
+void printf(const char *fmt, ...);
+
+void serial_printf(const char *fmt, ...);
 
 #endif

@@ -1,6 +1,6 @@
 #include <syscall.h>
 #include <mlibc/stdio.h>
-#include <mlibc/string.h>
+#include <mlibc/stdlib.h>
 
 int32_t starts_with(const char *a, const char *b)
 {
@@ -11,10 +11,11 @@ int32_t starts_with(const char *a, const char *b)
 
 void user_main()
 {
-    printf("> Successfully switched to usermode!");
+    char text[] = "> Successfully switched to usermode!\n";
+    printf(text);
 
     // init_framebuffer();
-    writec((char) strlen("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+    // writec((char) strlen("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
 
     while (1) {
         char *input = readline();

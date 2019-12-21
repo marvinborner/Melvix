@@ -1,4 +1,4 @@
-#include <mlibc/string.h>
+#include <mlibc/stdlib.h>
 
 char strcmp(const char *a, const char *b)
 {

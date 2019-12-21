@@ -89,9 +89,7 @@ void panic(char *msg)
     asm ("cli");
     vesa_set_color(vesa_dark_red);
     kernel_time();
-    serial_write("\nPANIC: ");
-    serial_write(msg);
-    serial_write(" - System halted!\n");
+    serial_printf("PANIC: %s - System halted!", msg);
     printf("PANIC: %s - System halted!\n", msg);
     halt_loop();
 }
@@ -105,7 +103,7 @@ void assert(int x)
 
 void halt_loop()
 {
-    serial_write("\n!!! HALT !!!\n");
+    serial_printf("\n!!! HALT !!!");
     asm ("cli");
     loop:
     asm ("hlt");

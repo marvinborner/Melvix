@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <kernel/paging/paging.h>
-#include <kernel/io/io.h>
 
 uint32_t sys_paging_alloc(uint32_t count)
 {

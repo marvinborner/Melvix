@@ -1,9 +1,8 @@
 #include <stdint.h>
 #include <kernel/interrupts/interrupts.h>
-#include <kernel/lib/lib.h>
 #include <kernel/system.h>
-#include <kernel/io/io.h>
 #include <kernel/lib/string.h>
+#include <kernel/lib/stdio.h>
 
 // Install ISRs in IDT
 void isrs_install()
@@ -112,28 +111,11 @@ void fault_handler(struct regs *r)
         uint32_t faulting_address;
         asm ("mov %%cr2, %0" : "=r" (faulting_address));
 
-        serial_write("\n[DEBUG]\nEIP: ");
-        serial_write_hex(r->eip);
-        serial_write("\nEAX: ");
-        serial_write_hex(r->eax);
-        serial_write("\nEBX: ");
-        serial_write_hex(r->ebx);
-        serial_write("\nECX: ");
-        serial_write_hex(r->ecx);
-        serial_write("\nEDX: ");
-        serial_write_hex(r->edx);
-        serial_write("\nESP: ");
-        serial_write_hex(r->esp);
-        serial_write("\nFaulting address: ");
-        serial_write_hex(faulting_address);
-        serial_write("\nError flags: ");
-        serial_write_hex(r->eflags);
-        serial_write("\nError code: ");
-        serial_write_hex(r->err_code);
-        serial_write("\nInterrupt code: ");
-        serial_write_hex(r->int_no);
-        serial_write("\nInterrupt message: ");
-        serial_write(exception_messages[r->int_no]);
+        serial_printf(
+                "\n[DEBUG]\nEIP: 0x%x\nEAX: 0x%x\nEBX: 0x%x\nECX: 0x%x\nEDX: 0x%x\nESP: 0x%x\nFault addr: 0x%x\nErr flag: 0x%x\nErr code: 0x%x\nINT code: 0x%x\nINT msg: %s",
+                r->eip, r->eax, r->ebx, r->ecx, r->edx, r->esp, faulting_address, r->eflags, r->err_code, r->int_no,
+                exception_messages[r->int_no]
+        );
         // halt_loop(); // Idk loop?
         char *message = (char *) exception_messages[r->int_no];
         strcat(message, " Exception");

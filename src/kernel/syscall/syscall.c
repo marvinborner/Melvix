@@ -1,9 +1,8 @@
 #include <stdint.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/interrupts/interrupts.h>
-#include <kernel/io/io.h>
-#include <kernel/paging/paging.h>
 #include <kernel/system.h>
+#include <kernel/lib/stdio.h>
 
 typedef uint32_t (*syscall_func)(unsigned int, ...);
 
@@ -20,7 +19,7 @@ uint32_t (*syscalls[])() = {
 
 void syscall_handler(struct regs *r)
 {
-    serial_write("Received syscall!\n");
+    serial_printf("Received syscall!");
 
     if (r->eax >= sizeof(syscalls) / sizeof(*syscalls))
         return;
@@ -28,6 +27,8 @@ void syscall_handler(struct regs *r)
     syscall_func location = (syscall_func) syscalls[r->eax];
     if (!location)
         return;
+
+    //serial_printf("[SYSCALL] %d (0x%x) 0x%x 0x%x 0x%x 0x%x 0x%x", r->eax, location, r->ebx, r->ecx, r->edx, r->esi, r->edi);
 
     r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
 }

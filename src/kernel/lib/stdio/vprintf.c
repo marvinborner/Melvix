@@ -4,7 +4,7 @@
 #include <kernel/lib/string.h>
 #include <kernel/lib/stdlib.h>
 
-void __writes(const char *data)
+void _writes(const char *data)
 {
     for (size_t i = 0; i < strlen(data); i++) writec(data[i]);
 }
@@ -26,16 +26,16 @@ void vprintf(const char *fmt, va_list args)
             buff = *fmt;
             if (buff == 's') {
                 const char *str = va_arg(args, const char*);
-                __writes(str);
+                _writes(str);
                 readyToFormat = 0;
             } else if (buff == 'x') {
                 char *p = htoa((uint32_t) va_arg(args, int));
-                __writes(p);
+                _writes(p);
                 kfree(p);
                 readyToFormat = 0;
             } else if (buff == 'd') {
                 char *p = itoa(va_arg(args, int));
-                __writes(p);
+                _writes(p);
                 kfree(p);
                 readyToFormat = 0;
             } else if (buff == 'c') {

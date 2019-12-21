@@ -1,6 +1,7 @@
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/io/io.h>
 #include <kernel/graphics/vesa.h>
+#include <kernel/lib/stdio.h>
 
 char mouse_cycle = 0;
 char mouse_byte[3];
@@ -109,7 +110,7 @@ void mouse_install()
     mouse_write(0xF2);
     mouse_read();
     status = mouse_read();
-    if (status == 3) serial_write("Scrollwheel support!\n");
+    if (status == 3) serial_printf("Scrollwheel support!");
 
     // Activate 4th and 5th mouse buttons
     mouse_write(0xF2);
@@ -130,7 +131,7 @@ void mouse_install()
     mouse_write(0xF2);
     mouse_read();
     status = mouse_read();
-    if (status == 4) serial_write("4th and 5th mouse button support!\n");
+    if (status == 4) serial_printf("4th and 5th mouse button support!");
 
     /* TODO: Fix mouse laggyness
     mouse_write(0xE8);

@@ -5,8 +5,7 @@
 #include <kernel/fs/atapi_pio.h>
 #include <kernel/lib/stdlib.h>
 #include <kernel/acpi/acpi.h>
-#include <kernel/io/io.h>
-#include <kernel/timer/timer.h>
+#include <kernel/lib/stdio.h>
 
 void install_melvix()
 {
@@ -84,7 +83,7 @@ void install_melvix()
     kfree(font_e);
 
     info("Installation successful!");
-    serial_write("Installation successful!\nRebooting...\n");
+    serial_printf("Installation successful!\nRebooting...");
     // timer_wait(200);
     acpi_poweroff();
     halt_loop();

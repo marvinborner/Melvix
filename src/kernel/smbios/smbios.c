@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include <kernel/graphics/vesa.h>
 #include <stddef.h>
-#include <kernel/io/io.h>
 #include <kernel/smbios/smbios.h>
+#include <kernel/lib/stdio.h>
 
 struct smbios_entry *smbios = 0;
 
@@ -46,7 +46,6 @@ struct smbios_entry *get_smbios()
 
 void smbios_table(struct smbios_header *header)
 {
-    serial_write("\n\n");
-    struct smbios_0 *table = (struct smbios_0 *) (header + sizeof(struct smbios_header));
-    serial_write(table->bios_version);
+    // struct smbios_0 *table = (struct smbios_0 *) (header + sizeof(struct smbios_header));
+    // serial_printf("\n\n %d", table->bios_version);
 }

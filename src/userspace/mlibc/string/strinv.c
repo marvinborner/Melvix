@@ -1,4 +1,4 @@
-#include <mlibc/string.h>
+#include <mlibc/stdlib.h>
 
 void strinv(char *str)
 {

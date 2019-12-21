@@ -4,8 +4,6 @@
 #include <kernel/input/input.h>
 #include <kernel/lib/stdlib/liballoc.h>
 #include <kernel/lib/string.h>
-#include <kernel/paging/paging.h>
-#include <kernel/lib/lib.h>
 
 int shift_pressed;
 int control_pressed;
@@ -109,7 +107,7 @@ void keyboard_handler(struct regs *r)
         keyboard_char_buffer = current_keymap[scan_code];
         keyboard_buffer[strlen(keyboard_buffer)] = keyboard_char_buffer;
     } else { // RELEASE
-        if (current_keymap[scan_code] == -107) // TODO: IDK WHY -107?!
+        if (current_keymap[scan_code] == (int) 0xffffffb5) // TODO: IDK WHY -107?!
             control_pressed = 0;
     }
 }

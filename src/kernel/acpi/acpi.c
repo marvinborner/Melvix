@@ -7,6 +7,7 @@
 #include <kernel/acpi/acpi.h>
 #include <stddef.h>
 #include <kernel/system.h>
+#include <kernel/lib/stdio.h>
 
 struct FADT *fadt;
 uint32_t *SMI_CMD;
@@ -87,15 +88,15 @@ int acpi_enable()
             if (i < 300) {
                 return 0; // Successfully enabled ACPI
             } else {
-                serial_write("ACPI couldn't be enabled!\n");
+                serial_printf("ACPI couldn't be enabled!");
                 return -1; // ACPI couldn't be enabled
             }
         } else {
-            serial_write("ACPI is not supported!\n");
+            serial_printf("ACPI is not supported!");
             return -1; // ACPI is not supported
         }
     } else {
-        serial_write("ACPI was already enabled!\n");
+        serial_printf("ACPI was already enabled!");
         return 0; // ACPI was already enabled
     }
 }
@@ -161,13 +162,12 @@ int acpi_install()
             }
             if (memcmp((unsigned int *) *ptr, "HPET", 4) == 0) {
                 hpet = (struct HPET *) *ptr;
-                // serial_write(hpet->signature);
-                // serial_write_hex((int) hpet->base_address);
+                // serial_printf("%d", hpet->base_address);
             }
             ptr++;
         } // Else: no valid FADT present
     } else {
-        serial_write("ACPI is not supported!\n");
+        serial_printf("ACPI is not supported!");
     }
 
     return success == 1 ? 0 : -1;

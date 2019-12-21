@@ -1,9 +1,5 @@
 #include <stdint.h>
-#include <kernel/lib/lib.h>
-#include <kernel/io/io.h>
 #include <kernel/system.h>
-#include <kernel/lib/string.h>
-#include <kernel/lib/stdlib.h>
 
 uint8_t inb(uint16_t port)
 {
@@ -62,44 +58,4 @@ void serial_put(char ch)
 {
     while (is_transmit_empty() == 0);
     outb(0x3f8, ch);
-}
-
-void serial_write(const char *data)
-{
-    for (size_t i = 0; i < strlen(data); i++) {
-        serial_put(data[i]);
-    }
-}
-
-void serial_write_hex(int n)
-{
-    int tmp;
-
-    serial_write("0x");
-    char noZeroes = 1;
-
-    for (int i = 28; i > 0; i -= 4) {
-        tmp = (n >> i) & 0xF;
-        if (tmp == 0 && noZeroes != 0) continue;
-
-        if (tmp >= 0xA) {
-            noZeroes = 0;
-            serial_put(tmp - 0xA + 'a');
-        } else {
-            noZeroes = 0;
-            serial_put(tmp + '0');
-        }
-    }
-
-    tmp = n & 0xF;
-    if (tmp >= 0xA) {
-        serial_put(tmp - 0xA + 'a');
-    } else {
-        serial_put(tmp + '0');
-    }
-}
-
-void serial_write_dec(int n)
-{
-    serial_write(itoa(n));
 }

@@ -1,4 +1,4 @@
-#include <mlibc/string.h>
+#include <mlibc/stdlib.h>
 
 void strcpy(char *dest, const char *orig)
 {

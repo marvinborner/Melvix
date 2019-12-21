@@ -38,10 +38,8 @@ section .text
 
     global jump_userspace
     jump_userspace:
-        push ebp
-        mov ebp, esp
-        mov edx, DWORD[ebp + 0xC]
-        mov esp, edx
+        cli
+        mov ebx, dword [esp + 4]
 
         mov ax, 0x23
         mov ds, ax
@@ -53,17 +51,16 @@ section .text
         push 0x23
         push eax
         pushf
-        pop eax
 
+        ; Enable interrupts
+        pop eax
         or eax, 0x200
         push eax
+
         push 0x1B
-
-        push DWORD[ebp + 0x8]
-
+        push ebx
+        mov ebp, ebx
         iret
-        pop ebp
-        ret
 
 section .end_section
     global ASM_KERNEL_END

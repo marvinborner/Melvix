@@ -1,6 +1,4 @@
 #include <kernel/io/io.h>
-#include <kernel/graphics/vesa.h>
-#include <kernel/acpi/acpi.h>
 #include <kernel/lib/stdio.h>
 
 unsigned char second;

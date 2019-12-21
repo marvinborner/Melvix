@@ -92,29 +92,29 @@ debug:
 	@echo "Starting simulation..."
 	@head -c 10485760 /dev/zero > ./build/hdd10M.img
 	@echo "[SERIAL OUTPUT]"
-	@qemu-system-x86_64 ${QEMU_OPTIONS} -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
+	@qemu-system-i386 ${QEMU_OPTIONS} -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
 	@echo "[END OF CONNECTION]"
 
 image: build
 	@echo "Starting simulation..."
 	@head -c 10485760 /dev/zero > ./build/hdd10M.img
 	@echo "[SERIAL OUTPUT]"
-	@qemu-system-x86_64 ${QEMU_OPTIONS} -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
+	@qemu-system-i386 ${QEMU_OPTIONS} -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
 	@echo "[END OF CONNECTION]"
 	@printf "\n"
 	@echo "[SERIAL OUTPUT]"
-	@qemu-system-x86_64 ${QEMU_OPTIONS} -drive file=./build/hdd10M.img,format=raw
+	@qemu-system-i386 ${QEMU_OPTIONS} -drive file=./build/hdd10M.img,format=raw
 	@echo "[END OF CONNECTION]"
 
 debugHDD:
 	@echo "Starting simulation..."
 	@echo "[SERIAL OUTPUT]"
-	@qemu-system-x86_64 ${QEMU_OPTIONS} -drive file=./build/hdd10M.img,format=raw
+	@qemu-system-i386 ${QEMU_OPTIONS} -drive file=./build/hdd10M.img,format=raw
 	@echo "[END OF CONNECTION]"
 
 bochs: build
 	@head -c 10485760 /dev/zero > ./build/hdd10M.img
-	@qemu-system-x86_64 ${QEMU_OPTIONS} -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
+	@qemu-system-i386 ${QEMU_OPTIONS} -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
 	@bochs -f bochs.txt
 
 bochsHDD:

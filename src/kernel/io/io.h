@@ -56,22 +56,4 @@ void init_serial();
  */
 void serial_put(char ch);
 
-/**
- * Write a string to the serial port (QEMU logging)
- * @param data The string
- */
-void serial_write(const char *data);
-
-/**
- * Write a hexadecimal formatted int to the serial port (QEMU logging)
- * @param n The decimal number
- */
-void serial_write_hex(int n);
-
-/**
- * Write a decimal number to the serial port (QEMU logging)
- * @param n The decimal number
- */
-void serial_write_dec(int n);
-
 #endif

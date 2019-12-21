@@ -1,4 +1,4 @@
-#include <mlibc/string.h>
+#include <mlibc/stdlib.h>
 #include <mlibc/stdlib.h>
 
 char *strdup(const char *orig)

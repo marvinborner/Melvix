@@ -2,7 +2,7 @@
 #include <kernel/lib/string.h>
 #include <kernel/lib/stdlib.h>
 
-static const char __HTOA_TABLE[] = "0123456789ABCDEF";
+static const char HTOA_TABLE[] = "0123456789ABCDEF";
 
 char *htoa(uint32_t n)
 {
@@ -10,7 +10,7 @@ char *htoa(uint32_t n)
 
     int i = 0;
     while (n) {
-        ret[i++] = __HTOA_TABLE[n & 0xF];
+        ret[i++] = HTOA_TABLE[n & 0xF];
         n >>= 4;
     }
 

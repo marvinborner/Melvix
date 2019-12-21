@@ -3,6 +3,7 @@
 #include <kernel/system.h>
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/lib/stdlib/liballoc.h>
+#include <kernel/lib/stdio.h>
 
 int rtl_irq = 0;
 uint8_t mac[6];
@@ -19,14 +20,14 @@ void find_rtl(uint32_t device, uint16_t vendor_id, uint16_t device_id, void *ext
 
 void rtl8139_irq_handler(struct regs *r)
 {
-    serial_write("RTL INT!\n");
+    serial_printf("RTL INT!");
     uint16_t status = inw(rtl_iobase + 0x3E);
     if (!status) return;
     outw(rtl_iobase + 0x3E, status);
 
     if (status & 0x01 || status & 0x02) {
         while ((inw(rtl_iobase + 0x37) & 0x01) == 0) {
-            serial_write("RECEIVE\n");
+            serial_printf("RECEIVE");
             // RECEIVE
         }
     }
