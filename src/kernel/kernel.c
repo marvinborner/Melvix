@@ -18,7 +18,7 @@
 #include <kernel/pci/pci.h>
 #include <kernel/net/network.h>
 
-extern void jump_userspace();
+extern void jump_userspace(uintptr_t location, uintptr_t stack);
 
 void kernel_main()
 {
@@ -66,10 +66,10 @@ void kernel_main()
         if (!user_e) panic("Userspace binary not found!");
         ATAPI_granular_read(1 + (user_e->length / 2048), user_e->lba, (uint8_t *) (userspace + 4096));
         kfree(user_e);
-        jump_userspace(userspace + 4096);
+        jump_userspace(userspace + 4096, (uintptr_t) umalloc(4096));
     } else {
         marfs_read_whole_file(4, (uint8_t *) (userspace + 4096));
-        jump_userspace(userspace + 4096);
+        jump_userspace(userspace + 4096, (uintptr_t) umalloc(4096));
     }
 
     panic("This should NOT happen!");

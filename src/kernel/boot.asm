@@ -38,7 +38,10 @@ section .text
 
     global jump_userspace
     jump_userspace:
-        mov ebx, dword [esp+4]
+        push ebp
+        mov ebp, esp
+        mov edx, DWORD[ebp + 0xC]
+        mov esp, edx
 
         mov ax, 0x23
         mov ds, ax
@@ -56,8 +59,8 @@ section .text
         push eax
         push 0x1B
 
-        push ebx
-        mov ebp, ebx
+        push DWORD[ebp + 0x8]
+
         iret
         pop ebp
         ret

@@ -11,6 +11,7 @@ uint32_t sys_write(char *buf)
 
 uint32_t sys_writec(char ch)
 {
+    serial_write_hex(ch);
     writec((char) ch);
     return 0;
 }

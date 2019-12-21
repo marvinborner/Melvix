@@ -9,8 +9,8 @@ char *readline()
     while (buf != '\n') {
         buf = getch();
         writec(buf);
-        strcpy(ret, buf);
+        strcpy(ret, &buf);
     }
-    strcpy(ret, buf);
+    strcpy(ret, &buf);
     return ret;
 }

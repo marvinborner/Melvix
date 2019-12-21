@@ -3,6 +3,12 @@
 
 #include <stdint.h>
 
+#ifndef MELVIX_ALLOC_H
+
+#include <mlibc/stdlib/liballoc.h>
+
+#endif
+
 #ifndef MELVIX_STRING_H
 
 #include <mlibc/string.h>

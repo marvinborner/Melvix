@@ -1,8 +1,6 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <mlibc/stdio.h>
-#include <mlibc/string.h>
-#include <mlibc/stdlib.h>
 #include <mlibc/stdlib.h>
 
 void __writes(const char *data)
@@ -32,12 +30,12 @@ void vprintf(const char *fmt, va_list args)
             } else if (buff == 'x') {
                 char *p = htoa((uint32_t) va_arg(args, int));
                 __writes(p);
-                // kfree(p);
+                free(p);
                 readyToFormat = 0;
             } else if (buff == 'd') {
                 char *p = itoa(va_arg(args, int));
                 __writes(p);
-                // kfree(p);
+                free(p);
                 readyToFormat = 0;
             } else if (buff == 'c') {
                 writec((char) va_arg(args, int));

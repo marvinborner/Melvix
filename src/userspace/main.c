@@ -11,10 +11,10 @@ int32_t starts_with(const char *a, const char *b)
 
 void user_main()
 {
-    char hello[] = "> Successfully switched to usermode!\n";
-    syscall_write(hello);
+    printf("> Successfully switched to usermode!");
 
     // init_framebuffer();
+    writec((char) strlen("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
 
     while (1) {
         char *input = readline();

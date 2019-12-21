@@ -45,7 +45,7 @@ build: clean
 		i686-elf-gcc -c ./"$${line}" -o ./build/userspace/"$${stripped}" -I ./src/userspace -std=gnu99 -ffreestanding -O3 -Wall -Wextra -Wno-unused-parameter || exit; \
 	done <./build/tmp; \
 	rm ./build/tmp; \
-	i686-elf-gcc -I ./src/userspace -o ./build/user.o -std=gnu99 -ffreestanding -O2 -nostdlib ./build/userspace/*.o|| exit; \
+	i686-elf-gcc -I ./src/userspace -o ./build/user.o -std=gnu99 -ffreestanding -O2 -nostdlib ./build/userspace/*.o || exit; \
 	i686-elf-objcopy -O binary ./build/user.o ./build/user.bin; \
 
 	# Create ISO
