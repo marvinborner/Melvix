@@ -27,8 +27,9 @@ add_executable(resources ${resources_sources})
 set_target_properties(resources PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/iso/font.o")
 add_custom_command(
         TARGET resources POST_BUILD
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cross/opt/bin/i686-elf-objcopy -O binary ${CMAKE_CURRENT_SOURCE_DIR}/iso/font.o ${CMAKE_CURRENT_SOURCE_DIR}/iso/font.bin
-        COMMAND rm ${CMAKE_CURRENT_SOURCE_DIR}/iso/font.o
+        COMMAND cross/opt/bin/i686-elf-objcopy -O binary iso/font.o iso/font.bin
+        COMMAND rm iso/font.o
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # USERSPACE
@@ -37,27 +38,30 @@ add_executable(user ${user_sources})
 set_target_properties(user PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/iso/user.o")
 add_custom_command(
         TARGET user POST_BUILD
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/cross/opt/bin/i686-elf-objcopy -O binary ${CMAKE_CURRENT_SOURCE_DIR}/iso/user.o ${CMAKE_CURRENT_SOURCE_DIR}/iso/user.bin
-        COMMAND rm ${CMAKE_CURRENT_SOURCE_DIR}/iso/user.o
+        COMMAND cross/opt/bin/i686-elf-objcopy -O binary iso/user.o iso/user.bin
+        COMMAND rm iso/user.o
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # ISO
-add_custom_target(
-        iso
-        COMMAND nasm ${CMAKE_CURRENT_SOURCE_DIR}/src/bootloader/cd.asm -o ${CMAKE_CURRENT_SOURCE_DIR}/iso/boot/cd.bin -f bin
-        COMMAND nasm ${CMAKE_CURRENT_SOURCE_DIR}/src/bootloader/hdd1.asm -o ${CMAKE_CURRENT_SOURCE_DIR}/iso/boot/hdd1.bin -f bin
-        COMMAND nasm ${CMAKE_CURRENT_SOURCE_DIR}/src/bootloader/hdd2.asm -o ${CMAKE_CURRENT_SOURCE_DIR}/iso/boot/hdd2.bin -f bin
-        COMMAND genisoimage -input-charset utf-8 -no-emul-boot -b boot/cd.bin -o ${CMAKE_CURRENT_SOURCE_DIR}/iso/melvix.iso ${CMAKE_CURRENT_SOURCE_DIR}/iso
+add_custom_command(
+        TARGET kernel POST_BUILD
+        COMMAND nasm src/bootloader/cd.asm -o iso/boot/cd.bin -f bin
+        COMMAND nasm src/bootloader/hdd1.asm -o iso/boot/hdd1.bin -f bin
+        COMMAND nasm src/bootloader/hdd2.asm -o iso/boot/hdd2.bin -f bin
+        COMMAND genisoimage -input-charset utf-8 -no-emul-boot -b boot/cd.bin -o iso/melvix.iso iso
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # TEST
-add_custom_target(
-        test
-        COMMAND head -c 10485760 /dev/zero > ${CMAKE_CURRENT_SOURCE_DIR}/iso/hdd10M.img
-        COMMAND qemu-system-i386 -no-reboot -vga std -smp $$(nproc) -serial stdio -rtc base=localtime -m 256M -net nic,model=rtl8139,macaddr=42:42:42:42:42:42 -net user -cdrom ${CMAKE_CURRENT_SOURCE_DIR}/melvix.iso -drive file=${CMAKE_CURRENT_SOURCE_DIR}/iso/hdd10M.img,format=raw
-)
+if (DEFINED ENV{DISPLAY})
+    add_custom_command(
+            TARGET kernel POST_BUILD
+            COMMAND head -c 10485760 /dev/zero > iso/hdd10M.img
+            COMMAND qemu-system-i386 -no-reboot -vga std -smp $$(nproc) -serial stdio -rtc base=localtime -m 256M -net nic,model=rtl8139,macaddr=42:42:42:42:42:42 -net user -cdrom iso/melvix.iso -drive file=iso/hdd10M.img,format=raw
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif ()
 
 add_custom_target(clean_iso COMMAND rm -rf ${CMAKE_CURRENT_SOURCE_DIR}/iso && mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/iso/boot)
 add_dependencies(kernel clean_iso resources user)
-add_dependencies(iso kernel)
-add_dependencies(test iso)

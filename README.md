@@ -17,9 +17,11 @@
 * Use any system running GNU/Linux (Successfully tried building on Debian, Arch Linux and even OpenBSD)
 
 * Install build dependencies (package names may vary depending on your operating system)
+  * Ubuntu/Debian _"instructions"_ can be found here: [GitHub Workflow](https://raw.githubusercontent.com/marvinborner/Melvix/master/.github/workflows/build.yml)
   * binutils
   * gcc
   * make
+  * cmake
   * bison
   * flex
   * gmp
@@ -31,13 +33,15 @@
   * genisoimage
   * qemu
 
-* Build a cross compiler using `make cross`
+* Build a cross compiler using `sh cross.sh`
 
-* Run `make build`
+* Run
+  * `mkdir build && cd build`
+  * `cmake .. && make`
+  * `cd .. && rm -rf build`
+  * The relevant files are in iso/
 
-* Test Melvix in QEMU (opens after `make test`)
-
-* Optional: Flash the built ISO to a USB/Floppy/CD drive using `sudo dd if=./build/melvix.iso of=/dev/sdX bs=4M oflag=sync`
+* Optional: Flash the built ISO to a CD drive using `sudo dd if=./iso/melvix.iso of=/dev/sdX bs=4M oflag=sync`
 
 ## Licenses
 Melvix is released under the MIT License and uses the following 3rd party applications (as stated in the regarding files): 
