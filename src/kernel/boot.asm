@@ -26,16 +26,6 @@ section .text
         hlt
         jmp hlt_L
 
-    %include "src/kernel/gdt/gdt.asm"
-
-    %include "src/kernel/interrupts/idt.asm"
-
-    %include "src/kernel/interrupts/isr.asm"
-
-    %include "src/kernel/interrupts/irq.asm"
-
-    %include "src/kernel/interact.asm"
-
     global jump_userspace
     jump_userspace:
         cli
