@@ -33,9 +33,7 @@ if [ ! -d "./cross/" ]; then
   make install-gcc
   make install-target-libgcc
 
-  # Source exported variables
   cd "${DIR}/.." || exit
-  . cross.sh
 else
   # Should be sourced to take effect
   cd cross || exit
