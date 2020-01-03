@@ -44,7 +44,6 @@ make_cross() {
     make install-target-libgcc
 
     cd "${DIR}/.." || exit
-    . cross.sh || exit
   else
     # Should be sourced to take effect
     cd cross || exit
