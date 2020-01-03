@@ -1,8 +1,0 @@
-megs: 64
-ata0-master: type=disk, path=./build/hdd10M.img, status=inserted
-boot: disk
-mouse: enabled=0
-sound: driver=dummy
-clock: sync=realtime
-cpu: ips=50000000
-display_library: x, options="gui_debug"

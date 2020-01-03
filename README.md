@@ -21,7 +21,6 @@
   * binutils
   * gcc
   * make
-  * cmake
   * bison
   * flex
   * gmp
@@ -33,13 +32,9 @@
   * genisoimage
   * qemu
 
-* Build a cross compiler using `sh cross.sh`
+* Build a cross compiler using `./run cross`
 
-* Run
-  * `mkdir build && cd build`
-  * `cmake .. && make`
-  * `cd ..`
-  * The relevant files are in iso/
+* Run `./run build` or `./run test`
 
 * Optional: Flash the built ISO to a CD drive using `sudo dd if=./iso/melvix.iso of=/dev/sdX bs=4M oflag=sync`
 

@@ -1,6 +1,8 @@
 #ifndef MELVIX_GRAPHICS_H
 #define MELVIX_GRAPHICS_H
 
+#include <stdint.h>
+
 struct font {
     uint16_t font_32[758][32];
     uint16_t font_24[758][24];
