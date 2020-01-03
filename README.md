@@ -1,9 +1,9 @@
 # Melvix
 <p align="center">
-    <i>„A lightweight unix-like operating system“</i>
+    <i>„A lightweight unix-unlike operating system“</i>
     <br><br>
-    <a href="https://travis-ci.com/marvinborner/Melvix" target="_blank">
-        <img src="https://img.shields.io/travis/marvinborner/Melvix?style=for-the-badge" />
+    <a href="https://github.com/marvinborner/Melvix/actions?query=workflow%3A%22Project+build%22" target="_blank">
+        <img src="https://img.shields.io/github/workflow/status/marvinborner/Melvix/Project%20build?style=for-the-badge" />
     </a>
     <a href="https://app.codacy.com/manual/marvin-borner/Melvix/dashboard" target="_blank">
         <img src="https://img.shields.io/codacy/grade/4ae29e218d7c439eaa549ea828ffcaac?style=for-the-badge" />
@@ -38,7 +38,7 @@
 * Run
   * `mkdir build && cd build`
   * `cmake .. && make`
-  * `cd .. && rm -rf build`
+  * `cd ..`
   * The relevant files are in iso/
 
 * Optional: Flash the built ISO to a CD drive using `sudo dd if=./iso/melvix.iso of=/dev/sdX bs=4M oflag=sync`
