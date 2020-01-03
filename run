@@ -7,7 +7,7 @@ qemu_with_flags() {
 }
 
 compile_with_flags() {
- i686-elf-gcc -std=gnu99 -ffreestanding -O3 -nostdlib -Wall -Wextra -Wno-unused-parameter "$@"
+  i686-elf-gcc -std=gnu99 -ffreestanding -O3 -nostdlib -Wall -Wextra -Wno-unused-parameter "$@"
 }
 
 make_cross() {
@@ -58,59 +58,59 @@ make_cross() {
 
 make_build() {
   echo "Building..."
-	mkdir -p ./build/kernel && mkdir -p ./build/userspace
+  mkdir -p ./build/kernel && mkdir -p ./build/userspace
 
-	# Assemble ASM files
-	find ./src/kernel/ -name \*.asm >./build/tmp
-	while read -r line; do
-		stripped=$(echo "${line}" | sed -r 's/\//_/g')
-		stripped=${stripped#??????}
-		stripped=${stripped%%???}o
-		nasm -f elf ./"${line}" -o ./build/kernel/asm_"${stripped}" || exit
-	done <./build/tmp
-	rm ./build/tmp
+  # Assemble ASM files
+  find ./src/kernel/ -name \*.asm >./build/tmp
+  while read -r line; do
+    stripped=$(echo "${line}" | sed -r 's/\//_/g')
+    stripped=${stripped#??????}
+    stripped=${stripped%%???}o
+    nasm -f elf ./"${line}" -o ./build/kernel/asm_"${stripped}" || exit
+  done <./build/tmp
+  rm ./build/tmp
 
-	# Make all kernel C files
-	find ./src/kernel/ -name \*.c >./build/tmp
-	while read -r line; do
-		stripped=$(echo "${line}" | sed -r 's/\//_/g')
-		stripped=${stripped#??????}
-		stripped=${stripped%%?}o
-		compile_with_flags -c ./"${line}" -I ./src -D ${NETWORK} -o ./build/kernel/"${stripped}" || exit
-	done <./build/tmp
-	rm ./build/tmp
+  # Make all kernel C files
+  find ./src/kernel/ -name \*.c >./build/tmp
+  while read -r line; do
+    stripped=$(echo "${line}" | sed -r 's/\//_/g')
+    stripped=${stripped#??????}
+    stripped=${stripped%%?}o
+    compile_with_flags -c ./"${line}" -I ./src -D ${NETWORK} -o ./build/kernel/"${stripped}" || exit
+  done <./build/tmp
+  rm ./build/tmp
 
-	# Link kernel ASM and C objects
-	compile_with_flags ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin || exit
+  # Link kernel ASM and C objects
+  compile_with_flags ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin || exit
 
-	# Modules
-	compile_with_flags -c ./src/resources/font.c -I ./src -o ./build/font.o
-	i686-elf-objcopy -O binary ./build/font.o ./build/font.bin
-	rm ./build/font.o
+  # Modules
+  compile_with_flags -c ./src/resources/font.c -I ./src -o ./build/font.o
+  i686-elf-objcopy -O binary ./build/font.o ./build/font.bin
+  rm ./build/font.o
 
-	# Userspace
-	nasm -f elf ./src/userspace/start.asm -o ./build/userspace/start.o || exit
-	find ./src/userspace/ -name \*.c >./build/tmp
-	while read -r line; do
-		stripped=$(echo "${line}" | sed -r 's/\//_/g')
-		stripped=${stripped#??????}
-		stripped=${stripped%%?}o
-		compile_with_flags -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}" || exit
-	done <./build/tmp
-	rm ./build/tmp
-	compile_with_flags ./build/userspace/*.o -I ./src/userspace -o ./build/user.o || exit
-	i686-elf-objcopy -O binary ./build/user.o ./build/user.bin
+  # Userspace
+  nasm -f elf ./src/userspace/start.asm -o ./build/userspace/start.o || exit
+  find ./src/userspace/ -name \*.c >./build/tmp
+  while read -r line; do
+    stripped=$(echo "${line}" | sed -r 's/\//_/g')
+    stripped=${stripped#??????}
+    stripped=${stripped%%?}o
+    compile_with_flags -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}" || exit
+  done <./build/tmp
+  rm ./build/tmp
+  compile_with_flags ./build/userspace/*.o -I ./src/userspace -o ./build/user.o || exit
+  i686-elf-objcopy -O binary ./build/user.o ./build/user.bin
 
-	# Create ISO
-	mkdir -p ./iso/boot/
-	mv ./build/melvix.bin ./iso/boot/kernel.bin
-	nasm ./src/bootloader/cd.asm -f bin -o ./iso/boot/cd.bin || exit
-	nasm ./src/bootloader/hdd1.asm -f bin -o ./iso/boot/hdd1.bin || exit
-	nasm ./src/bootloader/hdd2.asm -f bin -o ./iso/boot/hdd2.bin || exit
-	cp ./build/user.bin ./iso/user.bin || exit
-	cp ./build/font.bin ./iso/font.bin || exit
-	genisoimage -quiet -input-charset utf-8 -no-emul-boot -b boot/cd.bin -o ./build/melvix.iso ./iso;
-  head -c 10485760 /dev/zero > ./build/hdd10M.img
+  # Create ISO
+  mkdir -p ./iso/boot/
+  mv ./build/melvix.bin ./iso/boot/kernel.bin
+  nasm ./src/bootloader/cd.asm -f bin -o ./iso/boot/cd.bin || exit
+  nasm ./src/bootloader/hdd1.asm -f bin -o ./iso/boot/hdd1.bin || exit
+  nasm ./src/bootloader/hdd2.asm -f bin -o ./iso/boot/hdd2.bin || exit
+  cp ./build/user.bin ./iso/user.bin || exit
+  cp ./build/font.bin ./iso/font.bin || exit
+  genisoimage -quiet -input-charset utf-8 -no-emul-boot -b boot/cd.bin -o ./build/melvix.iso ./iso
+  head -c 10485760 /dev/zero >./build/hdd10M.img
 
   printf "Build finshed successfully!\n\n"
 }
