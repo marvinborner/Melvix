@@ -9,9 +9,9 @@ qemu_with_flags() {
 
 compile_with_flags() {
   if [ "${mode}" = "image" ]; then
-    i686-elf-gcc -std=gnu99 -ffreestanding -O3 -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@"
+    i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@"
   else
-    i686-elf-gcc -std=gnu99 -ffreestanding -O3 -nostdlib -Wall -Wextra -Wno-unused-parameter "$@"
+    i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter "$@"
   fi
 
 }
@@ -81,29 +81,31 @@ make_build() {
     stripped=$(echo "${line}" | sed -r 's/\//_/g')
     stripped=${stripped#??????}
     stripped=${stripped%%?}o
-    compile_with_flags -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}" || exit
+    compile_with_flags -Os -s -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}" || exit
   done <./build/tmp
   rm ./build/tmp
 
   # Link kernel ASM and C objects
-  compile_with_flags ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin || exit
+  compile_with_flags -Os -s ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin || exit
 
   # Modules
-  compile_with_flags -c ./src/resources/font.c -I ./src -o ./build/font.o
+  # TODO: Find out why no font optimizations cause strange glitches
+  compile_with_flags -Os -c ./src/resources/font.c -o ./build/font.o
   i686-elf-objcopy -O binary ./build/font.o ./build/font.bin
   rm ./build/font.o
 
   # Userspace
+  # TODO: Find out why userspace optimizations (-Os) cause fatal errors
   nasm -f elf ./src/userspace/start.asm -o ./build/userspace/start.o || exit
   find ./src/userspace/ -name \*.c >./build/tmp
   while read -r line; do
     stripped=$(echo "${line}" | sed -r 's/\//_/g')
     stripped=${stripped#??????}
     stripped=${stripped%%?}o
-    compile_with_flags -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}" || exit
+    compile_with_flags -O3 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}" || exit
   done <./build/tmp
   rm ./build/tmp
-  compile_with_flags ./build/userspace/*.o -I ./src/userspace -o ./build/user.o || exit
+  compile_with_flags -O3 ./build/userspace/*.o -I ./src/userspace -o ./build/user.o || exit
   i686-elf-objcopy -O binary ./build/user.o ./build/user.bin
 
   # Create ISO
