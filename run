@@ -1,13 +1,19 @@
 #!/usr/bin/env sh
 
-NETWORK="rtl8139"
+mode="${1}"
+network="rtl8139"
 
 qemu_with_flags() {
-  qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial stdio -rtc base=localtime -m 256M -net nic,model=${NETWORK},macaddr=42:42:42:42:42:42 -net user "$@"
+  qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
 }
 
 compile_with_flags() {
-  i686-elf-gcc -std=gnu99 -ffreestanding -O3 -nostdlib -Wall -Wextra -Wno-unused-parameter "$@"
+  if [ "${mode}" = "image" ]; then
+    i686-elf-gcc -std=gnu99 -ffreestanding -O3 -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@"
+  else
+    i686-elf-gcc -std=gnu99 -ffreestanding -O3 -nostdlib -Wall -Wextra -Wno-unused-parameter "$@"
+  fi
+
 }
 
 make_cross() {
@@ -75,7 +81,7 @@ make_build() {
     stripped=$(echo "${line}" | sed -r 's/\//_/g')
     stripped=${stripped#??????}
     stripped=${stripped%%?}o
-    compile_with_flags -c ./"${line}" -I ./src -D ${NETWORK} -o ./build/kernel/"${stripped}" || exit
+    compile_with_flags -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}" || exit
   done <./build/tmp
   rm ./build/tmp
 
@@ -131,22 +137,22 @@ make_clean() {
   rm -rf ./build ./iso
 }
 
-if [ "${1}" = "cross" ]; then
+if [ "${mode}" = "cross" ]; then
   make_cross
-elif [ "${1}" = "build" ]; then
+elif [ "${mode}" = "build" ]; then
   make_cross
   make_clean
   make_build
-elif [ "${1}" = "clean" ]; then
+elif [ "${mode}" = "clean" ]; then
   make_clean
-elif [ "${1}" = "test" ]; then
+elif [ "${mode}" = "test" ]; then
   make_cross
   make_clean
   make_build
   make_test
-elif [ "${1}" = "debug" ]; then
+elif [ "${mode}" = "debug" ]; then
   make_debug
-elif [ "${1}" = "image" ]; then
+elif [ "${mode}" = "image" ]; then
   make_cross
   make_clean
   make_build

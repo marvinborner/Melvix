@@ -50,8 +50,12 @@ void kernel_main()
     info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
 
     uint8_t boot_drive_id = (uint8_t) (*((uint8_t *) 0x9000));
-    // if (boot_drive_id == 0xE0) {
-    // install_melvix();
+
+#ifdef INSTALL_MELVIX
+#include <kernel/fs/install.h>
+    if (boot_drive_id == 0xE0)
+        install_melvix();
+#endif
 
     info("Switching to user mode...");
     syscalls_install();
