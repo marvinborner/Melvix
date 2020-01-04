@@ -45,7 +45,7 @@ void isrs_install()
 
     idt_set_gate(0x80, (unsigned) isr128, 0x08, 0xEE);
 
-    vga_log("Installed Interrupt Service Routines", 6);
+    vga_log("Installed Interrupt Service Routines");
 }
 
 irq_handler_t isr_routines[256] = {0};

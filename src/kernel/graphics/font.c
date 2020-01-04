@@ -24,4 +24,5 @@ void font_install()
         ATAPI_granular_read(1 + (font_e->length / 2048), font_e->lba, (uint8_t *) font);
         kfree(font_e);
     }
+    vga_log("Successfully loaded font");
 }

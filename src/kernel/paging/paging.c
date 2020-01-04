@@ -24,7 +24,7 @@ void paging_install()
 
     paging_enable();
 
-    vga_log("Installed paging", 4);
+    vga_log("Installed paging");
 }
 
 void paging_disable()

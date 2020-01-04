@@ -98,7 +98,7 @@ void gdt_install()
     // Remove old GDT and install the new changes!
     gdt_flush();
 
-    vga_log("Installed Global Descriptor Table", 1);
+    vga_log("Installed Global Descriptor Table");
 }
 
 void tss_write(int32_t num, uint16_t ss0)

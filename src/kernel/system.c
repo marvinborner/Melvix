@@ -18,7 +18,9 @@ void vga_clear()
             terminal_buffer[y * 80 + x] = 0 | (uint16_t) 0x700;
 }
 
-void vga_log(char *msg, int line)
+static line = 0;
+
+void vga_log(char *msg)
 {
     if (line == 0) vga_clear();
     uint16_t *terminal_buffer = (uint16_t *) 0xB8000;
@@ -32,6 +34,7 @@ void vga_log(char *msg, int line)
     strcat(string, msg);
     strcat(string, "\n");
     strcat(vga_buffer, string);
+    line++;
 }
 
 void kernel_time()

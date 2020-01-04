@@ -46,7 +46,7 @@ void init_serial()
     outb(0x3f8 + 3, 0x03);
     outb(0x3f8 + 2, 0xC7);
     outb(0x3f8 + 4, 0x0B);
-    vga_log("Installed serial connection", 2);
+    vga_log("Installed serial connection");
 }
 
 int is_transmit_empty()

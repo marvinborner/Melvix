@@ -20,7 +20,7 @@ extern void jump_userspace();
 
 void kernel_main()
 {
-    vga_log("Installing basic features of Melvix...", 0);
+    vga_log("Installing basic features of Melvix...");
 
     // Install features
     memory_init();

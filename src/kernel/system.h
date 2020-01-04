@@ -34,9 +34,8 @@ char *vga_buffer;
 /**
  * Log a message before VESA has been initialized
  * @param msg The message
- * @param line The hardcoded linenumber
  */
-void vga_log(char *msg, int line);
+void vga_log(char *msg);
 
 /**
  * Print the current kernel time

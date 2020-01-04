@@ -92,7 +92,7 @@ void irq_install()
     idt_set_gate(45, (unsigned) irq13, 0x08, 0x8E);
     idt_set_gate(46, (unsigned) irq14, 0x08, 0x8E);
     idt_set_gate(47, (unsigned) irq15, 0x08, 0x8E);
-    vga_log("Installed Interrupt Requests", 7);
+    vga_log("Installed Interrupt Requests");
 }
 
 // Handle IRQ ISRs

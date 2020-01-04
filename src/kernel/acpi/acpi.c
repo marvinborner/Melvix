@@ -153,7 +153,7 @@ int acpi_install()
                             SCI_EN = 1;
 
                             acpi_enable();
-                            vga_log("Installed ACPI", 3);
+                            vga_log("Installed ACPI");
 
                             success = 1;
                         } // Else: \_S5 parse error

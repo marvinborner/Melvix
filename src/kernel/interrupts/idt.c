@@ -44,5 +44,5 @@ void idt_install()
     memset(&idt, 0, sizeof(struct idt_entry) * 256);
 
     idt_load();
-    vga_log("Installed Interrupt Descriptor Table", 5);
+    vga_log("Installed Interrupt Descriptor Table");
 }
