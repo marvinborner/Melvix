@@ -15,6 +15,6 @@ DEFN_SYSCALL0(readc, 4);
 
 DEFN_SYSCALL0(get_pointers, 5);
 
-DEFN_SYSCALL1(paging_alloc, 6, uint32_t);
+DEFN_SYSCALL1(alloc, 6, uint32_t);
 
-DEFN_SYSCALL2(paging_free, 7, uint32_t, uint32_t);
+DEFN_SYSCALL1(free, 7, uint32_t);

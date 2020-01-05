@@ -105,8 +105,7 @@ make_build() {
     compile_with_flags -O3 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}" || exit
   done <./build/tmp
   rm ./build/tmp
-  compile_with_flags -O3 ./build/userspace/*.o -I ./src/userspace -o ./build/user.o || exit
-  i686-elf-objcopy -O binary ./build/user.o ./build/user.bin
+  compile_with_flags -O3 ./build/userspace/*.o -T ./src/userspace/linker.ld -I ./src/userspace -o ./build/user.bin || exit
 
   # Create ISO
   mkdir -p ./iso/boot/

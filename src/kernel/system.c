@@ -18,7 +18,7 @@ void vga_clear()
             terminal_buffer[y * 80 + x] = 0 | (uint16_t) 0x700;
 }
 
-static line = 0;
+static int line = 0;
 
 void vga_log(char *msg)
 {

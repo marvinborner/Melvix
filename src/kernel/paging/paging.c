@@ -146,6 +146,7 @@ uint32_t paging_alloc_pages(uint32_t count)
 {
     uint32_t ptr = paging_find_pages(count);
     paging_set_used(ptr, count);
+    paging_set_user(ptr, count);
     return ptr;
 }
 

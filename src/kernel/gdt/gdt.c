@@ -104,7 +104,7 @@ void gdt_install()
 void tss_write(int32_t num, uint16_t ss0)
 {
     uint32_t base = (uint32_t) &tss_entry;
-    uint32_t limit = base + sizeof(struct tss_entry_struct);
+    uint32_t limit = base + sizeof(tss_entry);
 
     gdt_set_gate(num, base, limit, 0xE9, 0x00);
 
@@ -119,5 +119,5 @@ void tss_write(int32_t num, uint16_t ss0)
 void tss_flush(void)
 {
     tss_entry.esp0 = 4096 + (uint32_t) kmalloc(4096);
-    asm volatile ("ltr %%ax": : "a" (0x2A));
+    asm volatile ("ltr %%ax": : "a" (0x2B));
 }

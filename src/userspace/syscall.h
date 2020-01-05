@@ -76,8 +76,8 @@ DECL_SYSCALL0(readc);
 
 DECL_SYSCALL0(get_pointers);
 
-DECL_SYSCALL1(paging_alloc, uint32_t);
+DECL_SYSCALL1(alloc, uint32_t);
 
-DECL_SYSCALL2(paging_free, uint32_t, uint32_t);
+DECL_SYSCALL1(free, uint32_t);
 
 #endif

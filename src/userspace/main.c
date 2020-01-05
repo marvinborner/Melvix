@@ -14,14 +14,10 @@ void user_main()
     char text[] = "> Successfully switched to usermode!\n";
     printf(text);
 
-    // init_framebuffer();
-    // writec((char) strlen("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-
     while (1) {
         char *input = readline();
         if (starts_with(input, "ls")) {
-            char test[] = "WOOOHOOO\n";
-            syscall_write(test);
+            printf(text);
         }
     };
 }

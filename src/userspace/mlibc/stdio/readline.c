@@ -3,7 +3,7 @@
 
 char *readline()
 {
-    char ret[256] = {'\0'};
+    char *ret = malloc(256);
     char buf = 0;
     while (buf != '\n') {
         buf = getch();
