@@ -298,17 +298,17 @@ void vesa_draw_char(char ch)
             draw += vbe_pitch;
         }
 
-        terminal_x += font_width + 2;
+        terminal_x += font_width;
     } else if (ch == '\n') {
         terminal_x = 0;
-        terminal_y += font_height + 2;
+        terminal_y += font_height;
     } else if (ch == '\t') {
-        terminal_x += 4 * (font_width + 2);
+        terminal_x += 4 * font_width;
     }
 
     if (terminal_x >= vbe_width) {
         terminal_x = 0;
-        terminal_y += font_height + 2;
+        terminal_y += font_height;
     }
 }
 
@@ -318,10 +318,10 @@ void vesa_keyboard_char(char ch)
                         terminal_background);
 
     if (ch == 0x08) {
-        if (terminal_x != 0) terminal_x -= font_width + 2;
+        if (terminal_x != 0) terminal_x -= font_width;
         text[strlen(text) - 1] = '\0';
     } else if (ch == 0x09) {
-        terminal_x += 4 * (font_width + 2);
+        terminal_x += 4 * font_width;
     } else if (ch == '\r') {
         terminal_x = 0;
     } else if (ch == '\n') {
