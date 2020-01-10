@@ -4,7 +4,7 @@ mode="${1}"
 network="rtl8139"
 
 qemu_with_flags() {
-  qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+  SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -enable-kvm -cpu host -no-reboot -vga std -smp "$(nproc)" -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
 }
 
 compile_with_flags() {
