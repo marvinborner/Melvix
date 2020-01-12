@@ -4,11 +4,16 @@ mode="${1}"
 network="rtl8139"
 
 qemu_with_flags() {
-  SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -enable-kvm -cpu host -no-reboot -vga std -smp "$(nproc)" -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+  if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
+    # TODO: Find out why kvm install is incredibly slow
+    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial mon:stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+  else
+    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -enable-kvm -cpu host -no-reboot -vga std -smp "$(nproc)" -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+  fi
 }
 
 compile_with_flags() {
-  if [ "${mode}" = "image" ]; then
+  if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
     i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@"
   else
     i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter "$@"
@@ -129,9 +134,19 @@ make_debug() {
   qemu_with_flags -s -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
 }
 
-make_image() {
+make_image_debug() {
   qemu_with_flags -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
   qemu_with_flags -drive file=./build/hdd10M.img,format=raw
+}
+
+make_image() {
+  start=$(date +%s.%N)
+  qemu_with_flags -nographic -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw >install.log
+  end=$(date +%s.%N)
+  cat install.log
+  printf "[LOG END]\n\n"
+  tail install.log | grep -q "Installation successful!" && echo Booted and installed within "$(echo "$end - $start" | bc -l)" seconds || echo Installation failed!
+  rm install.log
 }
 
 make_clean() {
@@ -153,6 +168,11 @@ elif [ "${mode}" = "test" ]; then
   make_test
 elif [ "${mode}" = "debug" ]; then
   make_debug
+elif [ "${mode}" = "image_debug" ]; then
+  make_cross
+  make_clean
+  make_build
+  make_image_debug
 elif [ "${mode}" = "image" ]; then
   make_cross
   make_clean
