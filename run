@@ -14,9 +14,9 @@ qemu_with_flags() {
 
 compile_with_flags() {
   if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
-    i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@"
+    i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@" || exit
   else
-    i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter "$@"
+    i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter "$@" || exit
   fi
 
 }
@@ -86,12 +86,12 @@ make_build() {
     stripped=$(echo "${line}" | sed -r 's/\//_/g')
     stripped=${stripped#??????}
     stripped=${stripped%%?}o
-    compile_with_flags -Os -s -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}" || exit
+    compile_with_flags -Os -s -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}"
   done <./build/tmp
   rm ./build/tmp
 
   # Link kernel ASM and C objects
-  compile_with_flags -Os -s ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin || exit
+  compile_with_flags -Os -s ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin
 
   # Modules
   # TODO: Find out why no font optimizations cause strange glitches
@@ -107,10 +107,10 @@ make_build() {
     stripped=$(echo "${line}" | sed -r 's/\//_/g')
     stripped=${stripped#??????}
     stripped=${stripped%%?}o
-    compile_with_flags -O3 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}" || exit
+    compile_with_flags -O3 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}"
   done <./build/tmp
   rm ./build/tmp
-  compile_with_flags -O3 ./build/userspace/*.o -T ./src/userspace/linker.ld -I ./src/userspace -o ./build/user.bin || exit
+  compile_with_flags -O3 ./build/userspace/*.o -T ./src/userspace/linker.ld -I ./src/userspace -o ./build/user.bin
 
   # Create ISO
   mkdir -p ./iso/boot/
