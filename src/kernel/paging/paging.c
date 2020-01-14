@@ -4,19 +4,27 @@
 #include <kernel/lib/lib.h>
 
 int paging_enabled = 0;
-uint32_t page_directory[1024] __attribute__((aligned(4096)));
-uint32_t page_tables[1024][1024] __attribute__((aligned(4096)));
+
+uint32_t *current_page_directory;
+uint32_t (*current_page_tables)[1024];
+uint32_t kernel_page_directory[1024] __attribute__((aligned(4096)));
+uint32_t kernel_page_tables[1024][1024] __attribute__((aligned(4096)));
+uint32_t user_page_directory[1024] __attribute__((aligned(4096)));
+uint32_t user_page_tables[1024][1024] __attribute__((aligned(4096)));
 
 void paging_install()
 {
+    current_page_directory = kernel_page_directory;
+    current_page_tables = kernel_page_tables;
+
     for (uint32_t i = 0; i < 1024; i++) {
         for (uint32_t j = 0; j < 1024; j++) {
-            page_tables[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW;
+            current_page_tables[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW;
         }
     }
 
     for (uint32_t i = 0; i < 1024; i++) {
-        page_directory[i] = ((uint32_t) page_tables[i]) | PD_RW | PD_PRESENT;
+        current_page_directory[i] = ((uint32_t) current_page_tables[i]) | PD_RW | PD_PRESENT;
     }
 
     paging_set_present(0, memory_get_all() >> 2); // /4
@@ -36,9 +44,21 @@ void paging_disable()
     paging_enabled = 0;
 }
 
+void paging_switch_directory()
+{
+    if (current_page_tables == kernel_page_tables) {
+        current_page_tables = user_page_tables;
+        current_page_directory = user_page_directory;
+    } else {
+        current_page_tables = kernel_page_tables;
+        current_page_directory = kernel_page_directory;
+    }
+    asm ("mov %0, %%cr3"::"r"(current_page_directory));
+}
+
 void paging_enable()
 {
-    asm ("mov %0, %%cr3"::"r"(page_directory));
+    asm ("mov %0, %%cr3"::"r"(current_page_directory));
     uint32_t cr0;
     asm ("mov %%cr0, %0": "=r"(cr0));
     cr0 |= 0x80000000;
@@ -55,7 +75,7 @@ void paging_map(uint32_t phy, uint32_t virt, uint16_t flags)
 {
     uint32_t pdi = virt >> 22;
     uint32_t pti = virt >> 12 & 0x03FF;
-    page_tables[pdi][pti] = phy | flags;
+    current_page_tables[pdi][pti] = phy | flags;
     invlpg(virt);
 }
 
@@ -63,21 +83,21 @@ uint32_t paging_get_phys(uint32_t virt)
 {
     uint32_t pdi = virt >> 22;
     uint32_t pti = (virt >> 12) & 0x03FF;
-    return page_tables[pdi][pti] & 0xFFFFF000;
+    return current_page_tables[pdi][pti] & 0xFFFFF000;
 }
 
 uint16_t paging_get_flags(uint32_t virt)
 {
     uint32_t pdi = virt >> 22;
     uint32_t pti = (virt >> 12) & 0x03FF;
-    return page_tables[pdi][pti] & 0xFFF;
+    return current_page_tables[pdi][pti] & 0xFFF;
 }
 
 void paging_set_flag_up(uint32_t virt, uint32_t count, uint32_t flag)
 {
     uint32_t page_n = virt / 4096;
     for (uint32_t i = page_n; i < page_n + count; i++) {
-        page_tables[i / 1024][i % 1024] |= flag;
+        current_page_tables[i / 1024][i % 1024] |= flag;
         invlpg(i * 4096);
     }
 }
@@ -86,7 +106,7 @@ void paging_set_flag_down(uint32_t virt, uint32_t count, uint32_t flag)
 {
     uint32_t page_n = virt / 4096;
     for (uint32_t i = page_n; i < page_n + count; i++) {
-        page_tables[i / 1024][i % 1024] &= ~flag;
+        current_page_tables[i / 1024][i % 1024] &= ~flag;
         invlpg(i * 4096);
     }
 }
@@ -115,7 +135,7 @@ void paging_set_user(uint32_t virt, uint32_t count)
 {
     uint32_t page_n = virt / 4096;
     for (uint32_t i = page_n; i < page_n + count; i += 1024) {
-        page_directory[i / 1024] |= PD_ALL_PRIV;
+        current_page_directory[i / 1024] |= PD_ALL_PRIV;
     }
     paging_set_flag_up(virt, count, PT_ALL_PRIV);
 }
@@ -127,7 +147,7 @@ uint32_t paging_find_pages(uint32_t count)
     uint32_t startPage = 0;
     for (uint32_t i = 0; i < 1024; i++) {
         for (uint32_t j = 0; j < 1024; j++) {
-            if (!(page_tables[i][j] & PT_PRESENT) || (page_tables[i][j] & PT_USED)) {
+            if (!(current_page_tables[i][j] & PT_PRESENT) || (current_page_tables[i][j] & PT_USED)) {
                 continuous = 0;
                 startDir = i;
                 startPage = j + 1;
@@ -155,7 +175,7 @@ uint32_t paging_get_used_pages()
     uint32_t n = 0;
     for (uint32_t i = 0; i < 1024; i++) {
         for (uint32_t j = 0; j < 1024; j++) {
-            uint8_t flags = page_tables[i][j] & PT_USED;
+            uint8_t flags = current_page_tables[i][j] & PT_USED;
             if (flags == 1) n++;
         }
     }
