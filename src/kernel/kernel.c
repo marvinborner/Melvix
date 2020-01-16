@@ -60,18 +60,19 @@ void kernel_main()
     info("Switching to user mode...");
     syscalls_install();
     tss_flush();
-    uint32_t userspace = paging_alloc_pages(10);
-    paging_set_user(userspace, 10);
+    uint32_t userspace = (uint32_t) umalloc(8096);
+    paging_switch_directory(1);
     if (boot_drive_id == 0xE0) {
         char *user_p[] = {"USER.BIN"};
         struct iso9660_entity *user_e = ISO9660_get(user_p, 1);
         if (!user_e) panic("Userspace binary not found!");
         ATAPI_granular_read(1 + (user_e->length / 2048), user_e->lba, (uint8_t *) (userspace + 4096));
         kfree(user_e);
-        jump_userspace(userspace + 4096);
+        jump_userspace(userspace + 4096, userspace + 4096);
     } else {
         marfs_read_whole_file(4, (uint8_t *) (userspace + 4096));
-        jump_userspace(userspace + 4096);
+        paging_switch_directory(1);
+        jump_userspace(userspace + 4096, userspace + 4096);
     }
 
     panic("This should NOT happen!");

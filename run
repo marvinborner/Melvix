@@ -107,10 +107,10 @@ make_build() {
     stripped=$(echo "${line}" | sed -r 's/\//_/g')
     stripped=${stripped#??????}
     stripped=${stripped%%?}o
-    compile_with_flags -O3 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}"
+    compile_with_flags -O2 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}"
   done <./build/tmp
   rm ./build/tmp
-  compile_with_flags -O3 ./build/userspace/*.o -T ./src/userspace/linker.ld -I ./src/userspace -o ./build/user.bin
+  compile_with_flags -O2 ./build/userspace/*.o -T ./src/userspace/linker.ld -I ./src/userspace -o ./build/user.bin
 
   # Create ISO
   mkdir -p ./iso/boot/

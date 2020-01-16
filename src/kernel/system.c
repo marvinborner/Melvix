@@ -106,7 +106,6 @@ void assert(int x)
 
 void halt_loop()
 {
-    serial_printf("\n!!! HALT !!!");
     asm ("cli");
     loop:
     asm ("hlt");

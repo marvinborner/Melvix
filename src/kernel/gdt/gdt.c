@@ -2,7 +2,7 @@
 #include <kernel/gdt/gdt.h>
 #include <kernel/system.h>
 #include <kernel/lib/lib.h>
-#include <kernel/lib/stdlib/liballoc.h>
+#include <kernel/lib/stdlib.h>
 
 struct gdt_entry {
     unsigned short limit_low;
@@ -93,7 +93,7 @@ void gdt_install()
     gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);
 
     // Write TSS
-    tss_write(5, 0x10);
+    tss_write(5, 0x10, 0x0);
 
     // Remove old GDT and install the new changes!
     gdt_flush();
@@ -101,7 +101,7 @@ void gdt_install()
     vga_log("Installed Global Descriptor Table");
 }
 
-void tss_write(int32_t num, uint16_t ss0)
+void tss_write(int32_t num, uint16_t ss0, uint32_t esp0)
 {
     uint32_t base = (uint32_t) &tss_entry;
     uint32_t limit = base + sizeof(tss_entry);
@@ -111,13 +111,20 @@ void tss_write(int32_t num, uint16_t ss0)
     memset(&tss_entry, 0, sizeof(tss_entry));
 
     tss_entry.ss0 = ss0;
-    tss_entry.iomap_base = sizeof(struct tss_entry_struct);
+    tss_entry.esp0 = esp0;
     tss_entry.cs = 0x0b;
     tss_entry.ss = tss_entry.ds = tss_entry.es = tss_entry.fs = tss_entry.gs = 0x13;
+
+    tss_entry.iomap_base = sizeof(struct tss_entry_struct);
 }
 
 void tss_flush(void)
 {
-    tss_entry.esp0 = 4096 + (uint32_t) kmalloc(4096);
+    tss_entry.esp0 = 4096 + (uint32_t) umalloc(4096);
     asm volatile ("ltr %%ax": : "a" (0x2B));
+}
+
+void set_kernel_stack(uintptr_t stack)
+{
+    tss_entry.esp0 = stack;
 }
