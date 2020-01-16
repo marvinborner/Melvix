@@ -12,11 +12,8 @@ uint32_t kernel_page_tables[1024][1024] __attribute__((aligned(4096)));
 uint32_t user_page_directory[1024] __attribute__((aligned(4096)));
 uint32_t user_page_tables[1024][1024] __attribute__((aligned(4096)));
 
-void paging_install()
+void paging_init()
 {
-    current_page_directory = kernel_page_directory;
-    current_page_tables = kernel_page_tables;
-
     for (uint32_t i = 0; i < 1024; i++) {
         for (uint32_t j = 0; j < 1024; j++) {
             current_page_tables[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW;
@@ -27,7 +24,19 @@ void paging_install()
         current_page_directory[i] = ((uint32_t) current_page_tables[i]) | PD_RW | PD_PRESENT;
     }
 
-    paging_set_present(0, memory_get_all() >> 2); // /4
+    paging_set_present(0, memory_get_all() >> 3); // /4
+}
+
+void paging_install()
+{
+    // User paging
+    paging_switch_directory(1);
+    paging_init();
+    paging_set_user(0, memory_get_all() >> 3);
+
+    // Kernel paging
+    paging_switch_directory(0);
+    paging_init();
     paging_set_used(0, ((uint32_t) ASM_KERNEL_END >> 12) + 1); // /4096
 
     paging_enable();
@@ -44,9 +53,9 @@ void paging_disable()
     paging_enabled = 0;
 }
 
-void paging_switch_directory()
+void paging_switch_directory(int user)
 {
-    if (current_page_tables == kernel_page_tables) {
+    if (user == 1) {
         current_page_tables = user_page_tables;
         current_page_directory = user_page_directory;
     } else {

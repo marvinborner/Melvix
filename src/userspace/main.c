@@ -14,6 +14,9 @@ void user_main()
     char text[] = "> Successfully switched to usermode!\n";
     printf(text);
 
+    // TODO: PLEASE
+    printf("If this message shows up, I'll be happy.\n");
+
     while (1) {
         char *input = readline();
         if (starts_with(input, "ls")) {

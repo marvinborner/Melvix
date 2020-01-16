@@ -29,7 +29,11 @@ section .text
     global jump_userspace
     jump_userspace:
         cli
-        mov ebx, dword [esp + 4]
+        push ebp
+        mov ebp, esp
+        mov edx, dword [esp + 0xC]
+        mov esp, edx
+        push 0xABCDEF
 
         mov ax, 0x23
         mov ds, ax
@@ -48,9 +52,11 @@ section .text
         push eax
 
         push 0x1B
-        push ebx
-        mov ebp, ebx
+        push dword [ebp + 8]
         iret
+
+        pop ebp
+        ret
 
 section .end_section
     global ASM_KERNEL_END

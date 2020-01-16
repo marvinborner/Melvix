@@ -472,6 +472,7 @@ void *krealloc(void *p, size_t size)
 
 void *umalloc(size_t req_size)
 {
+    paging_switch_directory(1);
     int started_bet = 0;
     unsigned long long best_size = 0;
     void *p = NULL;
@@ -497,6 +498,7 @@ void *umalloc(size_t req_size)
         l_mem_root_user = allocate_new_page(size, 1);
         if (l_mem_root_user == NULL) {
             liballoc_unlock();
+            paging_switch_directory(0);
             return NULL;
         }
     }
@@ -554,6 +556,7 @@ void *umalloc(size_t req_size)
             p = (void *) ((uintptr_t) (maj->first) + sizeof(struct liballoc_minor));
             ALIGN(p);
             liballoc_unlock();
+            paging_switch_directory(0);
             return p;
         }
 
@@ -576,6 +579,7 @@ void *umalloc(size_t req_size)
             p = (void *) ((uintptr_t) (maj->first) + sizeof(struct liballoc_minor));
             ALIGN(p);
             liballoc_unlock();
+            paging_switch_directory(0);
             return p;
         }
 
@@ -601,6 +605,7 @@ void *umalloc(size_t req_size)
                     p = (void *) ((uintptr_t) min + sizeof(struct liballoc_minor));
                     ALIGN(p);
                     liballoc_unlock();
+                    paging_switch_directory(0);
                     return p;
                 }
             }
@@ -626,6 +631,7 @@ void *umalloc(size_t req_size)
                     p = (void *) ((uintptr_t) new_min + sizeof(struct liballoc_minor));
                     ALIGN(p);
                     liballoc_unlock();
+                    paging_switch_directory(0);
                     return p;
                 }
             }
@@ -649,16 +655,19 @@ void *umalloc(size_t req_size)
 
     liballoc_unlock();
 
+    paging_switch_directory(0);
     return NULL;
 }
 
 void ufree(void *ptr)
 {
+    paging_switch_directory(1);
     struct liballoc_minor *min;
     struct liballoc_major *maj;
 
     if (ptr == NULL) {
         l_warning_count_user += 1;
+        paging_switch_directory(0);
         return;
     }
 
@@ -677,6 +686,7 @@ void ufree(void *ptr)
         }
 
         liballoc_unlock();
+        paging_switch_directory(0);
         return;
     }
 
@@ -703,10 +713,12 @@ void ufree(void *ptr)
         }
     }
     liballoc_unlock();
+    paging_switch_directory(0);
 }
 
 void *ucalloc(size_t nobj, size_t size)
 {
+    paging_switch_directory(1);
     int real_size;
     void *p;
 
@@ -716,17 +728,20 @@ void *ucalloc(size_t nobj, size_t size)
 
     liballoc_memset(p, 0, real_size);
 
+    paging_switch_directory(0);
     return p;
 }
 
 void *urealloc(void *p, size_t size)
 {
+    paging_switch_directory(1);
     void *ptr;
     struct liballoc_minor *min;
     unsigned int real_size;
 
     if (size == 0) {
         ufree(p);
+        paging_switch_directory(0);
         return NULL;
     }
 
@@ -746,6 +761,7 @@ void *urealloc(void *p, size_t size)
         }
 
         liballoc_unlock();
+        paging_switch_directory(0);
         return NULL;
     }
 
@@ -754,6 +770,7 @@ void *urealloc(void *p, size_t size)
     if (real_size >= size) {
         min->req_size = size;
         liballoc_unlock();
+        paging_switch_directory(0);
         return p;
     }
 
@@ -763,5 +780,6 @@ void *urealloc(void *p, size_t size)
     liballoc_memcpy(ptr, p, real_size);
     ufree(p);
 
+    paging_switch_directory(0);
     return ptr;
 }

@@ -29,7 +29,7 @@ void paging_enable();
 
 void paging_disable();
 
-void paging_switch_directory();
+void paging_switch_directory(int user);
 
 void paging_map(uint32_t phy, uint32_t virt, uint16_t flags);
 

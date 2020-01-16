@@ -3,6 +3,7 @@
 #include <kernel/system.h>
 #include <kernel/lib/string.h>
 #include <kernel/lib/stdio.h>
+#include <kernel/paging/paging.h>
 
 // Install ISRs in IDT
 void isrs_install()
@@ -116,6 +117,7 @@ void fault_handler(struct regs *r)
                 r->eip, r->eax, r->ebx, r->ecx, r->edx, r->esp, faulting_address, r->eflags, r->err_code, r->int_no,
                 exception_messages[r->int_no]
         );
+        serial_printf("%d", paging_get_flags(faulting_address));
         // halt_loop(); // Idk loop?
         char *message = (char *) exception_messages[r->int_no];
         strcat(message, " Exception");
