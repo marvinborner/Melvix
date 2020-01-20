@@ -1,8 +1,8 @@
 #include <stdint.h>
-#include <kernel/lib/stdlib/liballoc.h>
+#include <kernel/memory/kheap.h>
 
 uint32_t sys_free(uint32_t ptr)
 {
-    ufree((void *) ptr);
+    kfree((void *) ptr);
     return 0;
 }

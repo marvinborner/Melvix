@@ -8,8 +8,8 @@ void timer_phase(int hz)
 {
     int divisor = (int) (3579545.0 / 3.0 / (double) hz);
     outb(0x43, 0x36); // 01 10 11 0b // CTR, RW, MODE, BCD
-    outb(0x40, divisor & 0xFF);
-    outb(0x40, divisor >> 8);
+    outb(0x40, (uint8_t) (divisor & 0xFF));
+    outb(0x40, (uint8_t) (divisor >> 8));
 }
 
 // Executed 1000 times per second

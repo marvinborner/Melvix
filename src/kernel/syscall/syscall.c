@@ -3,7 +3,6 @@
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/system.h>
 #include <kernel/lib/stdio.h>
-#include <kernel/paging/paging.h>
 
 typedef uint32_t (*syscall_func)(unsigned int, ...);
 
@@ -22,7 +21,6 @@ uint32_t (*syscalls[])() = {
 
 void syscall_handler(struct regs *r)
 {
-    paging_switch_directory(0);
     serial_printf("Received syscall!");
 
     if (r->eax >= sizeof(syscalls) / sizeof(*syscalls))
@@ -35,7 +33,6 @@ void syscall_handler(struct regs *r)
     //serial_printf("[SYSCALL] %d (0x%x) 0x%x 0x%x 0x%x 0x%x 0x%x", r->eax, location, r->ebx, r->ecx, r->edx, r->esi, r->edi);
 
     r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
-    paging_switch_directory(1);
 }
 
 void syscalls_install()

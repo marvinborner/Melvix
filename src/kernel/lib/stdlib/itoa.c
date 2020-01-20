@@ -1,8 +1,8 @@
 #include <kernel/lib/math.h>
 #include <stdint.h>
 #include <kernel/lib/string.h>
-#include <kernel/lib/stdlib.h>
-#include <kernel/paging/paging.h>
+#include <kernel/memory/kheap.h>
+#include <kernel/memory/paging.h>
 
 static const char ITOA_TABLE[] = "0123456789";
 
@@ -12,7 +12,7 @@ char *itoa(int n)
         return "0"; // kmalloc isn't available
 
     if (!n) {
-        char *ret = kmalloc(2);
+        char *ret = (char *) kmalloc(2);
         ret[0] = '0';
         ret[1] = 0;
         return ret;
@@ -23,7 +23,7 @@ char *itoa(int n)
     int sz;
     for (sz = 0; n % pow(10, sz) != n; sz++) {}
 
-    char *ret = kmalloc(sz + 1);
+    char *ret = (char *) kmalloc((uint32_t) (sz + 1));
 
     for (int i = 0; i < sz; i++) {
         int digit = (n % pow(10, i + 1)) / pow(10, i);
@@ -32,7 +32,7 @@ char *itoa(int n)
     ret[sz] = 0;
 
     if (negative) {
-        char *aux = kmalloc(sz + 2);
+        char *aux = (char *) kmalloc((uint32_t) (sz + 2));
         strcpy(aux, ret);
         aux[sz] = '-';
         aux[sz + 1] = 0;

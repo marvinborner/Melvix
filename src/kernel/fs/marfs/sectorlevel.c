@@ -1,7 +1,7 @@
 #include <stdint.h>
-#include <kernel/lib/stdlib.h>
 #include <kernel/fs/ata_pio.h>
 #include <kernel/fs/marfs/marfs.h>
+#include <kernel/memory/kheap.h>
 
 uint8_t marfs_init(struct ata_interface *_interface)
 {
@@ -62,7 +62,7 @@ static uint8_t marfs_mark_block(uint32_t lba_sector, uint8_t mode)
 {
     lba_sector -= 2;
     lba_sector -= sb_cache.s_first_chunk;
-    uint16_t block_in_chunk = lba_sector % 512;
+    uint16_t block_in_chunk = (uint16_t) (lba_sector % 512);
     lba_sector /= 512;
     lba_sector = 2 + sb_cache.s_first_chunk + (512 * lba_sector);
 

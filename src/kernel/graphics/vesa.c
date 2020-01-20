@@ -1,11 +1,13 @@
 #include <kernel/graphics/vesa.h>
 #include <kernel/graphics/font.h>
 #include <kernel/lib/lib.h>
-#include <kernel/paging/paging.h>
 #include <kernel/system.h>
 #include <kernel/lib/stdlib.h>
-#include <kernel/commands/command.h>
 #include <kernel/lib/stdio.h>
+#include <kernel/memory/kheap.h>
+#include <kernel/memory/paging.h>
+
+extern page_directory_t *kernel_directory;
 
 void switch_to_vga()
 {
@@ -32,7 +34,7 @@ struct edid_data get_edid()
 
     struct edid_data *edid = (struct edid_data *) 0x7E00;
 
-    return *(struct edid_data *) edid;
+    return *edid;
 }
 
 void vbe_set_mode(unsigned short mode)
@@ -68,7 +70,7 @@ uint16_t *vbe_get_modes()
     size_t number_modes = 1;
     for (uint16_t *p = mode_ptr; *p != 0xFFFF; p++) number_modes++;
 
-    uint16_t *ret = kmalloc(sizeof(uint16_t) * number_modes);
+    uint16_t *ret = (uint16_t *) kmalloc(sizeof(uint16_t) * number_modes);
     for (size_t i = 0; i < number_modes; i++)
         ret[i] = ((uint16_t *) info->video_modes)[i];
 
@@ -154,7 +156,7 @@ void set_optimal_resolution()
         };
 
         for (size_t i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-            mode_info = vbe_get_mode_info(modes[i]);
+            mode_info = vbe_get_mode_info((uint16_t) modes[i]);
             if (mode_info == 0 || (mode_info->attributes & 0x90) != 0x90 ||
                 (mode_info->memory_model != 4 && mode_info->memory_model != 6)) {
                 kfree(mode_info);
@@ -162,7 +164,7 @@ void set_optimal_resolution()
             }
 
             if ((mode_info->width > vbe_width || (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl))) {
-                highest = modes[i];
+                highest = (uint16_t) modes[i];
                 vbe_width = mode_info->width;
                 vbe_height = mode_info->height;
                 vbe_pitch = mode_info->pitch;
@@ -180,11 +182,10 @@ void set_optimal_resolution()
     vbe_set_mode(highest);
 
     uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
-    cursor_buffer = umalloc(fb_size);
-    for (uint32_t z = 0; z < fb_size; z += 4096) {
-        paging_set_user((uint32_t) fb + z, 1);
-        paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED | PT_ALL_PRIV);
-        paging_map((uint32_t) cursor_buffer + z, (uint32_t) cursor_buffer + z, PT_PRESENT | PT_RW | PT_USED);
+    cursor_buffer = (unsigned char *) kmalloc(fb_size);
+    for (uint32_t z = 0; z < fb_size; z += 0x1000) {
+        alloc_frame(get_page((uint32_t) fb + z, 1, kernel_directory), 0, 1);
+        alloc_frame(get_page((uint32_t) cursor_buffer + z, 1, kernel_directory), 0, 1);
     }
 
     if (vbe_height > 1440) vesa_set_font(32);
@@ -220,9 +221,9 @@ void vesa_set_font(int height)
 
 void vesa_convert_color(uint32_t *color_array, uint32_t color)
 {
-    uint8_t red = (color >> 16) & 255;
-    uint8_t green = (color >> 8) & 255;
-    uint8_t blue = color & 255;
+    uint8_t red = (uint8_t) ((color >> 16) & 255);
+    uint8_t green = (uint8_t) ((color >> 8) & 255);
+    uint8_t blue = (uint8_t) (color & 255);
 
     if ((vbe_bpl << 3) == 8) {
         uint32_t new_color = ((red * 7 / 255) << 5) + ((green * 7 / 255) << 2) + (blue * 3 / 255);
@@ -245,11 +246,11 @@ void vesa_convert_color(uint32_t *color_array, uint32_t color)
 
 void vesa_set_pixel(uint16_t x, uint16_t y, const uint32_t color[3])
 {
-    unsigned pos = x * vbe_bpl + y * vbe_pitch;
+    unsigned pos = (unsigned int) (x * vbe_bpl + y * vbe_pitch);
     char *draw = (char *) &fb[pos];
-    draw[pos] = color[2];
-    draw[pos + 1] = color[1];
-    draw[pos + 2] = color[0];
+    draw[pos] = (char) color[2];
+    draw[pos + 1] = (char) color[1];
+    draw[pos + 2] = (char) color[0];
 }
 
 void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const uint32_t color[3])
@@ -258,9 +259,9 @@ void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const uint32_t color[3]
     char *draw = (char *) &fb[pos1];
     for (int i = 0; i <= y2 - y1; i++) {
         for (int j = 0; j <= x2 - x1; j++) {
-            draw[vbe_bpl * j] = color[2];
-            draw[vbe_bpl * j + 1] = color[1];
-            draw[vbe_bpl * j + 2] = color[0];
+            draw[vbe_bpl * j] = (char) color[2];
+            draw[vbe_bpl * j + 1] = (char) color[1];
+            draw[vbe_bpl * j + 2] = (char) color[0];
         }
         draw += vbe_pitch;
     }
@@ -286,13 +287,13 @@ void vesa_draw_char(char ch)
             else if (font_height == 32) bitmap = font->font_32[ch - 32][cy];
             for (int cx = 0; cx <= font_width + 1; cx++) {
                 if (bitmap & ((1 << font_width) >> cx)) { // Side effect: Smoothness factor!
-                    draw[vbe_bpl * cx] = terminal_color[2];
-                    draw[vbe_bpl * cx + 1] = terminal_color[1];
-                    draw[vbe_bpl * cx + 2] = terminal_color[0];
+                    draw[vbe_bpl * cx] = (char) terminal_color[2];
+                    draw[vbe_bpl * cx + 1] = (char) terminal_color[1];
+                    draw[vbe_bpl * cx + 2] = (char) terminal_color[0];
                 } else {
-                    draw[vbe_bpl * cx] = terminal_background[2];
-                    draw[vbe_bpl * cx + 1] = terminal_background[1];
-                    draw[vbe_bpl * cx + 2] = terminal_background[0];
+                    draw[vbe_bpl * cx] = (char) terminal_background[2];
+                    draw[vbe_bpl * cx + 1] = (char) terminal_background[1];
+                    draw[vbe_bpl * cx + 2] = (char) terminal_background[0];
                 }
             }
             draw += vbe_pitch;
@@ -310,34 +311,6 @@ void vesa_draw_char(char ch)
         terminal_x = 0;
         terminal_y += font_height;
     }
-}
-
-void vesa_keyboard_char(char ch)
-{
-    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + font_width, terminal_y + font_height,
-                        terminal_background);
-
-    if (ch == 0x08) {
-        if (terminal_x != 0) terminal_x -= font_width;
-        text[strlen(text) - 1] = '\0';
-    } else if (ch == 0x09) {
-        terminal_x += 4 * font_width;
-    } else if (ch == '\r') {
-        terminal_x = 0;
-    } else if (ch == '\n') {
-        writec(ch);
-        exec_command(text);
-        memset(text, 0, sizeof(text));
-        // terminal_scroll();
-    } else if (ch >= ' ') {
-        writec(ch);
-        char tmp[2] = {ch};
-        strcat(text, tmp);
-    }
-
-    // terminal_scroll();
-    vesa_draw_rectangle(terminal_x, terminal_y, terminal_x + font_width, terminal_y + font_height,
-                        terminal_color);
 }
 
 int prev_coords[2] = {};
@@ -372,9 +345,9 @@ void vesa_draw_cursor(int x, int y)
             prev[vbe_bpl * cx + 1] = draw[vbe_bpl * cx + 1];
             prev[vbe_bpl * cx + 2] = draw[vbe_bpl * cx + 2];
             if (font->cursor[cy] & ((1 << 12) >> cx)) {
-                draw[vbe_bpl * cx] = terminal_color[2];
-                draw[vbe_bpl * cx + 1] = terminal_color[1];
-                draw[vbe_bpl * cx + 2] = terminal_color[0];
+                draw[vbe_bpl * cx] = (char) terminal_color[2];
+                draw[vbe_bpl * cx + 1] = (char) terminal_color[1];
+                draw[vbe_bpl * cx + 2] = (char) terminal_color[0];
             }
         }
         draw += vbe_pitch;

@@ -24,13 +24,13 @@ extern void idt_load();
 void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags)
 {
     // Specify the interrupt routine's base address
-    idt[num].base_low = (base & 0xFFFF);
-    idt[num].base_high = (base >> 16) & 0xFFFF;
+    idt[num].base_low = (uint16_t) (base & 0xFFFF);
+    idt[num].base_high = (uint16_t) ((base >> 16) & 0xFFFF);
 
     // Set selector/segment of IDT entry
     idt[num].sel = sel;
     idt[num].always0 = 0;
-    idt[num].flags = flags | 0x60;
+    idt[num].flags = (uint8_t) (flags | 0x60);
 }
 
 // Install IDT

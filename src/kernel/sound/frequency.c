@@ -14,13 +14,13 @@ void play_sound(uint32_t frequency)
 
     tmp = inb(0x61);
     if (tmp != (tmp | 3)) {
-        outb(0x61, tmp | 3);
+        outb(0x61, (uint8_t) (tmp | 3));
     }
 }
 
 static void shut_up()
 {
-    uint8_t tmp = inb(0x61) & 0xFC;
+    uint8_t tmp = (uint8_t) (inb(0x61) & 0xFC);
 
     outb(0x61, tmp);
 }
@@ -29,6 +29,6 @@ static void shut_up()
 void beep(uint32_t frequency, uint32_t ticks)
 {
     play_sound(frequency);
-    timer_wait(ticks);
+    timer_wait((int) ticks);
     shut_up();
 }

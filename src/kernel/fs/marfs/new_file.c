@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <kernel/fs/ata_pio.h>
-#include <kernel/lib/stdlib.h>
 #include <kernel/fs/marfs/marfs.h>
+#include <kernel/memory/kheap.h>
 
 static uint8_t last_max_level = 0;
 
@@ -30,17 +30,17 @@ void marfs_update_recursive(uint8_t level, uint32_t i, uint32_t rec_lba, uint32_
     uint32_t contents_idx = contents[idx];
     kfree(contents);
     if (level != 1) {
-        marfs_update_recursive(level - 1, i, contents_idx, real_lba);
+        marfs_update_recursive((uint8_t) (level - 1), i, contents_idx, real_lba);
     }
     last_max_level = 0;
 }
 
 uint32_t marfs_new_file(uint64_t size, uint8_t *data, uint32_t uid, uint8_t exec, uint8_t dir)
 {
-    struct marfs_inode *inode = (struct marfs_inode *) kcalloc(1, 512);
+    struct marfs_inode *inode = (struct marfs_inode *) kmalloc(512);
     inode->size = size;
     inode->creation_time = inode->last_mod_time = inode->last_access_time = 0; // TODO: POSIX time
-    inode->n_blocks = size / 512;
+    inode->n_blocks = (uint32_t) (size / 512);
     if (size % 512) inode->n_blocks++;
     inode->uid = uid;
     inode->is_app = exec;

@@ -2,6 +2,7 @@
 #include <kernel/fs/ata_pio.h>
 #include <kernel/lib/stdlib.h>
 #include <kernel/fs/marfs/marfs.h>
+#include <kernel/memory/kheap.h>
 
 uint32_t marfs_new_dir(uint32_t uid)
 {
@@ -17,7 +18,7 @@ void marfs_add_to_dir(uint32_t lba_inode, char *filename, uint32_t lba)
     uint8_t *old = marfs_allocate_and_read_whole_file(lba_inode);
 
     // Allocate memory
-    uint8_t *contents = kmalloc(inode->size + strlen(filename) + 1 + 4);
+    uint8_t *contents = (uint8_t *) kmalloc((uint32_t) (inode->size + strlen(filename) + 1 + 4));
 
     // Copy the content
     uint8_t last_was_null = 0;
@@ -26,16 +27,16 @@ void marfs_add_to_dir(uint32_t lba_inode, char *filename, uint32_t lba)
         if (old[i] == 0 && last_was_null) continue;
 
         contents[new_size++] = old[i];
-        last_was_null = (old[i] == 0);
+        last_was_null = (uint8_t) (old[i] == 0);
     }
     kfree(old);
 
     // Append new file
-    for (size_t i = 0; i <= strlen(filename); i++) contents[new_size++] = filename[i];
-    for (signed char j = 24; j > 0; j -= 8) contents[new_size++] = (lba >> j) & 0xFF;
+    for (size_t i = 0; i <= strlen(filename); i++) contents[new_size++] = (uint8_t) filename[i];
+    for (signed char j = 24; j > 0; j -= 8) contents[new_size++] = (uint8_t) ((lba >> j) & 0xFF);
 
     // Free the blocks
-    uint32_t new_size_in_blocks = new_size / 512;
+    uint32_t new_size_in_blocks = (uint32_t) (new_size / 512);
     if (new_size % 512) new_size_in_blocks++;
     for (uint32_t i = 0; i < new_size_in_blocks; i++)
         marfs_mark_block_as_free(marfs_get_block(inode, i));

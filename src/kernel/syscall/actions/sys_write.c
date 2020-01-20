@@ -10,6 +10,6 @@ uint32_t sys_write(char *buf)
 
 uint32_t sys_writec(char ch)
 {
-    writec((char) ch);
+    writec(ch);
     return 0;
 }

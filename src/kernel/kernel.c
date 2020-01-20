@@ -3,7 +3,7 @@
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/io/io.h>
 #include <kernel/timer/timer.h>
-#include <kernel/paging/paging.h>
+#include <kernel/memory/paging.h>
 #include <kernel/input/input.h>
 #include <kernel/acpi/acpi.h>
 #include <kernel/smbios/smbios.h>
@@ -12,9 +12,10 @@
 #include <kernel/fs/marfs/marfs.h>
 #include <kernel/fs/iso9660/iso9660.h>
 #include <kernel/fs/atapi_pio.h>
-#include <kernel/lib/stdlib/liballoc.h>
 #include <kernel/pci/pci.h>
 #include <kernel/net/network.h>
+#include <kernel/memory/kheap.h>
+#include <kernel/lib/stdio.h>
 
 extern void jump_userspace();
 
@@ -32,6 +33,7 @@ void kernel_main()
     isrs_install();
     irq_install();
     font_install();
+    serial_printf("%d", memory_get_all());
     set_optimal_resolution();
 
     // Install drivers
@@ -53,6 +55,7 @@ void kernel_main()
 
 #ifdef INSTALL_MELVIX
 #include <kernel/fs/install.h>
+    serial_printf("Install flag given!");
     if (boot_drive_id == 0xE0)
         install_melvix();
 #endif
@@ -60,8 +63,7 @@ void kernel_main()
     info("Switching to user mode...");
     syscalls_install();
     tss_flush();
-    uint32_t userspace = (uint32_t) umalloc(8096);
-    paging_switch_directory(1);
+    uint32_t userspace = (uint32_t) kmalloc(8096);
     if (boot_drive_id == 0xE0) {
         char *user_p[] = {"USER.BIN"};
         struct iso9660_entity *user_e = ISO9660_get(user_p, 1);
@@ -71,7 +73,6 @@ void kernel_main()
         jump_userspace(userspace + 4096, userspace + 4096);
     } else {
         marfs_read_whole_file(4, (uint8_t *) (userspace + 4096));
-        paging_switch_directory(1);
         jump_userspace(userspace + 4096, userspace + 4096);
     }
 

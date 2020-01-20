@@ -3,10 +3,11 @@
 #include <kernel/fs/marfs/marfs.h>
 #include <kernel/fs/iso9660/iso9660.h>
 #include <kernel/fs/atapi_pio.h>
-#include <kernel/lib/stdlib.h>
 #include <kernel/acpi/acpi.h>
 #include <kernel/lib/stdio.h>
 #include <kernel/timer/timer.h>
+#include <kernel/memory/kheap.h>
+#include <kernel/graphics/font.h>
 
 void install_melvix()
 {
@@ -27,6 +28,7 @@ void install_melvix()
 
     // Copy MBR
     info("Copying MBR... ");
+    serial_printf("Copying MBR... ");
     char *stage1_p[] = {"BOOT", "HDD1.BIN"};
     struct iso9660_entity *stage1_e = ISO9660_get(stage1_p, 2);
     if (!stage1_e)
@@ -37,10 +39,12 @@ void install_melvix()
 
     // Format disk
     info("Formatting disk...");
+    serial_printf("Formatting disk...");
     marfs_format();
 
     // Copy second stage
     info("Copying second stage...");
+    serial_printf("Copying second stage...");
     char *stage2_p[] = {"BOOT", "HDD2.BIN"};
     struct iso9660_entity *stage2_e = ISO9660_get(stage2_p, 2);
     if (!stage2_e)
@@ -51,11 +55,12 @@ void install_melvix()
 
     // Copy the kernel
     info("Copying the kernel...");
+    serial_printf("Copying the kernel...");
     char *kernel_p[] = {"BOOT", "KERNEL.BIN"};
     struct iso9660_entity *kernel_e = ISO9660_get(kernel_p, 2);
     if (!kernel_e)
         panic("WTH Kernel not found!?");
-    uint8_t *kernel = kmalloc(kernel_e->length + 2048);
+    uint8_t *kernel = (uint8_t *) kmalloc(kernel_e->length + 2048);
     ATAPI_granular_read(1 + (kernel_e->length / 2048), kernel_e->lba, kernel);
     marfs_new_file(kernel_e->length, kernel, 0, 0, 0);
     kfree(kernel);
@@ -63,6 +68,7 @@ void install_melvix()
 
     // Copy the userspace binary
     info("Copying userspace... ");
+    serial_printf("Copying userspace... ");
     char *userspace_p[] = {"USER.BIN"};
     struct iso9660_entity *userspace_e = ISO9660_get(userspace_p, 1);
     if (!userspace_e)
@@ -73,14 +79,10 @@ void install_melvix()
 
     // Copy the global font binary
     info("Copying font... ");
+    serial_printf("Copying font... ");
     char *font_p[] = {"FONT.BIN"};
     struct iso9660_entity *font_e = ISO9660_get(font_p, 1);
-    if (!font_e)
-        panic("Font not found!");
-    uint8_t *font = kmalloc(font_e->length + 2048);
-    ATAPI_granular_read(1 + (font_e->length / 2048), font_e->lba, font);
-    marfs_new_file(font_e->length, font, 0, 0, 0);
-    kfree(font);
+    marfs_new_file(font_e->length, (uint8_t *) font, 0, 0, 0);
     kfree(font_e);
 
     info("Installation successful!");

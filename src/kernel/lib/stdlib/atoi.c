@@ -16,7 +16,7 @@ int atoi(char *str)
 
     int ret = 0;
     for (; i < s_str; i++) {
-        ret += (str[i] - '0') * pow(10, (s_str - i) - 1);
+        ret += (str[i] - '0') * pow(10, (int) ((s_str - i) - 1));
     }
 
     if (negative) ret *= -1;

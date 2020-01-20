@@ -57,5 +57,5 @@ int is_transmit_empty()
 void serial_put(char ch)
 {
     while (is_transmit_empty() == 0);
-    outb(0x3f8, ch);
+    outb(0x3f8, (uint8_t) ch);
 }

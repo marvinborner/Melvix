@@ -1,16 +1,14 @@
 #include <kernel/fs/marfs/marfs.h>
-#include <kernel/paging/paging.h>
 #include <kernel/graphics/font.h>
-#include <kernel/lib/stdlib/liballoc.h>
 #include <kernel/fs/ata_pio.h>
 #include <kernel/fs/atapi_pio.h>
 #include <kernel/system.h>
 #include <kernel/fs/iso9660/iso9660.h>
+#include <kernel/memory/kheap.h>
 
 void font_install()
 {
-    font = (struct font *) paging_alloc_pages(25);; // High quality shit
-    paging_set_user((uint32_t) font, 25);
+    font = (struct font *) kmalloc(100000);; // High quality shit
 
     uint8_t boot_drive_id = (uint8_t) (*((uint8_t *) 0x9000));
     if (boot_drive_id != 0xE0) {

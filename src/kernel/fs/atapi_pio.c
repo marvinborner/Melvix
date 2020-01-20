@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <kernel/fs/atapi_pio.h>
 #include <kernel/system.h>
-#include <kernel/paging/paging.h>
 
 void ATAPI_read(uint16_t nblocks, uint32_t lba)
 {

@@ -3,6 +3,7 @@
 #include <kernel/lib/string.h>
 #include <kernel/lib/stdlib.h>
 #include <kernel/io/io.h>
+#include <kernel/memory/kheap.h>
 
 void _write_serial(const char *data)
 {

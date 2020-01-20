@@ -3,8 +3,7 @@
 #include <kernel/graphics/vesa.h>
 #include <kernel/lib/string.h>
 #include <kernel/lib/stdlib.h>
-#include <kernel/paging/paging.h>
-#include <kernel/interrupts/interrupts.h>
+#include <kernel/memory/paging.h>
 #include <kernel/lib/stdio.h>
 #include <stdarg.h>
 

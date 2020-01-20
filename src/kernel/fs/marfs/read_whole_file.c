@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <kernel/fs/ata_pio.h>
-#include <kernel/lib/stdlib.h>
 #include <kernel/fs/marfs/marfs.h>
+#include <kernel/memory/kheap.h>
 
 static uint8_t last_max_level = 0;
 
@@ -19,7 +19,7 @@ uint32_t marfs_get_recursive(uint8_t level, uint32_t i, uint32_t rec_lba)
     kfree(contents);
 
     uint32_t toRet;
-    if (level > 1) toRet = marfs_get_recursive(level - 1, i, next_rec_lba);
+    if (level > 1) toRet = marfs_get_recursive((uint8_t) (level - 1), i, next_rec_lba);
     else toRet = next_rec_lba;
     last_max_level = 0;
     return toRet;
@@ -48,7 +48,7 @@ void marfs_read_whole_file(uint32_t lba_inode, uint8_t *buffer)
     for (uint32_t i = 0; i < size_in_blocks; i++) {
         uint32_t this_block = marfs_get_block(inode, i);
         uint8_t *this_block_contents = ata_read28(interface, this_block);
-        uint16_t upper_bound = (i != size_in_blocks - 1) ? 512 : (inode->size % 512);
+        uint16_t upper_bound = (uint16_t) ((i != size_in_blocks - 1) ? 512 : (inode->size % 512));
         for (uint16_t j = 0; j < upper_bound; j++) buffer[(i * 512) + j] = this_block_contents[j];
         kfree(this_block_contents);
     }
@@ -63,7 +63,7 @@ uint8_t *marfs_allocate_and_read_whole_file(uint32_t lba_inode)
     uint64_t size = inode->size;
     kfree(inode);
 
-    uint8_t *buffer = kmalloc(size);
+    uint8_t *buffer = (uint8_t *) kmalloc((uint32_t) size);
     marfs_read_whole_file(lba_inode, buffer);
     return buffer;
 }
