@@ -7,7 +7,7 @@
 #include <kernel/memory/kheap.h>
 #include <kernel/memory/paging.h>
 
-extern page_directory_t *kernel_directory;
+extern page_directory_t *current_directory;
 
 void switch_to_vga()
 {
@@ -184,9 +184,9 @@ void set_optimal_resolution()
     uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
     cursor_buffer = (unsigned char *) kmalloc(fb_size);
     for (uint32_t z = 0; z < fb_size; z += 0x1000) {
-        alloc_frame(get_page((uint32_t) fb + z, 1, kernel_directory), 0, 1);
-        alloc_frame(get_page((uint32_t) cursor_buffer + z, 1, kernel_directory), 0, 1);
+        paging_alloc_frame(paging_get_page((uint32_t) fb + z, 1, current_directory), 0, 1);
     }
+    serial_printf("0x%x", fb);
 
     if (vbe_height > 1440) vesa_set_font(32);
     else if (vbe_height > 720) vesa_set_font(24);

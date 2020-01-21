@@ -3,6 +3,7 @@
 #include <kernel/system.h>
 #include <kernel/lib/string.h>
 #include <kernel/lib/stdio.h>
+#include <kernel/graphics/vesa.h>
 
 // Install ISRs in IDT
 void isrs_install()
@@ -119,6 +120,11 @@ void fault_handler(struct regs *r)
         // halt_loop(); // Idk loop?
         char *message = (char *) exception_messages[r->int_no];
         strcat(message, " Exception");
-        panic(message);
+
+        // Show message if there wasn't an error in video memory
+        if (faulting_address != (uint32_t) fb)
+            panic(message);
+        else
+            halt_loop();
     }
 }

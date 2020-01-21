@@ -26,22 +26,20 @@ typedef struct page_directory {
 
 int paging_enabled;
 
-void alloc_frame(page_t *page, int is_kernel, int is_writeable);
+void paging_alloc_frame(page_t *page, int is_kernel, int is_writeable);
 
-void free_frame(page_t *page);
+void paging_free_frame(page_t *page);
 
 void paging_install();
 
-void switch_page_directory(page_directory_t *new);
+void paging_switch_directory(page_directory_t *dir);
 
 void paging_enable();
 
 void paging_disable();
 
-page_t *get_page(uint32_t address, int make, page_directory_t *dir);
+page_t *paging_get_page(uint32_t address, int make, page_directory_t *dir);
 
-void page_fault(struct regs *regs);
-
-page_directory_t *clone_directory(page_directory_t *src);
+page_directory_t *paging_clone_directory(page_directory_t *src);
 
 #endif

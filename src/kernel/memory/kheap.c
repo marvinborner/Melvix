@@ -12,7 +12,7 @@ uint32_t kmalloc_int(uint32_t sz, int align, uint32_t *phys)
     if (kheap != 0) {
         void *addr = alloc(sz, (uint8_t) align, kheap);
         if (phys != 0) {
-            page_t *page = get_page((uint32_t) addr, 0, kernel_directory);
+            page_t *page = paging_get_page((uint32_t) addr, 0, kernel_directory);
             *phys = page->frame * 0x1000 + ((uint32_t) addr & 0xFFF);
         }
         return (uint32_t) addr;
@@ -70,8 +70,8 @@ static void expand(uint32_t new_size, heap_t *heap)
 
     uint32_t i = old_size;
     while (i < new_size) {
-        alloc_frame(get_page(heap->start_address + i, 1, kernel_directory),
-                    (heap->supervisor) ? 1 : 0, (heap->readonly) ? 0 : 1);
+        paging_alloc_frame(paging_get_page(heap->start_address + i, 1, kernel_directory),
+                           (heap->supervisor) ? 1 : 0, (heap->readonly) ? 0 : 1);
         i += 0x1000;
     }
     heap->end_address = heap->start_address + new_size;
@@ -92,7 +92,7 @@ static uint32_t contract(uint32_t new_size, heap_t *heap)
     uint32_t old_size = heap->end_address - heap->start_address;
     uint32_t i = old_size - 0x1000;
     while (new_size < i) {
-        free_frame(get_page(heap->start_address + i, 0, kernel_directory));
+        paging_free_frame(paging_get_page(heap->start_address + i, 0, kernel_directory));
         i -= 0x1000;
     }
 
