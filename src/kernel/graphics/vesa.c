@@ -183,8 +183,15 @@ void set_optimal_resolution()
 
     uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
     cursor_buffer = (unsigned char *) kmalloc(fb_size);
-    for (uint32_t z = 0; z < fb_size; z += 0x1000) {
-        paging_alloc_frame(paging_get_page((uint32_t) fb + z, 1, current_directory), 0, 1);
+    uint32_t j = (uint32_t) fb;
+    while ((unsigned char *) j < fb + (vbe_width * vbe_height * 4)) {
+        paging_set_frame(j);
+        page_t *page = paging_get_page(j, 1, current_directory);
+        page->present = 1;
+        page->rw = 1;
+        page->user = 1;
+        page->frame = j / 0x1000;
+        j += 0x1000;
     }
     serial_printf("0x%x", fb);
 

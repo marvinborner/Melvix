@@ -26,6 +26,8 @@ typedef struct page_directory {
 
 int paging_enabled;
 
+void paging_set_frame(uint32_t frame_addr);
+
 void paging_alloc_frame(page_t *page, int is_kernel, int is_writeable);
 
 void paging_free_frame(page_t *page);

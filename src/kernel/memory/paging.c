@@ -20,7 +20,7 @@ extern void copy_page_physical();
 #define INDEX_FROM_BIT(a) (a/(8*4))
 #define OFFSET_FROM_BIT(a) (a%(8*4))
 
-static void paging_set_frame(uint32_t frame_addr)
+void paging_set_frame(uint32_t frame_addr)
 {
     uint32_t frame = frame_addr / 0x1000;
     uint32_t idx = INDEX_FROM_BIT(frame);
@@ -28,7 +28,7 @@ static void paging_set_frame(uint32_t frame_addr)
     frames[idx] |= (0x1 << off);
 }
 
-static void paging_clear_frame(uint32_t frame_addr)
+void paging_clear_frame(uint32_t frame_addr)
 {
     uint32_t frame = frame_addr / 0x1000;
     uint32_t idx = INDEX_FROM_BIT(frame);
@@ -36,7 +36,7 @@ static void paging_clear_frame(uint32_t frame_addr)
     frames[idx] &= ~(0x1 << off);
 }
 
-static uint32_t paging_first_frame()
+uint32_t paging_first_frame()
 {
     uint32_t i, j;
     for (i = 0; i < INDEX_FROM_BIT(nframes); i++) {
