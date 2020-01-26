@@ -1,12 +1,12 @@
 #include <stdint.h>
 #include <kernel/lib/string.h>
-#include <kernel/lib/stdlib.h>
+#include <kernel/memory/kheap.h>
 
 static const char HTOA_TABLE[] = "0123456789ABCDEF";
 
 char *htoa(uint32_t n)
 {
-    char *ret = kmalloc(10);
+    char *ret = (char *) kmalloc(10);
 
     int i = 0;
     while (n) {

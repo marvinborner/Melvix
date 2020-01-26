@@ -15,16 +15,11 @@ section .text
     global _start
     extern kernel_main
     _start:
-        mov esp, STACK_TOP
-        push ebx
-        push eax
+        push esp
         cli
         call kernel_main
         cli
-
-    hlt_L:
-        hlt
-        jmp hlt_L
+        jmp $
 
     global jump_userspace
     jump_userspace:

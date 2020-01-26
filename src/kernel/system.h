@@ -7,6 +7,11 @@
 extern void ASM_KERNEL_END();
 
 /**
+ * The initial stack pointer
+ */
+uint32_t initial_esp;
+
+/**
  * Initialize the basic features of the OS
  */
 void init();

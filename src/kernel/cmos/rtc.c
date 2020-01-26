@@ -16,7 +16,7 @@ int get_update_in_progress_flag()
 
 unsigned char get_rtc_register(int reg)
 {
-    outb(0x70, reg);
+    outb(0x70, (uint8_t) reg);
     return inb(0x71);
 }
 
@@ -48,8 +48,8 @@ void read_rtc()
         last_hour = hour;
         last_day = day;
         last_month = month;
-        last_year = year;
-        last_century = century;
+        last_year = (unsigned char) year;
+        last_century = (unsigned char) century;
 
         while (get_update_in_progress_flag());
         second = get_rtc_register(0x00);
@@ -66,11 +66,11 @@ void read_rtc()
     registerB = get_rtc_register(0x0B);
 
     if (!(registerB & 0x04)) {
-        second = (second & 0x0F) + ((second / 16) * 10);
-        minute = (minute & 0x0F) + ((minute / 16) * 10);
-        hour = ((hour & 0x0F) + (((hour & 0x70) / 16) * 10)) | (hour & 0x80);
-        day = (day & 0x0F) + ((day / 16) * 10);
-        month = (month & 0x0F) + ((month / 16) * 10);
+        second = (unsigned char) ((second & 0x0F) + ((second / 16) * 10));
+        minute = (unsigned char) ((minute & 0x0F) + ((minute / 16) * 10));
+        hour = (unsigned char) (((hour & 0x0F) + (((hour & 0x70) / 16) * 10)) | (hour & 0x80));
+        day = (unsigned char) ((day & 0x0F) + ((day / 16) * 10));
+        month = (unsigned char) ((month & 0x0F) + ((month / 16) * 10));
         year = (year & 0x0F) + ((year / 16) * 10);
         // century = (century & 0x0F) + ((century / 16) * 10);
     }
@@ -79,7 +79,7 @@ void read_rtc()
 
     // Convert to 24h if necessary
     if (!(registerB & 0x02) && (hour & 0x80)) {
-        hour = ((hour & 0x7F) + 12) % 24;
+        hour = (unsigned char) (((hour & 0x7F) + 12) % 24);
     }
 }
 

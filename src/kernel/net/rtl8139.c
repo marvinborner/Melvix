@@ -2,8 +2,8 @@
 #include <kernel/pci/pci.h>
 #include <kernel/system.h>
 #include <kernel/interrupts/interrupts.h>
-#include <kernel/lib/stdlib/liballoc.h>
 #include <kernel/lib/stdio.h>
+#include <kernel/memory/kheap.h>
 
 int rtl_irq = 0;
 uint8_t mac[6];
@@ -21,12 +21,12 @@ void find_rtl(uint32_t device, uint16_t vendor_id, uint16_t device_id, void *ext
 void rtl8139_irq_handler(struct regs *r)
 {
     serial_printf("RTL INT!");
-    uint16_t status = inw(rtl_iobase + 0x3E);
+    uint16_t status = inw((uint16_t) (rtl_iobase + 0x3E));
     if (!status) return;
-    outw(rtl_iobase + 0x3E, status);
+    outw((uint16_t) (rtl_iobase + 0x3E), status);
 
     if (status & 0x01 || status & 0x02) {
-        while ((inw(rtl_iobase + 0x37) & 0x01) == 0) {
+        while ((inw((uint16_t) (rtl_iobase + 0x37)) & 0x01) == 0) {
             serial_printf("RECEIVE");
             // RECEIVE
         }
@@ -36,7 +36,7 @@ void rtl8139_irq_handler(struct regs *r)
 int rtl8139_init(void)
 {
     if (rtl_device_pci) {
-        uint16_t command_reg = pci_read_field(rtl_device_pci, PCI_COMMAND, 4);
+        uint16_t command_reg = (uint16_t) pci_read_field(rtl_device_pci, PCI_COMMAND, 4);
 
         if (command_reg & (1 << 2)) {
         } else {
@@ -59,28 +59,28 @@ int rtl8139_init(void)
 
         // Get mac address
         for (int i = 0; i < 6; ++i)
-            mac[i] = inb(rtl_iobase + 0x00 + i);
+            mac[i] = inb((uint16_t) (rtl_iobase + 0x00 + i));
         debug("Mac address: %2x:%2x:%2x:%2x:%2x:%2x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
         // Activate (turn on)
-        outb(rtl_iobase + 0x52, 0x0);
+        outb((uint16_t) (rtl_iobase + 0x52), 0x0);
 
         // Reset
-        outb(rtl_iobase + 0x37, 0x10);
-        while ((inb(rtl_iobase + 0x37) & 0x10) != 0) {}
+        outb((uint16_t) (rtl_iobase + 0x37), 0x10);
+        while ((inb((uint16_t) (rtl_iobase + 0x37)) & 0x10) != 0) {}
 
         // Set receive buffer
-        rtl_rx_buffer = kmalloc(8192 + 16);
-        outl(rtl_iobase + 0x30, (uintptr_t) rtl_rx_buffer);
+        rtl_rx_buffer = (uint8_t *) kmalloc(8192 + 16);
+        outl((uint16_t) (rtl_iobase + 0x30), (uintptr_t) rtl_rx_buffer);
 
         // Enable ISR
-        outw(rtl_iobase + 0x3C, 0x0005);
+        outw((uint16_t) (rtl_iobase + 0x3C), 0x0005);
 
         // Accept packets
-        outl(rtl_iobase + 0x44, 0xf | (1 << 7));
+        outl((uint16_t) (rtl_iobase + 0x44), 0xf | (1 << 7));
 
         // Enable receive and transmitter
-        outb(rtl_iobase + 0x37, 0x0C);
+        outb((uint16_t) (rtl_iobase + 0x37), 0x0C);
     } else {
         return -1;
     }

@@ -2,7 +2,7 @@
 #include <kernel/gdt/gdt.h>
 #include <kernel/system.h>
 #include <kernel/lib/lib.h>
-#include <kernel/lib/stdlib.h>
+#include <kernel/memory/kheap.h>
 
 struct gdt_entry {
     unsigned short limit_low;
@@ -58,13 +58,13 @@ extern void gdt_flush();
 void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
 {
     // Set descriptor base address
-    gdt[num].base_low = (base & 0xFFFF);
-    gdt[num].base_middle = (base >> 16) & 0xFF;
-    gdt[num].base_high = (base >> 24) & 0xFF;
+    gdt[num].base_low = (unsigned short) (base & 0xFFFF);
+    gdt[num].base_middle = (unsigned char) ((base >> 16) & 0xFF);
+    gdt[num].base_high = (unsigned char) ((base >> 24) & 0xFF);
 
     // Set descriptor limits
-    gdt[num].limit_low = (limit & 0xFFFF);
-    gdt[num].granularity = ((limit >> 16) & 0x0F);
+    gdt[num].limit_low = (unsigned short) (limit & 0xFFFF);
+    gdt[num].granularity = (unsigned char) ((limit >> 16) & 0x0F);
 
     // Set granularity and access flags
     gdt[num].granularity |= (gran & 0xF0);
@@ -120,7 +120,7 @@ void tss_write(int32_t num, uint16_t ss0, uint32_t esp0)
 
 void tss_flush(void)
 {
-    tss_entry.esp0 = 4096 + (uint32_t) umalloc(4096);
+    tss_entry.esp0 = 4096 + (uint32_t) kmalloc(4096);
     asm volatile ("ltr %%ax": : "a" (0x2B));
 }
 

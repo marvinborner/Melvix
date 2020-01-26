@@ -69,19 +69,19 @@ unsigned int *acpi_get_rsd_ptr()
 
 int acpi_enable()
 {
-    if ((inw((unsigned int) PM1a_CNT) & SCI_EN) == 0) {
+    if ((inw((uint16_t) (unsigned int) PM1a_CNT) & SCI_EN) == 0) {
         if (SMI_CMD != 0 && ACPI_ENABLE != 0) {
-            outb((unsigned int) SMI_CMD, ACPI_ENABLE); // Enable ACPI
+            outb((uint16_t) (unsigned int) SMI_CMD, (uint8_t) ACPI_ENABLE); // Enable ACPI
             // Try 3s until ACPI is enabled
             int i;
             for (i = 0; i < 300; i++) {
-                if ((inw((unsigned int) PM1a_CNT) & SCI_EN) == 1)
+                if ((inw((uint16_t) (unsigned int) PM1a_CNT) & SCI_EN) == 1)
                     break;
                 timer_wait(1);
             }
             if (PM1b_CNT != 0)
                 for (; i < 300; i++) {
-                    if ((inw((unsigned int) PM1b_CNT) & SCI_EN) == 1)
+                    if ((inw((uint16_t) (unsigned int) PM1b_CNT) & SCI_EN) == 1)
                         break;
                     timer_wait(1);
                 }
@@ -117,7 +117,7 @@ int acpi_install()
                 fadt = (struct FADT *) *ptr; // TODO: Allocate ACPI tables after paging (page fault)!
                 if (memcmp((unsigned int *) fadt->DSDT, "DSDT", 4) == 0) {
                     char *S5Addr = (char *) fadt->DSDT + 36;
-                    int dsdt_length = *(fadt->DSDT + 1) - 36;
+                    int dsdt_length = (int) (*(fadt->DSDT + 1) - 36);
                     while (0 < dsdt_length--) {
                         if (memcmp(S5Addr, "_S5_", 4) == 0)
                             break;
@@ -182,9 +182,9 @@ void acpi_poweroff()
     }
 
     // Send shutdown command
-    outw((unsigned int) PM1a_CNT, SLP_TYPa | SLP_EN);
+    outw((uint16_t) (unsigned int) PM1a_CNT, (uint16_t) (SLP_TYPa | SLP_EN));
     if (PM1b_CNT != 0)
-        outw((unsigned int) PM1b_CNT, SLP_TYPb | SLP_EN);
+        outw((uint16_t) (unsigned int) PM1b_CNT, (uint16_t) (SLP_TYPb | SLP_EN));
     else {
         outw(0xB004, 0x2000); // Bochs
         outw(0x604, 0x2000); // QEMU

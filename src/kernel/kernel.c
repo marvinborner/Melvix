@@ -3,23 +3,21 @@
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/io/io.h>
 #include <kernel/timer/timer.h>
-#include <kernel/paging/paging.h>
+#include <kernel/memory/paging.h>
 #include <kernel/input/input.h>
 #include <kernel/acpi/acpi.h>
 #include <kernel/smbios/smbios.h>
 #include <kernel/lib/lib.h>
 #include <kernel/syscall/syscall.h>
-#include <kernel/fs/marfs/marfs.h>
-#include <kernel/fs/iso9660/iso9660.h>
-#include <kernel/fs/atapi_pio.h>
-#include <kernel/lib/stdlib/liballoc.h>
 #include <kernel/pci/pci.h>
 #include <kernel/net/network.h>
+#include <kernel/lib/stdio.h>
+#include <kernel/tasks/task.h>
+#include <kernel/fs/load.h>
 
-extern void jump_userspace();
-
-void kernel_main()
+void kernel_main(uint32_t initial_stack)
 {
+    initial_esp = initial_stack;
     vga_log("Installing basic features of Melvix...");
 
     // Install features
@@ -27,12 +25,13 @@ void kernel_main()
     gdt_install();
     init_serial();
     acpi_install();
-    paging_install();
     idt_install();
     isrs_install();
     irq_install();
-    font_install();
+    paging_install();
+    load_binaries();
     set_optimal_resolution();
+    serial_printf("%d", memory_get_all());
 
     // Install drivers
     asm ("cli");
@@ -49,31 +48,17 @@ void kernel_main()
     // Print total memory
     info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
 
-    uint8_t boot_drive_id = (uint8_t) (*((uint8_t *) 0x9000));
-
 #ifdef INSTALL_MELVIX
 #include <kernel/fs/install.h>
-    if (boot_drive_id == 0xE0)
+    serial_printf("Install flag given!");
+    if ((*((uint8_t *) 0x9000)) == 0xE0)
         install_melvix();
 #endif
 
-    info("Switching to user mode...");
+    tasking_install();
     syscalls_install();
     tss_flush();
-    uint32_t userspace = (uint32_t) umalloc(8096);
-    paging_switch_directory(1);
-    if (boot_drive_id == 0xE0) {
-        char *user_p[] = {"USER.BIN"};
-        struct iso9660_entity *user_e = ISO9660_get(user_p, 1);
-        if (!user_e) panic("Userspace binary not found!");
-        ATAPI_granular_read(1 + (user_e->length / 2048), user_e->lba, (uint8_t *) (userspace + 4096));
-        kfree(user_e);
-        jump_userspace(userspace + 4096, userspace + 4096);
-    } else {
-        marfs_read_whole_file(4, (uint8_t *) (userspace + 4096));
-        paging_switch_directory(1);
-        jump_userspace(userspace + 4096, userspace + 4096);
-    }
+    switch_to_usermode(userspace);
 
     panic("This should NOT happen!");
 

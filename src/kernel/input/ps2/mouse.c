@@ -85,7 +85,7 @@ void mouse_install()
     mouse_wait(1);
     outb(0x64, 0x20);
     mouse_wait(0);
-    status = (inb(0x60) | 3);
+    status = (unsigned char) (inb(0x60) | 3);
     mouse_wait(1);
     outb(0x64, 0x60);
     mouse_wait(1);
@@ -109,7 +109,7 @@ void mouse_install()
     mouse_read();
     mouse_write(0xF2);
     mouse_read();
-    status = mouse_read();
+    status = (unsigned char) mouse_read();
     if (status == 3) serial_printf("Scrollwheel support!");
 
     // Activate 4th and 5th mouse buttons
@@ -130,7 +130,7 @@ void mouse_install()
     mouse_read();
     mouse_write(0xF2);
     mouse_read();
-    status = mouse_read();
+    status = (unsigned char) mouse_read();
     if (status == 4) serial_printf("4th and 5th mouse button support!");
 
     /* TODO: Fix mouse laggyness

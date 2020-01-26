@@ -16,7 +16,7 @@ int htoi(char *str)
         else if (c >= 'A' && c <= 'F')
             aux = (c - 'A') + 10;
 
-        ret += aux * pow(16, (s_str - i) - 1);
+        ret += aux * pow(16, (int) ((s_str - i) - 1));
     }
 
     return ret;

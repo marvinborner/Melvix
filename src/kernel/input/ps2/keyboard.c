@@ -2,8 +2,8 @@
 #include <kernel/io/io.h>
 #include <kernel/graphics/vesa.h>
 #include <kernel/input/input.h>
-#include <kernel/lib/stdlib/liballoc.h>
 #include <kernel/lib/string.h>
+#include <kernel/memory/kheap.h>
 
 int shift_pressed;
 int control_pressed;
@@ -126,8 +126,8 @@ void keyboard_rate()
 
 void keyboard_clear_buffer()
 {
-    ufree(keyboard_buffer);
-    keyboard_buffer = (char *) umalloc(4096); // 4KiB
+    kfree(keyboard_buffer);
+    keyboard_buffer = (char *) kmalloc(4096); // 4KiB
 }
 
 // Installs the keyboard handler into IRQ1

@@ -1,6 +1,5 @@
 #include <stddef.h>
 #include <stdint.h>
-#include <kernel/paging/paging.h>
 
 void *memcpy(void *dest, const void *src, size_t count)
 {
@@ -53,13 +52,13 @@ void memory_init()
             max_length = i->length;
         }
     }
-    total_memory = max_base + max_length;
+    total_memory = (uint32_t) (max_base + max_length);
     total_memory /= 1024;
 }
 
 uint32_t memory_get_free()
 {
-    return total_memory - paging_get_used_pages() * 4;
+    return total_memory; // - paging_get_used_pages() * 4;
 }
 
 uint32_t memory_get_all()

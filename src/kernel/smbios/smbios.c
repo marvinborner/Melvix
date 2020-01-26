@@ -1,8 +1,6 @@
-#include <stdint.h>
 #include <kernel/graphics/vesa.h>
 #include <stddef.h>
 #include <kernel/smbios/smbios.h>
-#include <kernel/lib/stdio.h>
 
 struct smbios_entry *smbios = 0;
 

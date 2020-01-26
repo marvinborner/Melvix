@@ -5,9 +5,9 @@
  */
 DEFN_SYSCALL0(halt, 0);
 
-DEFN_SYSCALL1(write, 1, char *);
+DEFN_SYSCALL1(write, 1, const char *);
 
-DEFN_SYSCALL1(read, 2, char *);
+DEFN_SYSCALL1(read, 2, const char *);
 
 DEFN_SYSCALL1(writec, 3, char);
 
