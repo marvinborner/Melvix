@@ -1,6 +1,7 @@
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/io/io.h>
 #include <kernel/system.h>
+#include <kernel/tasks/task.h>
 
 unsigned long timer_ticks = 0;
 
@@ -16,6 +17,7 @@ void timer_phase(int hz)
 void timer_handler(struct regs *r)
 {
     timer_ticks++;
+    // switch_task();
 }
 
 // "Delay" function with CPU sleep

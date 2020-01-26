@@ -6,8 +6,6 @@
 
 typedef uint32_t (*syscall_func)(unsigned int, ...);
 
-extern void jump_userspace();
-
 uint32_t (*syscalls[])() = {
         [0] = (uint32_t (*)()) halt_loop, // DEBUG!
         [1] = sys_write,

@@ -1,5 +1,5 @@
 #include <kernel/graphics/vesa.h>
-#include <kernel/graphics/font.h>
+#include <kernel/fs/load.h>
 #include <kernel/lib/lib.h>
 #include <kernel/system.h>
 #include <kernel/lib/stdlib.h>

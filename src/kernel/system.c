@@ -7,6 +7,8 @@
 #include <kernel/lib/stdio.h>
 #include <stdarg.h>
 
+uint32_t initial_esp;
+
 char *vga_buffer = (char *) 0x500;
 
 void vga_clear()

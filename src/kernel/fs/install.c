@@ -7,7 +7,7 @@
 #include <kernel/lib/stdio.h>
 #include <kernel/timer/timer.h>
 #include <kernel/memory/kheap.h>
-#include <kernel/graphics/font.h>
+#include <kernel/fs/load.h>
 
 void install_melvix()
 {
