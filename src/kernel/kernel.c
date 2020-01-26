@@ -29,9 +29,9 @@ void kernel_main(uint32_t initial_stack)
     isrs_install();
     irq_install();
     paging_install();
+
     load_binaries();
     set_optimal_resolution();
-    serial_printf("%d", memory_get_all());
 
     // Install drivers
     asm ("cli");

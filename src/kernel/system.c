@@ -31,7 +31,7 @@ void vga_log(char *msg)
     strcpy(string, "[");
     strcat(string, itoa((int) get_time()));
     strcat(string, "] ");
-    strcat(string, "INFO: ");
+    strcat(string, "INF: ");
     strcat(string, msg);
     strcat(string, "\n");
     strcat(vga_buffer, string);
@@ -47,7 +47,7 @@ void debug(const char *fmt, ...)
 {
     vesa_set_color(vesa_dark_white);
     kernel_time();
-    printf("DEBG: ");
+    printf("DBG: ");
 
     va_list args;
     va_start(args, fmt);
@@ -62,7 +62,7 @@ void info(const char *fmt, ...)
 {
     vesa_set_color(vesa_blue);
     kernel_time();
-    printf("INFO: ");
+    printf("INF: ");
 
     va_list args;
     va_start(args, fmt);
@@ -77,7 +77,7 @@ void warn(const char *fmt, ...)
 {
     vesa_set_color(vesa_dark_yellow);
     kernel_time();
-    printf("WARN: ");
+    printf("WRN: ");
 
     va_list args;
     va_start(args, fmt);
@@ -88,13 +88,27 @@ void warn(const char *fmt, ...)
     writec('\n');
 }
 
+const char *random_message[10] = {
+        "Uh... Did I do that?",
+        "Layer 8 problem!",
+        "Oops.",
+        "DON'T PANIC!",
+        "Must be a typo.",
+        "I'm tired of this ;(",
+        "PC LOAD LETTER",
+        "Have you tried turning it off and on again?",
+        "Call 01189998819991197253 pls",
+        "Please fix me!"
+};
+
 void panic(char *msg)
 {
     asm ("cli");
     vesa_set_color(vesa_dark_red);
     kernel_time();
-    serial_printf("PANIC: %s - System halted!", msg);
-    printf("PANIC: %s - System halted!\n", msg);
+    serial_printf("PNC: %s - System halted!", msg);
+    printf("PNC: %s - System halted!\n\n", msg);
+    printf("> %s", random_message[get_time() % 10]);
     halt_loop();
 }
 
