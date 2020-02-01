@@ -64,7 +64,7 @@ void isr_uninstall_handler(size_t isr)
 }
 
 // Error exception messages
-const char *exception_messages[] = {
+const char *exception_messages[32] = {
         "Division By Zero",
         "Debug",
         "Non Maskable Interrupt",
@@ -117,14 +117,18 @@ void fault_handler(struct regs *r)
                 r->eip, r->eax, r->ebx, r->ecx, r->edx, r->esp, faulting_address, r->eflags, r->err_code, r->int_no,
                 exception_messages[r->int_no]
         );
-        // halt_loop(); // Idk loop?
-        char *message = (char *) exception_messages[r->int_no];
-        strcat(message, " Exception");
 
-        // Show message if there wasn't an error in video memory
-        if (faulting_address != (uint32_t) fb)
-            panic(message);
-        else
-            halt_loop();
+        if (r->int_no <= 32) {
+            char *message = (char *) exception_messages[r->int_no];
+            strcat(message, " Exception");
+
+            // Show message if there wasn't an error in video memory
+            if (faulting_address != (uint32_t) fb)
+                panic(message);
+            else
+                halt_loop();
+        } else {
+            panic("Unknown Exception");
+        }
     }
 }
