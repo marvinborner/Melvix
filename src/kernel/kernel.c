@@ -6,12 +6,10 @@
 #include <kernel/memory/paging.h>
 #include <kernel/input/input.h>
 #include <kernel/acpi/acpi.h>
-#include <kernel/smbios/smbios.h>
 #include <kernel/lib/lib.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/pci/pci.h>
 #include <kernel/net/network.h>
-#include <kernel/lib/stdio.h>
 #include <kernel/tasks/task.h>
 #include <kernel/fs/load.h>
 
@@ -42,8 +40,10 @@ void kernel_main(uint32_t initial_stack)
     network_install();
     asm ("sti");
 
+    tasking_install();
+
     // Get hardware information
-    get_smbios();
+    // get_smbios();
 
     // Print total memory
     info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
@@ -55,10 +55,8 @@ void kernel_main(uint32_t initial_stack)
         install_melvix();
 #endif
 
-    tasking_install();
     syscalls_install();
-    tss_flush();
-    switch_to_usermode(userspace);
+    exec(userspace);
 
     panic("This should NOT happen!");
 

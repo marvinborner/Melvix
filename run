@@ -101,7 +101,6 @@ make_build() {
 
   # Userspace
   # TODO: Find out why userspace optimizations (-Os) cause fatal errors
-  nasm -f elf ./src/userspace/start.asm -o ./build/userspace/start.o || exit
   find ./src/userspace/ -name \*.c >./build/tmp
   while read -r line; do
     stripped=$(echo "${line}" | sed -r 's/\//_/g')
@@ -110,7 +109,7 @@ make_build() {
     compile_with_flags -O2 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}"
   done <./build/tmp
   rm ./build/tmp
-  compile_with_flags -O2 ./build/userspace/*.o -T ./src/userspace/linker.ld -I ./src/userspace -o ./build/user.bin
+  compile_with_flags -Wl,--oformat=binary -emain -O2 ./build/userspace/*.o -I ./src/userspace -o ./build/user.bin
 
   # Create ISO
   mkdir -p ./iso/boot/

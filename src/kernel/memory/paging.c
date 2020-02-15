@@ -2,7 +2,6 @@
 #include <kernel/memory/kheap.h>
 #include <kernel/lib/lib.h>
 #include <kernel/system.h>
-#include <kernel/lib/stdio.h>
 
 int paging_enabled = 0;
 
@@ -89,7 +88,7 @@ void paging_install()
 
     kernel_directory = (page_directory_t *) kmalloc_a(sizeof(page_directory_t));
     memset(kernel_directory, 0, sizeof(page_directory_t));
-    kernel_directory->physicalAddr = (uint32_t) kernel_directory->tablesPhysical;
+    kernel_directory->physical_address = (uint32_t) kernel_directory->tables_physical;
 
     for (uint32_t i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
         paging_get_page((uint32_t) i, 1, kernel_directory);
@@ -115,7 +114,7 @@ void paging_install()
 void paging_switch_directory(page_directory_t *dir)
 {
     current_directory = dir;
-    asm volatile("mov %0, %%cr3"::"r"(dir->physicalAddr));
+    asm volatile("mov %0, %%cr3"::"r"(dir->physical_address));
     uint32_t cr0;
     asm volatile("mov %%cr0, %0": "=r"(cr0));
     cr0 |= 0x80000000; // Enable paging!
@@ -148,7 +147,7 @@ page_t *paging_get_page(uint32_t address, int make, page_directory_t *dir)
         uint32_t tmp;
         dir->tables[table_idx] = (page_table_t *) kmalloc_ap(sizeof(page_table_t), &tmp);
         memset(dir->tables[table_idx], 0, 0x1000);
-        dir->tablesPhysical[table_idx] = tmp | 0x7; // PRESENT, RW, US
+        dir->tables_physical[table_idx] = tmp | 0x7; // PRESENT, RW, US
         return &dir->tables[table_idx]->pages[address % 1024];
     } else {
         return 0;
@@ -183,9 +182,9 @@ page_directory_t *paging_clone_directory(page_directory_t *src)
     page_directory_t *dir = (page_directory_t *) kmalloc_ap(sizeof(page_directory_t), &phys);
     memset(dir, 0, sizeof(page_directory_t));
 
-    uint32_t offset = (uint32_t) dir->tablesPhysical - (uint32_t) dir;
+    uint32_t offset = (uint32_t) dir->tables_physical - (uint32_t) dir;
 
-    dir->physicalAddr = phys + offset;
+    dir->physical_address = phys + offset;
 
     for (int i = 0; i < 1024; i++) {
         if (!src->tables[i])
@@ -193,11 +192,11 @@ page_directory_t *paging_clone_directory(page_directory_t *src)
 
         if (kernel_directory->tables[i] == src->tables[i]) {
             dir->tables[i] = src->tables[i];
-            dir->tablesPhysical[i] = src->tablesPhysical[i];
+            dir->tables_physical[i] = src->tables_physical[i];
         } else {
             uint32_t phys;
             dir->tables[i] = paging_clone_table(src->tables[i], &phys);
-            dir->tablesPhysical[i] = phys | 0x07;
+            dir->tables_physical[i] = phys | 0x07;
         }
     }
     return dir;

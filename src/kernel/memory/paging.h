@@ -20,8 +20,8 @@ typedef struct page_table {
 
 typedef struct page_directory {
     page_table_t *tables[1024];
-    uint32_t tablesPhysical[1024];
-    uint32_t physicalAddr;
+    uint32_t tables_physical[1024];
+    uint32_t physical_address;
 } page_directory_t;
 
 int paging_enabled;

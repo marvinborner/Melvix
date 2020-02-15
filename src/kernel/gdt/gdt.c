@@ -97,6 +97,7 @@ void gdt_install()
 
     // Remove old GDT and install the new changes!
     gdt_flush();
+    tss_flush();
 
     vga_log("Installed Global Descriptor Table");
 }
@@ -114,13 +115,10 @@ void tss_write(int32_t num, uint16_t ss0, uint32_t esp0)
     tss_entry.esp0 = esp0;
     tss_entry.cs = 0x0b;
     tss_entry.ss = tss_entry.ds = tss_entry.es = tss_entry.fs = tss_entry.gs = 0x13;
-
-    tss_entry.iomap_base = sizeof(struct tss_entry_struct);
 }
 
-void tss_flush(void)
+void tss_flush()
 {
-    tss_entry.esp0 = 4096 + (uint32_t) kmalloc(4096);
     asm volatile ("ltr %%ax": : "a" (0x2B));
 }
 

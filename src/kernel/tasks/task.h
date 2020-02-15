@@ -25,6 +25,6 @@ void move_stack(void *new_stack_start, uint32_t size);
 
 int getpid();
 
-void switch_to_usermode(uint32_t);
+void exec(uint32_t binary);
 
 #endif

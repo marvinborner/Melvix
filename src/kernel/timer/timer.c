@@ -17,7 +17,7 @@ void timer_phase(int hz)
 void timer_handler(struct regs *r)
 {
     timer_ticks++;
-    // switch_task();
+    switch_task();
 }
 
 // "Delay" function with CPU sleep

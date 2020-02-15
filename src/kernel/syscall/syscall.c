@@ -28,7 +28,8 @@ void syscall_handler(struct regs *r)
     if (!location)
         return;
 
-    //serial_printf("[SYSCALL] %d (0x%x) 0x%x 0x%x 0x%x 0x%x 0x%x", r->eax, location, r->ebx, r->ecx, r->edx, r->esi, r->edi);
+    serial_printf("[SYSCALL] %d (0x%x) 0x%x 0x%x 0x%x 0x%x 0x%x", r->eax, location, r->ebx, r->ecx, r->edx, r->esi,
+                  r->edi);
 
     r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
 }

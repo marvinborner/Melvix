@@ -1,5 +1,4 @@
 #include <syscall.h>
-#include <mlibc/stdio.h>
 #include <mlibc/stdlib.h>
 
 int32_t starts_with(const char *a, const char *b)
@@ -9,18 +8,12 @@ int32_t starts_with(const char *a, const char *b)
     return length_main < length_pre ? 0 : memcmp(b, a, length_pre) == 0;
 }
 
-void user_main()
+void main()
 {
-    char text[] = "> Successfully switched to usermode!\n";
-    printf(text);
+    // As char[]:       0xC105BFD6
+    // As const char *: 0x8048B20
 
-    // TODO: PLEASE
-    printf("If this message shows up, I'll be happy.\n");
-
-    while (1) {
-        char *input = readline();
-        if (starts_with(input, "ls")) {
-            printf(text);
-        }
-    };
+    char test[] = "banane";
+    syscall_write(test);
+    syscall_halt();
 }

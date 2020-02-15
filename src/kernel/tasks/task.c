@@ -4,6 +4,7 @@
 #include <kernel/lib/lib.h>
 #include <kernel/gdt/gdt.h>
 #include <kernel/system.h>
+#include <kernel/syscall.h>
 
 volatile task_t *current_task;
 volatile task_t *ready_queue;
@@ -22,7 +23,8 @@ void tasking_install()
 
     current_task = ready_queue = (task_t *) kmalloc(sizeof(task_t));
     current_task->id = (int) next_pid++;
-    current_task->esp = current_task->ebp = 0;
+    current_task->esp = 0;
+    current_task->ebp = 0;
     current_task->eip = 0;
     current_task->page_directory = current_directory;
     current_task->next = 0;
@@ -98,7 +100,8 @@ void switch_task()
 
     set_kernel_stack(current_task->kernel_stack + KERNEL_STACK_SIZE);
 
-    perform_task_switch(eip, current_directory->physicalAddr, ebp, esp);
+    paging_switch_directory(current_directory);
+    perform_task_switch(eip, current_directory->physical_address, ebp, esp);
 }
 
 int fork()
@@ -143,7 +146,7 @@ int getpid()
     return current_task->id;
 }
 
-void switch_to_usermode(uint32_t binary)
+void exec(uint32_t binary)
 {
     set_kernel_stack(current_task->kernel_stack + KERNEL_STACK_SIZE);
 
@@ -163,6 +166,5 @@ void switch_to_usermode(uint32_t binary)
       pushl $0x1B; \
       push %0; \
       iret; \
-    1: \
       " : : "r" (binary));
 }
