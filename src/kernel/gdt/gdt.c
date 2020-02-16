@@ -2,7 +2,7 @@
 #include <kernel/gdt/gdt.h>
 #include <kernel/system.h>
 #include <kernel/lib/lib.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 
 struct gdt_entry {
     unsigned short limit_low;

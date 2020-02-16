@@ -4,11 +4,11 @@
 #include <kernel/fs/atapi_pio.h>
 #include <kernel/system.h>
 #include <kernel/fs/iso9660/iso9660.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 
 void load_binaries()
 {
-    userspace = kmalloc(10000);
+    userspace = (uint32_t) kmalloc(10000);
     font = (struct font *) kmalloc(100000);; // High quality shit
 
     uint8_t boot_drive_id = (uint8_t) (*((uint8_t *) 0x9000));

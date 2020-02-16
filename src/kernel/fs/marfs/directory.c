@@ -2,7 +2,7 @@
 #include <kernel/fs/ata_pio.h>
 #include <kernel/lib/stdlib.h>
 #include <kernel/fs/marfs/marfs.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 
 uint32_t marfs_new_dir(uint32_t uid)
 {

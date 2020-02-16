@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <kernel/fs/ata_pio.h>
 #include <kernel/fs/marfs/marfs.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 
 uint8_t marfs_init(struct ata_interface *_interface)
 {

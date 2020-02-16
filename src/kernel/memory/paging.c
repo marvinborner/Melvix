@@ -1,130 +1,47 @@
+#include <stdint.h>
 #include <kernel/memory/paging.h>
-#include <kernel/memory/kheap.h>
-#include <kernel/lib/lib.h>
 #include <kernel/system.h>
+#include <kernel/lib/lib.h>
 
 int paging_enabled = 0;
 
-page_directory_t *kernel_directory = 0;
-page_directory_t *current_directory = 0;
+uint32_t *current_page_directory;
+uint32_t (*current_page_tables)[1024];
+uint32_t kernel_page_directory[1024] __attribute__((aligned(4096)));
+uint32_t kernel_page_tables[1024][1024] __attribute__((aligned(4096)));
+uint32_t user_page_directory[1024] __attribute__((aligned(4096)));
+uint32_t user_page_tables[1024][1024] __attribute__((aligned(4096)));
 
-uint32_t *frames;
-uint32_t nframes;
-
-extern uint32_t placement_address;
-extern heap_t *kheap;
-
-extern void copy_page_physical();
-
-#define INDEX_FROM_BIT(a) (a/(8*4))
-#define OFFSET_FROM_BIT(a) (a%(8*4))
-
-void paging_set_frame(uint32_t frame_addr)
+void paging_init()
 {
-    uint32_t frame = frame_addr / 0x1000;
-    uint32_t idx = INDEX_FROM_BIT(frame);
-    uint32_t off = OFFSET_FROM_BIT(frame);
-    frames[idx] |= (0x1 << off);
-}
-
-void paging_clear_frame(uint32_t frame_addr)
-{
-    uint32_t frame = frame_addr / 0x1000;
-    uint32_t idx = INDEX_FROM_BIT(frame);
-    uint32_t off = OFFSET_FROM_BIT(frame);
-    frames[idx] &= ~(0x1 << off);
-}
-
-uint32_t paging_first_frame()
-{
-    uint32_t i, j;
-    for (i = 0; i < INDEX_FROM_BIT(nframes); i++) {
-        if (frames[i] != 0xFFFFFFFF) {
-            for (j = 0; j < 32; j++) {
-                uint32_t toTest = (0x1 << j);
-                if (!(frames[i] & toTest)) {
-                    return i * 4 * 8 + j;
-                }
-            }
+    for (uint32_t i = 0; i < 1024; i++) {
+        for (uint32_t j = 0; j < 1024; j++) {
+            current_page_tables[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW;
         }
     }
-    return 0;
-}
 
-void paging_alloc_frame(page_t *page, int is_kernel, int is_writeable)
-{
-    if (page->frame != 0) {
-        return;
-    } else {
-        uint32_t idx = paging_first_frame();
-        if (idx == (uint32_t) -1)
-            panic("No free frames!");
-        paging_set_frame(idx * 0x1000);
-        page->present = 1;
-        page->rw = (is_writeable == 1) ? 1 : 0;
-        page->user = (is_kernel == 1) ? 0 : 1;
-        page->frame = idx;
+    for (uint32_t i = 0; i < 1024; i++) {
+        current_page_directory[i] = ((uint32_t) current_page_tables[i]) | PD_RW | PD_PRESENT;
     }
-}
 
-void paging_free_frame(page_t *page)
-{
-    uint32_t frame;
-    if (!(frame = page->frame)) {
-        return;
-    } else {
-        paging_clear_frame(frame);
-        page->frame = 0x0;
-    }
+    paging_set_present(0, memory_get_all() >> 3); // /4
 }
 
 void paging_install()
 {
-    uint32_t mem_end_page = memory_get_all() << 10;
+    // User paging
+    paging_switch_directory(1);
+    paging_init();
+    paging_set_user(0, memory_get_all() >> 3);
 
-    nframes = mem_end_page / 0x1000;
-    frames = (uint32_t *) kmalloc(INDEX_FROM_BIT(nframes));
-    memset(frames, 0, INDEX_FROM_BIT(nframes));
+    // Kernel paging
+    paging_switch_directory(0);
+    paging_init();
+    paging_set_used(0, ((uint32_t) ASM_KERNEL_END >> 12) + 1); // /4096
 
-    kernel_directory = (page_directory_t *) kmalloc_a(sizeof(page_directory_t));
-    memset(kernel_directory, 0, sizeof(page_directory_t));
-    kernel_directory->physical_address = (uint32_t) kernel_directory->tables_physical;
+    paging_enable();
 
-    for (uint32_t i = KHEAP_START; i < KHEAP_START + KHEAP_INITIAL_SIZE; i += 0x1000)
-        paging_get_page((uint32_t) i, 1, kernel_directory);
-
-    int i = 0;
-    while (i < 0x400000) {
-        paging_alloc_frame(paging_get_page((uint32_t) i, 1, kernel_directory), 0, 0);
-        i += 0x1000;
-    }
-
-    for (i = KHEAP_START; i < (int) (KHEAP_START + KHEAP_INITIAL_SIZE); i += 0x1000)
-        paging_alloc_frame(paging_get_page((uint32_t) i, 1, kernel_directory), 0, 0);
-
-    paging_switch_directory(kernel_directory);
-
-    kheap = create_heap(KHEAP_START, KHEAP_START + KHEAP_INITIAL_SIZE, 0xCFFFF000, 0, 0);
-
-    current_directory = paging_clone_directory(kernel_directory);
-    paging_switch_directory(current_directory);
-    vga_log("Installed Paging");
-}
-
-void paging_switch_directory(page_directory_t *dir)
-{
-    current_directory = dir;
-    asm volatile("mov %0, %%cr3"::"r"(dir->physical_address));
-    uint32_t cr0;
-    asm volatile("mov %%cr0, %0": "=r"(cr0));
-    cr0 |= 0x80000000; // Enable paging!
-    asm volatile("mov %0, %%cr0"::"r"(cr0));
-}
-
-void paging_enable()
-{
-    paging_switch_directory(kernel_directory);
-    paging_enabled = 1;
+    vga_log("Installed paging");
 }
 
 void paging_disable()
@@ -136,68 +53,140 @@ void paging_disable()
     paging_enabled = 0;
 }
 
-page_t *paging_get_page(uint32_t address, int make, page_directory_t *dir)
+void paging_switch_directory(int user)
 {
-    address /= 0x1000;
-    uint32_t table_idx = address / 1024;
-
-    if (dir->tables[table_idx]) {
-        return &dir->tables[table_idx]->pages[address % 1024];
-    } else if (make) {
-        uint32_t tmp;
-        dir->tables[table_idx] = (page_table_t *) kmalloc_ap(sizeof(page_table_t), &tmp);
-        memset(dir->tables[table_idx], 0, 0x1000);
-        dir->tables_physical[table_idx] = tmp | 0x7; // PRESENT, RW, US
-        return &dir->tables[table_idx]->pages[address % 1024];
+    if (user == 1) {
+        current_page_tables = user_page_tables;
+        current_page_directory = user_page_directory;
     } else {
-        return 0;
+        current_page_tables = kernel_page_tables;
+        current_page_directory = kernel_page_directory;
+    }
+    asm ("mov %0, %%cr3"::"r"(current_page_directory));
+}
+
+void paging_enable()
+{
+    asm ("mov %0, %%cr3"::"r"(current_page_directory));
+    uint32_t cr0;
+    asm ("mov %%cr0, %0": "=r"(cr0));
+    cr0 |= 0x80000000;
+    asm ("mov %0, %%cr0"::"r"(cr0));
+    paging_enabled = 1;
+}
+
+inline void invlpg(uint32_t addr)
+{
+    asm ("invlpg (%0)"::"r" (addr) : "memory");
+}
+
+void paging_map(uint32_t phy, uint32_t virt, uint16_t flags)
+{
+    uint32_t pdi = virt >> 22;
+    uint32_t pti = virt >> 12 & 0x03FF;
+    current_page_tables[pdi][pti] = phy | flags;
+    invlpg(virt);
+}
+
+uint32_t paging_get_phys(uint32_t virt)
+{
+    uint32_t pdi = virt >> 22;
+    uint32_t pti = (virt >> 12) & 0x03FF;
+    return current_page_tables[pdi][pti] & 0xFFFFF000;
+}
+
+uint16_t paging_get_flags(uint32_t virt)
+{
+    uint32_t pdi = virt >> 22;
+    uint32_t pti = (virt >> 12) & 0x03FF;
+    return current_page_tables[pdi][pti] & 0xFFF;
+}
+
+void paging_set_flag_up(uint32_t virt, uint32_t count, uint32_t flag)
+{
+    uint32_t page_n = virt / 4096;
+    for (uint32_t i = page_n; i < page_n + count; i++) {
+        current_page_tables[i / 1024][i % 1024] |= flag;
+        invlpg(i * 4096);
     }
 }
 
-static page_table_t *paging_clone_table(page_table_t *src, uint32_t *physAddr)
+void paging_set_flag_down(uint32_t virt, uint32_t count, uint32_t flag)
 {
-    page_table_t *table = (page_table_t *) kmalloc_ap(sizeof(page_table_t), physAddr);
-    memset(table, 0, sizeof(page_directory_t));
-
-    for (int i = 0; i < 1024; i++) {
-        if (!src->pages[i].frame)
-            continue;
-
-        paging_alloc_frame(&table->pages[i], 0, 0);
-
-        if (src->pages[i].present) table->pages[i].present = 1;
-        if (src->pages[i].rw) table->pages[i].rw = 1;
-        if (src->pages[i].user) table->pages[i].user = 1;
-        if (src->pages[i].accessed)table->pages[i].accessed = 1;
-        if (src->pages[i].dirty) table->pages[i].dirty = 1;
-
-        copy_page_physical(src->pages[i].frame * 0x1000, table->pages[i].frame * 0x1000);
+    uint32_t page_n = virt / 4096;
+    for (uint32_t i = page_n; i < page_n + count; i++) {
+        current_page_tables[i / 1024][i % 1024] &= ~flag;
+        invlpg(i * 4096);
     }
-    return table;
 }
 
-page_directory_t *paging_clone_directory(page_directory_t *src)
+void paging_set_present(uint32_t virt, uint32_t count)
 {
-    uint32_t phys;
-    page_directory_t *dir = (page_directory_t *) kmalloc_ap(sizeof(page_directory_t), &phys);
-    memset(dir, 0, sizeof(page_directory_t));
+    paging_set_flag_up(virt, count, PT_PRESENT);
+}
 
-    uint32_t offset = (uint32_t) dir->tables_physical - (uint32_t) dir;
+void paging_set_absent(uint32_t virt, uint32_t count)
+{
+    paging_set_flag_down(virt, count, PT_PRESENT);
+}
 
-    dir->physical_address = phys + offset;
+void paging_set_used(uint32_t virt, uint32_t count)
+{
+    paging_set_flag_up(virt, count, PT_USED);
+}
 
-    for (int i = 0; i < 1024; i++) {
-        if (!src->tables[i])
-            continue;
+void paging_set_free(uint32_t virt, uint32_t count)
+{
+    paging_set_flag_down(virt, count, PT_USED);
+}
 
-        if (kernel_directory->tables[i] == src->tables[i]) {
-            dir->tables[i] = src->tables[i];
-            dir->tables_physical[i] = src->tables_physical[i];
-        } else {
-            uint32_t phys;
-            dir->tables[i] = paging_clone_table(src->tables[i], &phys);
-            dir->tables_physical[i] = phys | 0x07;
+void paging_set_user(uint32_t virt, uint32_t count)
+{
+    uint32_t page_n = virt / 4096;
+    for (uint32_t i = page_n; i < page_n + count; i += 1024) {
+        current_page_directory[i / 1024] |= PD_ALL_PRIV;
+    }
+    paging_set_flag_up(virt, count, PT_ALL_PRIV);
+}
+
+uint32_t paging_find_pages(uint32_t count)
+{
+    uint32_t continuous = 0;
+    uint32_t startDir = 0;
+    uint32_t startPage = 0;
+    for (uint32_t i = 0; i < 1024; i++) {
+        for (uint32_t j = 0; j < 1024; j++) {
+            if (!(current_page_tables[i][j] & PT_PRESENT) || (current_page_tables[i][j] & PT_USED)) {
+                continuous = 0;
+                startDir = i;
+                startPage = j + 1;
+            } else {
+                if (++continuous == count)
+                    return (startDir * 0x400000) + (startPage * 0x1000);
+            }
         }
     }
-    return dir;
+
+    panic("Out of memory!");
+    return 0;
+}
+
+uint32_t paging_alloc_pages(uint32_t count)
+{
+    uint32_t ptr = paging_find_pages(count);
+    paging_set_used(ptr, count);
+    paging_set_user(ptr, count);
+    return ptr;
+}
+
+uint32_t paging_get_used_pages()
+{
+    uint32_t n = 0;
+    for (uint32_t i = 0; i < 1024; i++) {
+        for (uint32_t j = 0; j < 1024; j++) {
+            uint8_t flags = current_page_tables[i][j] & PT_USED;
+            if (flags == 1) n++;
+        }
+    }
+    return n;
 }

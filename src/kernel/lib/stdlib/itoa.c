@@ -1,7 +1,7 @@
 #include <kernel/lib/math.h>
 #include <stdint.h>
 #include <kernel/lib/string.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 #include <kernel/memory/paging.h>
 
 static const char ITOA_TABLE[] = "0123456789";

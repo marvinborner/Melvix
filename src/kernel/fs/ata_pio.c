@@ -1,6 +1,6 @@
 #include <kernel/io/io.h>
 #include <kernel/fs/ata_pio.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 
 struct ata_interface *new_ata(uint8_t master, uint16_t port_base)
 {

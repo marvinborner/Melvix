@@ -3,7 +3,7 @@
 #include <kernel/graphics/vesa.h>
 #include <kernel/input/input.h>
 #include <kernel/lib/string.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 
 int shift_pressed;
 int control_pressed;

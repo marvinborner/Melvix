@@ -1,16 +1,12 @@
 #include <kernel/memory/paging.h>
 #include <kernel/tasks/task.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 #include <kernel/lib/lib.h>
 #include <kernel/gdt/gdt.h>
 #include <kernel/system.h>
-#include <kernel/syscall.h>
 
-volatile task_t *current_task;
-volatile task_t *ready_queue;
-
-extern page_directory_t *kernel_directory;
-extern page_directory_t *current_directory;
+task_t *current_task;
+task_t *ready_queue;
 
 extern uint32_t read_eip();
 
@@ -26,9 +22,9 @@ void tasking_install()
     current_task->esp = 0;
     current_task->ebp = 0;
     current_task->eip = 0;
-    current_task->page_directory = current_directory;
+    current_task->page_directory = current_page_directory;
     current_task->next = 0;
-    current_task->kernel_stack = kmalloc_a(KERNEL_STACK_SIZE);
+    current_task->kernel_stack = kmalloc(KERNEL_STACK_SIZE);
 
     vga_log("Installed Tasking");
     asm ("sti");
@@ -39,7 +35,7 @@ void move_stack(void *new_stack_start, uint32_t size)
     for (uint32_t i = (uint32_t) new_stack_start;
          i >= ((uint32_t) new_stack_start - size);
          i -= 0x1000) {
-        paging_alloc_frame(paging_get_page(i, 1, current_directory), 0, 1);
+        // paging_alloc_frame(paging_get_page(i, 1, current_page_directory), 0, 1);
     }
 
     uint32_t pd_addr;
@@ -96,12 +92,12 @@ void switch_task()
     esp = current_task->esp;
     ebp = current_task->ebp;
 
-    current_directory = current_task->page_directory;
+    current_page_directory = current_task->page_directory;
 
-    set_kernel_stack(current_task->kernel_stack + KERNEL_STACK_SIZE);
+    set_kernel_stack((uintptr_t) (current_task->kernel_stack + KERNEL_STACK_SIZE));
 
-    paging_switch_directory(current_directory);
-    perform_task_switch(eip, current_directory->physical_address, ebp, esp);
+    paging_switch_directory((int) current_page_directory);
+    perform_task_switch(eip, (uint32_t) current_page_directory, ebp, esp);
 }
 
 int fork()
@@ -110,14 +106,14 @@ int fork()
 
     task_t *parent_task = (task_t *) current_task;
 
-    page_directory_t *directory = paging_clone_directory(current_directory);
+    uint32_t *directory = 0;//paging_clone_directory(current_page_directory);
 
     task_t *new_task = (task_t *) kmalloc(sizeof(task_t));
     new_task->id = (int) next_pid++;
     new_task->esp = new_task->ebp = 0;
     new_task->eip = 0;
     new_task->page_directory = directory;
-    current_task->kernel_stack = kmalloc_a(KERNEL_STACK_SIZE);
+    current_task->kernel_stack = kmalloc(KERNEL_STACK_SIZE);
     new_task->next = 0;
 
     task_t *tmp_task = (task_t *) ready_queue;
@@ -148,7 +144,7 @@ int getpid()
 
 void exec(uint32_t binary)
 {
-    set_kernel_stack(current_task->kernel_stack + KERNEL_STACK_SIZE);
+    set_kernel_stack((uintptr_t) (current_task->kernel_stack + KERNEL_STACK_SIZE));
 
     info("Switching to user mode...");
 
@@ -164,7 +160,10 @@ void exec(uint32_t binary)
       pushl %%esp; \
       pushf; \
       pushl $0x1B; \
-      push %0; \
+      push $1f; \
       iret; \
+      1: \
       " : : "r" (binary));
+
+    // syscall_write("test");
 }

@@ -3,7 +3,7 @@
 #include <kernel/lib/stdio.h>
 #include <kernel/lib/string.h>
 #include <kernel/lib/stdlib.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 
 void _writes(const char *data)
 {

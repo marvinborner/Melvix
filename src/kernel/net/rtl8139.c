@@ -3,7 +3,7 @@
 #include <kernel/system.h>
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/lib/stdio.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 
 int rtl_irq = 0;
 uint8_t mac[6];

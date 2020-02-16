@@ -6,7 +6,7 @@
 #include <kernel/acpi/acpi.h>
 #include <kernel/lib/stdio.h>
 #include <kernel/timer/timer.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 #include <kernel/fs/load.h>
 
 void install_melvix()

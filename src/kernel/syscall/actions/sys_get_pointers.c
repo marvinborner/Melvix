@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <kernel/graphics/vesa.h>
 #include <kernel/fs/load.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 
 struct userspace_pointers {
     unsigned char *fb;

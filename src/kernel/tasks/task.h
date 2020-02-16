@@ -10,8 +10,8 @@ typedef struct task {
     int id;
     uint32_t esp, ebp;
     uint32_t eip;
-    page_directory_t *page_directory;
-    uint32_t kernel_stack;
+    uint32_t *page_directory;
+    uint32_t *kernel_stack;
     struct task *next;
 } task_t;
 

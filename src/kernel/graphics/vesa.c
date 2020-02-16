@@ -1,13 +1,10 @@
 #include <kernel/graphics/vesa.h>
 #include <kernel/fs/load.h>
-#include <kernel/lib/lib.h>
 #include <kernel/system.h>
 #include <kernel/lib/stdlib.h>
 #include <kernel/lib/stdio.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 #include <kernel/memory/paging.h>
-
-extern page_directory_t *current_directory;
 
 void switch_to_vga()
 {
@@ -182,16 +179,10 @@ void set_optimal_resolution()
     vbe_set_mode(highest);
 
     uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
-    cursor_buffer = (unsigned char *) kmalloc(fb_size);
-    uint32_t j = (uint32_t) fb;
-    while ((unsigned char *) j < fb + fb_size) {
-        paging_set_frame(j);
-        page_t *page = paging_get_page(j, 1, current_directory);
-        page->present = 1;
-        page->rw = 1;
-        page->user = 1;
-        page->frame = j / 0x1000;
-        j += 0x1000;
+    cursor_buffer = kmalloc(fb_size);
+    for (uint32_t z = 0; z < fb_size; z += 4096) {
+        paging_map((uint32_t) fb + z, (uint32_t) fb + z, PT_PRESENT | PT_RW | PT_USED);
+        paging_map((uint32_t) cursor_buffer + z, (uint32_t) cursor_buffer + z, PT_PRESENT | PT_RW | PT_USED);
     }
     serial_printf("0x%x", fb);
 

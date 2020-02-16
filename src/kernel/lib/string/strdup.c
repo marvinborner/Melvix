@@ -1,5 +1,5 @@
 #include <kernel/lib/string.h>
-#include <kernel/memory/kheap.h>
+#include <kernel/memory/alloc.h>
 
 char *strdup(const char *orig)
 {
