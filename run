@@ -14,9 +14,9 @@ qemu_with_flags() {
 
 compile_with_flags() {
   if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
-    i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@" || exit
+    GCC_COLORS=1 ccache i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@" || exit
   else
-    i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter "$@" || exit
+    GCC_COLORS=1 ccache i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter "$@" || exit
   fi
 
 }
@@ -109,7 +109,7 @@ make_build() {
     compile_with_flags -O2 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}"
   done <./build/tmp
   rm ./build/tmp
-  compile_with_flags -Wl,--oformat=binary -emain -O2 ./build/userspace/*.o -I ./src/userspace -o ./build/user.bin
+  compile_with_flags -emain -O2 ./build/userspace/*.o -I ./src/userspace -o ./build/user.bin
 
   # Create ISO
   mkdir -p ./iso/boot/

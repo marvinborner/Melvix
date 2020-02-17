@@ -19,6 +19,7 @@
 * Install build dependencies (package names may vary depending on your operating system)
   * Ubuntu/Debian _"instructions"_ can be found here: [GitHub Workflow](https://raw.githubusercontent.com/marvinborner/Melvix/master/.github/workflows/build.yml)
   * binutils
+  * ccache
   * gcc
   * make
   * bison
