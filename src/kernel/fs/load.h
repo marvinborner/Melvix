@@ -16,4 +16,20 @@ struct font {
 
 void load_binaries();
 
+typedef struct {
+    char *name;
+
+    void *(*probe)(uint8_t *buf);
+
+    uint8_t (*start)(uint8_t *buf, void *priv);
+} loader_t;
+
+void loader_init();
+
+void register_loader(loader_t *load);
+
+uint8_t exec_start(uint8_t *buf);
+
+uint32_t loader_get_unused_load_location();
+
 #endif

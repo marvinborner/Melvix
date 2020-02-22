@@ -5,6 +5,8 @@
 #include <kernel/system.h>
 #include <kernel/fs/iso9660/iso9660.h>
 #include <kernel/memory/alloc.h>
+#include <kernel/lib/stdio.h>
+#include <kernel/lib/lib.h>
 
 void load_binaries()
 {
@@ -31,4 +33,46 @@ void load_binaries()
         kfree(user_e);
     }
     vga_log("Successfully loaded binaries");
+}
+
+#define MAX_LOADERS 16
+
+loader_t **loaders = 0;
+uint8_t last_loader = 0;
+
+uint32_t last_load_loc = 0x400000;
+
+void loader_init()
+{
+    serial_printf("Setting up loader");
+    loaders = (loader_t **) kmalloc(MAX_LOADERS * sizeof(uint32_t));
+    memset(loaders, 0, MAX_LOADERS * sizeof(uint32_t));
+    // _kill();
+}
+
+void register_loader(loader_t *load)
+{
+    if (last_loader + 1 > MAX_LOADERS) return;
+    if (!load) return;
+    loaders[last_loader] = load;
+    last_loader++;
+    serial_printf("Registered %s loader as id %d", load->name, last_loader - 1);
+}
+
+uint32_t loader_get_unused_load_location()
+{
+    last_load_loc += 0x400000;
+    return last_load_loc;
+}
+
+uint8_t exec_start(uint8_t *buf)
+{
+    for (int i = 0; i < MAX_LOADERS; i++) {
+        if (!loaders[i]) break;
+        void *priv = loaders[i]->probe(buf);
+        if (priv) {
+            return loaders[i]->start(buf, priv);
+        }
+    }
+    return 0;
 }

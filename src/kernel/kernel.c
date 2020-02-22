@@ -12,6 +12,8 @@
 #include <kernel/net/network.h>
 #include <kernel/tasks/task.h>
 #include <kernel/fs/load.h>
+#include <kernel/fs/elf.h>
+#include <kernel/lib/stdio.h>
 
 void kernel_main(uint32_t initial_stack)
 {
@@ -40,7 +42,7 @@ void kernel_main(uint32_t initial_stack)
     network_install();
     asm ("sti");
 
-    tasking_install();
+    // tasking_install();
 
     // Get hardware information
     // get_smbios();
@@ -55,8 +57,12 @@ void kernel_main(uint32_t initial_stack)
         install_melvix();
 #endif
 
-    syscalls_install();
-    exec(userspace);
+    loader_init();
+    elf_init();
+    exec_start((uint8_t *) userspace);
+
+//    syscalls_install();
+//    exec(userspace);
 
     panic("This should NOT happen!");
 

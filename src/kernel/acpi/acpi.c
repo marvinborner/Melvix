@@ -162,7 +162,10 @@ int acpi_install()
             }
             if (memcmp((unsigned int *) *ptr, "HPET", 4) == 0) {
                 hpet = (struct HPET *) *ptr;
-                // serial_printf("%d", hpet->base_address);
+                serial_printf("%c%c%c%c", hpet->signature[0], hpet->signature[1], hpet->signature[2],
+                              hpet->signature[3]);
+                serial_printf("%d", hpet->legacy_replacement);
+                serial_printf("%d", hpet->address.address);
             }
             ptr++;
         } // Else: no valid FADT present
