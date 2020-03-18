@@ -3,10 +3,10 @@
 
 void *malloc(size_t count)
 {
-    return (void *) syscall_alloc(count);
+	return (void *)syscall_alloc(count);
 }
 
 void free(void *ptr)
 {
-    syscall_free((uint32_t) ptr);
+	syscall_free((uint32_t)ptr);
 }

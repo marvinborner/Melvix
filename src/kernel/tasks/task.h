@@ -7,12 +7,12 @@
 #define KERNEL_STACK_SIZE 2048
 
 typedef struct task {
-    int id;
-    uint32_t esp, ebp;
-    uint32_t eip;
-    uint32_t *page_directory;
-    uint32_t *kernel_stack;
-    struct task *next;
+	int id;
+	uint32_t esp, ebp;
+	uint32_t eip;
+	uint32_t *page_directory;
+	uint32_t *kernel_stack;
+	struct task *next;
 } task_t;
 
 void tasking_install();

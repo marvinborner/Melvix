@@ -2,5 +2,5 @@
 
 void writec(char c)
 {
-    vesa_draw_char(c);
+	vesa_draw_char(c);
 }

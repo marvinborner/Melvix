@@ -3,9 +3,9 @@
 
 char getch()
 {
-    keyboard_char_buffer = 0;
-    while (keyboard_char_buffer == 0) {
-        timer_wait(1); // IDK why!
-    }
-    return keyboard_char_buffer;
+	keyboard_char_buffer = 0;
+	while (keyboard_char_buffer == 0) {
+		timer_wait(1); // IDK why!
+	}
+	return keyboard_char_buffer;
 }

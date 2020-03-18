@@ -2,5 +2,5 @@
 
 void writec(char c)
 {
-    syscall_writec(c);
+	syscall_writec(c);
 }

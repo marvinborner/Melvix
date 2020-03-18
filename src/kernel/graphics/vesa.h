@@ -5,30 +5,30 @@
 #include <kernel/system.h>
 
 struct edid_data {
-    uint8_t padding[8];
-    uint16_t manufacture_id;
-    uint16_t product_code;
-    uint32_t serial_number;
-    uint8_t manufacture_week;
-    uint8_t manufacture_year;
-    uint8_t edid_version;
-    uint8_t edid_revision;
-    uint8_t video_input_type;
-    uint8_t max_horizontal_size;
-    uint8_t max_vertical_size;
-    uint8_t gamma_factor;
-    uint8_t dpms_flags; // power management features
-    uint8_t chroma_information[10];
-    uint8_t timings_1;
-    uint8_t timings_2;
-    uint8_t reserved_timings;
-    uint32_t timing_identification[8];
-    uint8_t timing_description_1[18];
-    uint8_t timing_description_2[18];
-    uint8_t timing_description_3[18];
-    uint8_t timing_description_4[18];
-    uint8_t unused;
-    uint8_t checksum;
+	uint8_t padding[8];
+	uint16_t manufacture_id;
+	uint16_t product_code;
+	uint32_t serial_number;
+	uint8_t manufacture_week;
+	uint8_t manufacture_year;
+	uint8_t edid_version;
+	uint8_t edid_revision;
+	uint8_t video_input_type;
+	uint8_t max_horizontal_size;
+	uint8_t max_vertical_size;
+	uint8_t gamma_factor;
+	uint8_t dpms_flags; // power management features
+	uint8_t chroma_information[10];
+	uint8_t timings_1;
+	uint8_t timings_2;
+	uint8_t reserved_timings;
+	uint32_t timing_identification[8];
+	uint8_t timing_description_1[18];
+	uint8_t timing_description_2[18];
+	uint8_t timing_description_3[18];
+	uint8_t timing_description_4[18];
+	uint8_t unused;
+	uint8_t checksum;
 };
 
 /**
@@ -36,71 +36,71 @@ struct edid_data {
  * Used to receive the supported video modes
  */
 struct vbe_info {
-    char signature[4];
-    uint16_t version;
-    uint32_t oem;
-    uint32_t capabilities;
-    uint32_t video_modes;
-    uint16_t video_memory;
-    uint16_t software_rev;
-    uint32_t vendor;
-    uint32_t product_name;
-    uint32_t product_rev;
-    char reserved[222];
-    char oem_data[256];
-} __attribute__ ((packed));
+	char signature[4];
+	uint16_t version;
+	uint32_t oem;
+	uint32_t capabilities;
+	uint32_t video_modes;
+	uint16_t video_memory;
+	uint16_t software_rev;
+	uint32_t vendor;
+	uint32_t product_name;
+	uint32_t product_rev;
+	char reserved[222];
+	char oem_data[256];
+} __attribute__((packed));
 
 /**
  * The CPUs response to the 0x4F01 call
  * Used to get information about a specific video mode code
  */
 struct vbe_mode_info_all {
-    uint16_t attributes;
-    uint8_t window_a;
-    uint8_t window_b;
-    uint16_t granularity;
-    uint16_t window_size;
-    uint16_t segment_a;
-    uint16_t segment_b;
-    uint32_t win_func_ptr;
-    uint16_t pitch;
-    uint16_t width;
-    uint16_t height;
-    uint8_t w_char;
-    uint8_t y_char;
-    uint8_t planes;
-    uint8_t bpp;
-    uint8_t banks;
-    uint8_t memory_model;
-    uint8_t bank_size;
-    uint8_t image_pages;
-    uint8_t reserved0;
+	uint16_t attributes;
+	uint8_t window_a;
+	uint8_t window_b;
+	uint16_t granularity;
+	uint16_t window_size;
+	uint16_t segment_a;
+	uint16_t segment_b;
+	uint32_t win_func_ptr;
+	uint16_t pitch;
+	uint16_t width;
+	uint16_t height;
+	uint8_t w_char;
+	uint8_t y_char;
+	uint8_t planes;
+	uint8_t bpp;
+	uint8_t banks;
+	uint8_t memory_model;
+	uint8_t bank_size;
+	uint8_t image_pages;
+	uint8_t reserved0;
 
-    uint8_t red_mask;
-    uint8_t red_position;
-    uint8_t green_mask;
-    uint8_t green_position;
-    uint8_t blue_mask;
-    uint8_t blue_position;
-    uint8_t reserved_mask;
-    uint8_t reserved_position;
-    uint8_t direct_color_attributes;
+	uint8_t red_mask;
+	uint8_t red_position;
+	uint8_t green_mask;
+	uint8_t green_position;
+	uint8_t blue_mask;
+	uint8_t blue_position;
+	uint8_t reserved_mask;
+	uint8_t reserved_position;
+	uint8_t direct_color_attributes;
 
-    uint32_t framebuffer;
-    uint32_t off_screen_mem_off;
-    uint16_t off_screen_mem_size;
-    uint8_t reserved1[206];
-} __attribute__ ((packed));
+	uint32_t framebuffer;
+	uint32_t off_screen_mem_off;
+	uint16_t off_screen_mem_size;
+	uint8_t reserved1[206];
+} __attribute__((packed));
 
 struct vbe_mode_info {
-    uint16_t attributes;
-    uint16_t pitch;
-    uint16_t width;
-    uint16_t height;
-    uint8_t bpp;
-    uint8_t memory_model;
-    uint32_t framebuffer;
-} __attribute__ ((packed));
+	uint16_t attributes;
+	uint16_t pitch;
+	uint16_t width;
+	uint16_t height;
+	uint8_t bpp;
+	uint8_t memory_model;
+	uint32_t framebuffer;
+} __attribute__((packed));
 
 /**
  * Get the monitors EDID information
@@ -190,22 +190,22 @@ void vesa_set_color(uint32_t color);
  * From https://github.com/joshdick/onedark.vim/ License: MIT
  */
 enum vesa_color {
-    vesa_black = 0x1d1f24,
-    vesa_red = 0xE06C75,
-    vesa_green = 0x98C379,
-    vesa_yellow = 0xE5C07B,
-    vesa_blue = 0x61AFEF,
-    vesa_magenta = 0xC678DD,
-    vesa_cyan = 0x56B6C2,
-    vesa_white = 0xABB2BF,
-    vesa_dark_black = 0x3E4452,
-    vesa_dark_red = 0xBE5046,
-    vesa_dark_green = 0x98C379,
-    vesa_dark_yellow = 0xD19A66,
-    vesa_dark_blue = 0x61AFEF,
-    vesa_dark_magenta = 0xC678DD,
-    vesa_dark_cyan = 0x56B6C2,
-    vesa_dark_white = 0x5C6370,
+	vesa_black = 0x1d1f24,
+	vesa_red = 0xE06C75,
+	vesa_green = 0x98C379,
+	vesa_yellow = 0xE5C07B,
+	vesa_blue = 0x61AFEF,
+	vesa_magenta = 0xC678DD,
+	vesa_cyan = 0x56B6C2,
+	vesa_white = 0xABB2BF,
+	vesa_dark_black = 0x3E4452,
+	vesa_dark_red = 0xBE5046,
+	vesa_dark_green = 0x98C379,
+	vesa_dark_yellow = 0xD19A66,
+	vesa_dark_blue = 0x61AFEF,
+	vesa_dark_magenta = 0xC678DD,
+	vesa_dark_cyan = 0x56B6C2,
+	vesa_dark_white = 0x5C6370,
 };
 
 /**

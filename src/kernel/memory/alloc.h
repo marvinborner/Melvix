@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#define PREFIX(func) k ## func
+#define PREFIX(func) k##func
 
 int liballoc_lock();
 

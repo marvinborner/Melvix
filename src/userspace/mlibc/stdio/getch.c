@@ -2,5 +2,5 @@
 
 char getch()
 {
-    return (char) syscall_readc();
+	return (char)syscall_readc();
 }

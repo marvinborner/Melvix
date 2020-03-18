@@ -11,8 +11,8 @@
 #include <stdint.h>
 
 struct iso9660_entity {
-    uint32_t lba;
-    uint32_t length;
+	uint32_t lba;
+	uint32_t length;
 };
 
 struct iso9660_entity *ISO9660_get(char **dirs, uint8_t dirs_sz);

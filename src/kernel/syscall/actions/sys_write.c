@@ -4,12 +4,12 @@
 
 uint32_t sys_write(char *buf)
 {
-    printf(buf);
-    return strlen((const char *) buf);
+	printf(buf);
+	return strlen((const char *)buf);
 }
 
 uint32_t sys_writec(char ch)
 {
-    writec(ch);
-    return 0;
+	writec(ch);
+	return 0;
 }

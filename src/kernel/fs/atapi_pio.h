@@ -10,13 +10,13 @@
 #define ATAPI_SECTOR_SIZE 2048
 
 struct dapack {
-    uint8_t size;
-    uint8_t null;
-    uint16_t blk_count;
-    uint16_t b_offset;
-    uint16_t b_segment;
-    uint32_t start;
-    uint32_t upper_lba_bits;
+	uint8_t size;
+	uint8_t null;
+	uint16_t blk_count;
+	uint16_t b_offset;
+	uint16_t b_segment;
+	uint32_t start;
+	uint32_t upper_lba_bits;
 } __attribute__((packed));
 
 void ATAPI_read(uint16_t nblocks, uint32_t lba);

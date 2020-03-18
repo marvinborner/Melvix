@@ -42,47 +42,47 @@
 typedef void (*pci_func_t)(uint32_t device, uint16_t vendor_id, uint16_t device_id, void *extra);
 
 struct pci_device_descriptor {
-    uint32_t port_base;
-    uint32_t interrupt;
+	uint32_t port_base;
+	uint32_t interrupt;
 
-    uint8_t bus;
-    uint8_t slot;
-    uint8_t function;
+	uint8_t bus;
+	uint8_t slot;
+	uint8_t function;
 
-    uint16_t vendor_id;
-    uint16_t device_id;
+	uint16_t vendor_id;
+	uint16_t device_id;
 
-    uint8_t class_id;
-    uint8_t subclass_id;
-    uint8_t interface_id;
+	uint8_t class_id;
+	uint8_t subclass_id;
+	uint8_t interface_id;
 
-    uint8_t revision;
+	uint8_t revision;
 };
 
 static inline int pci_extract_bus(uint32_t device)
 {
-    return (uint8_t) ((device >> 16));
+	return (uint8_t)((device >> 16));
 }
 
 static inline int pci_extract_slot(uint32_t device)
 {
-    return (uint8_t) ((device >> 8));
+	return (uint8_t)((device >> 8));
 }
 
 static inline int pci_extract_func(uint32_t device)
 {
-    return (uint8_t) (device);
+	return (uint8_t)(device);
 }
 
 static inline uint32_t pci_get_addr(uint32_t device, int field)
 {
-    return 0x80000000 | (pci_extract_bus(device) << 16) | (pci_extract_slot(device) << 11) |
-           (pci_extract_func(device) << 8) | ((field) & 0xFC);
+	return 0x80000000 | (pci_extract_bus(device) << 16) | (pci_extract_slot(device) << 11) |
+	       (pci_extract_func(device) << 8) | ((field)&0xFC);
 }
 
 static inline uint32_t pci_box_device(int bus, int slot, int func)
 {
-    return (uint32_t) ((bus << 16) | (slot << 8) | func);
+	return (uint32_t)((bus << 16) | (slot << 8) | func);
 }
 
 uint32_t pci_read_field(uint32_t device, int field, int size);

@@ -4,29 +4,29 @@
 #include <stdint.h>
 
 struct marfs_superblock {
-    uint64_t signature;
-    uint32_t n_inodes;
-    uint32_t n_chunks;
-    uint32_t n_first_unallocated_inode;
-    uint32_t s_first_inode;
-    uint32_t s_first_chunk;
+	uint64_t signature;
+	uint32_t n_inodes;
+	uint32_t n_chunks;
+	uint32_t n_first_unallocated_inode;
+	uint32_t s_first_inode;
+	uint32_t s_first_chunk;
 } __attribute__((packed));
 
 struct marfs_inode {
-    uint64_t size;
-    uint32_t creation_time;
-    uint32_t last_mod_time;
-    uint32_t last_access_time;
-    uint32_t n_blocks;
-    uint32_t DBPs[10];
-    uint32_t ext_1;
-    uint32_t ext_2;
-    uint32_t ext_3;
-    uint32_t ext_4;
-    uint32_t uid;
-    uint8_t is_app;
-    uint8_t is_dir;
-    uint8_t is_used;
+	uint64_t size;
+	uint32_t creation_time;
+	uint32_t last_mod_time;
+	uint32_t last_access_time;
+	uint32_t n_blocks;
+	uint32_t DBPs[10];
+	uint32_t ext_1;
+	uint32_t ext_2;
+	uint32_t ext_3;
+	uint32_t ext_4;
+	uint32_t uid;
+	uint8_t is_app;
+	uint8_t is_dir;
+	uint8_t is_used;
 } __attribute__((packed));
 
 struct ata_interface *interface;

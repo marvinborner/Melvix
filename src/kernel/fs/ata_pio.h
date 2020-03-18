@@ -6,16 +6,16 @@
 #define BYTES_PER_SECTOR 512
 
 struct ata_interface {
-    uint8_t master;
-    uint16_t data_port;
-    uint16_t error_port;
-    uint16_t sector_count_port;
-    uint16_t lba_low_port;
-    uint16_t lba_mid_port;
-    uint16_t lba_high_port;
-    uint16_t device_port;
-    uint16_t command_port;
-    uint16_t control_port;
+	uint8_t master;
+	uint16_t data_port;
+	uint16_t error_port;
+	uint16_t sector_count_port;
+	uint16_t lba_low_port;
+	uint16_t lba_mid_port;
+	uint16_t lba_high_port;
+	uint16_t device_port;
+	uint16_t command_port;
+	uint16_t control_port;
 };
 
 struct ata_interface *new_ata(uint8_t master, uint16_t port_base);

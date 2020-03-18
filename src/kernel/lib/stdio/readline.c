@@ -3,7 +3,8 @@
 
 char *readline()
 {
-    keyboard_clear_buffer();
-    while (keyboard_buffer[strlen(keyboard_buffer) - 1] != '\n') {}
-    return keyboard_buffer;
+	keyboard_clear_buffer();
+	while (keyboard_buffer[strlen(keyboard_buffer) - 1] != '\n') {
+	}
+	return keyboard_buffer;
 }
