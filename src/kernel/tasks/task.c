@@ -2,6 +2,7 @@
 #include <kernel/tasks/task.h>
 #include <kernel/memory/alloc.h>
 #include <kernel/lib/lib.h>
+#include <kernel/io/io.h>
 #include <kernel/gdt/gdt.h>
 #include <kernel/system.h>
 
@@ -14,7 +15,7 @@ uint32_t next_pid = 1;
 
 void tasking_install()
 {
-    asm ("cli");
+    cli();
     move_stack((void *) 0xE0000000, 0x2000);
 
     current_task = ready_queue = (task_t *) kmalloc(sizeof(task_t));
@@ -27,7 +28,7 @@ void tasking_install()
     current_task->kernel_stack = kmalloc(KERNEL_STACK_SIZE);
 
     vga_log("Installed Tasking");
-    asm ("sti");
+    sti();
 }
 
 void move_stack(void *new_stack_start, uint32_t size)
@@ -102,7 +103,7 @@ void switch_task()
 
 int fork()
 {
-    asm ("cli");
+    cli();
 
     task_t *parent_task = (task_t *) current_task;
 
@@ -129,7 +130,7 @@ int fork()
         new_task->esp = esp;
         new_task->ebp = ebp;
         new_task->eip = eip;
-        asm volatile ("sti");
+        sti();
 
         return new_task->id;
     } else {

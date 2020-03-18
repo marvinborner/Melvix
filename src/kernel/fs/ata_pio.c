@@ -81,7 +81,7 @@ uint8_t *ata_read28(struct ata_interface *interface, uint32_t sector)
 uint8_t ata_write28(struct ata_interface *interface, uint32_t sector, const uint8_t *contents)
 {
     if (sector > 0x0FFFFFFF) return 1;
-    asm ("cli");
+    cli();
 
     outb(interface->device_port, (uint8_t) ((interface->master ? 0xE0 : 0xF0) | ((sector & 0x0F000000) >> 24)));
 

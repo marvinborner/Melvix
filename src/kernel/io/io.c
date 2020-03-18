@@ -22,6 +22,21 @@ uint32_t inl(uint16_t port)
     return value;
 }
 
+void cli()
+{
+    asm volatile ("cli");
+}
+
+void sti()
+{
+    asm volatile ("sti");
+}
+
+void hlt()
+{
+    asm volatile ("hlt");
+}
+
 void outb(uint16_t port, uint8_t data)
 {
     asm ("outb %0, %1"::"a" (data), "Nd"(port));

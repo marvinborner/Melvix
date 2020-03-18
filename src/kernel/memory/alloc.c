@@ -5,13 +5,13 @@
 
 int liballoc_lock()
 {
-    // asm ("cli");
+    // cli();
     return 0;
 }
 
 int liballoc_unlock()
 {
-    // asm ("sti");
+    // sti();
     return 0;
 }
 

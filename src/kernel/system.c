@@ -103,7 +103,7 @@ const char *random_message[10] = {
 
 void panic(char *msg)
 {
-    asm ("cli");
+    cli();
     vesa_set_color(vesa_dark_red);
     kernel_time();
     serial_printf("PNC: %s - System halted!", msg);
@@ -121,9 +121,9 @@ void assert(int x)
 
 void halt_loop()
 {
-    asm ("cli");
+    cli();
     loop:
-    asm ("hlt");
+    hlt();
     goto loop;
 }
 

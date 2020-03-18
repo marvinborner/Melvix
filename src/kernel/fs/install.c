@@ -1,5 +1,6 @@
 #include <kernel/graphics/vesa.h>
 #include <kernel/fs/ata_pio.h>
+#include <kernel/io/io.h>
 #include <kernel/fs/marfs/marfs.h>
 #include <kernel/fs/iso9660/iso9660.h>
 #include <kernel/fs/atapi_pio.h>
@@ -12,7 +13,7 @@
 void install_melvix()
 {
     info("You're booting from a CD, Melvix will only run after an installation");
-    asm ("cli");
+    cli();
     struct ata_interface *primary_master = new_ata(1, 0x1F0);
     if (marfs_init(primary_master) != 0) {
         panic("No HDD found!");

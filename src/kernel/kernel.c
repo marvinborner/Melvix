@@ -34,13 +34,13 @@ void kernel_main(uint32_t initial_stack)
     set_optimal_resolution();
 
     // Install drivers
-    asm ("cli");
+    cli();
     timer_install();
     mouse_install();
     keyboard_install();
     pci_remap();
     network_install();
-    asm ("sti");
+    sti();
 
     // tasking_install();
 

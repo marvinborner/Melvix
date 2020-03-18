@@ -178,7 +178,7 @@ int acpi_install()
 
 void acpi_poweroff()
 {
-    asm ("cli");
+    cli();
     if (SCI_EN == 0) {
         warn("ACPI shutdown is not supported\n");
         return;
@@ -197,7 +197,7 @@ void acpi_poweroff()
 
 void reboot()
 {
-    asm ("cli");
+    cli();
     uint8_t good = 0x02;
     while (good & 0x02)
         good = inb(0x64);
