@@ -148,6 +148,17 @@ make_image() {
   rm install.log
 }
 
+make_sync() {
+  rm tags compile_commands.json
+  ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
+  mkdir cmake
+  cd cmake
+  cmake .. > /dev/null
+  mv compile_commands.json ..
+  cd ..
+  rm -rf cmake
+}
+
 make_clean() {
   rm -rf ./build ./iso
 }
@@ -177,6 +188,8 @@ elif [ "${mode}" = "image" ]; then
   make_clean
   make_build
   make_image
+elif [ "${mode}" = "sync" ]; then
+  make_sync
 else
   echo "Please use the following syntax:"
   echo "./run {cross | build | clean | test | debug | image}"
