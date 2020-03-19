@@ -156,7 +156,6 @@ make_sync() {
   cmake .. > /dev/null
   mv compile_commands.json ..
   cd ..
-  rm -rf cmake
 }
 
 make_clean() {

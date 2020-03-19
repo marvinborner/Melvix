@@ -6,7 +6,7 @@ compile_commands.json
 .idea/
 .clangd/
 build/
-cmake-build-debug/
+cmake/
 cross/
 cross64/
 iso/
