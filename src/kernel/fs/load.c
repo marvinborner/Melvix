@@ -50,7 +50,6 @@ void loader_init()
 	serial_printf("Setting up loader");
 	loaders = (loader_t **)kmalloc(MAX_LOADERS * sizeof(uint32_t));
 	memset(loaders, 0, MAX_LOADERS * sizeof(uint32_t));
-	// _kill();
 }
 
 void register_loader(loader_t *load)

@@ -1,6 +1,9 @@
 #ifndef MELVIX_SYSTEM_H
 #define MELVIX_SYSTEM_H
 
+#include <stdint.h>
+#include <stddef.h>
+
 /**
  * The kernel end
  */

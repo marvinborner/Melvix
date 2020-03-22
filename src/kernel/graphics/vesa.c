@@ -181,8 +181,9 @@ void set_optimal_resolution()
 		// Everything else failed :(
 		if (highest == 0)
 			switch_to_vga();
-	} else
+	} else {
 		vga_log("Mode detection succeeded");
+	}
 
 	vbe_set_mode(highest);
 
@@ -193,7 +194,6 @@ void set_optimal_resolution()
 		paging_map((uint32_t)cursor_buffer + z, (uint32_t)cursor_buffer + z,
 			   PT_PRESENT | PT_RW | PT_USED);
 	}
-	serial_printf("0x%x", fb);
 
 	if (vbe_height > 1440)
 		vesa_set_font(32);
