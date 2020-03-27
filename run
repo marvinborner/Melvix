@@ -152,10 +152,10 @@ make_sync() {
 	rm tags compile_commands.json
 	ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
 	mkdir -p cmake
-	cd cmake
+	cd cmake || exit
 	cmake .. >/dev/null
 	mv compile_commands.json ..
-	cd ..
+	cd .. || exit
 }
 
 make_tidy() {
