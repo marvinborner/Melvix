@@ -11,8 +11,8 @@ mkdir font
 cd font || exit
 wget $font_url -O temp.bdf
 bdf2c -C font.h
-bdf2c -b < temp.bdf > temp.c
-gcc -E -CC temp.c > final.h
+bdf2c -b <temp.bdf >temp.c
+gcc -E -CC temp.c >final.h
 
 sed -i -e 1,74d final.h
 sed -i -e :a -e '$d;N;2,1533ba' -e 'P;D' final.h

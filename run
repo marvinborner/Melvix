@@ -4,192 +4,201 @@ mode="${1}"
 network="rtl8139"
 
 qemu_with_flags() {
-  if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
-    # TODO: Find out why kvm install is incredibly slow
-    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial mon:stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
-  else
-    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -enable-kvm -cpu host -no-reboot -vga std -smp "$(nproc)" -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
-  fi
+	if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
+		# TODO: Find out why kvm install is incredibly slow
+		SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial mon:stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+	else
+		SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -enable-kvm -cpu host -no-reboot -vga std -smp "$(nproc)" -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+	fi
 }
 
 compile_with_flags() {
-  if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
-    GCC_COLORS=1 ccache i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@" || exit
-  else
-    GCC_COLORS=1 ccache i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter "$@" || exit
-  fi
+	if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
+		GCC_COLORS=1 ccache i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@" || exit
+	else
+		GCC_COLORS=1 ccache i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter "$@" || exit
+	fi
 
 }
 
 make_cross() {
-  if [ ! -d "./cross/" ]; then
-    # Create directory
-    mkdir -p cross
-    cd cross || exit
-    DIR=$(pwd)
+	if [ ! -d "./cross/" ]; then
+		# Create directory
+		mkdir -p cross
+		cd cross || exit
+		DIR=$(pwd)
 
-    # Get sources
-    mkdir "${DIR}/src" && cd "${DIR}/src" || exit
-    echo "Downloading..."
-    curl -sSL "https://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.xz" | tar xJ
-    curl -sSL "https://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.xz" | tar xJ
+		# Get sources
+		mkdir "${DIR}/src" && cd "${DIR}/src" || exit
+		echo "Downloading..."
+		curl -sSL "https://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.xz" | tar xJ
+		curl -sSL "https://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.xz" | tar xJ
 
-    # Prepare compiling
-    mkdir -p "${DIR}/opt/bin"
-    export PREFIX="${DIR}/opt"
-    export TARGET=i686-elf
-    export PATH="$PREFIX/bin:$PATH"
+		# Prepare compiling
+		mkdir -p "${DIR}/opt/bin"
+		export PREFIX="${DIR}/opt"
+		export TARGET=i686-elf
+		export PATH="$PREFIX/bin:$PATH"
 
-    # Compile binutils
-    mkdir "${DIR}/src/build-binutils" && cd "${DIR}/src/build-binutils" || exit
-    ../binutils-2.32/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
-    make
-    make install
+		# Compile binutils
+		mkdir "${DIR}/src/build-binutils" && cd "${DIR}/src/build-binutils" || exit
+		../binutils-2.32/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
+		make
+		make install
 
-    # Compile GCC
-    mkdir "${DIR}/src/build-gcc" && cd "${DIR}/src/build-gcc" || exit
-    ../gcc-9.2.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
-    make all-gcc
-    make all-target-libgcc
-    make install-gcc
-    make install-target-libgcc
+		# Compile GCC
+		mkdir "${DIR}/src/build-gcc" && cd "${DIR}/src/build-gcc" || exit
+		../gcc-9.2.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
+		make all-gcc
+		make all-target-libgcc
+		make install-gcc
+		make install-target-libgcc
 
-    cd "${DIR}/.." || exit
-  else
-    # Should be sourced to take effect
-    cd cross || exit
-    DIR=$(pwd)
-    export PREFIX="${DIR}/opt"
-    export TARGET=i686-elf
-    export PATH="$PREFIX/bin:$PATH"
-    cd ..
-  fi
+		cd "${DIR}/.." || exit
+	else
+		# Should be sourced to take effect
+		cd cross || exit
+		DIR=$(pwd)
+		export PREFIX="${DIR}/opt"
+		export TARGET=i686-elf
+		export PATH="$PREFIX/bin:$PATH"
+		cd ..
+	fi
 }
 
 make_build() {
-  echo "Building..."
-  mkdir -p ./build/kernel && mkdir -p ./build/userspace
+	echo "Building..."
+	mkdir -p ./build/kernel && mkdir -p ./build/userspace
 
-  # Assemble ASM files
-  find ./src/kernel/ -name \*.asm >./build/tmp
-  while read -r line; do
-    stripped=$(echo "${line}" | sed -r 's/\//_/g')
-    stripped=${stripped#??????}
-    stripped=${stripped%%???}o
-    nasm -f elf ./"${line}" -o ./build/kernel/asm_"${stripped}" || exit
-  done <./build/tmp
-  rm ./build/tmp
+	# Assemble ASM files
+	find ./src/kernel/ -name \*.asm >./build/tmp
+	while read -r line; do
+		stripped=$(echo "${line}" | sed -r 's/\//_/g')
+		stripped=${stripped#??????}
+		stripped=${stripped%%???}o
+		nasm -f elf ./"${line}" -o ./build/kernel/asm_"${stripped}" || exit
+	done <./build/tmp
+	rm ./build/tmp
 
-  # Make all kernel C files
-  find ./src/kernel/ -name \*.c >./build/tmp
-  while read -r line; do
-    stripped=$(echo "${line}" | sed -r 's/\//_/g')
-    stripped=${stripped#??????}
-    stripped=${stripped%%?}o
-    compile_with_flags -Os -s -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}"
-  done <./build/tmp
-  rm ./build/tmp
+	# Make all kernel C files
+	find ./src/kernel/ -name \*.c >./build/tmp
+	while read -r line; do
+		stripped=$(echo "${line}" | sed -r 's/\//_/g')
+		stripped=${stripped#??????}
+		stripped=${stripped%%?}o
+		compile_with_flags -Os -s -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}"
+	done <./build/tmp
+	rm ./build/tmp
 
-  # Link kernel ASM and C objects
-  compile_with_flags -Os -s ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin
+	# Link kernel ASM and C objects
+	compile_with_flags -Os -s ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin
 
-  # Modules
-  # TODO: Find out why no font optimizations cause strange glitches
-  compile_with_flags -Os -c ./src/resources/font.c -o ./build/font.o
-  i686-elf-objcopy -O binary ./build/font.o ./build/font.bin
-  rm ./build/font.o
+	# Modules
+	# TODO: Find out why no font optimizations cause strange glitches
+	compile_with_flags -Os -c ./src/resources/font.c -o ./build/font.o
+	i686-elf-objcopy -O binary ./build/font.o ./build/font.bin
+	rm ./build/font.o
 
-  # Userspace
-  # TODO: Find out why userspace optimizations (-Os) cause fatal errors
-  find ./src/userspace/ -name \*.c >./build/tmp
-  while read -r line; do
-    stripped=$(echo "${line}" | sed -r 's/\//_/g')
-    stripped=${stripped#??????}
-    stripped=${stripped%%?}o
-    compile_with_flags -O2 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}"
-  done <./build/tmp
-  rm ./build/tmp
-  compile_with_flags -emain -O2 ./build/userspace/*.o -I ./src/userspace -o ./build/user.bin
+	# Userspace
+	# TODO: Find out why userspace optimizations (-Os) cause fatal errors
+	find ./src/userspace/ -name \*.c >./build/tmp
+	while read -r line; do
+		stripped=$(echo "${line}" | sed -r 's/\//_/g')
+		stripped=${stripped#??????}
+		stripped=${stripped%%?}o
+		compile_with_flags -O2 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}"
+	done <./build/tmp
+	rm ./build/tmp
+	compile_with_flags -emain -O2 ./build/userspace/*.o -I ./src/userspace -o ./build/user.bin
 
-  # Create ISO
-  mkdir -p ./iso/boot/
-  mv ./build/melvix.bin ./iso/boot/kernel.bin
-  nasm ./src/bootloader/cd.asm -f bin -o ./iso/boot/cd.bin || exit
-  nasm ./src/bootloader/hdd1.asm -f bin -o ./iso/boot/hdd1.bin || exit
-  nasm ./src/bootloader/hdd2.asm -f bin -o ./iso/boot/hdd2.bin || exit
-  cp ./build/user.bin ./iso/user.bin || exit
-  cp ./build/font.bin ./iso/font.bin || exit
-  genisoimage -quiet -input-charset utf-8 -no-emul-boot -b boot/cd.bin -o ./build/melvix.iso ./iso
-  head -c 10485760 /dev/zero >./build/hdd10M.img
+	# Create ISO
+	mkdir -p ./iso/boot/
+	mv ./build/melvix.bin ./iso/boot/kernel.bin
+	nasm ./src/bootloader/cd.asm -f bin -o ./iso/boot/cd.bin || exit
+	nasm ./src/bootloader/hdd1.asm -f bin -o ./iso/boot/hdd1.bin || exit
+	nasm ./src/bootloader/hdd2.asm -f bin -o ./iso/boot/hdd2.bin || exit
+	cp ./build/user.bin ./iso/user.bin || exit
+	cp ./build/font.bin ./iso/font.bin || exit
+	genisoimage -quiet -input-charset utf-8 -no-emul-boot -b boot/cd.bin -o ./build/melvix.iso ./iso
+	head -c 10485760 /dev/zero >./build/hdd10M.img
 
-  printf "Build finshed successfully!\n\n"
+	printf "Build finshed successfully!\n\n"
 }
 
 make_test() {
-  qemu_with_flags -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
+	qemu_with_flags -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
 }
 
 make_debug() {
-  qemu_with_flags -s -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
+	qemu_with_flags -s -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
 }
 
 make_image_debug() {
-  qemu_with_flags -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
-  qemu_with_flags -drive file=./build/hdd10M.img,format=raw
+	qemu_with_flags -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw
+	qemu_with_flags -drive file=./build/hdd10M.img,format=raw
 }
 
 make_image() {
-  start=$(date +%s.%N)
-  qemu_with_flags -nographic -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw >install.log
-  end=$(date +%s.%N)
-  cat install.log
-  printf "[LOG END]\n\n"
-  tail install.log | grep -q "Installation successful!" && echo Booted and installed within "$(echo "$end - $start" | bc -l)" seconds || echo Installation failed!
-  rm install.log
+	start=$(date +%s.%N)
+	qemu_with_flags -nographic -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw >install.log
+	end=$(date +%s.%N)
+	cat install.log
+	printf "[LOG END]\n\n"
+	tail install.log | grep -q "Installation successful!" && echo Booted and installed within "$(echo "$end - $start" | bc -l)" seconds || echo Installation failed!
+	rm install.log
 }
 
 make_sync() {
-  rm tags compile_commands.json
-  ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
-  mkdir cmake
-  cd cmake
-  cmake .. > /dev/null
-  mv compile_commands.json ..
-  cd ..
+	rm tags compile_commands.json
+	ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
+	mkdir -p cmake
+	cd cmake
+	cmake .. >/dev/null
+	mv compile_commands.json ..
+	cd ..
+}
+
+make_tidy() {
+	find ./src -type f -name "*.sh" | xargs -l -i sh -c 'shfmt -w {}'
+	shfmt -w ./run
+	find ./src -type f -regex '.*\.\(c\|h\)' -exec clang-format -i {} \;
+	find ./src -type f | xargs -l -i sh -c 'printf %s "$(< {})" > {}'
 }
 
 make_clean() {
-  rm -rf ./build ./iso
+	rm -rf ./build ./iso
 }
 
 if [ "${mode}" = "cross" ]; then
-  make_cross
+	make_cross
 elif [ "${mode}" = "build" ]; then
-  make_cross
-  make_clean
-  make_build
+	make_cross
+	make_clean
+	make_build
 elif [ "${mode}" = "clean" ]; then
-  make_clean
+	make_clean
 elif [ "${mode}" = "test" ]; then
-  make_cross
-  make_clean
-  make_build
-  make_test
+	make_cross
+	make_clean
+	make_build
+	make_test
 elif [ "${mode}" = "debug" ]; then
-  make_debug
+	make_debug
 elif [ "${mode}" = "image_debug" ]; then
-  make_cross
-  make_clean
-  make_build
-  make_image_debug
+	make_cross
+	make_clean
+	make_build
+	make_image_debug
 elif [ "${mode}" = "image" ]; then
-  make_cross
-  make_clean
-  make_build
-  make_image
+	make_cross
+	make_clean
+	make_build
+	make_image
 elif [ "${mode}" = "sync" ]; then
-  make_sync
+	make_sync
+elif [ "${mode}" = "tidy" ]; then
+	make_tidy
 else
-  echo "Please use the following syntax:"
-  echo "./run {cross | build | clean | test | debug | image}"
+	echo "Please use the following syntax:"
+	echo "./run {cross | build | clean | test | debug | image}"
 fi
