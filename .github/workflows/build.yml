@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Install
-        run: sudo apt-get update && sudo apt-get install -y build-essential ccache curl nasm genisoimage qemu qemu-kvm mtools
+        run: sudo apt-get update && sudo apt-get install -y build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo libcloog-isl-dev libisl-0.18-dev ccache curl nasm genisoimage qemu qemu-kvm mtools
       - name: Get cross compiler
         id: cache-cross
         uses: actions/cache@v1
@@ -21,9 +21,7 @@ jobs:
           key: ${{ runner.os }}-cross
       - name: Build cross compiler
         if: steps.cache-cross.outputs.cache-hit != 'true'
-        run: |
-          sudo apt-get install -y bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo libcloog-isl-dev libisl-0.18-dev curl
-          sh run cross
+        run: sh run cross
       - name: Build
         run: sh run build
       - name: Test install
