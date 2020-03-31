@@ -68,4 +68,3 @@ void kernel_main(uint32_t initial_stack)
 
 	// asm ("div %0" :: "r"(0)); // Exception testing x/0
 }
-

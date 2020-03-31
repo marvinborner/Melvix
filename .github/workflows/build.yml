@@ -1,12 +1,12 @@
 name: Project build
 
-on: push
-
-jobs:
-  build:
+on:
+  push:
     paths:
     - 'src/**'
 
+jobs:
+  build:
     runs-on: ubuntu-latest
 
     steps:
