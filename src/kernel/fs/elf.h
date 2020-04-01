@@ -48,6 +48,7 @@ typedef struct {
 	uint32_t align;
 } elf_program_header_t;
 
-void elf_init();
+int is_elf(char *data);
+uint32_t load_elf(char *elf_data);
 
 #endif
