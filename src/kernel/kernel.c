@@ -57,12 +57,10 @@ void kernel_main(uint32_t initial_stack)
 		install_melvix();
 #endif
 
-	loader_init();
-	elf_init();
-	exec_start((uint8_t *)userspace);
+	load_elf((char *)userspace);
 
-	//    syscalls_install();
-	//    exec(userspace);
+	// syscalls_install();
+	// exec(userspace);
 
 	panic("This should NOT happen!");
 

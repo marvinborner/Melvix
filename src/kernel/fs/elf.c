@@ -40,13 +40,13 @@ uint32_t load_elf(char *elf_data)
 			v_begin = p_entry->vaddr;
 			v_end = p_entry->vaddr + p_entry->memsz;
 			if (v_begin < USER_OFFSET) {
-				printf("INFO: load_elf(): can't load executable below %x\n",
+				warn("load_elf(): can't load executable below %x\n",
 				       USER_OFFSET);
 				return 0;
 			}
 
 			if (v_end > USER_STACK) {
-				printf("INFO: load_elf(): can't load executable above %x\n",
+				warn("load_elf(): can't load executable above %x\n",
 				       USER_STACK);
 				return 0;
 			}
