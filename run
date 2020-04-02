@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+cd "$(dirname "$0")" || exit
+
 mode="${1}"
 network="rtl8139"
 
@@ -144,7 +146,7 @@ make_image() {
 	end=$(date +%s.%N)
 	cat install.log
 	printf "[LOG END]\n\n"
-	tail install.log | grep -q "Installation successful!" && echo Booted and installed within "$(echo "$end - $start" | bc -l)" seconds || echo Installation failed!
+	tail install.log | grep -q "Installation successful!" && echo Booted and installed within "$(echo "$end - $start" | bc -l)" seconds || echo Installation failed! && exit
 	rm install.log
 }
 
