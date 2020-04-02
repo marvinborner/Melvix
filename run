@@ -167,6 +167,12 @@ make_tidy() {
 	find ./src -type f | xargs -l -i sh -c 'printf %s "$(< {})" > {}'
 }
 
+make_font() {
+	cd ./src/resources/ || exit 1
+	sh conv.sh
+	cd ../../ || exit 1
+}
+
 make_clean() {
 	rm -rf ./build ./iso
 }
@@ -200,7 +206,10 @@ elif [ "${mode}" = "sync" ]; then
 	make_sync
 elif [ "${mode}" = "tidy" ]; then
 	make_tidy
+elif [ "${mode}" = "font" ]; then
+	make_font
+	make_tidy
 else
 	echo "Please use the following syntax:"
-	echo "./run {cross | build | clean | test | debug | image}"
+	echo "./run {cross | build | clean | test | debug | image | sync | tidy | font}"
 fi
