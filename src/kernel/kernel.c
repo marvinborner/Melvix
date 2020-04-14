@@ -57,10 +57,7 @@ void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
 	serial_printf("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
 
 #ifdef INSTALL_MELVIX
-#include <kernel/fs/install.h>
-	serial_printf("Install flag given!");
-	if ((*((uint8_t *)0x9000)) == 0xE0)
-		install_melvix();
+	panic("Installation isn't supported right now!");
 #endif
 
 	// load_elf((char *)userspace);

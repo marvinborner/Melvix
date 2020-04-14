@@ -1,5 +1,4 @@
 #include <kernel/fs/load.h>
-#include <kernel/fs/marfs/marfs.h>
 #include <kernel/fs/ata_pio.h>
 #include <kernel/fs/atapi_pio.h>
 #include <kernel/system.h>
@@ -14,10 +13,7 @@ void load_binaries()
 	font = (struct font *)kmalloc(100000); // High quality shit
 
 	if (multiboot_header->boot_device != 0xE0FFFFFF) {
-		struct ata_interface *primary_master = new_ata(1, 0x1F0);
-		marfs_init(primary_master);
-		marfs_read_whole_file(4, (uint8_t *)userspace);
-		marfs_read_whole_file(5, (uint8_t *)font);
+		panic("Unsupported boot drive!");
 	} else {
 		char *font_p[] = { "FONT.BIN" };
 		struct iso9660_entity *font_e = ISO9660_get(font_p, 1);
