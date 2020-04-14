@@ -1,3 +1,4 @@
+#include <kernel/multiboot.h>
 #include <kernel/graphics/vesa.h>
 #include <kernel/gdt/gdt.h>
 #include <kernel/interrupts/interrupts.h>
@@ -15,20 +16,24 @@
 #include <kernel/fs/elf.h>
 #include <kernel/lib/stdio.h>
 
-void kernel_main(uint32_t initial_stack)
+void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
 {
-	initial_esp = initial_stack;
+	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
+		vga_log("Invalid boot magic!");
+		halt_loop();
+	}
 	vga_log("Installing basic features of Melvix...");
 
 	// Install features
-	memory_init();
 	gdt_install();
 	init_serial();
 	acpi_install();
 	idt_install();
 	isrs_install();
 	irq_install();
+	memory_init(grub_header);
 	paging_install();
+	memory_print();
 
 	load_binaries();
 	set_optimal_resolution();
@@ -49,6 +54,7 @@ void kernel_main(uint32_t initial_stack)
 
 	// Print total memory
 	info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
+	serial_printf("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
 
 #ifdef INSTALL_MELVIX
 #include <kernel/fs/install.h>
@@ -57,12 +63,12 @@ void kernel_main(uint32_t initial_stack)
 		install_melvix();
 #endif
 
-	load_elf((char *)userspace);
+	// load_elf((char *)userspace);
 
 	// syscalls_install();
 	// exec(userspace);
 
-	panic("This should NOT happen!");
+	// panic("This should NOT happen!");
 
 	// asm ("div %0" :: "r"(0)); // Exception testing x/0
 }

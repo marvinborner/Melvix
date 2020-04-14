@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <kernel/multiboot.h>
 
 /**
  * Copy n data from src to dest
@@ -31,7 +32,9 @@ void *memset(void *dest, char val, size_t count);
  */
 int memcmp(const void *a_ptr, const void *b_ptr, size_t size);
 
-void memory_init();
+void memory_init(multiboot_info_t *grub_header);
+
+void memory_print();
 
 uint32_t memory_get_all();
 

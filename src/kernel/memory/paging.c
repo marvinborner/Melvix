@@ -2,6 +2,7 @@
 #include <kernel/memory/paging.h>
 #include <kernel/system.h>
 #include <kernel/lib/lib.h>
+#include <kernel/io/io.h>
 
 int paging_enabled = 0;
 
@@ -40,7 +41,6 @@ void paging_install()
 	paging_set_used(0, ((uint32_t)ASM_KERNEL_END >> 12) + 1); // /4096
 
 	paging_enable();
-
 	vga_log("Installed paging");
 }
 

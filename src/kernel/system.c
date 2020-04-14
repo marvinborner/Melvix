@@ -28,6 +28,7 @@ void vga_log(char *msg)
 	uint16_t *terminal_buffer = (uint16_t *)0xB8000;
 	for (size_t i = 0; i < strlen(msg); i++)
 		terminal_buffer[line * 80 + i] = (uint16_t)msg[i] | (uint16_t)0x700;
+	serial_printf(msg);
 	char string[80];
 	strcpy(string, "[");
 	strcat(string, itoa((int)get_time()));

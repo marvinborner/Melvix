@@ -1,3 +1,15 @@
+%define ALIGN    1 ; Align loaded modules on page boundaries
+%define MEMINFO  2 ; Provide memory map
+%define FLAGS    3 ; Flags (ALIGN | MEMINFO)
+%define MAGIC    0x1BADB002
+%define CHECKSUM -(MAGIC + FLAGS)
+
+section .multiboot
+    align 4
+    dd MAGIC
+    dd FLAGS
+    dd CHECKSUM
+
 section .start_section
     dd _start
 
@@ -15,7 +27,9 @@ section .text
     global _start
     extern kernel_main
     _start:
-        push esp
+        mov esp, STACK_TOP
+        push ebx
+        push eax
         cli
         call kernel_main
         cli

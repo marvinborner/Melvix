@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <kernel/multiboot.h>
 
 /**
  * The kernel end
@@ -13,6 +14,11 @@ extern void ASM_KERNEL_END();
  * The initial stack pointer
  */
 uint32_t initial_esp;
+
+/**
+ * Multiboot structure pointer by grub
+ */
+multiboot_info_t *multiboot_header;
 
 /**
  * Initialize the basic features of the OS

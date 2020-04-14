@@ -13,8 +13,7 @@ void load_binaries()
 	userspace = (uint32_t)kmalloc(10000);
 	font = (struct font *)kmalloc(100000); // High quality shit
 
-	uint8_t boot_drive_id = (uint8_t)(*((uint8_t *)0x9000));
-	if (boot_drive_id != 0xE0) {
+	if (multiboot_header->boot_device != 0xE0FFFFFF) {
 		struct ata_interface *primary_master = new_ata(1, 0x1F0);
 		marfs_init(primary_master);
 		marfs_read_whole_file(4, (uint8_t *)userspace);
@@ -33,6 +32,11 @@ void load_binaries()
 			panic("Userspace binary not found!");
 		ATAPI_granular_read(1 + (user_e->length / 2048), user_e->lba, (uint8_t *)userspace);
 		kfree(user_e);
+
+		if (font->magic != 0xf0f0f0f0) {
+			serial_printf("0x%x: WRONG FONT MAGIC!", font->magic);
+			halt_loop();
+		}
 	}
 	vga_log("Successfully loaded binaries");
 }
