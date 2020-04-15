@@ -765,6 +765,7 @@ void ext2_init(char *device_path, char *mountpoint)
 	ext2fs->sb = kmalloc(SUPERBLOCK_SIZE);
 	ext2fs->block_size = 1024;
 	read_disk_block(ext2fs, 1, (void *)ext2fs->sb);
+	log("%x", ext2fs->sb->ext2_magic);
 	ext2fs->block_size = (1024 << ext2fs->sb->log2block_size);
 	ext2fs->blocks_per_group = ext2fs->sb->blocks_per_group;
 	ext2fs->inodes_per_group = ext2fs->sb->inodes_per_group;

@@ -269,7 +269,7 @@ void ata_device_detect(ata_dev_t *dev, int primary)
 		pci_write_field(ata_device, PCI_COMMAND, pci_command_reg);
 	}
 
-	log("Detected drive: %d", dev->drive);
+	log("Detected drive: %s", dev->mountpoint);
 	vfs_mount(dev->mountpoint, create_ata_device(dev));
 }
 

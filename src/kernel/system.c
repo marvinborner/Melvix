@@ -42,49 +42,40 @@ void vga_log(char *msg)
 
 void _debug(const char *f, const char *fmt, ...)
 {
-	vesa_set_color(vesa_dark_white);
-	printf("[%s] DBG: ", f);
-
+	serial_printf(MAG "[%s] " RES, f);
 	va_list args;
 	va_start(args, fmt);
-	vprintf(fmt, args);
+	serial_vprintf(fmt, args);
 	va_end(args);
 
-	vesa_set_color(default_text_color);
-	writec('\n');
+	serial_put('\n');
 }
 
 void _info(const char *f, const char *fmt, ...)
 {
-	vesa_set_color(vesa_blue);
-	printf("[%s] INF: ", f);
-
+	serial_printf(BLU "[%s] " RES, f);
 	va_list args;
 	va_start(args, fmt);
-	vprintf(fmt, args);
+	serial_vprintf(fmt, args);
 	va_end(args);
 
-	vesa_set_color(default_text_color);
-	writec('\n');
+	serial_put('\n');
 }
 
 void _warn(const char *f, const char *fmt, ...)
 {
-	vesa_set_color(vesa_dark_yellow);
-	printf("[%s] WRN: ", f);
-
+	serial_printf(YEL "[%s] " RES, f);
 	va_list args;
 	va_start(args, fmt);
-	vprintf(fmt, args);
+	serial_vprintf(fmt, args);
 	va_end(args);
 
-	vesa_set_color(default_text_color);
-	writec('\n');
+	serial_put('\n');
 }
 
 void _log(const char *f, const char *fmt, ...)
 {
-	serial_printf("\x1B[34m[%s]\x1B[37m ", f);
+	serial_printf(CYN "[%s] " RES, f);
 	va_list args;
 	va_start(args, fmt);
 	serial_vprintf(fmt, args);
@@ -107,8 +98,7 @@ const char *random_message[10] = { "Uh... Did I do that?",
 void _panic(const char *f, const char *msg)
 {
 	cli();
-	vesa_set_color(vesa_dark_red);
-	_log(f, "PNC: %s - System halted!", msg);
+	_log(f, RED "PNC: %s - System halted!" RES, msg);
 	printf("[%s] PNC: %s - System halted!\n\n", f, msg);
 	printf("> %s", random_message[get_time() % 10]);
 	halt_loop();
