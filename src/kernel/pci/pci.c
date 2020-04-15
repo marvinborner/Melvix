@@ -3,7 +3,7 @@
 #include <kernel/io/io.h>
 #include <kernel/lib/lib.h>
 
-void pci_write_field(uint32_t device, int field, int size, uint32_t value)
+void pci_write_field(uint32_t device, int field, uint32_t value)
 {
 	outl(PCI_ADDRESS_PORT, pci_get_addr(device, field));
 	outl(PCI_VALUE_PORT, value);
@@ -107,7 +107,7 @@ void pci_remap()
 		}
 		uint32_t out = 0;
 		memcpy(&out, &pci_remaps, 4);
-		pci_write_field(pci_isa, 0x60, 4, out);
+		pci_write_field(pci_isa, 0x60, out);
 	}
 }
 
@@ -123,15 +123,15 @@ int pci_get_interrupt(uint32_t device)
 		if (pci_remaps[pirq] >= 0x80) {
 			if (int_line == 0xFF) {
 				int_line = 10;
-				pci_write_field(device, PCI_INTERRUPT_LINE, 1, (uint32_t)int_line);
+				pci_write_field(device, PCI_INTERRUPT_LINE, (uint32_t)int_line);
 			}
 			pci_remaps[pirq] = (uint8_t)int_line;
 			uint32_t out = 0;
 			memcpy(&out, &pci_remaps, 4);
-			pci_write_field(pci_isa, 0x60, 4, out);
+			pci_write_field(pci_isa, 0x60, out);
 			return int_line;
 		}
-		pci_write_field(device, PCI_INTERRUPT_LINE, 1, pci_remaps[pirq]);
+		pci_write_field(device, PCI_INTERRUPT_LINE, pci_remaps[pirq]);
 		return pci_remaps[pirq];
 	} else {
 		return (int)pci_read_field(device, PCI_INTERRUPT_LINE, 1);

@@ -1,8 +1,5 @@
 #include <kernel/fs/load.h>
-#include <kernel/fs/ata_pio.h>
-#include <kernel/fs/atapi_pio.h>
 #include <kernel/system.h>
-#include <kernel/fs/iso9660/iso9660.h>
 #include <kernel/memory/alloc.h>
 #include <kernel/lib/stdio.h>
 #include <kernel/lib/lib.h>
@@ -15,6 +12,7 @@ void load_binaries()
 	if (multiboot_header->boot_device != 0xE0FFFFFF) {
 		panic("Unsupported boot drive!");
 	} else {
+		/*
 		char *font_p[] = { "FONT.BIN" };
 		struct iso9660_entity *font_e = ISO9660_get(font_p, 1);
 		if (!font_e)
@@ -33,6 +31,7 @@ void load_binaries()
 			serial_printf("0x%x: WRONG FONT MAGIC!", font->magic);
 			halt_loop();
 		}
+		*/
 	}
 	vga_log("Successfully loaded binaries");
 }

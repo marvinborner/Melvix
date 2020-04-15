@@ -120,13 +120,35 @@ make_build() {
 	cp ./build/user.bin ./iso/user.bin
 	cp ./build/font.bin ./iso/font.bin
 	grub-mkrescue -o ./build/melvix.iso ./iso/
-	head -c 10485760 /dev/zero >./build/hdd10M.img
+	dd if=/dev/zero of=./build/ext2_hda.img bs=1k count=100000 > /dev/zero
+	mkfs -t ext2 -i 1024 -b 1024 -F ./build/ext2_hda.img > /dev/zero
+	fdisk ./build/ext2_hda.img <<EOF 
+x
+c
+10
+h
+16
+s
+63
+r
+n
+p
+1
+2048
+199999
+a
+w
+EOF
+
+	cp ./build/ext2_hda.img ./build/ext2_hdb.img
+	cp ./build/ext2_hda.img ./build/ext2_hdc.img
+	cp ./build/ext2_hda.img ./build/ext2_hdd.img
 
 	printf "Build finshed successfully!\n\n"
 }
 
 make_test() {
-	qemu_with_flags -cdrom ./build/melvix.iso #-drive file=./build/hdd10M.img,format=raw
+	qemu_with_flags -cdrom ./build/melvix.iso -hda ./build/ext2_hda.img -boot d
 }
 
 make_debug() {

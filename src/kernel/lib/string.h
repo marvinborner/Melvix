@@ -15,8 +15,14 @@ void strcati(char *dest, const char *orig);
 
 char strcmp(const char *a, const char *b);
 
+int strncmp(const char *s1, const char *s2, int c);
+
 char *strdup(const char *orig);
 
 void strinv(char *str);
+
+char *strstr(const char *in, const char *str);
+
+char *strsep(char **stringp, const char *delim);
 
 #endif

@@ -76,6 +76,12 @@ void info(const char *fmt, ...);
 void warn(const char *fmt, ...);
 
 /**
+ * Log into serial console
+ * @param msg The log string
+ */
+void log(const char *fmt, ...);
+
+/**
  * Halt the entire system and display a message
  * TODO: Add line number and file name
  * @param msg The error cause/reason

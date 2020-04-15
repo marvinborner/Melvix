@@ -15,6 +15,9 @@
 #include <kernel/fs/load.h>
 #include <kernel/fs/elf.h>
 #include <kernel/lib/stdio.h>
+#include <kernel/fs/ata.h>
+#include <kernel/fs/ext2/ext2.h>
+#include <kernel/fs/vfs/vfs.h>
 
 void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
 {
@@ -47,6 +50,9 @@ void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
 	network_install();
 	sti();
 
+	vfs_init();
+	ata_init();
+	ext2_init("/dev/hda", "/");
 	// tasking_install();
 
 	// Get hardware information

@@ -42,7 +42,7 @@ int rtl8139_init(void)
 		if (command_reg & (1 << 2)) {
 		} else {
 			command_reg |= (1 << 2);
-			pci_write_field(rtl_device_pci, PCI_COMMAND, 4, command_reg);
+			pci_write_field(rtl_device_pci, PCI_COMMAND, command_reg);
 		}
 
 		rtl_irq = pci_get_interrupt(rtl_device_pci);

@@ -90,6 +90,14 @@ void warn(const char *fmt, ...)
 	writec('\n');
 }
 
+void log(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	serial_printf(fmt, args);
+	va_end(args);
+}
+
 const char *random_message[10] = { "Uh... Did I do that?",
 				   "Layer 8 problem!",
 				   "Oops.",
