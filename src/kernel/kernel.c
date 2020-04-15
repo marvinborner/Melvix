@@ -50,6 +50,7 @@ void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
 	network_install();
 	sti();
 
+	log("%x", 0x42);
 	vfs_init();
 	ata_init();
 	ext2_init("/dev/hda", "/");
@@ -60,7 +61,7 @@ void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
 
 	// Print total memory
 	info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
-	serial_printf("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
+	log("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
 
 #ifdef INSTALL_MELVIX
 	panic("Installation isn't supported right now!");

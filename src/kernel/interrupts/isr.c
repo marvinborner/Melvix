@@ -110,10 +110,9 @@ void fault_handler(struct regs *r)
 		uint32_t faulting_address;
 		asm("mov %%cr2, %0" : "=r"(faulting_address));
 
-		serial_printf(
-			"\n[DEBUG]\nEIP: 0x%x\nEAX: 0x%x\nEBX: 0x%x\nECX: 0x%x\nEDX: 0x%x\nESP: 0x%x\nFault addr: 0x%x\nErr flag: 0x%x\nErr code: 0x%x\nINT code: 0x%x\nINT msg: %s",
-			r->eip, r->eax, r->ebx, r->ecx, r->edx, r->esp, faulting_address, r->eflags,
-			r->err_code, r->int_no, exception_messages[r->int_no]);
+		log("\n[DEBUG]\nEIP: 0x%x\nEAX: 0x%x\nEBX: 0x%x\nECX: 0x%x\nEDX: 0x%x\nESP: 0x%x\nFault addr: 0x%x\nErr flag: 0x%x\nErr code: 0x%x\nINT code: 0x%x\nINT msg: %s",
+		    r->eip, r->eax, r->ebx, r->ecx, r->edx, r->esp, faulting_address, r->eflags,
+		    r->err_code, r->int_no, exception_messages[r->int_no]);
 
 		if (r->int_no <= 32) {
 			char *message = (char *)exception_messages[r->int_no];

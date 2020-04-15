@@ -14,7 +14,7 @@ int is_elf(char *elf_data)
 	elf_header_t *header = (elf_header_t *)elf_data;
 	if (header->ident[0] == 0x7f && header->ident[1] == 'E' && header->ident[2] == 'L' &&
 	    header->ident[3] == 'F') {
-		serial_printf("Buffer is valid ELF file!");
+		log("Buffer is valid ELF file!");
 		return 1;
 	}
 	return 0;

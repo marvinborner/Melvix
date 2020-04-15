@@ -89,15 +89,15 @@ int acpi_enable()
 			if (i < 300) {
 				return 0; // Successfully enabled ACPI
 			} else {
-				serial_printf("ACPI couldn't be enabled!");
+				log("ACPI couldn't be enabled!");
 				return -1; // ACPI couldn't be enabled
 			}
 		} else {
-			serial_printf("ACPI is not supported!");
+			log("ACPI is not supported!");
 			return -1; // ACPI is not supported
 		}
 	} else {
-		serial_printf("ACPI was already enabled!");
+		log("ACPI was already enabled!");
 		return 0; // ACPI was already enabled
 	}
 }
@@ -166,15 +166,15 @@ int acpi_install()
 			}
 			if (memcmp((unsigned int *)*ptr, "HPET", 4) == 0) {
 				hpet = (struct HPET *)*ptr;
-				//serial_printf("%c%c%c%c", hpet->signature[0], hpet->signature[1],
+				//log("%c%c%c%c", hpet->signature[0], hpet->signature[1],
 				//hpet->signature[2], hpet->signature[3]);
-				//serial_printf("%d", hpet->legacy_replacement);
-				//serial_printf("%d", hpet->address.address);
+				//log("%d", hpet->legacy_replacement);
+				//log("%d", hpet->address.address);
 			}
 			ptr++;
 		} // Else: no valid FADT present
 	} else {
-		serial_printf("ACPI is not supported!");
+		log("ACPI is not supported!");
 	}
 
 	return success == 1 ? 0 : -1;

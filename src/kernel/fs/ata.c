@@ -3,6 +3,7 @@
 #include <kernel/fs/ata.h>
 #include <kernel/lib/lib.h>
 #include <kernel/lib/stdlib.h>
+#include <kernel/lib/stdio.h>
 #include <kernel/memory/alloc.h>
 #include <kernel/pci/pci.h>
 #include <kernel/interrupts/interrupts.h>
@@ -239,14 +240,14 @@ void ata_device_detect(ata_dev_t *dev, int primary)
 
 	outb(dev->command, COMMAND_IDENTIFY);
 	if (!inb(dev->status)) {
-		log("ata_detect_device: device does not exist");
+		log("Device does not exist");
 		return;
 	}
 
 	uint8_t lba_lo = inb(dev->lba_lo);
 	uint8_t lba_hi = inb(dev->lba_high);
 	if (lba_lo != 0 || lba_hi != 0) {
-		log("ata_detect_device: not ata device");
+		log("Device is not ata-compatible");
 		return;
 	}
 	uint8_t drq = 0, err = 0;
@@ -255,7 +256,7 @@ void ata_device_detect(ata_dev_t *dev, int primary)
 		err = inb(dev->status) & STATUS_ERR;
 	}
 	if (err) {
-		log("ata_detect_device: err when polling");
+		log("Error while polling");
 		return;
 	}
 
@@ -268,6 +269,7 @@ void ata_device_detect(ata_dev_t *dev, int primary)
 		pci_write_field(ata_device, PCI_COMMAND, pci_command_reg);
 	}
 
+	log("Detected drive: %d", dev->drive);
 	vfs_mount(dev->mountpoint, create_ata_device(dev));
 }
 
@@ -279,7 +281,10 @@ void ata_find(uint32_t device, uint16_t vendor_id, uint16_t device_id, void *ext
 
 void ata_init()
 {
+	log("0x%x", ata_device);
 	pci_scan(&ata_find, -1, &ata_device);
+	serial_printf("0x%x - ", ata_device);
+	log("0x%x", ata_device);
 
 	irq_install_handler(32 + 14, ata_handler);
 

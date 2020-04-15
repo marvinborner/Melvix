@@ -769,29 +769,21 @@ void ext2_init(char *device_path, char *mountpoint)
 	ext2fs->blocks_per_group = ext2fs->sb->blocks_per_group;
 	ext2fs->inodes_per_group = ext2fs->sb->inodes_per_group;
 
-	ext2fs->total_groups = ext2fs->sb->total_blocks / ext2fs->blocks_per_group; // REMEMBER: Zero Division Exception
-	log("9");
+	ext2fs->total_groups = ext2fs->sb->total_blocks /
+			       ext2fs->blocks_per_group; // REMEMBER: Zero Division Exception
 	if (ext2fs->blocks_per_group * ext2fs->total_groups < ext2fs->total_groups)
 		ext2fs->total_groups++;
-	log("10");
 
 	ext2fs->bgd_blocks = (ext2fs->total_groups * sizeof(bgd_t)) / ext2fs->block_size;
-	log("11");
 	if (ext2fs->bgd_blocks * ext2fs->block_size < ext2fs->total_groups * sizeof(bgd_t))
 		ext2fs->bgd_blocks++;
-	log("12");
 
 	ext2fs->bgds = kcalloc(sizeof(bgd_t), ext2fs->bgd_blocks * ext2fs->block_size);
-	log("13");
 	for (uint32_t i = 0; i < ext2fs->bgd_blocks; i++) {
 		read_disk_block(ext2fs, 2, (void *)ext2fs->bgds + i * ext2fs->block_size);
 	}
-	log("14");
 
 	inode_t *root_inode = kcalloc(sizeof(inode_t), 1);
-	log("15");
 	read_inode_metadata(ext2fs, root_inode, ROOT_INODE_NUMBER);
-	log("16");
 	vfs_mount(mountpoint, get_ext2_root(ext2fs, root_inode));
-	log("17");
 }

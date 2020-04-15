@@ -49,5 +49,5 @@ struct smbios_entry *get_smbios()
 void smbios_table(struct smbios_header *header)
 {
 	// struct smbios_0 *table = (struct smbios_0 *) (header + sizeof(struct smbios_header));
-	// serial_printf("\n\n %d", table->bios_version);
+	// log("\n\n %d", table->bios_version);
 }

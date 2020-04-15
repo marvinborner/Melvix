@@ -20,7 +20,7 @@ void find_rtl(uint32_t device, uint16_t vendor_id, uint16_t device_id, void *ext
 
 void rtl8139_irq_handler(struct regs *r)
 {
-	serial_printf("RTL INT!");
+	log("RTL INT!");
 	uint16_t status = inw((uint16_t)(rtl_iobase + 0x3E));
 	if (!status)
 		return;
@@ -28,7 +28,7 @@ void rtl8139_irq_handler(struct regs *r)
 
 	if (status & 0x01 || status & 0x02) {
 		while ((inw((uint16_t)(rtl_iobase + 0x37)) & 0x01) == 0) {
-			serial_printf("RECEIVE");
+			log("RECEIVE");
 			// RECEIVE
 		}
 	}

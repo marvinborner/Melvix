@@ -52,48 +52,46 @@ char *vga_buffer;
 void vga_log(char *msg);
 
 /**
- * Print the current kernel time
- */
-void kernel_time();
-
-/**
  * Display a general log message
- * @param msg The message
+ * @param fmt The message
  */
-void debug(const char *fmt, ...);
+void _debug(const char *f, const char *fmt, ...);
+#define debug(fmt, ...) _debug(__func__, fmt, ##__VA_ARGS__)
 
 /**
  * Display an information message
- * @param msg The information
+ * @param fmt The information
  */
-void info(const char *fmt, ...);
+void _info(const char *f, const char *fmt, ...);
+#define info(fmt, ...) _info(__func__, fmt, ##__VA_ARGS__)
 
 /**
  * Display a warning message
- * TODO: Add line number and file name
- * @param msg The warning cause/reason
+ * @param fmt The warning cause/reason
  */
-void warn(const char *fmt, ...);
+void _warn(const char *f, const char *fmt, ...);
+#define warn(fmt, ...) _warn(__func__, fmt, ##__VA_ARGS__)
 
 /**
  * Log into serial console
- * @param msg The log string
+ * @param fmt The log message
  */
-void log(const char *fmt, ...);
+void _log(const char *f, const char *fmt, ...);
+#define log(fmt, ...) _log(__func__, fmt, ##__VA_ARGS__)
 
 /**
  * Halt the entire system and display a message
- * TODO: Add line number and file name
  * @param msg The error cause/reason
  */
-void panic(char *msg);
+void _panic(const char *f, const char *msg);
+#define panic(msg) _panic(__func__, msg)
 
 /**
  * Assert that a value is non-zero, else panic
- * TODO: Add line number and file name
  * @param x The value
  */
-void assert(int x);
+void _assert(const char *f, int x);
+#define assert(x) _assert(__func__, x)
 
 /**
  * Creates an infinite halt loop

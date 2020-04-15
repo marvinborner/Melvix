@@ -40,10 +40,10 @@ multiboot_info_t *multiboot_header;
 void memory_print()
 {
 	if (multiboot_header->flags & MULTIBOOT_INFO_MEMORY) {
-		serial_printf("Mem lower: 0x%x", multiboot_header->mem_lower);
-		serial_printf("Mem upper: 0x%x", multiboot_header->mem_upper);
+		log("Mem lower: 0x%x", multiboot_header->mem_lower);
+		log("Mem upper: 0x%x", multiboot_header->mem_upper);
 	} else {
-		serial_printf("No memory information available!");
+		log("No memory information available!");
 	}
 }
 

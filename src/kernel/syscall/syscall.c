@@ -17,7 +17,7 @@ uint32_t (*syscalls[])() = { [0] = (uint32_t(*)())halt_loop, // DEBUG!
 
 void syscall_handler(struct regs *r)
 {
-	serial_printf("Received syscall!");
+	log("Received syscall!");
 
 	if (r->eax >= sizeof(syscalls) / sizeof(*syscalls))
 		return;
@@ -26,8 +26,8 @@ void syscall_handler(struct regs *r)
 	if (!location)
 		return;
 
-	serial_printf("[SYSCALL] %d (0x%x) 0x%x 0x%x 0x%x 0x%x 0x%x", r->eax, location, r->ebx,
-		      r->ecx, r->edx, r->esi, r->edi);
+	log("[SYSCALL] %d (0x%x) 0x%x 0x%x 0x%x 0x%x 0x%x", r->eax, location, r->ebx, r->ecx,
+	    r->edx, r->esi, r->edi);
 
 	r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
 }

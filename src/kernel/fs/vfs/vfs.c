@@ -22,7 +22,7 @@ void vfs_db_listdir(char *name)
 {
 	vfs_node_t *n = file_open(name, 0);
 	if (!n) {
-		log("Could not list a directory that does not exist\n");
+		log("Could not list a directory that does not exist");
 		return;
 	}
 	if (!n->listdir)
@@ -35,7 +35,6 @@ void vfs_db_listdir(char *name)
 		files++;
 	}
 	kfree(save);
-	log("\n");
 }
 
 void print_vfstree_recur(gtreenode_t *node, int parent_offset)
@@ -48,12 +47,11 @@ void print_vfstree_recur(gtreenode_t *node, int parent_offset)
 	for (int i = 0; i < parent_offset; ++i) {
 		strcat(tmp, " ");
 	}
-	char *curr = tmp + strlen(tmp);
 	struct vfs_entry *fnode = (struct vfs_entry *)node->value;
 	if (fnode->file) {
-		log(curr, "%s(0x%x, %s)", fnode->name, (uint32_t)fnode->file, fnode->file->name);
+		log("%s(0x%x, %s)", fnode->name, (uint32_t)fnode->file, fnode->file->name);
 	} else {
-		log(curr, "%s(empty)", fnode->name);
+		log("%s(empty)", fnode->name);
 	}
 	log("%s\n", tmp);
 	len = strlen(fnode->name);

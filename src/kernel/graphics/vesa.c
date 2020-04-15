@@ -8,7 +8,7 @@
 
 void switch_to_vga()
 {
-	serial_printf("Force switch to VGA!");
+	log("Force switch to VGA!");
 	uint16_t *terminal_buffer = (uint16_t *)0xB8000;
 	char *error = "Melvix does not support this graphics hardware!";
 	for (size_t i = 0; i < strlen(error); i++)
@@ -119,8 +119,8 @@ void set_optimal_resolution()
 			continue;
 		}
 
-		serial_printf("Found mode: (0x%x) %dx%dx%d", *mode, mode_info->width,
-			      mode_info->height, mode_info->bpp);
+		log("Found mode: (0x%x) %dx%dx%d", *mode, mode_info->width, mode_info->height,
+		    mode_info->bpp);
 
 		if (mode_info->width > vbe_width ||
 		    (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl)) {
@@ -139,7 +139,7 @@ void set_optimal_resolution()
 	kfree(video_modes);
 
 	if (highest == 0) {
-		serial_printf("Mode detection failed!\nTrying common modes...");
+		log("Mode detection failed!\nTrying common modes...");
 		vga_log("Mode detection failed!");
 		vga_log("Trying common modes...");
 		struct vbe_mode_info *mode_info;
@@ -210,7 +210,7 @@ void set_optimal_resolution()
 
 	info("Successfully switched to video mode!");
 
-	serial_printf("Using mode: (0x%x) %dx%dx%d", highest, vbe_width, vbe_height, vbe_bpl << 3);
+	log("Using mode: (0x%x) %dx%dx%d", highest, vbe_width, vbe_height, vbe_bpl << 3);
 	debug("Using mode: %dx%dx%d", vbe_width, vbe_height, vbe_bpl << 3);
 }
 

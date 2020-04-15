@@ -28,7 +28,7 @@ void load_binaries()
 		kfree(user_e);
 
 		if (font->magic != 0xf0f0f0f0) {
-			serial_printf("0x%x: WRONG FONT MAGIC!", font->magic);
+			log("0x%x: WRONG FONT MAGIC!", font->magic);
 			halt_loop();
 		}
 		*/

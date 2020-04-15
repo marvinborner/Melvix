@@ -5,17 +5,14 @@
 #include <kernel/io/io.h>
 #include <kernel/memory/alloc.h>
 
-void _write_serial(const char *data)
+void serial_print(const char *data)
 {
 	for (size_t i = 0; i < strlen(data); i++)
 		serial_put(data[i]);
 }
 
-void serial_printf(const char *fmt, ...)
+void serial_vprintf(const char *fmt, va_list args)
 {
-	va_list args;
-	va_start(args, fmt);
-
 	uint8_t readyToFormat = 0;
 
 	char buff = 0;
@@ -31,16 +28,16 @@ void serial_printf(const char *fmt, ...)
 			buff = *fmt;
 			if (buff == 's') {
 				const char *str = va_arg(args, const char *);
-				_write_serial(str);
+				serial_print(str);
 				readyToFormat = 0;
 			} else if (buff == 'x') {
 				char *p = htoa((uint32_t)va_arg(args, int));
-				_write_serial(p);
+				serial_print(p);
 				kfree(p);
 				readyToFormat = 0;
 			} else if (buff == 'd') {
 				char *p = itoa(va_arg(args, int));
-				_write_serial(p);
+				serial_print(p);
 				kfree(p);
 				readyToFormat = 0;
 			} else if (buff == 'c') {
@@ -54,8 +51,12 @@ void serial_printf(const char *fmt, ...)
 				serial_put(*fmt);
 		}
 	}
+}
 
-	serial_put('\n');
-
+void serial_printf(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	serial_vprintf(fmt, args);
 	va_end(args);
 }
