@@ -50,7 +50,6 @@ void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
 	network_install();
 	sti();
 
-	log("%x", 0x42);
 	vfs_init();
 	ata_init();
 	ext2_init("/dev/hda", "/");

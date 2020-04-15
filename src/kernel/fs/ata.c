@@ -281,10 +281,7 @@ void ata_find(uint32_t device, uint16_t vendor_id, uint16_t device_id, void *ext
 
 void ata_init()
 {
-	log("0x%x", ata_device);
 	pci_scan(&ata_find, -1, &ata_device);
-	serial_printf("0x%x - ", ata_device);
-	log("0x%x", ata_device);
 
 	irq_install_handler(32 + 14, ata_handler);
 

@@ -84,7 +84,7 @@ void _warn(const char *f, const char *fmt, ...)
 
 void _log(const char *f, const char *fmt, ...)
 {
-	serial_printf("[%s] ", f);
+	serial_printf("\x1B[34m[%s]\x1B[37m ", f);
 	va_list args;
 	va_start(args, fmt);
 	serial_vprintf(fmt, args);
