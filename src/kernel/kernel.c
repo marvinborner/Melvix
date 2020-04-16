@@ -19,12 +19,18 @@
 #include <kernel/fs/ext2.h>
 #include <kernel/fs/vfs.h>
 
-void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
+void kernel_main(uint32_t magic, uint32_t multiboot_address)
 {
 	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
 		vga_log("Invalid boot magic!");
 		halt_loop();
 	}
+
+	if (multiboot_address & 7) {
+		vga_log("Unaligned mbi!");
+		halt_loop();
+	}
+
 	vga_log("Installing basic features of Melvix...");
 
 	// Install features
@@ -34,9 +40,15 @@ void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
 	idt_install();
 	isrs_install();
 	irq_install();
-	memory_init(grub_header);
+
+	multiboot_parse();
 	paging_install();
+
 	memory_print();
+
+	vfs_init();
+	ata_init();
+	ext2_init("/dev/hda", "/");
 
 	load_binaries();
 	set_optimal_resolution();
@@ -50,17 +62,10 @@ void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
 	network_install();
 	sti();
 
-	vfs_init();
-	ata_init();
-	ext2_init("/dev/hda", "/");
 	// tasking_install();
 
 	// Get hardware information
 	// get_smbios();
-
-	// Print total memory
-	info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
-	log("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
 
 #ifdef INSTALL_MELVIX
 	panic("Installation isn't supported right now!");

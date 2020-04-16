@@ -16,11 +16,6 @@ extern void ASM_KERNEL_END();
 uint32_t initial_esp;
 
 /**
- * Multiboot structure pointer by grub
- */
-multiboot_info_t *multiboot_header;
-
-/**
  * Initialize the basic features of the OS
  */
 void init();

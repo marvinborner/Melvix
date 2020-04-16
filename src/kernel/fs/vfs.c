@@ -1,5 +1,4 @@
 #include <kernel/system.h>
-#include <kernel/fs/ext2.h>
 #include <kernel/fs/vfs.h>
 #include <kernel/lib/data/list.h>
 #include <kernel/lib/data/generic_tree.h>

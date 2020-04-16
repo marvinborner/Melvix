@@ -1,14 +1,25 @@
-%define ALIGN    1 ; Align loaded modules on page boundaries
-%define MEMINFO  2 ; Provide memory map
-%define FLAGS    3 ; Flags (ALIGN | MEMINFO)
-%define MAGIC    0x1BADB002
-%define CHECKSUM -(MAGIC + FLAGS)
-
 section .multiboot
-    align 4
-    dd MAGIC
-    dd FLAGS
-    dd CHECKSUM
+    header_start:
+        dd 0xe85250d6
+        dd 0
+        dd header_end - header_start
+        dd 0x100000000 - (0xe85250d6 + 0 + (header_end - header_start))
+    mb2_tag_info_start:
+        dw 1
+        dw 0 ; Non-optional
+        dd mb2_tag_info_end - mb2_tag_info_start
+        dd 1
+        dd 2
+        dd 4
+        dd 6
+    mb2_tag_info_end:
+        align 8
+    mb2_tag_end_start:
+        dw 0
+        dw 0
+        dd mb2_tag_end_end - mb2_tag_end_start
+    mb2_tag_end_end:
+    header_end:
 
 section .start_section
     dd _start

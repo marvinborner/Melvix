@@ -89,15 +89,15 @@ int acpi_enable()
 			if (i < 300) {
 				return 0; // Successfully enabled ACPI
 			} else {
-				log("ACPI couldn't be enabled!");
+				warn("ACPI couldn't be enabled!");
 				return -1; // ACPI couldn't be enabled
 			}
 		} else {
-			log("ACPI is not supported!");
+			warn("ACPI is not supported!");
 			return -1; // ACPI is not supported
 		}
 	} else {
-		log("ACPI was already enabled!");
+		warn("ACPI was already enabled!");
 		return 0; // ACPI was already enabled
 	}
 }
@@ -174,7 +174,7 @@ int acpi_install()
 			ptr++;
 		} // Else: no valid FADT present
 	} else {
-		log("ACPI is not supported!");
+		warn("ACPI is not supported!");
 	}
 
 	return success == 1 ? 0 : -1;

@@ -35,29 +35,32 @@ int memcmp(const void *a_ptr, const void *b_ptr, size_t size)
 	return 0;
 }
 
-multiboot_info_t *multiboot_header;
+struct multiboot_tag_basic_meminfo *meminfo = NULL;
 
-void memory_print()
+uint32_t memory_get_all()
 {
-	if (multiboot_header->flags & MULTIBOOT_INFO_MEMORY) {
-		log("Mem lower: 0x%x", multiboot_header->mem_lower);
-		log("Mem upper: 0x%x", multiboot_header->mem_upper);
+	if (meminfo != NULL) {
+		return meminfo->mem_lower + meminfo->mem_upper;
 	} else {
-		log("No memory information available!");
+		warn("Got no memory info, guessing size!");
+		return 42000; // This should not happen on a modern pc but well idk, 42MB?
 	}
-}
-
-void memory_init(multiboot_info_t *grub_header)
-{
-	multiboot_header = grub_header;
 }
 
 uint32_t memory_get_free()
 {
-	return multiboot_header->mem_upper - paging_get_used_pages() * 4;
+	return memory_get_all() - paging_get_used_pages() * 4;
 }
 
-uint32_t memory_get_all()
+void memory_print()
 {
-	return multiboot_header->mem_upper;
+	info("Mem lower: 0x%x", meminfo->mem_lower);
+	info("Mem upper: 0x%x", meminfo->mem_upper);
+	info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
+	info("Total free memory: %dMiB", (memory_get_free() >> 10) + 1);
+}
+
+void memory_init(struct multiboot_tag_basic_meminfo *tag)
+{
+	meminfo = tag;
 }
