@@ -1,7 +1,7 @@
 #ifndef ATA_DRIVER_H
 #define ATA_DRIVER_H
 
-#include <kernel/fs/vfs/vfs.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/memory/paging.h>
 #include <kernel/interrupts/interrupts.h>
 
@@ -56,7 +56,7 @@ typedef struct ata_dev {
 	char mountpoint[32];
 } __attribute__((packed)) ata_dev_t;
 
-// ATA PCI info
+// ATA PCI info of QEMU // TODO: Remove Qemu based device id
 #define ATA_VENDOR_ID 0x8086
 #define ATA_DEVICE_ID 0x7010
 

@@ -184,7 +184,7 @@ void acpi_poweroff()
 {
 	cli();
 	if (SCI_EN == 0) {
-		warn("ACPI shutdown is not supported\n");
+		warn("ACPI shutdown is not supported");
 		return;
 	}
 

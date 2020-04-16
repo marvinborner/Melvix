@@ -2,7 +2,7 @@
 #define MELVIX_EXT2_H
 
 #include <stdint.h>
-#include <kernel/fs/vfs/vfs.h>
+#include <kernel/fs/vfs.h>
 
 #define EXT2_DIRECT_BLOCKS 12
 

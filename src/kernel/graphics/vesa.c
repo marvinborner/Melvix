@@ -119,13 +119,9 @@ void set_optimal_resolution()
 			continue;
 		}
 
-		log("Found mode: (0x%x) %dx%dx%d", *mode, mode_info->width, mode_info->height,
-		    mode_info->bpp);
-
 		if (mode_info->width > vbe_width ||
 		    (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl)) {
 			// if (mode_info->bpp == 32) { // Force specific bpp for debugging
-			// (float) mode_info->width / (float) mode_info->height < 2.0 &&) {
 			highest = *mode;
 			vbe_width = mode_info->width;
 			vbe_height = mode_info->height;
@@ -139,7 +135,6 @@ void set_optimal_resolution()
 	kfree(video_modes);
 
 	if (highest == 0) {
-		log("Mode detection failed!\nTrying common modes...");
 		vga_log("Mode detection failed!");
 		vga_log("Trying common modes...");
 		struct vbe_mode_info *mode_info;
@@ -211,7 +206,6 @@ void set_optimal_resolution()
 	info("Successfully switched to video mode!");
 
 	log("Using mode: (0x%x) %dx%dx%d", highest, vbe_width, vbe_height, vbe_bpl << 3);
-	debug("Using mode: %dx%dx%d", vbe_width, vbe_height, vbe_bpl << 3);
 }
 
 const uint32_t default_text_color = vesa_white;

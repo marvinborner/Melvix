@@ -16,8 +16,8 @@
 #include <kernel/fs/elf.h>
 #include <kernel/lib/stdio.h>
 #include <kernel/fs/ata.h>
-#include <kernel/fs/ext2/ext2.h>
-#include <kernel/fs/vfs/vfs.h>
+#include <kernel/fs/ext2.h>
+#include <kernel/fs/vfs.h>
 
 void kernel_main(uint32_t magic, multiboot_info_t *grub_header)
 {

@@ -5,7 +5,7 @@
 #include <kernel/lib/stdio.h>
 #include <kernel/lib/lib.h>
 #include <kernel/memory/alloc.h>
-#include <kernel/fs/ext2/ext2.h>
+#include <kernel/fs/ext2.h>
 
 uint32_t ext2_file_size(vfs_node_t *node)
 {
@@ -259,7 +259,7 @@ void ext2_create_entry(vfs_node_t *parent, char *entry_name, uint32_t entry_inod
 		if (curr_dir->name_len == entry_name_len) {
 			memcpy(check, curr_dir->name, entry_name_len);
 			if (curr_dir->inode != 0 && !strcmp(entry_name, check)) {
-				log("Entry by the same name %s already exist\n", check);
+				log("Entry by the same name %s already exist", check);
 				return;
 			}
 		}
@@ -570,8 +570,7 @@ void set_disk_block_number(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx
 	}
 	b = a - p;
 	if (b <= 0) {
-		alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS]), ext2fs, inode,
-					   inode_idx, NULL, 0);
+		if(!alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS]), ext2fs, inode, inode_idx, NULL, 0));
 		read_disk_block(ext2fs, inode->blocks[EXT2_DIRECT_BLOCKS], (void *)tmp);
 		((unsigned int *)tmp)[a] = disk_block;
 		write_disk_block(ext2fs, inode->blocks[EXT2_DIRECT_BLOCKS], (void *)tmp);
@@ -582,11 +581,9 @@ void set_disk_block_number(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx
 	if (c <= 0) {
 		c = b / p;
 		d = b - c * p;
-		alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS + 1]), ext2fs, inode,
-					   inode_idx, NULL, 0);
+		if(!alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS + 1]), ext2fs, inode, inode_idx, NULL, 0));
 		read_disk_block(ext2fs, inode->blocks[EXT2_DIRECT_BLOCKS + 1], (void *)tmp);
-		alloc_inode_metadata_block(&(tmp[c]), ext2fs, inode, inode_idx, (void *)tmp,
-					   inode->blocks[EXT2_DIRECT_BLOCKS + 1]);
+		if(!alloc_inode_metadata_block(&(tmp[c]), ext2fs, inode, inode_idx, (void*)tmp, inode->blocks[EXT2_DIRECT_BLOCKS + 1]));
 		unsigned int temp = tmp[c];
 		read_disk_block(ext2fs, temp, (void *)tmp);
 		tmp[d] = disk_block;
@@ -598,14 +595,12 @@ void set_disk_block_number(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx
 		e = c / (p * p);
 		f = (c - e * p * p) / p;
 		g = (c - e * p * p - f * p);
-		alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS + 2]), ext2fs, inode,
-					   inode_idx, NULL, 0);
+		if(!alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS + 2]), ext2fs, inode, inode_idx, NULL, 0));
 		read_disk_block(ext2fs, inode->blocks[EXT2_DIRECT_BLOCKS + 2], (void *)tmp);
-		alloc_inode_metadata_block(&(tmp[e]), ext2fs, inode, inode_idx, (void *)tmp,
-					   inode->blocks[EXT2_DIRECT_BLOCKS + 2]);
+		if(!alloc_inode_metadata_block(&(tmp[e]), ext2fs, inode, inode_idx, (void*)tmp, inode->blocks[EXT2_DIRECT_BLOCKS + 2]));
 		unsigned int temp = tmp[e];
 		read_disk_block(ext2fs, tmp[e], (void *)tmp);
-		alloc_inode_metadata_block(&(tmp[f]), ext2fs, inode, inode_idx, (void *)tmp, temp);
+		if(!alloc_inode_metadata_block(&(tmp[f]), ext2fs, inode, inode_idx, (void*)tmp, temp));
 		temp = tmp[f];
 		read_disk_block(ext2fs, tmp[f], (void *)tmp);
 		tmp[g] = disk_block;
@@ -642,7 +637,7 @@ uint32_t ext2_alloc_block(ext2_fs_t *ext2fs)
 			}
 		}
 	}
-	panic("We're out of blocks!\n");
+	panic("We're out of blocks!");
 	return (uint32_t)-1;
 }
 
@@ -707,7 +702,7 @@ uint32_t alloc_inode(ext2_fs_t *ext2fs)
 			}
 		}
 	}
-	panic("We're out of inodes!\n");
+	panic("We're out of inodes!");
 	return (uint32_t)-1;
 }
 
@@ -762,10 +757,12 @@ void ext2_init(char *device_path, char *mountpoint)
 {
 	ext2_fs_t *ext2fs = kcalloc(sizeof(ext2_fs_t), 1);
 	ext2fs->disk_device = file_open(device_path, 0);
+	log("%s", ext2fs->disk_device->name);
 	ext2fs->sb = kmalloc(SUPERBLOCK_SIZE);
 	ext2fs->block_size = 1024;
-	read_disk_block(ext2fs, 1, (void *)ext2fs->sb);
+	read_disk_block(ext2fs, 1, (void *)ext2fs->sb); //!
 	log("%x", ext2fs->sb->ext2_magic);
+	log("%x", ext2fs->sb->total_inodes);
 	ext2fs->block_size = (1024 << ext2fs->sb->log2block_size);
 	ext2fs->blocks_per_group = ext2fs->sb->blocks_per_group;
 	ext2fs->inodes_per_group = ext2fs->sb->inodes_per_group;

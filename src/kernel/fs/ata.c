@@ -8,7 +8,7 @@
 #include <kernel/pci/pci.h>
 #include <kernel/interrupts/interrupts.h>
 
-uint32_t ata_device;
+uint32_t ata_device = 0x00000000;
 
 ata_dev_t primary_master = { .slave = 0 };
 ata_dev_t primary_slave = { .slave = 1 };
@@ -30,7 +30,7 @@ void software_reset(ata_dev_t *dev)
 	outb(dev->control, CONTROL_ZERO);
 }
 
-void ata_handler(struct regs *reg)
+void ata_handler(struct regs *r)
 {
 	inb(primary_master.status);
 	inb(primary_master.BMR_STATUS);
@@ -240,14 +240,14 @@ void ata_device_detect(ata_dev_t *dev, int primary)
 
 	outb(dev->command, COMMAND_IDENTIFY);
 	if (!inb(dev->status)) {
-		log("Device does not exist");
+		warn("Device does not exist: %s", dev->mountpoint);
 		return;
 	}
 
 	uint8_t lba_lo = inb(dev->lba_lo);
 	uint8_t lba_hi = inb(dev->lba_high);
 	if (lba_lo != 0 || lba_hi != 0) {
-		log("Device is not ata-compatible");
+		warn("Device is not ata-compatible: %s", dev->mountpoint);
 		return;
 	}
 	uint8_t drq = 0, err = 0;
@@ -256,7 +256,7 @@ void ata_device_detect(ata_dev_t *dev, int primary)
 		err = inb(dev->status) & STATUS_ERR;
 	}
 	if (err) {
-		log("Error while polling");
+		warn("Error while polling: %s", dev->mountpoint);
 		return;
 	}
 
@@ -283,10 +283,10 @@ void ata_init()
 {
 	pci_scan(&ata_find, -1, &ata_device);
 
-	irq_install_handler(32 + 14, ata_handler);
+	irq_install_handler(14, ata_handler);
 
 	ata_device_detect(&primary_master, 1);
 	ata_device_detect(&primary_slave, 1);
-	ata_device_detect(&secondary_master, 0);
-	ata_device_detect(&secondary_slave, 0);
+	/* ata_device_detect(&secondary_master, 0); */
+	/* ata_device_detect(&secondary_slave, 0); */
 }

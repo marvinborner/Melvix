@@ -136,13 +136,18 @@ p
 1
 2048
 199999
-a
 w
 EOF
 
 	cp ./build/ext2_hda.img ./build/ext2_hdb.img
 	cp ./build/ext2_hda.img ./build/ext2_hdc.img
 	cp ./build/ext2_hda.img ./build/ext2_hdd.img
+
+	mkdir mnt/
+	sudo mount ./build/ext2_hda.img mnt/
+	echo "Bananenkuchen" | sudo tee -a mnt/test.txt
+	sudo umount mnt
+	rm -r mnt/
 
 	printf "Build finshed successfully!\n\n"
 }

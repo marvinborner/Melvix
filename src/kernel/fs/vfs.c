@@ -1,6 +1,6 @@
 #include <kernel/system.h>
-#include <kernel/fs/ext2/ext2.h>
-#include <kernel/fs/vfs/vfs.h>
+#include <kernel/fs/ext2.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/lib/data/list.h>
 #include <kernel/lib/data/generic_tree.h>
 #include <kernel/memory/alloc.h>
@@ -53,7 +53,7 @@ void print_vfstree_recur(gtreenode_t *node, int parent_offset)
 	} else {
 		log("%s(empty)", fnode->name);
 	}
-	log("%s\n", tmp);
+	log("%s", tmp);
 	len = strlen(fnode->name);
 	kfree(tmp);
 	foreach(child, node->children)
@@ -259,6 +259,7 @@ vfs_node_t *get_mountpoint_recur(char **path, gtreenode_t *subroot)
 	}
 	return get_mountpoint_recur(path, subroot);
 }
+
 vfs_node_t *get_mountpoint(char **path)
 {
 	if (strlen(*path) > 1 && (*path)[strlen(*path) - 1] == '/')
@@ -324,7 +325,7 @@ void vfs_mount_recur(char *path, gtreenode_t *subroot, vfs_node_t *fs_obj)
 	if (curr_token == NULL || !strcmp(curr_token, "")) {
 		struct vfs_entry *ent = (struct vfs_entry *)subroot->value;
 		if (ent->file) {
-			log("The path is already mounted, plz unmount before mounting again\n");
+			warn("The path is already mounted, please unmount before mounting again");
 			return;
 		}
 		if (!strcmp(ent->name, "/"))
@@ -358,7 +359,7 @@ void vfs_mount(char *path, vfs_node_t *fs_obj)
 	if (path[0] == '/' && strlen(path) == 1) {
 		struct vfs_entry *ent = (struct vfs_entry *)vfs_tree->root->value;
 		if (ent->file) {
-			log("The path is already mounted, plz unmount before mounting again\n");
+			warn("The path is already mounted, please unmount before mounting again");
 			return;
 		}
 		vfs_root = fs_obj;

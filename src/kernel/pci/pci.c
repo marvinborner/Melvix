@@ -1,5 +1,6 @@
-#include <kernel/pci/pci.h>
 #include <stdint.h>
+#include <kernel/system.h>
+#include <kernel/pci/pci.h>
 #include <kernel/io/io.h>
 #include <kernel/lib/lib.h>
 
