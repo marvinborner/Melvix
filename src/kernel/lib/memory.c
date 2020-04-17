@@ -35,11 +35,14 @@ int memcmp(const void *a_ptr, const void *b_ptr, size_t size)
 	return 0;
 }
 
+uint32_t total = 0;
 struct multiboot_tag_basic_meminfo *meminfo = NULL;
 
 uint32_t memory_get_all()
 {
-	if (meminfo != NULL) {
+	if (total != 0) {
+		return total;
+	} else if (meminfo != NULL) {
 		return meminfo->mem_lower + meminfo->mem_upper;
 	} else {
 		warn("Got no memory info, guessing size!");
@@ -54,13 +57,31 @@ uint32_t memory_get_free()
 
 void memory_print()
 {
-	info("Mem lower: 0x%x", meminfo->mem_lower);
-	info("Mem upper: 0x%x", meminfo->mem_upper);
+	if (meminfo != NULL) {
+		info("Mem lower: 0x%x", meminfo->mem_lower);
+		info("Mem upper: 0x%x", meminfo->mem_upper);
+	}
 	info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
 	info("Total free memory: %dMiB", (memory_get_free() >> 10) + 1);
 }
 
-void memory_init(struct multiboot_tag_basic_meminfo *tag)
+void memory_info_init(struct multiboot_tag_basic_meminfo *tag)
 {
 	meminfo = tag;
+}
+
+void memory_mmap_init(struct multiboot_tag_mmap *tag)
+{
+	uint32_t sum = 0;
+	struct multiboot_mmap_entry *mmap;
+
+	for (mmap = ((struct multiboot_tag_mmap *)tag)->entries;
+	     (multiboot_uint8_t *)mmap < (multiboot_uint8_t *)tag + tag->size;
+	     mmap = (multiboot_memory_map_t *)((uint32_t)mmap +
+					       ((struct multiboot_tag_mmap *)tag)->entry_size)) {
+		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
+			sum += mmap->len;
+		}
+	}
+	total = sum >> 10; // I want kb
 }

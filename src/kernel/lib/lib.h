@@ -32,7 +32,9 @@ void *memset(void *dest, char val, size_t count);
  */
 int memcmp(const void *a_ptr, const void *b_ptr, size_t size);
 
-void memory_init(struct multiboot_tag_basic_meminfo *tag);
+void memory_info_init(struct multiboot_tag_basic_meminfo *tag);
+
+void memory_mmap_init(struct multiboot_tag_mmap *tag);
 
 void memory_print();
 
