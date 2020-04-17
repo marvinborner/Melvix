@@ -45,13 +45,6 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 
 	memory_print();
 
-	vfs_init();
-	ata_init();
-	ext2_init("/dev/hda", "/");
-
-	load_binaries();
-	set_optimal_resolution();
-
 	// Install drivers
 	cli();
 	timer_install();
@@ -61,10 +54,14 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 	network_install();
 	sti();
 
-	// tasking_install();
+	vfs_init();
+	ata_init();
+	ext2_init("/dev/hda", "/");
 
-	// Get hardware information
-	// get_smbios();
+	load_binaries();
+	set_optimal_resolution();
+
+	// tasking_install();
 
 #ifdef INSTALL_MELVIX
 	panic("Installation isn't supported right now!");

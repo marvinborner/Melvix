@@ -5,14 +5,15 @@ section .multiboot
         dd header_end - header_start
         dd 0x100000000 - (0xe85250d6 + 0 + (header_end - header_start))
 
-        ; Information tag (force)
+        ; Information tag
         align 8
         dw 1
-        dw 0
-        dd 20
-        dd 2
-        dd 4
-        dd 6
+        dw 1
+        dd 24
+        dd 2 ; bootloader name
+        dd 4 ; meminfo
+        dd 6 ; mmap
+        dd 13 ; smbios
 
         ; Empty tag
         align 8

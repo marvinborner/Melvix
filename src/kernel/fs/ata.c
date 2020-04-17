@@ -287,6 +287,6 @@ void ata_init()
 
 	ata_device_detect(&primary_master, 1);
 	ata_device_detect(&primary_slave, 1);
-	/* ata_device_detect(&secondary_master, 0); */
-	/* ata_device_detect(&secondary_slave, 0); */
+	// ata_device_detect(&secondary_master, 0);
+	// ata_device_detect(&secondary_slave, 0);
 }
