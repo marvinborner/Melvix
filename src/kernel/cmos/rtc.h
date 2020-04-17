@@ -1,15 +1,17 @@
 #ifndef MELVIX_RTC_H
 #define MELVIX_RTC_H
 
-unsigned char second;
-unsigned char minute;
-unsigned char hour;
-unsigned char day;
-unsigned char month;
+#include <stdint.h>
+
+uint8_t second;
+uint8_t minute;
+uint8_t hour;
+uint8_t day;
+uint8_t month;
 unsigned int year;
 
 void read_rtc();
 
-void write_time();
+void rtc_print();
 
 #endif

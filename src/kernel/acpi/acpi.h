@@ -1,11 +1,14 @@
 #ifndef MELVIX_ACPI_H
 #define MELVIX_ACPI_H
 
+#include <stdint.h>
+#include <kernel/multiboot.h>
+
 /**
  * Initialize the ACP interface
- * @return 0 if successful, otherwise -1
  */
-int acpi_install();
+void acpi_old_init(struct multiboot_tag_old_acpi *tag);
+void acpi_new_init(struct multiboot_tag_new_acpi *tag);
 
 /**
  * Activate a ACPI based device reboot
@@ -17,7 +20,15 @@ void reboot();
  */
 void acpi_poweroff();
 
-struct RSD_ptr {
+struct address_structure {
+	uint8_t address_space_id;
+	uint8_t register_bit_width;
+	uint8_t register_bit_offset;
+	uint8_t reserved;
+	uint64_t address;
+};
+
+struct rsdp {
 	char signature[8];
 	char checksum;
 	char oem_id[6];
@@ -25,42 +36,85 @@ struct RSD_ptr {
 	uint32_t *rsdt_address;
 };
 
-struct FADT {
-	char signature[4];
-	uint32_t length;
-	char unneded1[40 - 8];
-	uint32_t *DSDT;
-	char unneded2[48 - 44];
-	uint32_t *SMI_CMD;
-	char ACPI_ENABLE;
-	char ACPI_DISABLE;
-	char unneded3[64 - 54];
-	uint32_t *PM1a_CNT_BLK;
-	uint32_t *PM1b_CNT_BLK;
-	char unneded4[89 - 72];
-	char PM1_CNT_LEN;
-	char unneeded5[18];
-	char century;
-};
-
-struct address_structure {
-	uint8_t address_space_id;
-	uint8_t register_bit_width;
-	uint8_t register_bit_offset;
-	uint8_t reserved;
-	uint64_t address;
-} __attribute__((packed));
-
-struct HPET {
+struct sdt_header {
 	char signature[4];
 	uint32_t length;
 	uint8_t revision;
 	uint8_t checksum;
-	char oemid[6];
-	uint64_t oem_tableid;
+	char oem_id[6];
+	char oem_table_id[8];
 	uint32_t oem_revision;
 	uint32_t creator_id;
 	uint32_t creator_revision;
+};
+
+struct rsdt {
+	struct sdt_header header;
+	uint32_t sdt_pointer[0];
+};
+
+struct xsdt {
+	struct sdt_header header;
+	uint32_t sdt_pointer[0];
+};
+
+struct fadt {
+	struct sdt_header header;
+	uint32_t firmware_ctl;
+	uint32_t dsdt;
+	uint8_t reserved;
+	uint8_t preferred_power_management;
+	uint16_t sci_interrupt;
+	uint32_t smi_commandPort;
+	uint8_t acpi_enable;
+	uint8_t acpi_disable;
+	uint8_t S4BIOS_req;
+	uint8_t PSTATE_control;
+	uint32_t PM1a_event_block;
+	uint32_t PM1b_event_block;
+	uint32_t PM1a_control_block;
+	uint32_t PM1b_control_block;
+	uint32_t PM2_control_block;
+	uint32_t PM_timer_block;
+	uint32_t GPE0_block;
+	uint32_t GPE1_block;
+	uint8_t PM1_event_length;
+	uint8_t PM1_control_length;
+	uint8_t PM2_control_length;
+	uint8_t PM_timer_length;
+	uint8_t GPE0_length;
+	uint8_t GPE1_length;
+	uint8_t GPE1_base;
+	uint8_t C_state_control;
+	uint16_t worst_C2_latency;
+	uint16_t worst_C3_latency;
+	uint16_t flush_size;
+	uint16_t flush_stride;
+	uint8_t duty_offset;
+	uint8_t duty_width;
+	uint8_t day_alarm;
+	uint8_t month_alarm;
+	uint8_t century;
+	uint16_t boot_architecture_flags; // Reserved in 1.0
+	uint8_t reserved2;
+	uint32_t flags;
+	struct address_structure reset_reg;
+	uint8_t reset_value;
+	uint8_t reserved3[3];
+	uint64_t x_firmware_control; // Reserved in 1.0
+	uint64_t x_dsdt; // Reserved in 1.0
+	struct address_structure x_PM1a_event_block;
+	struct address_structure x_PM1b_event_block;
+	struct address_structure x_PM1a_control_block;
+	struct address_structure x_PM1b_control_block;
+	struct address_structure x_PM2_control_block;
+	struct address_structure x_PM_timer_block;
+	struct address_structure x_GPE0_block;
+	struct address_structure x_GPE1_block;
+};
+
+struct hpet {
+	struct sdt_header header;
 	uint8_t hardware_rev_id;
 	uint8_t comparator_count : 5;
 	uint8_t counter_size : 1;
@@ -71,10 +125,18 @@ struct HPET {
 	uint8_t hpet_number;
 	uint16_t minimum_tick;
 	uint8_t page_protection;
-} __attribute__((packed));
+};
 
-struct FADT *fadt;
+struct madt {
+	struct sdt_header header;
+	uint32_t address;
+	uint32_t flags;
+	// Interrupt devices...
+};
 
-struct HPET *hpet;
+struct rsdt *rsdt;
+struct fadt *fadt;
+struct hpet *hpet;
+struct madt *madt;
 
 #endif

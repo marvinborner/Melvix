@@ -3,6 +3,7 @@
 #include <kernel/system.h>
 #include <kernel/lib/lib.h>
 #include <kernel/io/io.h>
+#include <kernel/acpi/acpi.h>
 
 int paging_enabled = 0;
 
@@ -31,9 +32,9 @@ void paging_init()
 void paging_install()
 {
 	// User paging
-	paging_switch_directory(1);
-	paging_init();
-	paging_set_user(0, memory_get_all() >> 3);
+	//paging_switch_directory(1);
+	//paging_init();
+	//paging_set_user(0, memory_get_all() >> 3);
 
 	// Kernel paging
 	paging_switch_directory(0);
@@ -53,6 +54,16 @@ void paging_disable()
 	paging_enabled = 0;
 }
 
+void paging_enable()
+{
+	asm("mov %0, %%cr3" ::"r"(current_page_directory));
+	uint32_t cr0;
+	asm("mov %%cr0, %0" : "=r"(cr0));
+	cr0 |= 0x80000000;
+	asm("mov %0, %%cr0" ::"r"(cr0));
+	paging_enabled = 1;
+}
+
 void paging_switch_directory(int user)
 {
 	if (user == 1) {
@@ -63,16 +74,6 @@ void paging_switch_directory(int user)
 		current_page_directory = kernel_page_directory;
 	}
 	asm("mov %0, %%cr3" ::"r"(current_page_directory));
-}
-
-void paging_enable()
-{
-	asm("mov %0, %%cr3" ::"r"(current_page_directory));
-	uint32_t cr0;
-	asm("mov %%cr0, %0" : "=r"(cr0));
-	cr0 |= 0x80000000;
-	asm("mov %0, %%cr0" ::"r"(cr0));
-	paging_enabled = 1;
 }
 
 inline void invlpg(uint32_t addr)

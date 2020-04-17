@@ -119,7 +119,7 @@ void fault_handler(struct regs *r)
 			strcat(message, " Exception");
 
 			// Show message if there wasn't an error in video memory
-			if (faulting_address != (uint32_t)fb)
+			if (faulting_address != (uint32_t)fb || fb == 0)
 				panic(message);
 			else
 				halt_loop();

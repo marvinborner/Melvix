@@ -18,6 +18,7 @@
 #include <kernel/fs/ata.h>
 #include <kernel/fs/ext2.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/cmos/rtc.h>
 
 void kernel_main(uint32_t magic, uint32_t multiboot_address)
 {
@@ -36,14 +37,12 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 	// Install features
 	gdt_install();
 	init_serial();
-	acpi_install();
 	idt_install();
 	isrs_install();
 	irq_install();
+
 	multiboot_parse(multiboot_address);
 	paging_install();
-
-	memory_print();
 
 	// Install drivers
 	cli();
@@ -53,6 +52,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 	pci_remap();
 	network_install();
 	sti();
+
+	memory_print();
+	//rtc_print(); // TODO: Fix ACPI memory mapping!
 
 	vfs_init();
 	ata_init();

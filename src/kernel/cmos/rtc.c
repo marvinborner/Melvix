@@ -1,11 +1,13 @@
+#include <kernel/system.h>
 #include <kernel/io/io.h>
+#include <kernel/acpi/acpi.h>
 #include <kernel/lib/stdio.h>
 
-unsigned char second;
-unsigned char minute;
-unsigned char hour;
-unsigned char day;
-unsigned char month;
+uint8_t second;
+uint8_t minute;
+uint8_t hour;
+uint8_t day;
+uint8_t month;
 unsigned int year;
 
 int get_update_in_progress_flag()
@@ -14,7 +16,7 @@ int get_update_in_progress_flag()
 	return (inb(0x71) & 0x80);
 }
 
-unsigned char get_rtc_register(int reg)
+uint8_t get_rtc_register(int reg)
 {
 	outb(0x70, (uint8_t)reg);
 	return inb(0x71);
@@ -22,24 +24,27 @@ unsigned char get_rtc_register(int reg)
 
 void read_rtc()
 {
+	halt_loop();
 	unsigned int century = 20; // ...
-	unsigned char last_second;
-	unsigned char last_minute;
-	unsigned char last_hour;
-	unsigned char last_day;
-	unsigned char last_month;
-	unsigned char last_year;
-	unsigned char last_century;
-	unsigned char registerB;
+	uint8_t last_second;
+	uint8_t last_minute;
+	uint8_t last_hour;
+	uint8_t last_day;
+	uint8_t last_month;
+	uint8_t last_year;
+	uint8_t last_century;
+	uint8_t registerB;
 
-	while (get_update_in_progress_flag())
-		;
+	while (get_update_in_progress_flag()) {
+	};
+	halt_loop();
 	second = get_rtc_register(0x00);
 	minute = get_rtc_register(0x02);
 	hour = get_rtc_register(0x04);
 	day = get_rtc_register(0x07);
 	month = get_rtc_register(0x08);
 	year = get_rtc_register(0x09);
+	halt_loop();
 	// century = get_rtc_register(fadt->century); // TODO: Fix fadt table (page fault!)
 
 	// Try until the values are the same (fix for RTC updates)
@@ -49,11 +54,11 @@ void read_rtc()
 		last_hour = hour;
 		last_day = day;
 		last_month = month;
-		last_year = (unsigned char)year;
-		last_century = (unsigned char)century;
+		last_year = (uint8_t)year;
+		last_century = (uint8_t)century;
 
-		while (get_update_in_progress_flag())
-			;
+		while (get_update_in_progress_flag()) {
+		};
 		second = get_rtc_register(0x00);
 		minute = get_rtc_register(0x02);
 		hour = get_rtc_register(0x04);
@@ -68,12 +73,11 @@ void read_rtc()
 	registerB = get_rtc_register(0x0B);
 
 	if (!(registerB & 0x04)) {
-		second = (unsigned char)((second & 0x0F) + ((second / 16) * 10));
-		minute = (unsigned char)((minute & 0x0F) + ((minute / 16) * 10));
-		hour = (unsigned char)(((hour & 0x0F) + (((hour & 0x70) / 16) * 10)) |
-				       (hour & 0x80));
-		day = (unsigned char)((day & 0x0F) + ((day / 16) * 10));
-		month = (unsigned char)((month & 0x0F) + ((month / 16) * 10));
+		second = (uint8_t)((second & 0x0F) + ((second / 16) * 10));
+		minute = (uint8_t)((minute & 0x0F) + ((minute / 16) * 10));
+		hour = (uint8_t)(((hour & 0x0F) + (((hour & 0x70) / 16) * 10)) | (hour & 0x80));
+		day = (uint8_t)((day & 0x0F) + ((day / 16) * 10));
+		month = (uint8_t)((month & 0x0F) + ((month / 16) * 10));
 		year = (year & 0x0F) + ((year / 16) * 10);
 		// century = (century & 0x0F) + ((century / 16) * 10);
 	}
@@ -82,12 +86,13 @@ void read_rtc()
 
 	// Convert to 24h if necessary
 	if (!(registerB & 0x02) && (hour & 0x80)) {
-		hour = (unsigned char)(((hour & 0x7F) + 12) % 24);
+		hour = (uint8_t)(((hour & 0x7F) + 12) % 24);
 	}
 }
 
-void write_time()
+void rtc_print()
 {
+	log("%d", fadt->century);
 	read_rtc();
-	printf("Current time: %d:%d:%d %d/%d/%d\n", hour, minute, second, month, day, year);
+	info("Current time: %d:%d:%d %d/%d/%d", hour, minute, second, month, day, year);
 }

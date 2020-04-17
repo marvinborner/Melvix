@@ -81,6 +81,10 @@ void memory_mmap_init(struct multiboot_tag_mmap *tag)
 					       ((struct multiboot_tag_mmap *)tag)->entry_size)) {
 		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
 			sum += mmap->len;
+		} else if (mmap->type == MULTIBOOT_MEMORY_ACPI_RECLAIMABLE) {
+			log("ACPI reclaimable memory");
+		} else if (mmap->type == MULTIBOOT_MEMORY_BADRAM) {
+			warn("Bad memory!");
 		}
 	}
 	total = sum >> 10; // I want kb

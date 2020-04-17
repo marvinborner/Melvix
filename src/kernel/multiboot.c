@@ -2,6 +2,7 @@
 #include <kernel/system.h>
 #include <kernel/multiboot.h>
 #include <kernel/smbios/smbios.h>
+#include <kernel/acpi/acpi.h>
 #include <kernel/lib/lib.h>
 #include <kernel/lib/stdio.h>
 
@@ -46,16 +47,18 @@ void multiboot_parse(uint32_t multiboot_address)
 		case MULTIBOOT_TAG_TYPE_EFI32:
 			info("Got EFI32");
 			break;
-		case  MULTIBOOT_TAG_TYPE_SMBIOS:
+		case MULTIBOOT_TAG_TYPE_SMBIOS:
 			// GRUB doesn't detect SMBIOS on QEMU!
 			info("Got SMBIOS table");
 			smbios_init((struct multiboot_tag_smbios *)tag);
 			break;
 		case MULTIBOOT_TAG_TYPE_ACPI_OLD:
-			info("Got ACPI table");
+			info("Got ACPI 1.0 table");
+			acpi_old_init((struct multiboot_tag_old_acpi *)tag);
 			break;
 		case MULTIBOOT_TAG_TYPE_ACPI_NEW:
-			info("Got new ACPI table");
+			info("Got ACPI 2.0 table");
+			acpi_new_init((struct multiboot_tag_new_acpi *)tag);
 			break;
 		case MULTIBOOT_TAG_TYPE_NETWORK:
 			info("Got network info");
