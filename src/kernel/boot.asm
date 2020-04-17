@@ -4,21 +4,21 @@ section .multiboot
         dd 0
         dd header_end - header_start
         dd 0x100000000 - (0xe85250d6 + 0 + (header_end - header_start))
-    mb2_tag_info_start:
+
+        ; Information tag (force)
+        align 8
         dw 1
-        dw 0 ; Non-optional
-        dd mb2_tag_info_end - mb2_tag_info_start
-        dd 1
+        dw 0
+        dd 20
         dd 2
         dd 4
         dd 6
-    mb2_tag_info_end:
+
+        ; Empty tag
         align 8
-    mb2_tag_end_start:
         dw 0
         dw 0
-        dd mb2_tag_end_end - mb2_tag_end_start
-    mb2_tag_end_end:
+        dd 8
     header_end:
 
 section .start_section

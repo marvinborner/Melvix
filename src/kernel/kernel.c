@@ -41,7 +41,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 	isrs_install();
 	irq_install();
 
-	multiboot_parse();
+	multiboot_parse(multiboot_address);
 	paging_install();
 
 	memory_print();
