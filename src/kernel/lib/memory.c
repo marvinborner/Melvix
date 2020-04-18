@@ -80,17 +80,17 @@ void memory_mmap_init(struct multiboot_tag_mmap *tag)
 	     mmap = (multiboot_memory_map_t *)((uint32_t)mmap +
 					       ((struct multiboot_tag_mmap *)tag)->entry_size)) {
 		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
-			log("Found free memory");
+			debug("Found free memory");
 			paging_set_present(mmap->addr, mmap->len >> 12);
 			sum += mmap->len;
 		} else if (mmap->type == MULTIBOOT_MEMORY_RESERVED) {
-			log("Found reserved memory");
+			debug("Found reserved memory");
 			paging_set_present(mmap->addr, mmap->len >> 12);
 			paging_set_used(mmap->addr, mmap->len >> 12);
 		} else if (mmap->type == MULTIBOOT_MEMORY_ACPI_RECLAIMABLE) {
-			log("Found ACPI reclaimable memory");
+			debug("Found ACPI reclaimable memory");
 		} else if (mmap->type == MULTIBOOT_MEMORY_NVS) {
-			log("Found NVS memory");
+			debug("Found NVS memory");
 		} else if (mmap->type == MULTIBOOT_MEMORY_BADRAM) {
 			warn("Found bad memory!");
 		}

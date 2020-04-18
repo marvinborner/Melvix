@@ -28,6 +28,33 @@ struct address_structure {
 	uint64_t address;
 };
 
+// p. 138
+struct fadt_flags {
+	uint8_t WBINVD : 1;
+	uint8_t WBINVD_flush : 1;
+	uint8_t C1_support : 1;
+	uint8_t C2_mp_support : 1;
+	uint8_t power_button : 1; // 1 if not present
+	uint8_t sleep_button : 1; // 1 if not present
+	uint8_t rtc_fix_reg : 1;
+	uint8_t rtc_wakes_S4 : 1;
+	uint8_t timer_32 : 1;
+	uint8_t dock_support : 1;
+	uint8_t reset_support : 1;
+	uint8_t sealed_case : 1;
+	uint8_t headless : 1;
+	uint8_t slp_instruction : 1;
+	uint8_t pci_wake_support : 1;
+	uint8_t use_platform_clock : 1;
+	uint8_t rtc_valid_S4 : 1;
+	uint8_t remote_on_support : 1;
+	uint8_t force_apic_cluster : 1;
+	uint8_t force_apic_physical : 1;
+	uint8_t hw_reduced_acpi : 1;
+	uint8_t low_power_S0_support : 1;
+	uint16_t reserved : 10;
+};
+
 struct rsdp {
 	char signature[8];
 	char checksum;
@@ -50,11 +77,12 @@ struct sdt_header {
 
 struct rsdt {
 	struct sdt_header header;
+	uint32_t sdt_pointer[];
 };
 
 struct xsdt {
 	struct sdt_header header;
-	uint32_t *sdt_pointer;
+	uint32_t sdt_pointer[];
 };
 
 struct fadt {
@@ -96,7 +124,7 @@ struct fadt {
 	uint8_t century;
 	uint16_t boot_architecture_flags; // Reserved in 1.0
 	uint8_t reserved2;
-	uint32_t flags;
+	struct fadt_flags flags;
 	struct address_structure reset_reg;
 	uint8_t reset_value;
 	uint8_t reserved3[3];

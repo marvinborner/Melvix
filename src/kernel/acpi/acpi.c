@@ -37,6 +37,7 @@ void acpi_init(struct rsdp *rsdp)
 
 	if (strncmp(rsdp->signature, "RSD PTR ", 8) == 0) {
 		memcpy(rsdt, rsdp->rsdt_address, sizeof(struct rsdt) + 32);
+		debug("Found RSDT");
 		if (!check_sum((struct sdt_header *)rsdt)) {
 			warn("Corrupted RSDT!");
 		} else {
@@ -48,17 +49,17 @@ void acpi_init(struct rsdp *rsdp)
 				memcpy(header, (void *)address, sizeof(struct sdt_header));
 
 				if (strncmp(header->signature, "FACP", 4) == 0) {
-					info("Found FADT");
+					debug("Found FADT");
 					memcpy(fadt, (void *)address, sizeof(struct fadt));
 					if (!check_sum((struct sdt_header *)fadt))
 						warn("Corrupted FADT!");
 				} else if (strncmp(header->signature, "HPET", 4) == 0) {
-					info("Found HPET");
+					debug("Found HPET");
 					memcpy(hpet, (void *)address, sizeof(struct hpet));
 					if (!check_sum((struct sdt_header *)hpet))
 						warn("Corrupted HPET!");
 				} else if (strncmp(header->signature, "APIC", 4) == 0) {
-					info("Found MADT");
+					debug("Found MADT");
 					memcpy(madt, (void *)address, sizeof(struct madt));
 					if (!check_sum((struct sdt_header *)madt))
 						warn("Corrupted MADT!");
@@ -83,36 +84,26 @@ void acpi_new_init(struct multiboot_tag_new_acpi *tag)
 
 void acpi_poweroff()
 {
+	// TODO: Add APCI poweroff support
 	cli();
-	/*
-	if (SCI_EN == 0) {
-		warn("ACPI shutdown is not supported");
-		return;
-	}
-
-	// Send shutdown command
-	outw((uint16_t)(unsigned int)PM1a_CNT, (uint16_t)(SLP_TYPa | SLP_EN));
-	if (PM1b_CNT != 0)
-		outw((uint16_t)(unsigned int)PM1b_CNT, (uint16_t)(SLP_TYPb | SLP_EN));
-	else {
-		outw(0xB004, 0x2000); // Bochs
-		outw(0x604, 0x2000); // QEMU
-		outw(0x4004, 0x3400); // VirtualBox
-	}
-	*/
+	outw(0x604, 0x2000); // QEMU
+	outw(0xB004, 0x2000); // Bochs
+	outw(0x4004, 0x3400); // VirtualBox
+	halt_loop();
 }
 
 void reboot()
 {
 	cli();
-	outb(fadt->reset_reg.address, fadt->reset_value);
-	halt_loop();
-
-	/* else?
-	uint8_t good = 0x02;
-	while (good & 0x02)
-		good = inb(0x64);
-	outb(0x64, 0xFE);
-	halt_loop();
-	*/
+	if (fadt->header.revision >= 2 && fadt->flags.reset_support) {
+		debug("Reset support!");
+		outb(fadt->reset_reg.address, fadt->reset_value);
+		halt_loop();
+	} else {
+		uint8_t good = 0x02;
+		while (good & 0x02)
+			good = inb(0x64);
+		outb(0x64, 0xFE);
+		halt_loop();
+	}
 }

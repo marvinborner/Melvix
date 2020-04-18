@@ -24,7 +24,7 @@ uint8_t get_rtc_register(int reg)
 
 void read_rtc()
 {
-	unsigned int century = 20; // ...
+	uint32_t century = 20;
 	uint8_t last_second;
 	uint8_t last_minute;
 	uint8_t last_hour;
