@@ -37,29 +37,32 @@ void acpi_init(struct rsdp *rsdp)
 
 	if (strncmp(rsdp->signature, "RSD PTR ", 8) == 0) {
 		memcpy(rsdt, rsdp->rsdt_address, sizeof(struct rsdt) + 32);
+		if (!check_sum((struct sdt_header *)rsdt)) {
+			warn("Corrupted RSDT!");
+		} else {
+			uint32_t *pointer = (uint32_t *)(rsdt + 1);
+			uint32_t *end = (uint32_t *)((uint8_t *)rsdt + rsdt->header.length);
 
-		uint32_t *pointer = (uint32_t *)(rsdt + 1);
-		uint32_t *end = (uint32_t *)((uint8_t *)rsdt + rsdt->header.length);
+			while (pointer < end) {
+				uint32_t address = *pointer++;
+				memcpy(header, (void *)address, sizeof(struct sdt_header));
 
-		while (pointer < end) {
-			uint32_t address = *pointer++;
-			memcpy(header, (void *)address, sizeof(struct sdt_header));
-
-			if (strncmp(header->signature, "FACP", 4) == 0) {
-				info("Found FADT");
-				memcpy(fadt, (void *)address, sizeof(struct fadt));
-				if (!check_sum((struct sdt_header *)fadt))
-					warn("Corrupted FADT!");
-			} else if (strncmp(header->signature, "HPET", 4) == 0) {
-				info("Found HPET");
-				memcpy(hpet, (void *)address, sizeof(struct hpet));
-				if (!check_sum((struct sdt_header *)hpet))
-					warn("Corrupted HPET!");
-			} else if (strncmp(header->signature, "APIC", 4) == 0) {
-				info("Found MADT");
-				memcpy(madt, (void *)address, sizeof(struct madt));
-				if (!check_sum((struct sdt_header *)madt))
-					warn("Corrupted MADT!"); // This is currently okay
+				if (strncmp(header->signature, "FACP", 4) == 0) {
+					info("Found FADT");
+					memcpy(fadt, (void *)address, sizeof(struct fadt));
+					if (!check_sum((struct sdt_header *)fadt))
+						warn("Corrupted FADT!");
+				} else if (strncmp(header->signature, "HPET", 4) == 0) {
+					info("Found HPET");
+					memcpy(hpet, (void *)address, sizeof(struct hpet));
+					if (!check_sum((struct sdt_header *)hpet))
+						warn("Corrupted HPET!");
+				} else if (strncmp(header->signature, "APIC", 4) == 0) {
+					info("Found MADT");
+					memcpy(madt, (void *)address, sizeof(struct madt));
+					if (!check_sum((struct sdt_header *)madt))
+						warn("Corrupted MADT!");
+				}
 			}
 		}
 	} else {

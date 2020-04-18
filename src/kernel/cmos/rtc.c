@@ -8,7 +8,7 @@ uint8_t minute;
 uint8_t hour;
 uint8_t day;
 uint8_t month;
-unsigned int year;
+uint32_t year;
 
 int get_update_in_progress_flag()
 {
