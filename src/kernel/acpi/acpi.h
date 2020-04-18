@@ -50,12 +50,11 @@ struct sdt_header {
 
 struct rsdt {
 	struct sdt_header header;
-	uint32_t sdt_pointer[0];
 };
 
 struct xsdt {
 	struct sdt_header header;
-	uint32_t sdt_pointer[0];
+	uint32_t *sdt_pointer;
 };
 
 struct fadt {

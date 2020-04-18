@@ -10,35 +10,62 @@
 #include <kernel/lib/stdio.h>
 #include <kernel/acpi/acpi.h>
 #include <kernel/memory/paging.h>
+#include <kernel/memory/alloc.h>
 
 struct rsdt *rsdt;
 struct fadt *fadt;
 struct hpet *hpet;
-struct apic *apic;
+struct madt *madt;
+
+int check_sum(struct sdt_header *header)
+{
+	uint8_t sum = 0;
+
+	for (uint32_t i = 0; i < header->length; i++)
+		sum += ((char *)header)[i];
+
+	return sum == 0;
+}
 
 void acpi_init(struct rsdp *rsdp)
 {
-	// TODO: Fix usage of ACPI tables after paging!
-	if (strncmp(rsdp->signature, "RSD PTR ", 8) == 0) {
-		rsdt = (struct rsdt *)rsdp->rsdt_address;
-		int entries = (rsdt->header.length - sizeof(rsdt->header)) / 4;
+	struct sdt_header *header = (struct sdt_header *)kmalloc(sizeof(struct sdt_header));
+	rsdt = (struct rsdt *)kmalloc(sizeof(struct rsdt));
+	fadt = (struct fadt *)kmalloc(sizeof(struct fadt));
+	hpet = (struct hpet *)kmalloc(sizeof(struct hpet));
+	madt = (struct madt *)kmalloc(sizeof(struct madt));
 
-		for (int i = 0; i < entries; i++) {
-			struct sdt_header *header = (struct sdt_header *)rsdt->sdt_pointer[i];
+	if (strncmp(rsdp->signature, "RSD PTR ", 8) == 0) {
+		memcpy(rsdt, rsdp->rsdt_address, sizeof(struct rsdt) + 32);
+
+		uint32_t *pointer = (uint32_t *)(rsdt + 1);
+		uint32_t *end = (uint32_t *)((uint8_t *)rsdt + rsdt->header.length);
+
+		while (pointer < end) {
+			uint32_t address = *pointer++;
+			memcpy(header, (void *)address, sizeof(struct sdt_header));
+
 			if (strncmp(header->signature, "FACP", 4) == 0) {
 				info("Found FADT");
-				fadt = (struct fadt *)header;
+				memcpy(fadt, (void *)address, sizeof(struct fadt));
+				if (!check_sum((struct sdt_header *)fadt))
+					warn("Corrupted FADT!");
 			} else if (strncmp(header->signature, "HPET", 4) == 0) {
 				info("Found HPET");
-				hpet = (struct hpet *)header;
+				memcpy(hpet, (void *)address, sizeof(struct hpet));
+				if (!check_sum((struct sdt_header *)hpet))
+					warn("Corrupted HPET!");
 			} else if (strncmp(header->signature, "APIC", 4) == 0) {
 				info("Found MADT");
-				apic = (struct apic *)header;
+				memcpy(madt, (void *)address, sizeof(struct madt));
+				if (!check_sum((struct sdt_header *)madt))
+					warn("Corrupted MADT!"); // This is currently okay
 			}
 		}
 	} else {
 		warn("Wrong RSD signature!");
 	}
+	kfree(header);
 }
 
 void acpi_old_init(struct multiboot_tag_old_acpi *tag)

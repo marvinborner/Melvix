@@ -41,8 +41,8 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 	isrs_install();
 	irq_install();
 
+	paging_install(multiboot_address);
 	multiboot_parse(multiboot_address);
-	paging_install();
 
 	// Install drivers
 	cli();
@@ -54,7 +54,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 	sti();
 
 	memory_print();
-	//rtc_print(); // TODO: Fix ACPI memory mapping!
+	rtc_print();
 
 	vfs_init();
 	ata_init();

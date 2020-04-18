@@ -25,7 +25,7 @@ int paging_enabled;
 
 uint32_t *current_page_directory;
 
-void paging_install();
+void paging_install(uint32_t multiboot_address);
 
 void paging_enable();
 

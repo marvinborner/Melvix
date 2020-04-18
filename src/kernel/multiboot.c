@@ -24,16 +24,8 @@ void multiboot_parse(uint32_t multiboot_address)
 		case MULTIBOOT_TAG_TYPE_MODULE:
 			info("Got modules");
 			break;
-		case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
-			info("Got memory info");
-			memory_info_init((struct multiboot_tag_basic_meminfo *)tag);
-			break;
 		case MULTIBOOT_TAG_TYPE_BOOTDEV:
 			info("Got boot device");
-			break;
-		case MULTIBOOT_TAG_TYPE_MMAP:
-			info("Got memory map");
-			memory_mmap_init((struct multiboot_tag_mmap *)tag);
 			break;
 		case MULTIBOOT_TAG_TYPE_VBE:
 			info("Got VBE info");

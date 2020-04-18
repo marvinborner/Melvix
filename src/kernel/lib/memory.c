@@ -80,12 +80,40 @@ void memory_mmap_init(struct multiboot_tag_mmap *tag)
 	     mmap = (multiboot_memory_map_t *)((uint32_t)mmap +
 					       ((struct multiboot_tag_mmap *)tag)->entry_size)) {
 		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
+			log("Found free memory");
+			paging_set_present(mmap->addr, mmap->len >> 12);
 			sum += mmap->len;
+		} else if (mmap->type == MULTIBOOT_MEMORY_RESERVED) {
+			log("Found reserved memory");
+			paging_set_present(mmap->addr, mmap->len >> 12);
+			paging_set_used(mmap->addr, mmap->len >> 12);
 		} else if (mmap->type == MULTIBOOT_MEMORY_ACPI_RECLAIMABLE) {
-			log("ACPI reclaimable memory");
+			log("Found ACPI reclaimable memory");
+		} else if (mmap->type == MULTIBOOT_MEMORY_NVS) {
+			log("Found NVS memory");
 		} else if (mmap->type == MULTIBOOT_MEMORY_BADRAM) {
-			warn("Bad memory!");
+			warn("Found bad memory!");
 		}
 	}
 	total = sum >> 10; // I want kb
+}
+
+int memory_init(uint32_t multiboot_address)
+{
+	int ret = 0;
+	struct multiboot_tag *tag;
+
+	for (tag = (struct multiboot_tag *)(multiboot_address + 8);
+	     tag->type != MULTIBOOT_TAG_TYPE_END;
+	     tag = (struct multiboot_tag *)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7))) {
+		if (tag->type == MULTIBOOT_TAG_TYPE_BASIC_MEMINFO) {
+			info("Got memory info");
+			memory_info_init((struct multiboot_tag_basic_meminfo *)tag);
+		} else if (tag->type == MULTIBOOT_TAG_TYPE_MMAP) {
+			info("Got memory map");
+			memory_mmap_init((struct multiboot_tag_mmap *)tag);
+			ret = 1;
+		}
+	}
+	return ret;
 }

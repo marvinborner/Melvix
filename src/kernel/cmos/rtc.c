@@ -24,7 +24,6 @@ uint8_t get_rtc_register(int reg)
 
 void read_rtc()
 {
-	halt_loop();
 	unsigned int century = 20; // ...
 	uint8_t last_second;
 	uint8_t last_minute;
@@ -37,15 +36,13 @@ void read_rtc()
 
 	while (get_update_in_progress_flag()) {
 	};
-	halt_loop();
 	second = get_rtc_register(0x00);
 	minute = get_rtc_register(0x02);
 	hour = get_rtc_register(0x04);
 	day = get_rtc_register(0x07);
 	month = get_rtc_register(0x08);
 	year = get_rtc_register(0x09);
-	halt_loop();
-	// century = get_rtc_register(fadt->century); // TODO: Fix fadt table (page fault!)
+	century = get_rtc_register(fadt->century);
 
 	// Try until the values are the same (fix for RTC updates)
 	do {
@@ -65,7 +62,7 @@ void read_rtc()
 		day = get_rtc_register(0x07);
 		month = get_rtc_register(0x08);
 		year = get_rtc_register(0x09);
-		// century = get_rtc_register(fadt->century);
+		century = get_rtc_register(fadt->century);
 	} while ((last_second != second) || (last_minute != minute) || (last_hour != hour) ||
 		 (last_day != day) || (last_month != month) || (last_year != year) ||
 		 (last_century != century));
@@ -79,7 +76,7 @@ void read_rtc()
 		day = (uint8_t)((day & 0x0F) + ((day / 16) * 10));
 		month = (uint8_t)((month & 0x0F) + ((month / 16) * 10));
 		year = (year & 0x0F) + ((year / 16) * 10);
-		// century = (century & 0x0F) + ((century / 16) * 10);
+		century = (century & 0x0F) + ((century / 16) * 10);
 	}
 
 	year += century * 100;
@@ -92,7 +89,6 @@ void read_rtc()
 
 void rtc_print()
 {
-	log("%d", fadt->century);
 	read_rtc();
 	info("Current time: %d:%d:%d %d/%d/%d", hour, minute, second, month, day, year);
 }

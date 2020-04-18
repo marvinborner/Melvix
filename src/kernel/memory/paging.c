@@ -25,11 +25,9 @@ void paging_init()
 	for (uint32_t i = 0; i < 1024; i++) {
 		current_page_directory[i] = ((uint32_t)current_page_tables[i]) | PD_RW | PD_PRESENT;
 	}
-
-	paging_set_present(0, memory_get_all() >> 3); // /4
 }
 
-void paging_install()
+void paging_install(uint32_t multiboot_address)
 {
 	// User paging
 	//paging_switch_directory(1);
@@ -39,10 +37,14 @@ void paging_install()
 	// Kernel paging
 	paging_switch_directory(0);
 	paging_init();
+
+	// if mmap approach didn't work
+	if (!memory_init(multiboot_address))
+		paging_set_present(0, memory_get_all() >> 3); // /4
 	paging_set_used(0, ((uint32_t)ASM_KERNEL_END >> 12) + 1); // /4096
 
 	paging_enable();
-	vga_log("Installed paging");
+	log("Installed paging");
 }
 
 void paging_disable()

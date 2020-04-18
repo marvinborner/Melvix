@@ -36,6 +36,8 @@ void memory_info_init(struct multiboot_tag_basic_meminfo *tag);
 
 void memory_mmap_init(struct multiboot_tag_mmap *tag);
 
+int memory_init(uint32_t multiboot_address);
+
 void memory_print();
 
 uint32_t memory_get_all();
