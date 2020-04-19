@@ -27,8 +27,8 @@
   * texinfo
   * curl
   * nasm
-  * genisoimage
   * qemu
+  * grub
   * genext2fs
 
 * Build a cross compiler using `./run cross`
