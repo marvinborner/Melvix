@@ -8,13 +8,10 @@
     <a href="https://app.codacy.com/manual/marvin-borner/Melvix/dashboard" target="_blank">
         <img src="https://img.shields.io/codacy/grade/4ae29e218d7c439eaa549ea828ffcaac?style=for-the-badge" />
     </a>
-    <a href="https://marvinborner.de/melvix/" target="_blank">
-        <img src="https://img.shields.io/badge/download-latest-brightgreen?style=for-the-badge" />
-    </a>
 </p>
 
 ## Build
-* Use any system running GNU/Linux (Successfully tried building on Debian, Arch Linux and even OpenBSD)
+* Use any system running GNU/Linux
 
 * Install build dependencies (package names may vary depending on your operating system)
   * Ubuntu/Debian _"instructions"_ can be found here: [GitHub Workflow](https://raw.githubusercontent.com/marvinborner/Melvix/master/.github/workflows/build.yml)
@@ -32,6 +29,7 @@
   * nasm
   * genisoimage
   * qemu
+  * genext2fs
 
 * Build a cross compiler using `./run cross`
 

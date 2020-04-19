@@ -2,210 +2,139 @@
 #define MELVIX_EXT2_H
 
 #include <stdint.h>
-#include <kernel/fs/vfs.h>
+#include <stddef.h>
+#include <stdbool.h>
 
-#define EXT2_DIRECT_BLOCKS 12
+#define ROOT_INODE 2
 
-#define SUPERBLOCK_SIZE 1024
-#define ROOT_INODE_NUMBER 2
+#define EXT2_SIGNATURE 0xEF53
+#define INODE_SIZE 128
 
-#define EXT2_S_IFSOCK 0xC000
-#define EXT2_S_IFLNK 0xA000
-#define EXT2_S_IFREG 0x8000
-#define EXT2_S_IFBLK 0x6000
-#define EXT2_S_IFDIR 0x4000
-#define EXT2_S_IFCHR 0x2000
-#define EXT2_S_IFIFO 0x1000
+#define SUPERBLOCK_OFFSET 1024
+#define SUPERBLOCK_LENGTH 1024
 
-// http://wiki.osdev.org/Ext2#Locating_the_Superblock
-typedef struct superblock {
+#define SUPERBLOCK_LBA (SUPERBLOCK_OFFSET / SECTOR_SIZE)
+#define SUPERBLOCK_SECTORS (SUPERBLOCK_LENGTH / SECTOR_SIZE)
+
+struct ext2_superblock {
 	uint32_t total_inodes;
 	uint32_t total_blocks;
-	uint32_t su_blocks;
+	uint32_t su_res_blocks; // Superuser reserved
 	uint32_t free_blocks;
 	uint32_t free_inodes;
-	uint32_t superblock_idx;
-	uint32_t log2block_size;
-	uint32_t log2frag_size;
+	uint32_t superblock_block_num;
+	uint32_t log2_block_size;
+	uint32_t log2_frag_size;
 	uint32_t blocks_per_group;
 	uint32_t frags_per_group;
 	uint32_t inodes_per_group;
+	uint32_t last_mount_time;
+	uint32_t last_write_time;
+	uint16_t mounts_since_fsck;
+	uint16_t max_mounts_since_fsck;
+	uint16_t signature;
+	uint16_t state;
+	uint16_t error_action;
+	uint16_t minor_version;
+	uint32_t last_fsck_time;
+	uint32_t max_time_since_fsck;
+	uint32_t creator_OS_id;
+	uint32_t major_version;
+	uint16_t res_block_uid;
+	uint16_t res_block_gid;
+} __attribute__((packed));
 
-	uint32_t mtime;
-	uint32_t wtime;
+// Block group descriptor
+struct bgd {
+	uint32_t block_bitmap_addr;
+	uint32_t inode_bitmap_addr;
+	uint32_t inode_table_addr;
+	uint16_t free_blocks;
+	uint16_t free_inodes;
+	uint16_t used_dirs;
+	uint16_t pad;
+	uint8_t bg_reserved[12];
+} __attribute__((packed));
 
-	uint16_t mount_count;
-	uint16_t mount_allowed_count;
-	uint16_t ext2_magic;
-	uint16_t fs_state;
-	uint16_t err;
-	uint16_t minor;
-
-	uint32_t last_check;
-	uint32_t interval;
-	uint32_t os_id;
-	uint32_t major;
-
-	uint16_t r_userid;
-	uint16_t r_groupid;
-
-	// Extensions
-	uint32_t first_inode;
-	uint16_t inode_size;
-	uint16_t superblock_group;
-	uint32_t optional_feature;
-	uint32_t required_feature;
-	uint32_t readonly_feature;
-	char fs_id[16];
-	char vol_name[16];
-	char last_mount_path[64];
-	uint32_t compression_method;
-	uint8_t file_pre_alloc_blocks;
-	uint8_t dir_pre_alloc_blocks;
-	uint16_t unused1;
-	char journal_id[16];
-	uint32_t journal_inode;
-	uint32_t journal_device;
-	uint32_t orphan_head;
-
-	char unused2[1024 - 236];
-} __attribute__((packed)) superblock_t;
-
-typedef struct bgd {
-	uint32_t block_bitmap;
-	uint32_t inode_bitmap;
-	uint32_t inode_table;
-	uint32_t free_blocks;
-	uint32_t free_inodes;
-	uint32_t num_dirs;
-	uint32_t unused1;
-	uint32_t unused2;
-} __attribute__((packed)) bgd_t;
-
-typedef struct direntry {
-	uint32_t inode;
-	uint16_t size;
-	uint8_t name_len;
-	uint8_t type;
-	char name[];
-} __attribute__((packed)) direntry_t;
-
-typedef struct inode {
-	uint16_t permission;
-	uint16_t userid;
+struct ext2_inode {
+	uint16_t type_and_permissions;
+	uint16_t uid;
 	uint32_t size;
-	uint32_t atime;
-	uint32_t ctime;
-	uint32_t mtime;
-	uint32_t dtime;
+
+	uint32_t last_access_time;
+	uint32_t creation_time;
+	uint32_t last_modification_time;
+	uint32_t deletion_time;
+
 	uint16_t gid;
-	uint16_t hard_links;
-	uint32_t num_sectors;
+	uint16_t link_count;
+	uint32_t sectors_used;
 	uint32_t flags;
-	uint32_t os_specific1;
-	uint32_t blocks[EXT2_DIRECT_BLOCKS + 3];
-	uint32_t generation;
-	uint32_t file_acl;
-	union {
-		uint32_t dir_acl;
-		uint32_t size_high;
-	};
-	uint32_t f_block_addr;
-	char os_specific2[12];
-} __attribute__((packed)) inode_t;
+	uint32_t os_specific_val1;
+	uint32_t dbp[12];
+	uint32_t ibp;
+	uint32_t dibp;
+	uint32_t tibp;
+	uint32_t gen_number;
 
-typedef struct ext2_cache {
-	uint32_t block;
-	uint32_t times;
-	uint8_t dirty;
-	char *block_data;
-} ext2_cache_t;
+	uint32_t reserved1;
+	uint32_t reserved2;
 
-typedef struct ext2_fs {
-	vfs_node_t *disk_device;
+	uint32_t fragment_addr;
+	uint8_t os_specific_val2[12];
+} __attribute__((packed));
 
-	superblock_t *sb;
-	bgd_t *bgds;
-	uint32_t block_size;
-	uint32_t blocks_per_group;
-	uint32_t inodes_per_group;
-	uint32_t total_groups;
+#define S_IFIFO 0x1000
+#define S_IFCHR 0x2000
+#define S_IFDIR 0x4000
+#define S_IFBLK 0x6000
+#define S_IFREG 0x8000
+#define S_IFLNK 0xA000
+#define S_IFSOCK 0xC000
 
-	uint32_t bgd_blocks;
-} ext2_fs_t;
+#define S_ISUID 04000
+#define S_ISGID 02000
+#define S_ISTICK 01000
+#define S_IRUSR 00400
+#define S_IWUSR 00200
+#define S_IXUSR 00100
+#define S_IRGRP 00040
+#define S_IWGRP 00020
+#define S_IXGRP 00010
+#define S_IROTH 00004
+#define S_IWOTH 00002
+#define S_IXOTH 00001
 
-uint32_t ext2_file_size(vfs_node_t *node);
+#define SECURE_DELETE 0x00001
+#define UNDELETE 0x00002
+#define COMPRESSED 0x00004
+#define SYNCRONOUS 0x00008
+#define IMMUTABLE 0x00010
+#define APPEND_ONLY 0x00020
+#define DUMP_IGNORE 0x00040
+#define NO_UPDATE_ACCESS 0x00080
 
-void ext2_mkdir(vfs_node_t *parent, char *name, uint16_t permission);
+struct ext2_dirent {
+	uint32_t inode_num;
+	uint16_t total_len;
+	uint8_t name_len;
+	uint8_t type_indicator;
+	uint8_t *name;
+} __attribute__((packed));
 
-void ext2_mkfile(vfs_node_t *parent, char *name, uint16_t permission);
+struct ext2_file {
+	struct ext2_inode inode;
+	size_t pos;
+	uint8_t block_index;
+	uint8_t *buf;
+	size_t curr_block_pos;
+};
 
-void ext2_create_entry(vfs_node_t *parent, char *entry_name, uint32_t entry_inode);
-
-void ext2_unlink(vfs_node_t *parent, char *name);
-
-char **ext2_listdir(vfs_node_t *parent);
-
-vfs_node_t *ext2_finddir(vfs_node_t *parent, char *name);
-
-void ext2_create_entry(vfs_node_t *parent, char *entry_name, uint32_t entry_inode);
-
-void ext2_remove_entry(vfs_node_t *parent, char *entry_name);
-
-void ext2_chmod(vfs_node_t *file, uint32_t mode);
-
-uint32_t ext2_read(vfs_node_t *file, uint32_t offset, uint32_t size, char *buf);
-
-uint32_t ext2_write(vfs_node_t *file, uint32_t offset, uint32_t size, char *buf);
-
-void ext2_open(vfs_node_t *file, uint32_t flags);
-
-void ext2_close();
-
-void read_inode_metadata(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx);
-
-void write_inode_metadata(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx);
-
-uint32_t read_inode_filedata(ext2_fs_t *ext2fs, inode_t *inode, uint32_t offset, uint32_t size,
-			     char *buf);
-
-void write_inode_filedata(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx, uint32_t offset,
-			  uint32_t size, char *buf);
-
-char *read_inode_block(ext2_fs_t *ext2fs, inode_t *inode, uint32_t iblock);
-
-void write_inode_block(ext2_fs_t *ext2fs, inode_t *inode, uint32_t iblock, char *buf);
-
-void read_disk_block(ext2_fs_t *ext2fs, uint32_t block, char *buf);
-
-void write_disk_block(ext2_fs_t *ext2fs, uint32_t block, char *buf);
-
-void rewrite_bgds(ext2_fs_t *ext2fs);
-
-void rewrite_superblock(ext2_fs_t *ext2fs);
-
-int alloc_inode_metadata_block(uint32_t *block_ptr, ext2_fs_t *ext2fs, inode_t *inode,
-			       uint32_t inode_idx, char *buffer, unsigned int block_overwrite);
-
-uint32_t get_disk_block_number(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_block);
-
-void set_disk_block_number(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx,
-			   uint32_t inode_block, uint32_t disk_block);
-
-uint32_t ext2_alloc_block(ext2_fs_t *ext2fs);
-
-void ext2_free_block(ext2_fs_t *ext2fs, uint32_t block);
-
-void alloc_inode_block(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx, uint32_t block);
-
-void free_inode_block(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx, uint32_t block);
-
-uint32_t alloc_inode(ext2_fs_t *ext2fs);
-
-void free_inode(ext2_fs_t *ext2fs, uint32_t inode);
-
-vfs_node_t *get_ext2_root(ext2_fs_t *ext2fs, inode_t *inode);
-
-void ext2_init(char *device_path, char *mountpoint);
+void ext2_init_fs();
+void ext2_open_inode(uint32_t inode_num, struct ext2_file *file);
+size_t ext2_read(struct ext2_file *file, uint8_t *buf, size_t count);
+bool ext2_next_dirent(struct ext2_file *file, struct ext2_dirent *dir);
+uint32_t ext2_find_in_dir(uint32_t dir_inode, const char *name);
+uint32_t ext2_look_up_path(char *path);
 
 #endif

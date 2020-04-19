@@ -119,41 +119,18 @@ make_build() {
 	cp ./src/bootloader/grub.cfg ./iso/boot/grub/
 	cp ./build/user.bin ./iso/user.bin
 	cp ./build/font.bin ./iso/font.bin
-	grub-mkrescue -o ./build/melvix.iso ./iso/
-	dd if=/dev/zero of=./build/ext2_hda.img bs=1k count=100000 >/dev/zero
-	mkfs -t ext2 -i 1024 -b 1024 -F ./build/ext2_hda.img >/dev/zero
-	fdisk ./build/ext2_hda.img <<EOF
-x
-c
-10
-h
-16
-s
-63
-r
-n
-p
-1
-2048
-199999
-w
-EOF
+	grub-mkrescue -o ./build/melvix.iso ./iso/ || exit 1
 
-	cp ./build/ext2_hda.img ./build/ext2_hdb.img
-	cp ./build/ext2_hda.img ./build/ext2_hdc.img
-	cp ./build/ext2_hda.img ./build/ext2_hdd.img
-
-	mkdir mnt/
-	sudo mount ./build/ext2_hda.img mnt/
-	echo "Bananenkuchen" | sudo tee -a mnt/test.txt
-	sudo umount mnt
+	mkdir ./mnt/
+	echo "Bananenkuchen" >./mnt/test
+	genext2fs -d ./mnt/ -U -N 4096 -b 65536 ./build/disk.img || exit 1
 	rm -r mnt/
 
 	printf "Build finshed successfully!\n\n"
 }
 
 make_test() {
-	qemu_with_flags -cdrom ./build/melvix.iso -hda ./build/ext2_hda.img -hdb ./build/ext2_hdb.img -hdd ./build/ext2_hdd.img -boot d
+	qemu_with_flags -cdrom ./build/melvix.iso -hda ./build/disk.img -boot d
 }
 
 make_debug() {

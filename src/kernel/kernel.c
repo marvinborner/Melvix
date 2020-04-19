@@ -17,7 +17,6 @@
 #include <kernel/lib/stdio.h>
 #include <kernel/fs/ata.h>
 #include <kernel/fs/ext2.h>
-#include <kernel/fs/vfs.h>
 #include <kernel/cmos/rtc.h>
 
 void kernel_main(uint32_t magic, uint32_t multiboot_address)
@@ -56,9 +55,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 	memory_print();
 	rtc_print();
 
-	vfs_init();
 	ata_init();
-	ext2_init("/dev/hda", "/");
+	ext2_init_fs();
+	panic("YAY");
 
 	load_binaries();
 	set_optimal_resolution();
