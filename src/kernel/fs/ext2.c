@@ -570,7 +570,9 @@ void set_disk_block_number(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx
 	}
 	b = a - p;
 	if (b <= 0) {
-		if(!alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS]), ext2fs, inode, inode_idx, NULL, 0));
+		if (!alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS]), ext2fs, inode,
+						inode_idx, NULL, 0))
+			;
 		read_disk_block(ext2fs, inode->blocks[EXT2_DIRECT_BLOCKS], (void *)tmp);
 		((unsigned int *)tmp)[a] = disk_block;
 		write_disk_block(ext2fs, inode->blocks[EXT2_DIRECT_BLOCKS], (void *)tmp);
@@ -581,9 +583,13 @@ void set_disk_block_number(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx
 	if (c <= 0) {
 		c = b / p;
 		d = b - c * p;
-		if(!alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS + 1]), ext2fs, inode, inode_idx, NULL, 0));
+		if (!alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS + 1]), ext2fs,
+						inode, inode_idx, NULL, 0))
+			;
 		read_disk_block(ext2fs, inode->blocks[EXT2_DIRECT_BLOCKS + 1], (void *)tmp);
-		if(!alloc_inode_metadata_block(&(tmp[c]), ext2fs, inode, inode_idx, (void*)tmp, inode->blocks[EXT2_DIRECT_BLOCKS + 1]));
+		if (!alloc_inode_metadata_block(&(tmp[c]), ext2fs, inode, inode_idx, (void *)tmp,
+						inode->blocks[EXT2_DIRECT_BLOCKS + 1]))
+			;
 		unsigned int temp = tmp[c];
 		read_disk_block(ext2fs, temp, (void *)tmp);
 		tmp[d] = disk_block;
@@ -595,12 +601,18 @@ void set_disk_block_number(ext2_fs_t *ext2fs, inode_t *inode, uint32_t inode_idx
 		e = c / (p * p);
 		f = (c - e * p * p) / p;
 		g = (c - e * p * p - f * p);
-		if(!alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS + 2]), ext2fs, inode, inode_idx, NULL, 0));
+		if (!alloc_inode_metadata_block(&(inode->blocks[EXT2_DIRECT_BLOCKS + 2]), ext2fs,
+						inode, inode_idx, NULL, 0))
+			;
 		read_disk_block(ext2fs, inode->blocks[EXT2_DIRECT_BLOCKS + 2], (void *)tmp);
-		if(!alloc_inode_metadata_block(&(tmp[e]), ext2fs, inode, inode_idx, (void*)tmp, inode->blocks[EXT2_DIRECT_BLOCKS + 2]));
+		if (!alloc_inode_metadata_block(&(tmp[e]), ext2fs, inode, inode_idx, (void *)tmp,
+						inode->blocks[EXT2_DIRECT_BLOCKS + 2]))
+			;
 		unsigned int temp = tmp[e];
 		read_disk_block(ext2fs, tmp[e], (void *)tmp);
-		if(!alloc_inode_metadata_block(&(tmp[f]), ext2fs, inode, inode_idx, (void*)tmp, temp));
+		if (!alloc_inode_metadata_block(&(tmp[f]), ext2fs, inode, inode_idx, (void *)tmp,
+						temp))
+			;
 		temp = tmp[f];
 		read_disk_block(ext2fs, tmp[f], (void *)tmp);
 		tmp[g] = disk_block;

@@ -19,7 +19,7 @@ void multiboot_parse(uint32_t multiboot_address)
 			break;
 		case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
 			debug("Got bootloader name: %s",
-			     ((struct multiboot_tag_string *)tag)->string);
+			      ((struct multiboot_tag_string *)tag)->string);
 			break;
 		case MULTIBOOT_TAG_TYPE_MODULE:
 			debug("Got modules");
