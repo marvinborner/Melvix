@@ -88,12 +88,12 @@ make_build() {
 		stripped=$(echo "${line}" | sed -r 's/\//_/g')
 		stripped=${stripped#??????}
 		stripped=${stripped%%?}o
-		compile_with_flags -Os -s -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}"
+		compile_with_flags -O2 -s -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}"
 	done <./build/tmp
 	rm ./build/tmp
 
 	# Link kernel ASM and C objects
-	compile_with_flags -Os -s ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin
+	compile_with_flags -O2 -s ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin
 
 	# Modules
 	# TODO: Find out why no font optimizations cause strange glitches
