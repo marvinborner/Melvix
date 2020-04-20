@@ -36,7 +36,7 @@ void ext2_init_fs()
 	struct ext2_dirent dirent;
 
 	while (ext2_next_dirent(&file, &dirent))
-		log("Inode %d, name `%s'", dirent.inode_num, dirent.name);
+		log("Inode %d, name '%s'", dirent.inode_num, dirent.name);
 
 	kfree(file.buf);
 
@@ -46,7 +46,6 @@ void ext2_init_fs()
 		log("File not found");
 	else
 		log("Found: inode = %d", inode);
-	panic("nice");
 }
 
 static void read_block(uint32_t block_num, void *buf)
@@ -70,7 +69,7 @@ static void load_superblock()
 	assert(superblock.signature == EXT2_SIGNATURE);
 	log("Total inodes = 0x%x", superblock.total_inodes);
 	log("Total blocks = 0x%x", superblock.total_blocks);
-	log("Block size = %b", block_size);
+	log("Block size = %d", block_size);
 	log("Num blocks = %d", superblock.total_blocks);
 	log("Blocks/group = %d", superblock.blocks_per_group);
 	log("Inodes/group = %d", superblock.inodes_per_group);

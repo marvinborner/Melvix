@@ -78,7 +78,7 @@ void paging_switch_directory(int user)
 	asm("mov %0, %%cr3" ::"r"(current_page_directory));
 }
 
-inline void invlpg(uint32_t addr)
+void invlpg(uint32_t addr)
 {
 	asm("invlpg (%0)" ::"r"(addr) : "memory");
 }

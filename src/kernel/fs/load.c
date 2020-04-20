@@ -31,5 +31,5 @@ void load_binaries()
 			halt_loop();
 		}
 	}*/
-	vga_log("Successfully loaded binaries");
+	log("Successfully loaded binaries");
 }

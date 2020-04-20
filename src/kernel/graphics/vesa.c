@@ -104,8 +104,8 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode)
 
 void set_optimal_resolution()
 {
-	vga_log("Switching to graphics mode");
-	vga_log("Trying to detect available modes");
+	log("Switching to graphics mode");
+	log("Trying to detect available modes");
 	uint16_t *video_modes = vbe_get_modes();
 
 	uint16_t highest = 0;
@@ -135,8 +135,8 @@ void set_optimal_resolution()
 	kfree(video_modes);
 
 	if (highest == 0) {
-		vga_log("Mode detection failed!");
-		vga_log("Trying common modes...");
+		log("Mode detection failed!");
+		log("Trying common modes...");
 		struct vbe_mode_info *mode_info;
 		int modes[] = {
 			322, 287, 286, 285, 284, // 1600x1200
@@ -177,7 +177,7 @@ void set_optimal_resolution()
 		if (highest == 0)
 			switch_to_vga();
 	} else {
-		vga_log("Mode detection succeeded");
+		log("Mode detection succeeded");
 	}
 
 	vbe_set_mode(highest);

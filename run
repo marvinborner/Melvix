@@ -88,12 +88,12 @@ make_build() {
 		stripped=$(echo "${line}" | sed -r 's/\//_/g')
 		stripped=${stripped#??????}
 		stripped=${stripped%%?}o
-		compile_with_flags -O2 -s -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}"
+		compile_with_flags -s -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}"
 	done <./build/tmp
 	rm ./build/tmp
 
 	# Link kernel ASM and C objects
-	compile_with_flags -O2 -s ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin
+	compile_with_flags -s ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin
 
 	# Modules
 	# TODO: Find out why no font optimizations cause strange glitches
@@ -121,9 +121,13 @@ make_build() {
 	cp ./build/font.bin ./iso/font.bin
 	grub-mkrescue -o ./build/melvix.iso ./iso/ || exit 1
 
-	mkdir ./mnt/
-	echo "Bananenkuchen" >./mnt/test
-	genext2fs -d ./mnt/ -U -N 4096 -b 65536 ./build/disk.img || exit 1
+	mke2fs -b 4096 -N 4096 ./build/disk.img 65536 || exit 1
+	mkdir ./mnt/ || exit 1
+	sudo mount ./build/disk.img ./mnt/ || exit 1
+	sudo mkdir -p ./mnt/abc/def/
+	echo "Bananenkuchen" | sudo tee -a ./mnt/test
+	echo "toll" | sudo tee -a ./mnt/abc/def/baum
+	sync && sudo umount mnt || exit 1
 	rm -r mnt/
 
 	printf "Build finshed successfully!\n\n"
