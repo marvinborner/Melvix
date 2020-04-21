@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <kernel/fs/vfs.h>
 
 #define ROOT_INODE 2
 
@@ -136,5 +137,7 @@ size_t ext2_read(struct ext2_file *file, uint8_t *buf, size_t count);
 bool ext2_next_dirent(struct ext2_file *file, struct ext2_dirent *dir);
 uint32_t ext2_find_in_dir(uint32_t dir_inode, const char *name);
 uint32_t ext2_look_up_path(char *path);
+
+void ext2_mount(struct fs_node *mountpoint);
 
 #endif
