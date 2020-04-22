@@ -10,17 +10,8 @@ qemu_with_flags() {
 		# TODO: Find out why kvm install is incredibly slow
 		SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial mon:stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
 	else
-		SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -enable-kvm -cpu host -no-reboot -vga std -smp "$(nproc)" -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+		SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
 	fi
-}
-
-compile_with_flags() {
-	if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
-		GCC_COLORS=1 ccache i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter -D INSTALL_MELVIX "$@" || exit 1
-	else
-		GCC_COLORS=1 ccache i686-elf-gcc -std=gnu99 -ffreestanding -nostdlib -Wall -Wextra -Wno-unused-parameter "$@" || exit 1
-	fi
-
 }
 
 make_cross() {
@@ -69,59 +60,17 @@ make_cross() {
 }
 
 make_build() {
+	mkdir -p iso/
+
 	echo "Building..."
-	mkdir -p ./build/kernel && mkdir -p ./build/userspace
+	mkdir -p build
+	cd build || exit 1
+	cmake .. >/dev/null || exit 1
+	make || exit 1
+	cd ..
 
-	# Assemble ASM files
-	find ./src/kernel/ -name \*.asm >./build/tmp
-	while read -r line; do
-		stripped=$(echo "${line}" | sed -r 's/\//_/g')
-		stripped=${stripped#??????}
-		stripped=${stripped%%???}o
-		nasm -f elf ./"${line}" -o ./build/kernel/asm_"${stripped}" || exit 1
-	done <./build/tmp
-	rm ./build/tmp
-
-	# Make all kernel C files
-	find ./src/kernel/ -name \*.c >./build/tmp
-	while read -r line; do
-		stripped=$(echo "${line}" | sed -r 's/\//_/g')
-		stripped=${stripped#??????}
-		stripped=${stripped%%?}o
-		compile_with_flags -s -c ./"${line}" -I ./src -D ${network} -o ./build/kernel/"${stripped}"
-	done <./build/tmp
-	rm ./build/tmp
-
-	# Link kernel ASM and C objects
-	compile_with_flags -s ./build/kernel/*.o -T ./src/kernel/linker.ld -I ./src -o ./build/melvix.bin
-
-	# Modules
-	# TODO: Find out why no font optimizations cause strange glitches
-	compile_with_flags -Os -c ./src/resources/font.c -o ./build/font.o
-	i686-elf-objcopy -O binary ./build/font.o ./build/font.bin
-	rm ./build/font.o
-
-	# Userspace
-	# TODO: Find out why userspace optimizations (-Os) cause fatal errors
-	find ./src/userspace/ -name \*.c >./build/tmp
-	while read -r line; do
-		stripped=$(echo "${line}" | sed -r 's/\//_/g')
-		stripped=${stripped#??????}
-		stripped=${stripped%%?}o
-		compile_with_flags -O2 -c ./"${line}" -I ./src/userspace -o ./build/userspace/"${stripped}"
-	done <./build/tmp
-	rm ./build/tmp
-	compile_with_flags -emain -O2 ./build/userspace/*.o -I ./src/userspace -o ./build/user.bin
-
-	# Create ISO
-	mkdir -p ./iso/boot/grub/
-	cp ./build/melvix.bin ./iso/boot/kernel.bin
-	cp ./src/bootloader/grub.cfg ./iso/boot/grub/
-	cp ./build/user.bin ./iso/user.bin
-	cp ./build/font.bin ./iso/font.bin
-	grub-mkrescue -o ./build/melvix.iso ./iso/ || exit 1
-
-	mke2fs -b 4096 -N 4096 ./build/disk.img 65536 || exit 1
+	# Create disk image
+	mke2fs -b 1024 -N 1024 ./build/disk.img 65536 || exit 1
 	mkdir ./mnt/ || exit 1
 	sudo mount ./build/disk.img ./mnt/ || exit 1
 	sudo mkdir -p ./mnt/abc/def/
@@ -130,11 +79,17 @@ make_build() {
 	sync && sudo umount mnt || exit 1
 	rm -r mnt/
 
+	# Create ISO
+	mkdir -p ./iso/boot/grub/
+	cp ./kernel ./iso/boot/kernel.bin
+	cp ./src/bootloader/grub.cfg ./iso/boot/grub/
+	grub-mkrescue -o ./build/melvix.iso ./iso/ || exit 1
+
 	printf "Build finshed successfully!\n\n"
 }
 
 make_test() {
-	qemu_with_flags -cdrom ./build/melvix.iso -hda ./build/disk.img -boot d
+	qemu_with_flags -cdrom ./build/melvix.iso -hda ./build/disk.img
 }
 
 make_debug() {
@@ -196,6 +151,8 @@ elif [ "${mode}" = "test" ]; then
 	make_cross
 	make_clean
 	make_build
+	make_test
+elif [ "${mode}" = "again" ]; then
 	make_test
 elif [ "${mode}" = "debug" ]; then
 	make_debug

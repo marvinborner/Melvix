@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Install
-        run: sudo apt-get update && sudo apt-get install -y build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo libcloog-isl-dev libisl-0.18-dev ccache curl nasm grub-common qemu qemu-kvm mtools
+        run: sudo apt-get update && sudo apt-get install -y build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo libcloog-isl-dev libisl-0.18-dev ccache curl nasm grub-common qemu qemu-kvm mtools cmake
       - name: Get cross compiler
         id: cache-cross
         uses: actions/cache@v1
