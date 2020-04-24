@@ -70,7 +70,7 @@ make_build() {
 	cd ..
 
 	# Create disk image
-	mke2fs -b 1024 -N 1024 ./build/disk.img 65536 || exit 1
+	mke2fs -b 4096 -N 4096 ./build/disk.img 65536 || exit 1
 	mkdir ./mnt/ || exit 1
 	sudo mount ./build/disk.img ./mnt/ || exit 1
 	sudo mkdir -p ./mnt/abc/def/

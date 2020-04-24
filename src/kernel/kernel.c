@@ -58,7 +58,6 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 
 	ata_init();
 	ext2_init_fs();
-	ext2_mount(fs_root);
 
 	load_binaries();
 	set_optimal_resolution();
