@@ -105,6 +105,14 @@ make_build() {
 	cp ./src/bootloader/grub.cfg ./iso/boot/grub/
 	grub-mkrescue -o ./build/melvix.iso ./iso/
 
+	# Check ISO
+	if grub-file --is-x86-multiboot2 ./build/kernel.bin; then
+		echo "Multiboot confirmed"
+	else
+		echo "Kernel is corrupted!"
+		exit 1
+	fi
+
 	# Create disk image
 	make_genext2fs
 	mkdir ./mnt/

@@ -11,7 +11,6 @@
 #include <kernel/syscall/syscall.h>
 #include <kernel/pci/pci.h>
 #include <kernel/net/network.h>
-#include <kernel/tasks/task.h>
 #include <kernel/fs/load.h>
 #include <kernel/fs/elf.h>
 #include <kernel/lib/stdio.h>
@@ -66,18 +65,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 
 	elf_load("/bin/user");
 
-	// tasking_install();
-
 #ifdef INSTALL_MELVIX
 	panic("Installation isn't supported right now!");
 #endif
-
-	// load_elf((char *)userspace);
-
-	// syscalls_install();
-	// exec(userspace);
-
-	// panic("This should NOT happen!");
 
 	// asm ("div %0" :: "r"(0)); // Exception testing x/0
 }

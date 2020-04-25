@@ -1,7 +1,6 @@
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/io/io.h>
 #include <kernel/system.h>
-#include <kernel/tasks/task.h>
 
 unsigned long timer_ticks = 0;
 
