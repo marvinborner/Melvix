@@ -32,7 +32,7 @@ make_genext2fs() {
 			git checkout --quiet 000e369 >/dev/null
 			mv README.md README >/dev/null
 			touch ChangeLog >/dev/null
-			sh autogen.sh >/dev/null
+			bash autogen.sh >/dev/null
 			./configure >/dev/null
 			sudo make install >/dev/null
 			cd .. >/dev/null
@@ -113,7 +113,7 @@ make_build() {
 	mkdir -p ./mnt/bin/
 	cp ./build/font.bin ./mnt/bin/font
 	echo "Hello world, ext2!" | tee -a ./mnt/etc/test
-	genext2fs -B 4096 -d mnt -U -N 4096 -b 65536 ./build/disk.img
+	/usr/local/bin/genext2fs -B 4096 -d mnt -U -N 4096 -b 65536 ./build/disk.img
 	rm -r mnt/
 
 	printf "Build finshed successfully!\n\n"
