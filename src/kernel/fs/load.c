@@ -6,7 +6,6 @@
 
 void load_binaries()
 {
-	// userspace = (uint32_t)read_file("/bin/user.bin");
 	font = (struct font *)read_file("/bin/font");
 
 	log("Successfully loaded binaries");

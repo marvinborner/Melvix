@@ -62,8 +62,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 
 	load_binaries();
 	set_optimal_resolution();
-
 	printf("Awesome!");
+
+	elf_load("/bin/user");
 
 	// tasking_install();
 

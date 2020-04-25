@@ -241,7 +241,7 @@ uint8_t *read_file(char *path)
 	ext2_open_inode(inode, &file);
 	if (inode != 0) {
 		size_t size = file.inode.size;
-		debug("%dKiB", size >> 10);
+		debug("Reading %s: %dKiB", path, size >> 10);
 		uint8_t *buf = kmalloc(size);
 		ext2_read(&file, buf, size);
 		kfree(file.buf);

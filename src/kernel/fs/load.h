@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-uint32_t userspace;
-
 struct font *font;
 
 struct font {
@@ -12,7 +10,6 @@ struct font {
 	uint16_t font_24[758][24];
 	uint8_t font_16[758][16];
 	uint16_t cursor[19];
-	uint32_t magic;
 };
 
 void load_binaries();

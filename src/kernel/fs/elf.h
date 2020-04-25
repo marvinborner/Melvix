@@ -3,6 +3,30 @@
 
 #include <stdint.h>
 
+#define ELF_MAG 0x7F // 0
+#define ELF_32 (1) // 4: 32-bit Architecture
+#define ELF_LITTLE (1) // 5: Little Endian
+#define ELF_CURRENT (1) // 6: ELF Current Version
+#define ELF_386 (3) // header->machine x86 machine type
+
+#define ET_NONE 0 // Unkown type
+#define ET_REL 1 // Relocatable file
+#define ET_EXEC 2 // Executable file
+
+#define PT_NULL 0
+#define PT_LOAD 1
+#define PT_DYNAMIC 2
+#define PT_INTERP 3
+#define PT_NOTE 4
+#define PT_SHLIB 5
+#define PT_PHDR 6
+#define PT_LOPROC 0x70000000
+#define PT_HIPROC 0x7fffffff
+
+#define PF_X 0x1
+#define PF_W 0x2
+#define PF_R 0x4
+
 typedef struct {
 	uint32_t sig;
 } elf_priv_data;
@@ -48,7 +72,7 @@ typedef struct {
 	uint32_t align;
 } elf_program_header_t;
 
-int is_elf(char *data);
-uint32_t load_elf(char *elf_data);
+int is_elf(elf_header_t *header);
+void elf_load(char *path);
 
 #endif

@@ -55,11 +55,7 @@ add_custom_command(
 add_executable(user ${user_sources})
 target_include_directories(user PUBLIC "src/userspace/")
 set_target_properties(user PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/user.o")
-add_custom_command(
-        TARGET user POST_BUILD
-        COMMAND cross/opt/bin/i686-elf-objcopy -O binary build/user.o build/user.bin
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
+target_link_libraries(kernel PRIVATE "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/linker.ld")
+	
 # Dependencies
 add_dependencies(kernel resources user)

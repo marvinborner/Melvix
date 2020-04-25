@@ -4,63 +4,59 @@
 #include <kernel/memory/alloc.h>
 #include <kernel/lib/lib.h>
 #include <kernel/memory/paging.h>
+#include <kernel/fs/ext2.h>
 
-#define USER_OFFSET 0x40000000
-#define USER_STACK 0xF0000000
-#define PT_LOAD 0x1
-
-int is_elf(char *elf_data)
+int is_elf(elf_header_t *header)
 {
-	elf_header_t *header = (elf_header_t *)elf_data;
-	if (header->ident[0] == 0x7f && header->ident[1] == 'E' && header->ident[2] == 'L' &&
-	    header->ident[3] == 'F') {
-		log("Buffer is valid ELF file!");
+	if (header->ident[0] == ELF_MAG && header->ident[1] == 'E' && header->ident[2] == 'L' &&
+	    header->ident[3] == 'F' && header->ident[4] == ELF_32 &&
+	    header->ident[5] == ELF_LITTLE && header->ident[6] == ELF_CURRENT &&
+	    header->machine == ELF_386 && (header->type == ET_REL || header->type == ET_EXEC)) {
 		return 1;
 	}
 	return 0;
 }
 
-uint32_t load_elf(char *elf_data)
+void elf_load(char *path)
 {
-	uint32_t v_begin, v_end;
-	elf_header_t *hdr;
-	elf_program_header_t *p_entry;
-	elf_section_header_t *s_entry;
-
-	hdr = (elf_header_t *)elf_data;
-	p_entry = (elf_program_header_t *)(elf_data + hdr->phoff);
-
-	s_entry = (elf_section_header_t *)(elf_data + hdr->shoff);
-
-	if (is_elf(elf_data) == 0)
-		return 0;
-
-	for (int pe = 0; pe < hdr->phnum; pe++, p_entry++) {
-		if (p_entry->type == PT_LOAD) {
-			v_begin = p_entry->vaddr;
-			v_end = p_entry->vaddr + p_entry->memsz;
-			if (v_begin < USER_OFFSET) {
-				warn("load_elf(): can't load executable below %x", USER_OFFSET);
-				return 0;
-			}
-
-			if (v_end > USER_STACK) {
-				warn("load_elf(): can't load executable above %x", USER_STACK);
-				return 0;
-			}
-
-			log("ELF: entry flags: %x (%d)", p_entry->flags, p_entry->flags);
-
-			memcpy((uint8_t *)v_begin, (uint8_t *)(elf_data + p_entry->offset),
-			       p_entry->filesz);
-			if (p_entry->memsz > p_entry->filesz) {
-				char *p = (char *)p_entry->vaddr;
-				for (int i = p_entry->filesz; i < (int)(p_entry->memsz); i++) {
-					p[i] = 0;
-				}
-			}
-		}
+	uint8_t *file = read_file(path);
+	if (!file) {
+		warn("File or directory not found: %s", file);
+		return;
 	}
 
-	return hdr->entry;
+	elf_header_t *header = (elf_header_t *)file;
+	elf_program_header_t *program_header = (void *)header + header->phoff;
+
+	if (!is_elf(header)) {
+		warn("File not valid: %s", path);
+		return;
+	} else {
+		debug("File is valid: %s", path);
+	}
+
+	uint32_t seg_begin, seg_end;
+	for (int i = 0; i < header->phnum; i++) {
+		if (program_header->type == 1) {
+			seg_begin = program_header->vaddr;
+			seg_end = seg_begin + program_header->memsz;
+
+			for (uint32_t z = 0; z < seg_end - seg_begin; z += 4096)
+				paging_map((uint32_t)seg_begin + z, (uint32_t)seg_begin + z,
+					   PT_PRESENT | PT_RW | PT_USED | PT_ALL_PRIV);
+
+			memcpy((void *)seg_begin, file + program_header->offset,
+			       program_header->filesz);
+			memset((void *)(seg_begin + program_header->filesz), 0,
+			       program_header->memsz - program_header->filesz);
+
+			// Code segment
+			if (program_header->flags == PF_X + PF_R + PF_W ||
+			    program_header->flags == PF_X + PF_R) {
+				debug("Found code segment");
+				// current_process->regs.eip = header->entry + seg_begin;
+			}
+		}
+		program_header++;
+	}
 }
