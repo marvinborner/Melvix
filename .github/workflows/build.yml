@@ -23,6 +23,6 @@ jobs:
         if: steps.cache-cross.outputs.cache-hit != 'true'
         run: sh run cross
       - name: Build
-        run: sh run build
+        run: sh run build -y
       - name: Test install
         run: sh run image

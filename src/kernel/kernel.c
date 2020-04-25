@@ -58,7 +58,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 
 	ata_init();
 	ext2_init_fs();
-	// log("%s", read_file("/etc/test")); // Multiple reads don't work?!
+	log("%s", read_file("/etc/test"));
 
 	load_binaries();
 	set_optimal_resolution();

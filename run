@@ -5,6 +5,7 @@ set -e
 cd "$(dirname "$0")"
 
 mode="${1}"
+no_ask="${2}"
 network="rtl8139"
 
 qemu_with_flags() {
@@ -13,6 +14,33 @@ qemu_with_flags() {
 		SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial mon:stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
 	else
 		SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+	fi
+}
+
+make_genext2fs() {
+	if [ "$(genext2fs -V | awk '{print $2}')" = "1.4.2" ]; then
+		echo "genext2fs is already the newest version"
+	else
+		if [ "$no_ask" != "-y" ]; then
+			printf "Melvix requires the newest genext2fs version, would you like to install it? [y/n] "
+			read -r answer
+		fi
+		if [ "$answer" != "${answer#[Yy]}" ] || [ "$no_ask" = "-y" ]; then
+			echo "Building genext2fs..."
+			git clone --quiet https://github.com/bestouff/genext2fs.git >/dev/null
+			cd genext2fs >/dev/null
+			git checkout --quiet 000e369 >/dev/null
+			mv README.md README >/dev/null
+			touch ChangeLog >/dev/null
+			sh autogen.sh >/dev/null
+			./configure >/dev/null
+			sudo make install >/dev/null
+			cd .. >/dev/null
+			rm -rf genext2fs >/dev/null
+			echo "Success!"
+		else
+			echo "This probably won't compile..."
+		fi
 	fi
 }
 
@@ -78,15 +106,14 @@ make_build() {
 	grub-mkrescue -o ./build/melvix.iso ./iso/
 
 	# Create disk image
-	mke2fs -b 4096 -N 4096 ./build/disk.img 65536
+	make_genext2fs
 	mkdir ./mnt/
-	sudo mount ./build/disk.img ./mnt/
-	sudo mkdir -p ./mnt/etc/
-	sudo mkdir -p ./mnt/usr/
-	sudo mkdir -p ./mnt/bin/
-	# echo "Hello world, ext2!" | sudo tee -a ./mnt/etc/test # ?!
-	sudo cp ./build/font.bin ./mnt/bin/font
-	sync && sudo umount mnt
+	mkdir -p ./mnt/etc/
+	mkdir -p ./mnt/usr/
+	mkdir -p ./mnt/bin/
+	cp ./build/font.bin ./mnt/bin/font
+	echo "Hello world, ext2!" | tee -a ./mnt/etc/test
+	genext2fs -B 4096 -d mnt -U -N 4096 -b 65536 ./build/disk.img
 	rm -r mnt/
 
 	printf "Build finshed successfully!\n\n"
