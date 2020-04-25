@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 
-cd "$(dirname "$0")" || exit 1
+set -e
+
+cd "$(dirname "$0")"
 
 mode="${1}"
 network="rtl8139"
@@ -18,11 +20,11 @@ make_cross() {
 	if [ ! -d "./cross/" ]; then
 		# Create directory
 		mkdir -p cross
-		cd cross || exit 1
+		cd cross
 		DIR=$(pwd)
 
 		# Get sources
-		mkdir "${DIR}/src" && cd "${DIR}/src" || exit 1
+		mkdir "${DIR}/src" && cd "${DIR}/src"
 		echo "Downloading..."
 		curl -sSL "https://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.xz" | tar xJ
 		curl -sSL "https://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.xz" | tar xJ
@@ -34,23 +36,23 @@ make_cross() {
 		export PATH="$PREFIX/bin:$PATH"
 
 		# Compile binutils
-		mkdir "${DIR}/src/build-binutils" && cd "${DIR}/src/build-binutils" || exit 1
+		mkdir "${DIR}/src/build-binutils" && cd "${DIR}/src/build-binutils"
 		../binutils-2.32/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
 		make
 		make install
 
 		# Compile GCC
-		mkdir "${DIR}/src/build-gcc" && cd "${DIR}/src/build-gcc" || exit 1
+		mkdir "${DIR}/src/build-gcc" && cd "${DIR}/src/build-gcc"
 		../gcc-9.2.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
 		make all-gcc
 		make all-target-libgcc
 		make install-gcc
 		make install-target-libgcc
 
-		cd "${DIR}/.." || exit 1
+		cd "${DIR}/.."
 	else
 		# Should be sourced to take effect
-		cd cross || exit 1
+		cd cross
 		DIR=$(pwd)
 		export PREFIX="${DIR}/opt"
 		export TARGET=i686-elf
@@ -64,27 +66,27 @@ make_build() {
 
 	echo "Building..."
 	mkdir -p build
-	cd build || exit 1
-	cmake .. >/dev/null || exit 1
-	make || exit 1
+	cd build
+	cmake .. >/dev/null
+	make
 	cd ..
 
 	# Create ISO
 	mkdir -p ./iso/boot/grub/
 	cp ./build/kernel.bin ./iso/boot/kernel.bin
 	cp ./src/bootloader/grub.cfg ./iso/boot/grub/
-	grub-mkrescue -o ./build/melvix.iso ./iso/ || exit 1
+	grub-mkrescue -o ./build/melvix.iso ./iso/
 
 	# Create disk image
-	mke2fs -b 4096 -N 4096 ./build/disk.img 65536 || exit 1
-	mkdir ./mnt/ || exit 1
-	sudo mount ./build/disk.img ./mnt/ || exit 1
+	mke2fs -b 4096 -N 4096 ./build/disk.img 65536
+	mkdir ./mnt/
+	sudo mount ./build/disk.img ./mnt/
 	sudo mkdir -p ./mnt/etc/
 	sudo mkdir -p ./mnt/usr/
 	sudo mkdir -p ./mnt/bin/
-	echo "Hello world, ext2!" | sudo tee -a ./mnt/etc/test
-	sudo mv ./build/*.bin ./mnt/bin/
-	sync && sudo umount mnt || exit 1
+	# echo "Hello world, ext2!" | sudo tee -a ./mnt/etc/test # ?!
+	sudo cp ./build/font.bin ./mnt/bin/font
+	sync && sudo umount mnt
 	rm -r mnt/
 
 	printf "Build finshed successfully!\n\n"
@@ -118,10 +120,10 @@ make_sync() {
 	rm tags compile_commands.json
 	ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
 	mkdir -p cmake
-	cd cmake || exit 1
+	cd cmake
 	cmake .. >/dev/null
 	mv compile_commands.json ..
-	cd .. || exit 1
+	cd ..
 }
 
 make_tidy() {
@@ -132,13 +134,14 @@ make_tidy() {
 }
 
 make_font() {
-	cd ./src/resources/ || exit 1
+	cd ./src/resources/
 	sh conv.sh
-	cd ../../ || exit 1
+	cd ../../
 }
 
 make_clean() {
-	rm -rf ./build ./iso
+	#rm -rf ./build ./iso
+	rm -rf ./iso ./build/*.img ./build/*.o ./build/*.bin
 }
 
 if [ "${mode}" = "cross" ]; then

@@ -200,7 +200,6 @@ void set_optimal_resolution()
 	vesa_clear();
 
 	vesa_set_color(vesa_blue);
-	printf(vga_buffer);
 	vesa_set_color(default_text_color);
 
 	info("Successfully switched to video mode!");

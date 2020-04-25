@@ -44,6 +44,7 @@ target_link_libraries(kernel PRIVATE "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/
 # RESOURCES
 add_executable(resources ${resources_sources})
 set_target_properties(resources PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/font.o")
+target_compile_options(resources PRIVATE "-Os")
 add_custom_command(
         TARGET resources POST_BUILD
         COMMAND cross/opt/bin/i686-elf-objcopy -O binary build/font.o build/font.bin

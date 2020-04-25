@@ -24,19 +24,19 @@ void ext2_init_fs()
 
 	struct ext2_inode root_inode;
 	read_inode(&root_inode, ROOT_INODE);
-	log("Creation time: %d", root_inode.creation_time);
-	log("UID: %d", root_inode.uid);
-	log("Type & perms: 0x%x", root_inode.type_and_permissions);
-	log("Size: %d", root_inode.size);
+	debug("Creation time: %d", root_inode.creation_time);
+	debug("UID: %d", root_inode.uid);
+	debug("Type & perms: 0x%x", root_inode.type_and_permissions);
+	debug("Size: %d", root_inode.size);
 
-	log("Files:");
+	debug("Files:");
 
 	struct ext2_file file;
 	ext2_open_inode(ROOT_INODE, &file);
 	struct ext2_dirent dirent;
 
 	while (ext2_next_dirent(&file, &dirent))
-		log("Inode %d, name '%s'", dirent.inode_num, dirent.name);
+		debug("Inode %d, name '%s'", dirent.inode_num, dirent.name);
 
 	kfree(file.buf);
 }
@@ -60,14 +60,15 @@ static void load_superblock()
 	num_groups = superblock.total_blocks / superblock.blocks_per_group;
 
 	assert(superblock.signature == EXT2_SIGNATURE);
-	log("Total inodes: 0x%x", superblock.total_inodes);
-	log("Total blocks: 0x%x", superblock.total_blocks);
-	log("Block size: %d", block_size);
-	log("Num blocks: %d", superblock.total_blocks);
-	log("Blocks/group: %d", superblock.blocks_per_group);
-	log("Inodes/group: %d", superblock.inodes_per_group);
-	log("Num groups: %d", num_groups);
-	log("Creator OS: %s", superblock.creator_os_id == 0 ? "Linux" : "Other");
+	debug("Total inodes: 0x%x", superblock.total_inodes);
+	debug("Total blocks: 0x%x", superblock.total_blocks);
+	debug("Drive size: %dMiB", (block_size * superblock.total_blocks) >> 20);
+	debug("Block size: %d", block_size);
+	debug("Num blocks: %d", superblock.total_blocks);
+	debug("Blocks/group: %d", superblock.blocks_per_group);
+	debug("Inodes/group: %d", superblock.inodes_per_group);
+	debug("Num groups: %d", num_groups);
+	debug("Creator OS: %s", superblock.creator_os_id == 0 ? "Linux" : "Other");
 }
 
 static void load_bgdt()
@@ -136,10 +137,14 @@ size_t ext2_read(struct ext2_file *file, uint8_t *buf, size_t count)
 		if (new_block) {
 			file->curr_block_pos = 0;
 			file->block_index++;
-			if (file->block_index >= 12)
-				panic("Indirect block pointers are currently unsupported");
-
-			read_block(file->inode.dbp[file->block_index], file->buf);
+			if (file->block_index >= 12) {
+				// TODO: Add triple block pointer support
+				uint32_t *tmp = kmalloc(block_size);
+				read_block(file->inode.ibp, tmp);
+				read_block(tmp[file->block_index - 12], file->buf);
+			} else {
+				read_block(file->inode.dbp[file->block_index], file->buf);
+			}
 		}
 	}
 
@@ -227,7 +232,7 @@ uint32_t ext2_look_up_path(char *path)
 	return inode;
 }
 
-// Implementations
+// Interface
 
 uint8_t *read_file(char *path)
 {
@@ -236,13 +241,14 @@ uint8_t *read_file(char *path)
 	ext2_open_inode(inode, &file);
 	if (inode != 0) {
 		size_t size = file.inode.size;
-		log("%d", size);
+		debug("%d", size);
 		uint8_t *buf = kmalloc(size);
 		ext2_read(&file, buf, size);
 		kfree(file.buf);
 		buf[size - 1] = '\0';
 		return buf;
 	} else {
+		warn("File not found");
 		return NULL;
 	}
 }

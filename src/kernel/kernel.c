@@ -58,10 +58,12 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 
 	ata_init();
 	ext2_init_fs();
-	log("%s", read_file("/etc/test"));
+	// log("%s", read_file("/etc/test")); // Multiple reads don't work?!
 
 	load_binaries();
 	set_optimal_resolution();
+
+	printf("Awesome!");
 
 	// tasking_install();
 
