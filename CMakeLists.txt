@@ -46,7 +46,7 @@ add_executable(resources ${resources_sources})
 set_target_properties(resources PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/font.o")
 add_custom_command(
         TARGET resources POST_BUILD
-        COMMAND cross/opt/bin/i686-elf-objcopy -O binary build/font.o iso/font.bin
+        COMMAND cross/opt/bin/i686-elf-objcopy -O binary build/font.o build/font.bin
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
@@ -56,7 +56,7 @@ target_include_directories(user PUBLIC "src/userspace/")
 set_target_properties(user PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/user.o")
 add_custom_command(
         TARGET user POST_BUILD
-        COMMAND cross/opt/bin/i686-elf-objcopy -O binary build/user.o iso/user.bin
+        COMMAND cross/opt/bin/i686-elf-objcopy -O binary build/user.o build/user.bin
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

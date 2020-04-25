@@ -24,10 +24,10 @@ void ext2_init_fs()
 
 	struct ext2_inode root_inode;
 	read_inode(&root_inode, ROOT_INODE);
-	log("Creation time = %d", root_inode.creation_time);
-	log("UID = %d", root_inode.uid);
-	log("Type & perms = 0x%x", root_inode.type_and_permissions);
-	log("Size = %d", root_inode.size);
+	log("Creation time: %d", root_inode.creation_time);
+	log("UID: %d", root_inode.uid);
+	log("Type & perms: 0x%x", root_inode.type_and_permissions);
+	log("Size: %d", root_inode.size);
 
 	log("Files:");
 
@@ -39,13 +39,6 @@ void ext2_init_fs()
 		log("Inode %d, name '%s'", dirent.inode_num, dirent.name);
 
 	kfree(file.buf);
-
-	log("Looking for file '/test'...");
-	uint32_t inode = ext2_look_up_path("/test");
-	if (inode == 0)
-		log("File not found");
-	else
-		log("Found: inode = %d", inode);
 }
 
 static void read_block(uint32_t block_num, void *buf)
@@ -67,13 +60,14 @@ static void load_superblock()
 	num_groups = superblock.total_blocks / superblock.blocks_per_group;
 
 	assert(superblock.signature == EXT2_SIGNATURE);
-	log("Total inodes = 0x%x", superblock.total_inodes);
-	log("Total blocks = 0x%x", superblock.total_blocks);
-	log("Block size = %d", block_size);
-	log("Num blocks = %d", superblock.total_blocks);
-	log("Blocks/group = %d", superblock.blocks_per_group);
-	log("Inodes/group = %d", superblock.inodes_per_group);
-	log("Num groups = %d", num_groups);
+	log("Total inodes: 0x%x", superblock.total_inodes);
+	log("Total blocks: 0x%x", superblock.total_blocks);
+	log("Block size: %d", block_size);
+	log("Num blocks: %d", superblock.total_blocks);
+	log("Blocks/group: %d", superblock.blocks_per_group);
+	log("Inodes/group: %d", superblock.inodes_per_group);
+	log("Num groups: %d", num_groups);
+	log("Creator OS: %s", superblock.creator_os_id == 0 ? "Linux" : "Other");
 }
 
 static void load_bgdt()
@@ -208,7 +202,7 @@ uint32_t ext2_look_up_path(char *path)
 	path++;
 	uint32_t curr_dir_inode = ROOT_INODE;
 
-	for (;;) {
+	while (1) {
 		size_t j;
 		for (j = 0; path[j] != '/' && path[j] != '\0'; j++)
 			;
@@ -231,4 +225,24 @@ uint32_t ext2_look_up_path(char *path)
 		return 0;
 
 	return inode;
+}
+
+// Implementations
+
+uint8_t *read_file(char *path)
+{
+	uint32_t inode = ext2_look_up_path(path);
+	struct ext2_file file;
+	ext2_open_inode(inode, &file);
+	if (inode != 0) {
+		size_t size = file.inode.size;
+		log("%d", size);
+		uint8_t *buf = kmalloc(size);
+		ext2_read(&file, buf, size);
+		kfree(file.buf);
+		buf[size - 1] = '\0';
+		return buf;
+	} else {
+		return NULL;
+	}
 }

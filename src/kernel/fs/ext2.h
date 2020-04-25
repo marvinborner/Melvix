@@ -33,12 +33,12 @@ struct ext2_superblock {
 	uint16_t mounts_since_fsck;
 	uint16_t max_mounts_since_fsck;
 	uint16_t signature;
-	uint16_t state;
+	uint16_t state; // 1 clean; 2 errors
 	uint16_t error_action;
 	uint16_t minor_version;
 	uint32_t last_fsck_time;
 	uint32_t max_time_since_fsck;
-	uint32_t creator_OS_id;
+	uint32_t creator_os_id;
 	uint32_t major_version;
 	uint16_t res_block_uid;
 	uint16_t res_block_gid;
@@ -136,5 +136,7 @@ size_t ext2_read(struct ext2_file *file, uint8_t *buf, size_t count);
 bool ext2_next_dirent(struct ext2_file *file, struct ext2_dirent *dir);
 uint32_t ext2_find_in_dir(uint32_t dir_inode, const char *name);
 uint32_t ext2_look_up_path(char *path);
+
+uint8_t *read_file(char *path);
 
 #endif

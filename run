@@ -69,21 +69,23 @@ make_build() {
 	make || exit 1
 	cd ..
 
-	# Create disk image
-	mke2fs -b 4096 -N 4096 ./build/disk.img 65536 || exit 1
-	mkdir ./mnt/ || exit 1
-	sudo mount ./build/disk.img ./mnt/ || exit 1
-	sudo mkdir -p ./mnt/abc/def/
-	echo "Bananenkuchen" | sudo tee -a ./mnt/test
-	echo "toll" | sudo tee -a ./mnt/abc/def/baum
-	sync && sudo umount mnt || exit 1
-	rm -r mnt/
-
 	# Create ISO
 	mkdir -p ./iso/boot/grub/
 	cp ./build/kernel.bin ./iso/boot/kernel.bin
 	cp ./src/bootloader/grub.cfg ./iso/boot/grub/
 	grub-mkrescue -o ./build/melvix.iso ./iso/ || exit 1
+
+	# Create disk image
+	mke2fs -b 4096 -N 4096 ./build/disk.img 65536 || exit 1
+	mkdir ./mnt/ || exit 1
+	sudo mount ./build/disk.img ./mnt/ || exit 1
+	sudo mkdir -p ./mnt/etc/
+	sudo mkdir -p ./mnt/usr/
+	sudo mkdir -p ./mnt/bin/
+	echo "Hello world, ext2!" | sudo tee -a ./mnt/etc/test
+	sudo mv ./build/*.bin ./mnt/bin/
+	sync && sudo umount mnt || exit 1
+	rm -r mnt/
 
 	printf "Build finshed successfully!\n\n"
 }
