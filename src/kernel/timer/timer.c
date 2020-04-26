@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/io/io.h>
 #include <kernel/system.h>
@@ -16,13 +17,12 @@ void timer_phase(int hz)
 void timer_handler(struct regs *r)
 {
 	timer_ticks++;
-	// switch_task();
 }
 
 // "Delay" function with CPU sleep
 void timer_wait(int ticks)
 {
-	unsigned int eticks;
+	uint32_t eticks;
 
 	eticks = timer_ticks + ticks;
 	while (timer_ticks < eticks) {
@@ -30,7 +30,7 @@ void timer_wait(int ticks)
 	}
 }
 
-unsigned int get_time()
+uint32_t get_time()
 {
 	return timer_ticks;
 }

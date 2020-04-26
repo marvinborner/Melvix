@@ -2,6 +2,7 @@
 #define MELVIX_ELF_H
 
 #include <stdint.h>
+#include <kernel/tasks/process.h>
 
 #define ELF_MAG 0x7F // 0
 #define ELF_32 (1) // 4: 32-bit Architecture
@@ -27,11 +28,11 @@
 #define PF_W 0x2
 #define PF_R 0x4
 
-typedef struct {
+struct elf_priv_data {
 	uint32_t sig;
-} elf_priv_data;
+};
 
-typedef struct {
+struct elf_header {
 	uint8_t ident[16];
 	uint16_t type;
 	uint16_t machine;
@@ -46,9 +47,9 @@ typedef struct {
 	uint16_t shentsize;
 	uint16_t shnum;
 	uint16_t shstrndx;
-} elf_header_t;
+};
 
-typedef struct {
+struct elf_section_header {
 	uint32_t name;
 	uint32_t type;
 	uint32_t flags;
@@ -59,9 +60,9 @@ typedef struct {
 	uint32_t info;
 	uint32_t addralign;
 	uint32_t entsize;
-} elf_section_header_t;
+};
 
-typedef struct {
+struct elf_program_header {
 	uint32_t type;
 	uint32_t offset;
 	uint32_t vaddr;
@@ -70,9 +71,9 @@ typedef struct {
 	uint32_t memsz;
 	uint32_t flags;
 	uint32_t align;
-} elf_program_header_t;
+};
 
-int is_elf(elf_header_t *header);
-void elf_load(char *path);
+int is_elf(struct elf_header *header);
+struct process *elf_load(char *path);
 
 #endif

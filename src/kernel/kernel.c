@@ -62,14 +62,12 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 
 	load_binaries();
 	set_optimal_resolution();
-	printf("Awesome!\n");
 
 	syscalls_install();
-	elf_load("/bin/user");
+	struct process *proc = elf_load("/bin/user");
+	process_init(proc);
 
-#ifdef INSTALL_MELVIX
-	panic("Installation isn't supported right now!");
-#endif
+	halt_loop();
 
 	// asm ("div %0" :: "r"(0)); // Exception testing x/0
 }
