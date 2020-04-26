@@ -10,6 +10,7 @@ int32_t starts_with(const char *a, const char *b)
 
 void main()
 {
+	syscall_halt();
 	// As char[]:       0xC105BFD6
 	// As const char *: 0x8048B20
 

@@ -61,8 +61,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 
 	load_binaries();
 	set_optimal_resolution();
-	printf("Awesome!");
+	printf("Awesome!\n");
 
+	syscalls_install();
 	elf_load("/bin/user");
 
 #ifdef INSTALL_MELVIX

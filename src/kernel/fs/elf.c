@@ -5,6 +5,7 @@
 #include <kernel/lib/lib.h>
 #include <kernel/memory/paging.h>
 #include <kernel/fs/ext2.h>
+#include <kernel/gdt/gdt.h>
 
 int is_elf(elf_header_t *header)
 {
@@ -35,6 +36,7 @@ void elf_load(char *path)
 		debug("File is valid: %s", path);
 	}
 
+	uint32_t eip = 0;
 	uint32_t seg_begin, seg_end;
 	for (int i = 0; i < header->phnum; i++) {
 		if (program_header->type == 1) {
@@ -54,9 +56,37 @@ void elf_load(char *path)
 			if (program_header->flags == PF_X + PF_R + PF_W ||
 			    program_header->flags == PF_X + PF_R) {
 				debug("Found code segment");
-				// current_process->regs.eip = header->entry + seg_begin;
+				eip = header->entry + seg_begin;
 			}
 		}
 		program_header++;
-	}
+	};
+
+	// Just some testing, will be moved later
+	uint32_t sp;
+	asm("mov %%esp, %0" : "=rm"(sp));
+	set_kernel_stack(sp);
+
+	// paging_switch_directory(1);
+	uint32_t esp = paging_alloc_pages(0x1000);
+	asm("mov %0, %%esp" ::"r"(esp + 0x1000));
+
+	log("Jumping to usermode!");
+	asm volatile("\
+      cli; \
+      mov $0x23, %%ax; \
+      mov %%ax, %%ds; \
+      mov %%ax, %%es; \
+      mov %%ax, %%fs; \
+      mov %%ax, %%gs; \
+      mov %%esp, %%eax; \
+      pushl $0x23; \
+      pushl %%esp; \
+      pushf; \
+      push $0x1B; \
+      push %0; \
+      iret; \
+      "
+		     :
+		     : "r"(eip));
 }

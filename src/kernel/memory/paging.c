@@ -30,9 +30,9 @@ void paging_init()
 void paging_install(uint32_t multiboot_address)
 {
 	// User paging
-	//paging_switch_directory(1);
-	//paging_init();
-	//paging_set_user(0, memory_get_all() >> 3);
+	paging_switch_directory(1);
+	paging_init();
+	paging_set_user(0, memory_get_all() >> 3);
 
 	// Kernel paging
 	paging_switch_directory(0);
@@ -42,6 +42,7 @@ void paging_install(uint32_t multiboot_address)
 	if (!memory_init(multiboot_address))
 		paging_set_present(0, memory_get_all() >> 3); // /4
 	paging_set_used(0, ((uint32_t)ASM_KERNEL_END >> 12) + 1); // /4096
+	// paging_set_user(0, memory_get_all() >> 3); // HMM
 
 	paging_enable();
 	log("Installed paging");
@@ -107,19 +108,19 @@ uint16_t paging_get_flags(uint32_t virt)
 
 void paging_set_flag_up(uint32_t virt, uint32_t count, uint32_t flag)
 {
-	uint32_t page_n = virt / 4096;
+	uint32_t page_n = virt / 0x1000;
 	for (uint32_t i = page_n; i < page_n + count; i++) {
 		current_page_tables[i / 1024][i % 1024] |= flag;
-		invlpg(i * 4096);
+		invlpg(i * 0x1000);
 	}
 }
 
 void paging_set_flag_down(uint32_t virt, uint32_t count, uint32_t flag)
 {
-	uint32_t page_n = virt / 4096;
+	uint32_t page_n = virt / 0x1000;
 	for (uint32_t i = page_n; i < page_n + count; i++) {
 		current_page_tables[i / 1024][i % 1024] &= ~flag;
-		invlpg(i * 4096);
+		invlpg(i * 0x1000);
 	}
 }
 
@@ -145,7 +146,7 @@ void paging_set_free(uint32_t virt, uint32_t count)
 
 void paging_set_user(uint32_t virt, uint32_t count)
 {
-	uint32_t page_n = virt / 4096;
+	uint32_t page_n = virt / 0x1000;
 	for (uint32_t i = page_n; i < page_n + count; i += 1024) {
 		current_page_directory[i / 1024] |= PD_ALL_PRIV;
 	}
