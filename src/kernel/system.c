@@ -121,7 +121,7 @@ loop:
 
 void v86(uint8_t code, regs16_t *regs)
 {
-	paging_disable();
+	/* paging_disable(); */
 	int32(code, regs);
-	paging_enable();
+	/* paging_enable(); */
 }

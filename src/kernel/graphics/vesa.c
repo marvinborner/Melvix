@@ -184,11 +184,11 @@ void set_optimal_resolution()
 
 	uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
 	cursor_buffer = kmalloc(fb_size);
-	for (uint32_t z = 0; z < fb_size; z += 4096) {
-		paging_map((uint32_t)fb + z, (uint32_t)fb + z, PT_PRESENT | PT_RW | PT_USED);
-		paging_map((uint32_t)cursor_buffer + z, (uint32_t)cursor_buffer + z,
-			   PT_PRESENT | PT_RW | PT_USED);
-	}
+	/* for (uint32_t z = 0; z < fb_size; z += 4096) { */
+	/* 	paging_map((uint32_t)fb + z, (uint32_t)fb + z, PT_PRESENT | PT_RW | PT_USED); */
+	/* 	paging_map((uint32_t)cursor_buffer + z, (uint32_t)cursor_buffer + z, */
+	/* 		   PT_PRESENT | PT_RW | PT_USED); */
+	/* } */
 
 	if (vbe_height > 1440)
 		vesa_set_font(32);

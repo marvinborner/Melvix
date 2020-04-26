@@ -3,62 +3,47 @@
 
 #include <stdint.h>
 
-#define PD_PRESENT 1 << 0
-#define PD_RW 1 << 1
-#define PD_ALL_PRIV 1 << 2
-#define PD_WRITETHR 1 << 3
-#define PD_CACHE_D 1 << 4
-#define PD_ACCESSED 1 << 5
-#define PD_4M_PAGE 1 << 7
+struct page {
+	uint32_t present : 1;
+	uint32_t rw : 1;
+	uint32_t user : 1;
+	uint32_t accessed : 1;
+	uint32_t dirty : 1;
+	uint32_t unused : 7;
+	uint32_t frame : 20;
+};
 
-#define PT_PRESENT 1 << 0
-#define PT_RW 1 << 1
-#define PT_ALL_PRIV 1 << 2
-#define PT_WRITETHR 1 << 3
-#define PT_CACHE_D 1 << 4
-#define PT_ACCESSED 1 << 5
-#define PT_DIRTY 1 << 6
-#define PT_GLOBAL 1 << 8
-#define PT_USED 1 << 9
+struct page_table {
+	struct page pages[1024];
+};
 
-int paging_enabled;
+struct page_directory {
+	struct page_table *tables[1024];
+};
 
-uint32_t *current_page_directory;
+struct page_directory *paging_root_directory;
 
-void paging_install(uint32_t multiboot_address);
+struct page_table *get_cr3();
+uint32_t get_cr0();
 
-void paging_enable();
+void set_cr3(struct page_directory *dir);
+void set_cr0(uint32_t new_cr0);
 
-void paging_disable();
+void paging_switch_directory(struct page_directory *dir);
 
-void paging_switch_directory(int user);
+struct page_directory *paging_make_directory();
+struct page_table *paging_make_table();
 
-void paging_map(uint32_t phy, uint32_t virt, uint16_t flags);
+void paging_install();
 
-uint32_t paging_get_phys(uint32_t virt);
+void paging_map(struct page_directory *cr3, uint32_t virt, uint32_t phys);
+void paging_map_user(struct page_directory *cr3, uint32_t virt, uint32_t phys);
 
-uint16_t paging_get_flags(uint32_t virt);
+void paging_convert_page(struct page_directory *kdir);
 
-void paging_set_flags(uint32_t virt, uint32_t count, uint16_t flags);
+struct page_directory *paging_copy_user_directory(struct page_directory *dir);
 
-void paging_set_flag_up(uint32_t virt, uint32_t count, uint32_t flag);
-
-void paging_set_flag_down(uint32_t virt, uint32_t count, uint32_t flag);
-
-void paging_set_present(uint32_t virt, uint32_t count);
-
-void paging_set_absent(uint32_t virt, uint32_t count);
-
-void paging_set_used(uint32_t virt, uint32_t count);
-
-void paging_set_free(uint32_t virt, uint32_t count);
-
-void paging_set_user(uint32_t virt, uint32_t count);
-
-uint32_t paging_find_pages(uint32_t count);
-
-uint32_t paging_alloc_pages(uint32_t count);
-
-uint32_t paging_get_used_pages();
+#define EMPTY_TAB ((struct page_table *)0x00000002)
+#define PAGE_S 0x400000
 
 #endif

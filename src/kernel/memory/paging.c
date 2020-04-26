@@ -1,198 +1,143 @@
 #include <stdint.h>
 #include <kernel/memory/paging.h>
+#include <kernel/memory/alloc.h>
 #include <kernel/system.h>
 #include <kernel/lib/lib.h>
 #include <kernel/io/io.h>
 #include <kernel/acpi/acpi.h>
 
-int paging_enabled = 0;
+struct page_directory *paging_current_directory = NULL;
+struct page_directory *paging_root_directory = NULL;
 
-uint32_t *current_page_directory;
-uint32_t (*current_page_tables)[1024];
-uint32_t kernel_page_directory[1024] __attribute__((aligned(4096)));
-uint32_t kernel_page_tables[1024][1024] __attribute__((aligned(4096)));
-uint32_t user_page_directory[1024] __attribute__((aligned(4096)));
-uint32_t user_page_tables[1024][1024] __attribute__((aligned(4096)));
+/* void paging_install(uint32_t multiboot_address) */
+/* { */
+/* 	if (!memory_init(multiboot_address)) */
+/* 		paging_set_present(0, memory_get_all() >> 3); // /4 */
+/* 	paging_set_used(0, ((uint32_t)ASM_KERNEL_END >> 12) + 1); // /4096 */
+/* } */
 
-void paging_init()
+struct page_table *get_cr3()
 {
-	for (uint32_t i = 0; i < 1024; i++) {
-		for (uint32_t j = 0; j < 1024; j++) {
-			current_page_tables[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW;
-		}
-	}
-
-	for (uint32_t i = 0; i < 1024; i++) {
-		current_page_directory[i] = ((uint32_t)current_page_tables[i]) | PD_RW | PD_PRESENT;
-	}
+	uint32_t cr3;
+	asm volatile("movl %%cr3, %%eax" : "=a"(cr3));
+	return (struct page_table *)cr3;
 }
 
-void paging_install(uint32_t multiboot_address)
-{
-	// User paging
-	paging_switch_directory(1);
-	paging_init();
-	paging_set_user(0, memory_get_all() >> 3);
-
-	// Kernel paging
-	paging_switch_directory(0);
-	paging_init();
-
-	// if mmap approach didn't work
-	if (!memory_init(multiboot_address))
-		paging_set_present(0, memory_get_all() >> 3); // /4
-	paging_set_used(0, ((uint32_t)ASM_KERNEL_END >> 12) + 1); // /4096
-	// paging_set_user(0, memory_get_all() >> 3); // HMM
-
-	paging_enable();
-	log("Installed paging");
-}
-
-void paging_disable()
+uint32_t get_cr0()
 {
 	uint32_t cr0;
-	asm("mov %%cr0, %0" : "=r"(cr0));
-	cr0 &= 0x7fffffff;
-	asm("mov %0, %%cr0" ::"r"(cr0));
-	paging_enabled = 0;
+	asm volatile("movl %%cr0, %%eax" : "=a"(cr0));
+	return cr0;
 }
 
-void paging_enable()
+void set_cr3(struct page_directory *dir)
 {
-	asm("mov %0, %%cr3" ::"r"(current_page_directory));
-	uint32_t cr0;
-	asm("mov %%cr0, %0" : "=r"(cr0));
-	cr0 |= 0x80000000;
-	asm("mov %0, %%cr0" ::"r"(cr0));
-	paging_enabled = 1;
+	uint32_t addr = (uint32_t)&dir->tables[0];
+	asm volatile("movl %%eax, %%cr3" ::"a"(addr));
 }
 
-void paging_switch_directory(int user)
+void set_cr0(uint32_t cr0)
 {
-	if (user == 1) {
-		current_page_tables = user_page_tables;
-		current_page_directory = user_page_directory;
-	} else {
-		current_page_tables = kernel_page_tables;
-		current_page_directory = kernel_page_directory;
+	asm volatile("movl %%eax, %%cr0" ::"a"(cr0));
+}
+
+void paging_switch_directory(struct page_directory *dir)
+{
+	set_cr3(dir);
+	set_cr0(get_cr0() | 0x80000000);
+}
+
+struct page_directory *paging_make_directory()
+{
+	struct page_directory *dir =
+		(struct page_directory *)kmalloc_a(sizeof(struct page_directory));
+
+	for (int i = 0; i < 1024; i++)
+		dir->tables[i] = EMPTY_TAB;
+
+	return dir;
+}
+
+struct page_table *paging_make_table()
+{
+	struct page_table *tab = (struct page_table *)kmalloc_a(sizeof(struct page_table));
+
+	for (int i = 0; i < 1024; i++) {
+		tab->pages[i].present = 0;
+		tab->pages[i].rw = 1;
 	}
-	asm("mov %0, %%cr3" ::"r"(current_page_directory));
+
+	return tab;
 }
 
-void invlpg(uint32_t addr)
+void paging_map(struct page_directory *dir, uint32_t phys, uint32_t virt)
 {
-	asm("invlpg (%0)" ::"r"(addr) : "memory");
-}
+	short id = virt >> 22;
+	struct page_table *tab = paging_make_table();
 
-void paging_map(uint32_t phy, uint32_t virt, uint16_t flags)
-{
-	uint32_t pdi = virt >> 22;
-	uint32_t pti = virt >> 12 & 0x03FF;
-	current_page_tables[pdi][pti] = phy | flags;
-	invlpg(virt);
-}
+	dir->tables[id] = ((struct page_table *)((uint32_t)tab | 3)); // RW
 
-uint32_t paging_get_phys(uint32_t virt)
-{
-	uint32_t pdi = virt >> 22;
-	uint32_t pti = (virt >> 12) & 0x03FF;
-	return current_page_tables[pdi][pti] & 0xFFFFF000;
-}
-
-uint16_t paging_get_flags(uint32_t virt)
-{
-	uint32_t pdi = virt >> 22;
-	uint32_t pti = (virt >> 12) & 0x03FF;
-	return current_page_tables[pdi][pti] & 0xFFF;
-}
-
-void paging_set_flag_up(uint32_t virt, uint32_t count, uint32_t flag)
-{
-	uint32_t page_n = virt / 0x1000;
-	for (uint32_t i = page_n; i < page_n + count; i++) {
-		current_page_tables[i / 1024][i % 1024] |= flag;
-		invlpg(i * 0x1000);
+	for (int i = 0; i < 1024; i++) {
+		tab->pages[i].frame = phys >> 12;
+		tab->pages[i].present = 1;
+		phys += 4096;
 	}
 }
 
-void paging_set_flag_down(uint32_t virt, uint32_t count, uint32_t flag)
+void paging_map_user(struct page_directory *dir, uint32_t phys, uint32_t virt)
 {
-	uint32_t page_n = virt / 0x1000;
-	for (uint32_t i = page_n; i < page_n + count; i++) {
-		current_page_tables[i / 1024][i % 1024] &= ~flag;
-		invlpg(i * 0x1000);
+	short id = virt >> 22;
+	struct page_table *tab = paging_make_table();
+
+	dir->tables[id] = ((struct page_table *)((uint32_t)tab | 3 | 4)); // RW + usermode
+
+	int i;
+	for (i = 0; i < 1024; i++) {
+		tab->pages[i].frame = phys >> 12;
+		tab->pages[i].present = 1;
+		tab->pages[i].user = 1;
+		phys += 4096;
 	}
 }
 
-void paging_set_present(uint32_t virt, uint32_t count)
+void paging_install()
 {
-	paging_set_flag_up(virt, count, PT_PRESENT);
+	kheap_init();
+
+	paging_current_directory = paging_make_directory();
+	paging_root_directory = paging_current_directory;
+
+	for (uint32_t i = 0; i < 0xF0000000; i += PAGE_S)
+		paging_map(paging_root_directory, i, i);
 }
 
-void paging_set_absent(uint32_t virt, uint32_t count)
+void paging_convert_page(struct page_directory *kdir)
 {
-	paging_set_flag_down(virt, count, PT_PRESENT);
-}
+	for (int i = 0; i < 1024; i++) {
+		kdir->tables[i] = (struct page_table *)((uint32_t)kdir->tables[i] | 4); // Usermode
 
-void paging_set_used(uint32_t virt, uint32_t count)
-{
-	paging_set_flag_up(virt, count, PT_USED);
-}
-
-void paging_set_free(uint32_t virt, uint32_t count)
-{
-	paging_set_flag_down(virt, count, PT_USED);
-}
-
-void paging_set_user(uint32_t virt, uint32_t count)
-{
-	uint32_t page_n = virt / 0x1000;
-	for (uint32_t i = page_n; i < page_n + count; i += 1024) {
-		current_page_directory[i / 1024] |= PD_ALL_PRIV;
+		if (((uint32_t)kdir->tables[i]) & 1) { // Is present
+			for (int j = 0; j < 1024; j++)
+				kdir->tables[i]->pages[j].user = 1; // Usermode
+		}
 	}
-	paging_set_flag_up(virt, count, PT_ALL_PRIV);
 }
 
-uint32_t paging_find_pages(uint32_t count)
+struct page_directory *paging_copy_user_directory(struct page_directory *dir)
 {
-	uint32_t continuous = 0;
-	uint32_t startDir = 0;
-	uint32_t startPage = 0;
+	struct page_directory *copy = paging_make_directory();
+	memcpy(copy, paging_root_directory, sizeof(struct page_directory));
+
 	for (uint32_t i = 0; i < 1024; i++) {
-		for (uint32_t j = 0; j < 1024; j++) {
-			if (!(current_page_tables[i][j] & PT_PRESENT) ||
-			    (current_page_tables[i][j] & PT_USED)) {
-				continuous = 0;
-				startDir = i;
-				startPage = j + 1;
-			} else {
-				if (++continuous == count)
-					return (startDir * 0x400000) + (startPage * 0x1000);
-			}
+		if (((uint32_t)dir->tables[i]) & 4) {
+			struct page_table *tab =
+				(struct page_table *)((uint32_t)dir->tables[i] & 0xFFFFF000);
+
+			void *buffer = kmalloc_a(PAGE_S);
+			memcpy(buffer, (void *)(tab->pages[0].frame << 12), PAGE_S);
+			paging_map_user(copy, (uint32_t)buffer, (uint32_t)i << 22);
 		}
 	}
 
-	panic("Out of memory!");
-	return 0;
-}
-
-uint32_t paging_alloc_pages(uint32_t count)
-{
-	uint32_t ptr = paging_find_pages(count);
-	paging_set_used(ptr, count);
-	paging_set_user(ptr, count);
-	return ptr;
-}
-
-uint32_t paging_get_used_pages()
-{
-	uint32_t n = 0;
-	for (uint32_t i = 0; i < 1024; i++) {
-		for (uint32_t j = 0; j < 1024; j++) {
-			uint8_t flags = current_page_tables[i][j] & PT_USED;
-			if (flags == 1)
-				n++;
-		}
-	}
-	return n;
+	return copy;
 }

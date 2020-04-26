@@ -43,9 +43,9 @@ void elf_load(char *path)
 			seg_begin = program_header->vaddr;
 			seg_end = seg_begin + program_header->memsz;
 
-			for (uint32_t z = 0; z < seg_end - seg_begin; z += 4096)
-				paging_map((uint32_t)seg_begin + z, (uint32_t)seg_begin + z,
-					   PT_PRESENT | PT_RW | PT_USED | PT_ALL_PRIV);
+			/* for (uint32_t z = 0; z < seg_end - seg_begin; z += 4096) */
+			/* 	paging_map((uint32_t)seg_begin + z, (uint32_t)seg_begin + z, */
+			/* 		   PT_PRESENT | PT_RW | PT_USED | PT_ALL_PRIV); */
 
 			memcpy((void *)seg_begin, file + program_header->offset,
 			       program_header->filesz);
@@ -68,8 +68,8 @@ void elf_load(char *path)
 	set_kernel_stack(sp);
 
 	// paging_switch_directory(1);
-	uint32_t esp = paging_alloc_pages(0x1000);
-	asm("mov %0, %%esp" ::"r"(esp + 0x1000));
+	/* uint32_t esp = paging_alloc_pages(0x1000); */
+	/* asm("mov %0, %%esp" ::"r"(esp + 0x1000)); */
 
 	log("Jumping to usermode!");
 	asm volatile("\

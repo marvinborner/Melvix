@@ -2,23 +2,44 @@
 #define MELVIX_ALLOC_H
 
 #include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-#define PREFIX(func) k##func
+#define KHEAP_MAGIC 0x04206969
+#define KHEAP_MAGIC2 0xDEADBEEF
+#define KHEAP_END 0xFFFFDEAD
+#define MEM_END 0x8000000
 
-int liballoc_lock();
+struct heap_header {
+	uint32_t magic;
+	bool free;
+	uint32_t size;
+	uint32_t magic2;
+};
 
-int liballoc_unlock();
+struct heap_footer {
+	uint32_t magic;
+	uint32_t size;
+	uint32_t magic2;
+};
 
-void *liballoc_alloc(size_t);
+void kheap_init();
 
-int liballoc_free(void *, size_t);
+void *fmalloc(uint32_t size);
+void *kmalloc(uint32_t size);
+void *kmalloc_a(uint32_t size);
+void kfree(void *ptr);
 
-void *PREFIX(malloc)(size_t);
+void *umalloc(size_t size);
+void ufree(void *address);
 
-void *PREFIX(realloc)(void *, size_t);
+void init_heap(struct heap_header *heap, size_t size);
 
-void *PREFIX(calloc)(size_t, size_t);
-
-void PREFIX(free)(void *);
+#define KHEAP_SIZE 0xFFFFF
+#define UHEAP_SIZE 0xFFFFF
+#define HEAP_S (sizeof(struct heap_header))
+#define HEAP_TOTAL (sizeof(struct heap_footer) + HEAP_S)
+#define HEAP_MINIMUM 1
+#define HEAP_FIND_SIZE (HEAP_TOTAL + HEAP_MINIMUM)
 
 #endif

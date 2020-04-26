@@ -52,7 +52,7 @@ uint32_t memory_get_all()
 
 uint32_t memory_get_free()
 {
-	return memory_get_all() - paging_get_used_pages() * 4;
+	return memory_get_all() /*- paging_get_used_pages() * 4*/;
 }
 
 void memory_print()
@@ -81,12 +81,12 @@ void memory_mmap_init(struct multiboot_tag_mmap *tag)
 					       ((struct multiboot_tag_mmap *)tag)->entry_size)) {
 		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
 			debug("Found free memory");
-			paging_set_present(mmap->addr, mmap->len >> 12);
+			/* paging_set_present(mmap->addr, mmap->len >> 12); */
 			sum += mmap->len;
 		} else if (mmap->type == MULTIBOOT_MEMORY_RESERVED) {
 			debug("Found reserved memory");
-			paging_set_present(mmap->addr, mmap->len >> 12);
-			paging_set_used(mmap->addr, mmap->len >> 12);
+			/* paging_set_present(mmap->addr, mmap->len >> 12); */
+			/* paging_set_used(mmap->addr, mmap->len >> 12); */
 		} else if (mmap->type == MULTIBOOT_MEMORY_ACPI_RECLAIMABLE) {
 			debug("Found ACPI reclaimable memory");
 		} else if (mmap->type == MULTIBOOT_MEMORY_NVS) {

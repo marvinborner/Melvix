@@ -39,8 +39,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 	idt_install();
 	isrs_install();
 	irq_install();
-	paging_install(multiboot_address);
 
+	memory_init(multiboot_address);
+	paging_install();
 	multiboot_parse(multiboot_address);
 
 	// Install drivers
