@@ -23,7 +23,7 @@ struct process {
 	int state;
 	int thread;
 
-	uint32_t stdint;
+	uint32_t stdin;
 	uint32_t stdout;
 	uint32_t stderr;
 

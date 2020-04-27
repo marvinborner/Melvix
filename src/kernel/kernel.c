@@ -65,6 +65,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 
 	syscalls_install();
 	struct process *proc = elf_load("/bin/user");
+	proc->stdin = NULL;
+	proc->stdout = NULL;
+	proc->stderr = NULL;
 	process_init(proc);
 
 	halt_loop();

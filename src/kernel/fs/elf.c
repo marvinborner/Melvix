@@ -33,7 +33,8 @@ struct process *elf_load(char *path)
 	struct elf_program_header *program_header = (void *)header + header->phoff;
 
 	if (!is_elf(header)) {
-		panic("File not valid");
+		warn("File not valid: %s", path);
+		return NULL;
 	} else {
 		debug("File is valid: %s", path);
 	}
@@ -53,7 +54,6 @@ struct process *elf_load(char *path)
 		case 0:
 			break;
 		case 1:
-			i += 0;
 			debug("Allocating space for ELF binary section...");
 			uint32_t loc = (uint32_t)kmalloc_a(PAGE_S);
 			paging_map_user(proc->cr3, loc, program_header->vaddr);
