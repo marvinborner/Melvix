@@ -57,7 +57,7 @@ void isr_install_handler(size_t isr, irq_handler_t handler)
 	isr_routines[isr] = handler;
 }
 
-// Removes the custom IRQ handler
+// Remove the custom IRQ handler
 void isr_uninstall_handler(size_t isr)
 {
 	isr_routines[isr] = 0;

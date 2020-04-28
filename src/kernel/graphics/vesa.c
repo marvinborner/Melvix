@@ -184,7 +184,7 @@ void set_optimal_resolution()
 
 	uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
 	/* cursor_buffer = kmalloc(fb_size); */
-	for (uint32_t z = 0; z < fb_size; z += 4096) {
+	for (uint32_t z = 0; z < fb_size; z += PAGE_S) {
 		paging_map(paging_root_directory, (uint32_t)fb + z, (uint32_t)fb + z);
 		/* paging_map(paging_root_directory, (uint32_t)cursor_buffer + z, */
 		/* 	   (uint32_t)cursor_buffer + z); */

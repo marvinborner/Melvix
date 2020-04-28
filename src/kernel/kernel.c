@@ -19,8 +19,12 @@
 #include <kernel/cmos/rtc.h>
 #include <kernel/memory/alloc.h>
 
-void kernel_main(uint32_t magic, uint32_t multiboot_address)
+uint32_t stack_hold;
+
+void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 {
+	stack_hold = esp;
+
 	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
 		vga_log("Invalid boot magic!");
 		halt_loop();
@@ -58,19 +62,21 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address)
 
 	ata_init();
 	ext2_init_fs();
-	log("%s", read_file("/etc/test"));
 
 	load_binaries();
 	set_optimal_resolution();
+	printf("%s", read_file("/etc/test"));
 
 	syscalls_install();
 	struct process *proc = elf_load("/bin/user");
-	proc->stdin = NULL;
-	proc->stdout = NULL;
-	proc->stderr = NULL;
-	process_init(proc);
+	if (proc) {
+		proc->stdin = NULL;
+		proc->stdout = NULL;
+		proc->stderr = NULL;
+		process_init(proc);
+	}
 
+	log("Okidoko!");
 	halt_loop();
-
 	// asm ("div %0" :: "r"(0)); // Exception testing x/0
 }

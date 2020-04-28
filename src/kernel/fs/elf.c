@@ -25,7 +25,7 @@ struct process *elf_load(char *path)
 {
 	uint8_t *file = read_file(path);
 	if (!file) {
-		warn("File or directory not found: %s", file);
+		warn("File or directory not found: %s", path);
 		return NULL;
 	}
 
@@ -40,8 +40,9 @@ struct process *elf_load(char *path)
 	}
 
 	struct process *proc = process_make_new();
-	proc->name = "TEST";
+	proc->name = "ROOT";
 	proc->registers.eip = header->entry;
+
 	paging_switch_directory(proc->cr3);
 	uint32_t stk = (uint32_t)kmalloc_a(PAGE_S);
 	proc->registers.useresp = 0x40000000 - (PAGE_S / 2);
@@ -68,5 +69,6 @@ struct process *elf_load(char *path)
 		}
 	}
 
+	paging_switch_directory(paging_root_directory);
 	return proc;
 }

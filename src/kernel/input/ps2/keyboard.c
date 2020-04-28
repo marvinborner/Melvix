@@ -130,7 +130,7 @@ void keyboard_rate()
 
 void keyboard_clear_buffer()
 {
-	kfree(keyboard_buffer);
+	// kfree(keyboard_buffer);
 	keyboard_buffer = (char *)kmalloc(4096); // 4KiB
 }
 

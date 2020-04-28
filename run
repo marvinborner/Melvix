@@ -54,8 +54,8 @@ make_cross() {
 		# Get sources
 		mkdir "${DIR}/src" && cd "${DIR}/src"
 		echo "Downloading..."
-		curl -sSL "https://ftp.gnu.org/gnu/binutils/binutils-2.32.tar.xz" | tar xJ
-		curl -sSL "https://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.xz" | tar xJ
+		curl -sSL "https://ftp.gnu.org/gnu/binutils/binutils-2.34.tar.xz" | tar xJ
+		curl -sSL "https://ftp.gnu.org/gnu/gcc/gcc-9.3.0/gcc-9.3.0.tar.xz" | tar xJ
 
 		# Prepare compiling
 		mkdir -p "${DIR}/opt/bin"
@@ -65,13 +65,13 @@ make_cross() {
 
 		# Compile binutils
 		mkdir "${DIR}/src/build-binutils" && cd "${DIR}/src/build-binutils"
-		../binutils-2.32/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
+		../binutils-2.34/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
 		make
 		make install
 
 		# Compile GCC
 		mkdir "${DIR}/src/build-gcc" && cd "${DIR}/src/build-gcc"
-		../gcc-9.2.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
+		../gcc-9.3.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
 		make all-gcc
 		make all-target-libgcc
 		make install-gcc
@@ -216,5 +216,5 @@ elif [ "${mode}" = "font" ]; then
 	make_tidy
 else
 	echo "Please use the following syntax:"
-	echo "./run {cross | build | clean | test | debug | image | sync | tidy | font}"
+	echo "./run {cross | build | clean | test | debug | image | sync | tidy | font} [-y]"
 fi

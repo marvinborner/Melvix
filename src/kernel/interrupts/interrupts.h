@@ -80,6 +80,12 @@ void irq_handler(struct regs *r);
  */
 int irq_is_installed(int irq);
 
+/**
+ * Logs fault messages and panics
+ * @param r The registers
+ */
+void fault_handler(struct regs *r);
+
 // Defined in isr.asm
 extern void isr0();
 

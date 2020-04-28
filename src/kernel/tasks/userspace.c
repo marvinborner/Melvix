@@ -30,6 +30,7 @@ void userspace_enter(struct process *proc)
 	current_proc = proc;
 
 	sti();
+	debug("Jumping to userspace!");
 	jump_userspace();
 }
 

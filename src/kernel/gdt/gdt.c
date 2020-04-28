@@ -71,6 +71,8 @@ void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, ui
 	gdt[num].access = access;
 }
 
+extern uint32_t stack_hold;
+
 void gdt_install()
 {
 	// Set GDT pointer and limit
@@ -93,7 +95,10 @@ void gdt_install()
 	gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);
 
 	// Write TSS
-	tss_write(5, 0x10, 0x0);
+	tss_write(5, 0x10, stack_hold);
+
+	gdt_set_gate(6, 0, 0xFFFFF, 0x92, 0x0);
+	gdt_set_gate(7, 0, 0xFFFFF, 0x9A, 0x0);
 
 	// Remove old GDT and install the new changes!
 	gdt_flush();

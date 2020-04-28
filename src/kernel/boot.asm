@@ -26,20 +26,19 @@ section .start_section
 	dd _start
 
 ; Initialize stack
-section .bss
-	align 16
-	global STACK_BOTTOM
-	global STACK_TOP
-
-	STACK_BOTTOM:
-		resb 0x4000
-	STACK_TOP:
+;section .bss
+;	align 16
+;
+;	STACK_BOTTOM:
+;		resb 0x4000
+;	STACK_TOP:
 
 section .text
 	global _start
 	extern kernel_main
 	_start:
-		mov esp, STACK_TOP
+		;mov esp, STACK_TOP
+		push esp
 		push ebx
 		push eax
 		cli
