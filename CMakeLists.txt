@@ -32,7 +32,7 @@ set(CMAKE_ASM_LINK_EXECUTABLE "<CMAKE_LINKER> ${CMAKE_EXE_LINKER_FLAGS} <OBJECTS
 # Recursive sources
 file(GLOB_RECURSE kernel_sources src/kernel/*.c src/kernel/*.asm)
 file(GLOB_RECURSE resources_sources src/resources/*.c)
-file(GLOB_RECURSE user_sources src/userspace/*.c src/userspace/*.asm)
+file(GLOB_RECURSE user_sources src/userspace/programs/*.c src/userspace/libc/*.c)
 
 # KERNEL
 add_executable(kernel ${kernel_sources})
@@ -53,9 +53,9 @@ add_custom_command(
 
 # USERSPACE
 add_executable(user ${user_sources})
-target_include_directories(user PUBLIC "src/userspace/")
-set_target_properties(user PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/user.o")
-target_link_libraries(user PRIVATE "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/linker.ld")
+target_include_directories(user PUBLIC "src/userspace/libc/")
+set_target_properties(user PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/sh.o")
+target_link_libraries(user PRIVATE "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/linker.ld -emain")
 	
 # Dependencies
 add_dependencies(kernel resources user)

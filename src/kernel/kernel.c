@@ -68,7 +68,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 	printf("%s", read_file("/etc/test"));
 
 	syscalls_install();
-	struct process *proc = elf_load("/bin/user");
+	struct process *proc = elf_load("/bin/sh");
 	if (proc) {
 		proc->stdin = NULL;
 		proc->stdout = NULL;

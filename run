@@ -120,7 +120,7 @@ make_build() {
 	mkdir -p ./mnt/usr/
 	mkdir -p ./mnt/bin/
 	cp ./build/font.bin ./mnt/bin/font
-	cp ./build/user.o ./mnt/bin/user
+	cp ./build/sh.o ./mnt/bin/sh
 	echo "Hello world, ext2!" | tee -a ./mnt/etc/test
 	/usr/local/bin/genext2fs -B 4096 -d mnt -U -N 4096 -b 65536 ./build/disk.img
 	rm -r mnt/
