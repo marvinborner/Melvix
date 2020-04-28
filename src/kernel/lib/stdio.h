@@ -5,9 +5,7 @@
 
 char getch();
 
-char *readline();
-
-void writec(char c);
+void putch(char c);
 
 void vprintf(const char *fmt, va_list args);
 

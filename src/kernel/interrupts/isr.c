@@ -3,7 +3,10 @@
 #include <kernel/system.h>
 #include <kernel/lib/string.h>
 #include <kernel/lib/stdio.h>
+#include <kernel/lib/lib.h>
 #include <kernel/graphics/vesa.h>
+#include <kernel/tasks/process.h>
+#include <kernel/io/io.h>
 
 // Install ISRs in IDT
 void isrs_install()
@@ -107,6 +110,7 @@ void fault_handler(struct regs *r)
 	if (handler) {
 		handler(r);
 	} else {
+		cli();
 		uint32_t faulting_address;
 		asm("mov %%cr2, %0" : "=r"(faulting_address));
 
@@ -114,17 +118,22 @@ void fault_handler(struct regs *r)
 		    r->eip, r->eax, r->ebx, r->ecx, r->edx, r->esp, faulting_address, r->eflags,
 		    r->err_code, r->int_no, exception_messages[r->int_no]);
 
+		char *message;
 		if (r->int_no <= 32) {
-			char *message = (char *)exception_messages[r->int_no];
+			message = (char *)exception_messages[r->int_no];
 			strcat(message, " Exception");
-
-			// Show message if there wasn't an error in video memory
-			if (faulting_address != (uint32_t)fb || fb == 0)
-				panic(message);
-			else
-				halt_loop();
 		} else {
-			panic("Unknown Exception");
+			message = "Unknown Exception";
+		}
+
+		if (current_proc != NULL) {
+			memcpy(&current_proc->registers, r, sizeof(struct regs));
+			process_suspend(current_proc->pid);
+			warn("%s: Halting process %d", message, current_proc->pid);
+			scheduler(r);
+			sti();
+		} else {
+			panic("Page fault before multitasking started!");
 		}
 	}
 }

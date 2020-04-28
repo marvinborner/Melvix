@@ -3,6 +3,6 @@
 
 uint32_t sys_free(uint32_t ptr)
 {
-	kfree((void *)ptr);
+	ufree((void *)ptr);
 	return 0;
 }

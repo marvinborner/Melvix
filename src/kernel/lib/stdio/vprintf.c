@@ -5,10 +5,10 @@
 #include <kernel/lib/stdlib.h>
 #include <kernel/memory/alloc.h>
 
-void _writes(const char *data)
+void _puts(const char *data)
 {
 	for (size_t i = 0; i < strlen(data); i++)
-		writec(data[i]);
+		putch(data[i]);
 }
 
 void vprintf(const char *fmt, va_list args)
@@ -20,7 +20,7 @@ void vprintf(const char *fmt, va_list args)
 	for (; *fmt; fmt++) {
 		if (readyToFormat) {
 			if (*fmt == '%') {
-				writec('%');
+				putch('%');
 				readyToFormat = 0;
 				continue;
 			}
@@ -28,27 +28,27 @@ void vprintf(const char *fmt, va_list args)
 			buff = *fmt;
 			if (buff == 's') {
 				const char *str = va_arg(args, const char *);
-				_writes(str);
+				_puts(str);
 				readyToFormat = 0;
 			} else if (buff == 'x') {
 				char *p = htoa((uint32_t)va_arg(args, int));
-				_writes(p);
+				_puts(p);
 				kfree(p);
 				readyToFormat = 0;
 			} else if (buff == 'd') {
 				char *p = itoa(va_arg(args, int));
-				_writes(p);
+				_puts(p);
 				kfree(p);
 				readyToFormat = 0;
 			} else if (buff == 'c') {
-				writec((char)va_arg(args, int));
+				putch((char)va_arg(args, int));
 				readyToFormat = 0;
 			}
 		} else {
 			if (*fmt == '%')
 				readyToFormat = 1;
 			else
-				writec(*fmt);
+				putch(*fmt);
 		}
 	}
 }

@@ -3,20 +3,19 @@
 #include <kernel/interrupts/interrupts.h>
 #include <kernel/system.h>
 #include <kernel/lib/stdio.h>
+#include <kernel/io/io.h>
 
-typedef uint32_t (*syscall_func)(unsigned int, ...);
+typedef uint32_t (*syscall_func)(uint32_t, ...);
 
 uint32_t (*syscalls[])() = { [0] = (uint32_t(*)())halt_loop, // DEBUG!
-			     [1] = sys_write,
-			     [2] = sys_read,
-			     [3] = (uint32_t(*)())sys_writec,
-			     [4] = sys_readc,
-			     [5] = sys_get_pointers,
-			     [6] = sys_alloc,
-			     [7] = sys_free };
+			     [1] = sys_putch,
+			     [2] = sys_getch,
+			     [3] = sys_malloc,
+			     [4] = sys_free };
 
 void syscall_handler(struct regs *r)
 {
+	sti();
 	log("Received syscall!");
 
 	if (r->eax >= sizeof(syscalls) / sizeof(*syscalls))

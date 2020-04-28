@@ -44,8 +44,8 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 	isrs_install();
 	irq_install();
 
-	memory_init(multiboot_address);
 	paging_install();
+	log("0x%x", multiboot_address); // TODO: Fix multiboot table mmap
 	multiboot_parse(multiboot_address);
 
 	// Install drivers

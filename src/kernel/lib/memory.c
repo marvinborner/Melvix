@@ -97,23 +97,3 @@ void memory_mmap_init(struct multiboot_tag_mmap *tag)
 	}
 	total = sum >> 10; // I want kb
 }
-
-int memory_init(uint32_t multiboot_address)
-{
-	int ret = 0;
-	struct multiboot_tag *tag;
-
-	for (tag = (struct multiboot_tag *)(multiboot_address + 8);
-	     tag->type != MULTIBOOT_TAG_TYPE_END;
-	     tag = (struct multiboot_tag *)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7))) {
-		if (tag->type == MULTIBOOT_TAG_TYPE_BASIC_MEMINFO) {
-			info("Got memory info");
-			memory_info_init((struct multiboot_tag_basic_meminfo *)tag);
-		} else if (tag->type == MULTIBOOT_TAG_TYPE_MMAP) {
-			info("Got memory map");
-			memory_mmap_init((struct multiboot_tag_mmap *)tag);
-			ret = 1;
-		}
-	}
-	return ret;
-}

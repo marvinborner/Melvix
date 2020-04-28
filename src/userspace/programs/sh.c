@@ -2,9 +2,13 @@
 
 void main()
 {
-	syscall_write("\nHello from Userspace!\n");
+	syscall_putch('\n');
+	syscall_putch('>');
+	syscall_putch(' ');
 
-	syscall_write("> ");
+	while (1) {
+		syscall_putch(syscall_getch());
+	}
 
 	syscall_halt();
 }

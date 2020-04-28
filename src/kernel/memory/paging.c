@@ -102,21 +102,6 @@ void paging_map_user(struct page_directory *dir, uint32_t phys, uint32_t virt)
 	}
 }
 
-void page_fault(struct regs *regs)
-{
-	cli();
-	if (current_proc != NULL) {
-		memcpy(&current_proc->registers, regs, sizeof(struct regs));
-		process_suspend(current_proc->pid);
-		warn("Segfault, halting process %d", current_proc->pid);
-		scheduler(regs);
-	} else {
-		warn("Page fault before multitasking started!");
-		// fault_handler(regs);
-		halt_loop();
-	}
-}
-
 void paging_install()
 {
 	kheap_init();
@@ -124,11 +109,19 @@ void paging_install()
 	paging_current_directory = paging_make_directory();
 	paging_root_directory = paging_current_directory;
 
-	isr_install_handler(14, page_fault);
 	for (uint32_t i = 0; i < 0xF0000000; i += PAGE_S)
 		paging_map(paging_root_directory, i, i);
 	paging_switch_directory(paging_root_directory);
 	info("Installed paging");
+
+	// Test mallocing
+	uintptr_t a = (uintptr_t)kmalloc(4096); // TODO: Fix "can't collapse top of heap"
+	uintptr_t b = (uintptr_t)kmalloc(4096);
+	kfree((void *)b);
+	kfree((void *)a);
+	uintptr_t c = (uintptr_t)kmalloc(2048);
+	assert(a == c);
+	info("kmalloc test succeeded!");
 }
 
 void paging_convert_page(struct page_directory *kdir)

@@ -7,8 +7,6 @@
 #include <kernel/lib/stdio.h>
 #include <stdarg.h>
 
-uint32_t initial_esp;
-
 char *vga_buffer = (char *)0x500;
 
 void vga_clear()
@@ -28,7 +26,7 @@ void vga_log(char *msg)
 	uint16_t *terminal_buffer = (uint16_t *)0xB8000;
 	for (size_t i = 0; i < strlen(msg); i++)
 		terminal_buffer[line * 80 + i] = (uint16_t)msg[i] | (uint16_t)0x700;
-	log("%s", msg);
+	info("%s", msg);
 	char string[80];
 	strcpy(string, "[");
 	strcat(string, itoa((int)get_time()));

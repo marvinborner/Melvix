@@ -108,7 +108,6 @@ void keyboard_handler(struct regs *r)
 		}
 
 		keyboard_char_buffer = current_keymap[scan_code];
-		keyboard_buffer[strlen(keyboard_buffer)] = keyboard_char_buffer;
 	} else { // RELEASE
 		if (current_keymap[scan_code] == (int)0xffffffb5) // TODO: IDK WHY -107?!
 			control_pressed = 0;
@@ -128,16 +127,8 @@ void keyboard_rate()
 	outb(0x60, 0x0); // Rate{00000} Delay{00} 0
 }
 
-void keyboard_clear_buffer()
-{
-	// kfree(keyboard_buffer);
-	keyboard_buffer = (char *)kmalloc(4096); // 4KiB
-}
-
-// Installs the keyboard handler into IRQ1
 void keyboard_install()
 {
-	keyboard_clear_buffer();
 	keyboard_rate();
 	irq_install_handler(1, keyboard_handler);
 	shift_pressed = 0;

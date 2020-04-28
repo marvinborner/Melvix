@@ -28,7 +28,7 @@ void scheduler(struct regs *regs)
 		current_proc = root;
 	}
 
-	debug("Task switch to %s", current_proc->name);
+	//debug("Task switch to %s", current_proc->name);
 
 	while (current_proc->state == PROC_ASLEEP) {
 		current_proc = current_proc->next;
