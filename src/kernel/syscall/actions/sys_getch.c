@@ -1,10 +1,11 @@
 #include <stdint.h>
 #include <kernel/lib/stdio.h>
-#include <kernel/input/input.h>
-#include <kernel/lib/lib.h>
-#include <kernel/lib/string.h>
+#include <kernel/io/io.h>
 
 uint32_t sys_getch()
 {
-	return (uint32_t)getch();
+	sti();
+	uint32_t key = getch();
+	cli();
+	return key;
 }

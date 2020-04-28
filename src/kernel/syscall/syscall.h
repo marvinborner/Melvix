@@ -7,6 +7,8 @@ extern void idt_syscall();
 
 void syscalls_install();
 
+uint32_t sys_exec(char *path);
+
 uint32_t sys_putch(char ch);
 
 uint32_t sys_getch();

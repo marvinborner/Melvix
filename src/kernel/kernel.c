@@ -67,13 +67,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 	printf("Content of /etc/test: %s", read_file("/etc/test"));
 
 	syscalls_install();
-	struct process *proc = elf_load("/bin/init");
-	if (proc) {
-		proc->stdin = NULL;
-		proc->stdout = NULL;
-		proc->stderr = NULL;
-		process_init(proc);
-	}
+	kexec("/bin/init");
 
 	halt_loop();
 	// asm ("div %0" :: "r"(0)); // Exception testing x/0

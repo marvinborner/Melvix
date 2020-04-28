@@ -40,7 +40,7 @@ struct process *elf_load(char *path)
 	}
 
 	struct process *proc = process_make_new();
-	proc->name = "ROOT";
+	proc->name = path;
 	proc->registers.eip = header->entry;
 
 	paging_switch_directory(proc->cr3);

@@ -1,6 +1,9 @@
+#include <syscall.h>
+
 void main()
 {
-	// TODO: Exec shell
+	syscall_exec("/bin/sh");
+
 	while (1) {
 	};
 }

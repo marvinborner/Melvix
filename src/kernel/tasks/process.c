@@ -8,6 +8,7 @@
 #include <kernel/memory/paging.h>
 #include <kernel/memory/alloc.h>
 #include <kernel/timer/timer.h>
+#include <kernel/fs/elf.h>
 
 uint32_t pid = 0;
 struct process *root;
@@ -203,4 +204,35 @@ struct process *process_make_new()
 	proc->pid = pid++;
 
 	return proc;
+}
+
+uint32_t kexec(char *path)
+{
+	struct process *proc = elf_load(path);
+	if (proc == NULL)
+		return -1;
+
+	// TODO: Add stdin etc support (?)
+	proc->stdin = NULL;
+	proc->stdout = NULL;
+	proc->stderr = NULL;
+	process_init(proc);
+}
+
+uint32_t uexec(char *path)
+{
+	process_suspend(current_proc->pid);
+
+	struct process *proc = elf_load(path);
+	if (proc == NULL)
+		return -1;
+
+	proc->stdin = NULL;
+	proc->stdout = NULL;
+	proc->stderr = NULL;
+
+	proc->parent = current_proc;
+	proc->gid = current_proc->pid;
+	process_spawn(proc);
+	return 0;
 }

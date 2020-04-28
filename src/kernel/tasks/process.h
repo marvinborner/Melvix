@@ -54,6 +54,10 @@ void process_init(struct process *proc);
 
 struct process *process_make_new();
 
+uint32_t kexec(char *path);
+
+uint32_t uexec(char *path);
+
 extern struct process *current_proc;
 
 extern uint32_t stack_hold;

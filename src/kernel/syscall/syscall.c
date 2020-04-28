@@ -8,14 +8,15 @@
 typedef uint32_t (*syscall_func)(uint32_t, ...);
 
 uint32_t (*syscalls[])() = { [0] = (uint32_t(*)())halt_loop, // DEBUG!
-			     [1] = (uint32_t(*)())sys_putch,
-			     [2] = sys_getch,
-			     [3] = sys_malloc,
-			     [4] = sys_free };
+			     [1] = sys_exec,
+			     [2] = (uint32_t(*)())sys_putch,
+			     [3] = sys_getch,
+			     [4] = sys_malloc,
+			     [5] = sys_free };
 
 void syscall_handler(struct regs *r)
 {
-	sti();
+	cli();
 	log("Received syscall!");
 
 	if (r->eax >= sizeof(syscalls) / sizeof(*syscalls))
@@ -29,6 +30,7 @@ void syscall_handler(struct regs *r)
 	    r->edx, r->esi, r->edi);
 
 	r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
+	sti();
 }
 
 void syscalls_install()

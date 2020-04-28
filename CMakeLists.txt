@@ -58,6 +58,7 @@ target_include_directories(userspace_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src
 foreach(loop_file ${user_sources})
 	get_filename_component(testname ${loop_file} NAME_WE)
 	add_executable(${testname} ${loop_file})
+	target_compile_options(${testname} PRIVATE "-nostdinc")
 	target_include_directories(${testname} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/")
 	target_link_libraries(${testname} userspace_lib "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/linker.ld")
 	set_target_properties(${testname} PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/user/${testname}")
