@@ -15,7 +15,8 @@ void multiboot_parse(uint32_t multiboot_address)
 	     tag = (struct multiboot_tag *)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7))) {
 		switch (tag->type) {
 		case MULTIBOOT_TAG_TYPE_CMDLINE:
-			debug("Got cmdline");
+			// TODO: Add cmdline config support
+			debug("Got cmdline: %s", ((struct multiboot_tag_string *)tag)->string);
 			break;
 		case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
 			debug("Got bootloader name: %s",

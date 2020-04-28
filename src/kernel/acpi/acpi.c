@@ -35,6 +35,7 @@ void acpi_init(struct rsdp *rsdp)
 	hpet = (struct hpet *)kmalloc(sizeof(struct hpet));
 	madt = (struct madt *)kmalloc(sizeof(struct madt));
 
+	// TODO: Fix ACPI table discovering (HPET & MADT missing)
 	if (strncmp(rsdp->signature, "RSD PTR ", 8) == 0) {
 		memcpy(rsdt, rsdp->rsdt_address, sizeof(struct rsdt) + 32);
 		debug("Found RSDT");

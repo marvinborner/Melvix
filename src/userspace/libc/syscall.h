@@ -70,17 +70,11 @@
  */
 DECL_SYSCALL0(halt);
 
-DECL_SYSCALL1(write, const char *);
+DECL_SYSCALL1(putch, const char *);
 
-DECL_SYSCALL1(read, const char *);
+DECL_SYSCALL0(getch);
 
-DECL_SYSCALL1(writec, char);
-
-DECL_SYSCALL0(readc);
-
-DECL_SYSCALL0(get_pointers);
-
-DECL_SYSCALL1(alloc, uint32_t);
+DECL_SYSCALL1(malloc, uint32_t);
 
 DECL_SYSCALL1(free, uint32_t);
 

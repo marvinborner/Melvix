@@ -32,30 +32,33 @@ set(CMAKE_ASM_LINK_EXECUTABLE "<CMAKE_LINKER> ${CMAKE_EXE_LINKER_FLAGS} <OBJECTS
 # Recursive sources
 file(GLOB_RECURSE kernel_sources src/kernel/*.c src/kernel/*.asm)
 file(GLOB_RECURSE resources_sources src/resources/*.c)
-file(GLOB_RECURSE user_sources src/userspace/programs/*.c src/userspace/libc/*.c)
+file(GLOB_RECURSE user_sources src/userspace/programs/*.c)
+file(GLOB_RECURSE user_libc_sources src/userspace/libc/*.c)
 
 # KERNEL
 add_executable(kernel ${kernel_sources})
 target_include_directories(kernel PRIVATE "src")
-set_target_properties(kernel PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/kernel.bin")
+set_target_properties(kernel PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/kernel/kernel.bin")
 target_compile_options(kernel PRIVATE "-D ${NETWORK}")
 target_link_libraries(kernel PRIVATE "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/linker.ld")
 
 # RESOURCES
 add_executable(resources ${resources_sources})
-set_target_properties(resources PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/font.o")
-target_compile_options(resources PRIVATE "-Os")
+set_target_properties(resources PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/res/font.o")
+target_compile_options(resources PRIVATE "-Os") # This is needed to preserve my fixed function order ig
 add_custom_command(
         TARGET resources POST_BUILD
-        COMMAND cross/opt/bin/i686-elf-objcopy -O binary build/font.o build/font.bin
+        COMMAND cross/opt/bin/i686-elf-objcopy -O binary build/res/font.o build/res/font.bin
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 # USERSPACE
-add_executable(user ${user_sources})
-target_include_directories(user PUBLIC "src/userspace/libc/")
-set_target_properties(user PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/sh.o")
-target_link_libraries(user PRIVATE "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/linker.ld -emain")
-	
-# Dependencies
-add_dependencies(kernel resources user)
+add_library(userspace_lib ${user_libc_sources})
+target_include_directories(userspace_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/")
+foreach(loop_file ${user_sources})
+	get_filename_component(testname ${loop_file} NAME_WE)
+	add_executable(${testname} ${loop_file})
+	target_include_directories(${testname} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/")
+	target_link_libraries(${testname} userspace_lib "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/linker.ld")
+	set_target_properties(${testname} PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/user/${testname}")
+endforeach(loop_file ${user_sources})

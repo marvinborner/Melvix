@@ -8,7 +8,7 @@
 typedef uint32_t (*syscall_func)(uint32_t, ...);
 
 uint32_t (*syscalls[])() = { [0] = (uint32_t(*)())halt_loop, // DEBUG!
-			     [1] = sys_putch,
+			     [1] = (uint32_t(*)())sys_putch,
 			     [2] = sys_getch,
 			     [3] = sys_malloc,
 			     [4] = sys_free };

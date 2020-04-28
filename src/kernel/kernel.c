@@ -44,9 +44,8 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 	isrs_install();
 	irq_install();
 
+	// multiboot_parse(multiboot_address); // TODO: Why does this break graphics?
 	paging_install();
-	log("0x%x", multiboot_address); // TODO: Fix multiboot table mmap
-	multiboot_parse(multiboot_address);
 
 	// Install drivers
 	cli();
@@ -65,10 +64,10 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 
 	load_binaries();
 	set_optimal_resolution();
-	printf("%s", read_file("/etc/test"));
+	printf("Content of /etc/test: %s", read_file("/etc/test"));
 
 	syscalls_install();
-	struct process *proc = elf_load("/bin/sh");
+	struct process *proc = elf_load("/bin/init");
 	if (proc) {
 		proc->stdin = NULL;
 		proc->stdout = NULL;
@@ -76,7 +75,6 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 		process_init(proc);
 	}
 
-	log("Okidoko!");
 	halt_loop();
 	// asm ("div %0" :: "r"(0)); // Exception testing x/0
 }

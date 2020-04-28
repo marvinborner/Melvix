@@ -1,4 +1,4 @@
-ENTRY(_start)
+ENTRY(main)
 SECTIONS
 {
 	.text 0x40000000:

@@ -122,6 +122,8 @@ void set_optimal_resolution()
 		if (mode_info->width > vbe_width ||
 		    (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl)) {
 			// if (mode_info->bpp == 32) { // Force specific bpp for debugging
+			debug("Found mode: %dx%dx%d", mode_info->width, mode_info->height,
+			      mode_info->bpp);
 			highest = *mode;
 			vbe_width = mode_info->width;
 			vbe_height = mode_info->height;

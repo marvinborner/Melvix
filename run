@@ -93,20 +93,22 @@ make_build() {
 	mkdir -p iso/
 
 	echo "Building..."
-	mkdir -p build
-	cd build
+	mkdir -p build/kernel/
+	mkdir -p build/res/
+	mkdir -p build/user/
+	cd build/
 	cmake .. >/dev/null
 	make
 	cd ..
 
 	# Create ISO
 	mkdir -p ./iso/boot/grub/
-	cp ./build/kernel.bin ./iso/boot/kernel.bin
+	cp ./build/kernel/kernel.bin ./iso/boot/kernel.bin
 	cp ./src/bootloader/grub.cfg ./iso/boot/grub/
 	grub-mkrescue -o ./build/melvix.iso ./iso/
 
 	# Check ISO
-	if grub-file --is-x86-multiboot2 ./build/kernel.bin; then
+	if grub-file --is-x86-multiboot2 ./build/kernel/kernel.bin; then
 		echo "Multiboot confirmed"
 	else
 		echo "Kernel is corrupted!"
@@ -119,8 +121,8 @@ make_build() {
 	mkdir -p ./mnt/etc/
 	mkdir -p ./mnt/usr/
 	mkdir -p ./mnt/bin/
-	cp ./build/font.bin ./mnt/bin/font
-	cp ./build/sh.o ./mnt/bin/sh
+	cp ./build/res/font.bin ./mnt/bin/font
+	cp ./build/user/* ./mnt/bin/
 	echo "Hello world, ext2!" | tee -a ./mnt/etc/test
 	/usr/local/bin/genext2fs -B 4096 -d mnt -U -N 4096 -b 65536 ./build/disk.img
 	rm -r mnt/
@@ -155,8 +157,8 @@ make_image() {
 make_sync() {
 	rm tags compile_commands.json
 	ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
-	mkdir -p cmake
-	cd cmake
+	mkdir -p build
+	cd build
 	cmake .. >/dev/null
 	mv compile_commands.json ..
 	cd ..

@@ -58,6 +58,7 @@ uint32_t memory_get_free()
 void memory_print()
 {
 	if (meminfo != NULL) {
+		// TODO: Fix multiboot mem lower/upper
 		info("Mem lower: 0x%x", meminfo->mem_lower);
 		info("Mem upper: 0x%x", meminfo->mem_upper);
 	}
