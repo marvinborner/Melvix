@@ -197,8 +197,7 @@ struct process *process_make_new()
 
 	proc->brk = 0x50000000;
 
-	int i;
-	for (i = 0; i < 1024; i++)
+	for (int i = 0; i < 1024; i++)
 		proc->cr3->tables[i] = paging_root_directory->tables[i];
 
 	proc->pid = pid++;

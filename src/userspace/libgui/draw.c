@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <gui.h>
 
 void gui_draw_rectangle(int x1, int y1, int x2, int y2, const u32 color[3])

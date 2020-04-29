@@ -12,7 +12,7 @@ struct pointers {
 
 uint32_t sys_pointers()
 {
-	struct pointers *pointers = umalloc(sizeof(struct pointers));
+	struct pointers *pointers = umalloc(sizeof(struct vbe_mode_info) + sizeof(struct font));
 	pointers->current_mode_info = current_mode_info;
 	pointers->font = font;
 
