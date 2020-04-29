@@ -11,7 +11,7 @@ uint32_t sys_exec(char *path);
 
 uint32_t sys_putch(char ch);
 
-uint32_t sys_getch();
+uint32_t sys_scancode();
 
 uint32_t sys_malloc(uint32_t count);
 

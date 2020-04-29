@@ -8,6 +8,7 @@
 // Exponential and logarithmic
 
 // Power
+int pow(int base, int exp);
 
 // Error and gamma
 

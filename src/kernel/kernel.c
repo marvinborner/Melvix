@@ -26,16 +26,16 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 	stack_hold = esp;
 
 	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-		vga_log("Invalid boot magic!");
+		warn("Invalid boot magic!");
 		halt_loop();
 	}
 
 	if (multiboot_address & 7) {
-		vga_log("Unaligned mbi!");
+		warn("Unaligned mbi!");
 		halt_loop();
 	}
 
-	vga_log("Installing basic features of Melvix...");
+	info("Installing basic features of Melvix...");
 
 	// Install features
 	gdt_install();
@@ -44,7 +44,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 	isrs_install();
 	irq_install();
 
-	// multiboot_parse(multiboot_address); // TODO: Why does this break graphics?
+	multiboot_parse(multiboot_address);
 	paging_install();
 
 	// Install drivers

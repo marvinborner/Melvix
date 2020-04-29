@@ -29,6 +29,8 @@ uint32_t get_cr0();
 void set_cr3(struct page_directory *dir);
 void set_cr0(uint32_t new_cr0);
 
+void paging_disable();
+void paging_enable();
 void paging_switch_directory(struct page_directory *dir);
 
 struct page_directory *paging_make_directory();

@@ -74,7 +74,7 @@ DECL_SYSCALL1(exec, char *);
 
 DECL_SYSCALL1(putch, char *);
 
-DECL_SYSCALL0(getch);
+DECL_SYSCALL0(scancode);
 
 DECL_SYSCALL1(malloc, u32);
 

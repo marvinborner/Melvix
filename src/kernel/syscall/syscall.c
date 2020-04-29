@@ -11,7 +11,7 @@ typedef uint32_t (*syscall_func)(uint32_t, ...);
 uint32_t (*syscalls[])() = { [0] = (uint32_t(*)())halt_loop, // DEBUG!
 			     [1] = sys_exec,
 			     [2] = (uint32_t(*)())sys_putch,
-			     [3] = sys_getch,
+			     [3] = sys_scancode,
 			     [4] = sys_malloc,
 			     [5] = sys_free,
 			     [6] = sys_pointers };
@@ -27,8 +27,8 @@ void syscall_handler(struct regs *r)
 	if (!location)
 		return;
 
-	log("[SYSCALL] %s called %d with 0x%x 0x%x 0x%x 0x%x 0x%x", current_proc->name, r->eax,
-	    location, r->ebx, r->ecx, r->edx, r->esi, r->edi);
+	log("[SYSCALL] %d at [0x%x] with 0x%x 0x%x 0x%x 0x%x", r->eax, location, r->ebx, r->ecx,
+	    r->edx, r->esi, r->edi);
 
 	r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
 

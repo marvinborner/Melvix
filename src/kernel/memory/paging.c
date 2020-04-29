@@ -43,6 +43,17 @@ void set_cr0(uint32_t cr0)
 	asm volatile("movl %%eax, %%cr0" ::"a"(cr0));
 }
 
+void paging_disable()
+{
+	set_cr0(get_cr0() | 0x7fffffff);
+}
+
+void paging_enable()
+{
+	set_cr3(paging_current_directory);
+	set_cr0(get_cr0() | 0x80000000);
+}
+
 void paging_switch_directory(struct page_directory *dir)
 {
 	set_cr3(dir);

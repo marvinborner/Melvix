@@ -170,7 +170,7 @@ uint32_t process_fork(uint32_t pid)
 	proc->pid = current_proc->pid;
 
 	process_spawn(proc);*/
-	return pid++;
+	return 0; //pid++;
 }
 
 struct process *process_from_pid(uint32_t pid)

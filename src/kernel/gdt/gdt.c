@@ -104,7 +104,7 @@ void gdt_install()
 	gdt_flush();
 	tss_flush();
 
-	vga_log("Installed Global Descriptor Table");
+	info("Installed Global Descriptor Table");
 }
 
 void tss_write(int32_t num, uint16_t ss0, uint32_t esp0)

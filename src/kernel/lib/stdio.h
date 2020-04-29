@@ -3,8 +3,6 @@
 
 #include <stdarg.h>
 
-char getch();
-
 void putch(char c);
 
 void vprintf(const char *fmt, va_list args);

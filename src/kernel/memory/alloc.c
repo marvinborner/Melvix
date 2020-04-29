@@ -100,7 +100,7 @@ void free_internal(struct heap_header *heap, void *address)
 	}
 
 	if ((head->magic != KHEAP_MAGIC) || (head->magic2 != KHEAP_MAGIC2)) {
-		//warn("Invalid header in heap");
+		warn("Invalid header in heap");
 		return;
 	}
 
@@ -110,7 +110,7 @@ void free_internal(struct heap_header *heap, void *address)
 
 	foot = (struct heap_footer *)((uint32_t)head - sizeof(struct heap_footer));
 	if ((foot->magic != KHEAP_MAGIC) || (foot->magic2 != KHEAP_MAGIC2)) {
-		//warn("Invalid footer in heap");
+		warn("Invalid footer in heap");
 		return;
 	}
 
@@ -126,14 +126,7 @@ void free_internal(struct heap_header *heap, void *address)
 	foot = (struct heap_footer *)((uint32_t)heap + (heap->size + head->size + HEAP_TOTAL) +
 				      HEAP_S);
 	if ((foot->magic != KHEAP_MAGIC) || (foot->magic2 != KHEAP_MAGIC2)) {
-		/*vga_puts("Footer with size of ");
-		vga_puts_hex(foot->size);
-		vga_puts(" / head size of ");
-		vga_puts_hex(heap->size);
-		vga_puts("\n");
-		dump_struct(foot, sizeof(struct heap_footer));
-		warn("fatal arithmetic error in free() call");
-		*/
+		panic("Fatal arithmetic error in free() call");
 		return;
 	}
 

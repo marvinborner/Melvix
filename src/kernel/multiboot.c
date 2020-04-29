@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <kernel/graphics/vesa.h>
 #include <kernel/system.h>
 #include <kernel/multiboot.h>
 #include <kernel/smbios/smbios.h>
@@ -37,10 +38,10 @@ void multiboot_parse(uint32_t multiboot_address)
 			memory_mmap_init((struct multiboot_tag_mmap *)tag);
 			break;
 		case MULTIBOOT_TAG_TYPE_VBE:
-			debug("Got VBE debug");
+			debug("Got VBE");
 			break;
 		case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
-			debug("Got framebuffer debug");
+			debug("Got framebuffer");
 			break;
 		case MULTIBOOT_TAG_TYPE_APM:
 			debug("Got APM table");

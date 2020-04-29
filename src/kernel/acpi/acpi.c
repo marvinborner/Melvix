@@ -29,13 +29,15 @@ int check_sum(struct sdt_header *header)
 
 void acpi_init(struct rsdp *rsdp)
 {
+	// TODO: Fix ACPI table discovering (HPET & MADT missing)
+	// TODO: Fix ACPI breaking VESA (why?!)
+
 	struct sdt_header *header = (struct sdt_header *)kmalloc(sizeof(struct sdt_header));
 	rsdt = (struct rsdt *)kmalloc(sizeof(struct rsdt));
 	fadt = (struct fadt *)kmalloc(sizeof(struct fadt));
 	hpet = (struct hpet *)kmalloc(sizeof(struct hpet));
 	madt = (struct madt *)kmalloc(sizeof(struct madt));
 
-	// TODO: Fix ACPI table discovering (HPET & MADT missing)
 	if (strncmp(rsdp->signature, "RSD PTR ", 8) == 0) {
 		memcpy(rsdt, rsdp->rsdt_address, sizeof(struct rsdt) + 32);
 		debug("Found RSDT");
@@ -75,12 +77,12 @@ void acpi_init(struct rsdp *rsdp)
 
 void acpi_old_init(struct multiboot_tag_old_acpi *tag)
 {
-	acpi_init((struct rsdp *)tag->rsdp);
+	// acpi_init((struct rsdp *)tag->rsdp);
 }
 
 void acpi_new_init(struct multiboot_tag_new_acpi *tag)
 {
-	acpi_init((struct rsdp *)tag->rsdp);
+	// acpi_init((struct rsdp *)tag->rsdp);
 }
 
 void acpi_poweroff()

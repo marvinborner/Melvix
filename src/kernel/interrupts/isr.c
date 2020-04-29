@@ -49,7 +49,7 @@ void isrs_install()
 
 	idt_set_gate(0x80, (unsigned)isr128, 0x08, 0xEE);
 
-	vga_log("Installed Interrupt Service Routines");
+	info("Installed Interrupt Service Routines");
 }
 
 irq_handler_t isr_routines[256] = { 0 };
@@ -133,7 +133,12 @@ void fault_handler(struct regs *r)
 			scheduler(r);
 			sti();
 		} else {
-			panic("Page fault before multitasking started!");
+			if (faulting_address != (uint32_t)fb) {
+				panic("Page fault before multitasking started!");
+			} else {
+				debug(RED "Fatal video error!" RES);
+				halt_loop();
+			}
 		}
 	}
 }

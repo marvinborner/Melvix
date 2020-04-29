@@ -6,32 +6,11 @@
 #include <kernel/memory/alloc.h>
 #include <kernel/memory/paging.h>
 
-void switch_to_vga()
+void vbe_error()
 {
-	log("Force switch to VGA!");
-	uint16_t *terminal_buffer = (uint16_t *)0xB8000;
-	char *error = "Melvix does not support this graphics hardware!";
-	for (size_t i = 0; i < strlen(error); i++)
-		terminal_buffer[24 * 80 + i] = (uint16_t)error[i] | (uint16_t)0x700;
-	panic("No VESA support!");
-}
-
-struct edid_data get_edid()
-{
-	regs16_t regs;
-	regs.ax = 0x4F15;
-	regs.bx = 0x1; // BL
-	regs.es = 0;
-	regs.di = 0x7E00;
-	v86(0x10, &regs);
-
-	if ((regs.ax & 0xFF) != 0x4F) {
-		warn("No EDID available!");
-	}
-
-	struct edid_data *edid = (struct edid_data *)0x7E00;
-
-	return *edid;
+	log("Error in VESA detection script!");
+	warn(RED "Melvix can't work without VESA Support!" RES);
+	halt_loop();
 }
 
 void vbe_set_mode(unsigned short mode)
@@ -43,7 +22,7 @@ void vbe_set_mode(unsigned short mode)
 	v86(0x10, &regs);
 
 	if (regs.ax != 0x004F)
-		switch_to_vga();
+		vbe_error();
 }
 
 uint16_t *vbe_get_modes()
@@ -62,7 +41,7 @@ uint16_t *vbe_get_modes()
 	struct vbe_info *info = (struct vbe_info *)info_address;
 
 	if (regs.ax != 0x004F || strcmp(info->signature, "VESA") != 0)
-		switch_to_vga();
+		vbe_error();
 
 	// Get number of modes
 	uint16_t *mode_ptr = (uint16_t *)info->video_modes;
@@ -178,7 +157,7 @@ void set_optimal_resolution()
 
 		// Everything else failed :(
 		if (highest == 0)
-			switch_to_vga();
+			vbe_error();
 	} else {
 		log("Mode detection succeeded");
 	}
@@ -248,6 +227,7 @@ void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const uint32_t color[3]
 
 void vesa_clear()
 {
+	log("%dx%dx%d at %x", vbe_width, vbe_height, vbe_bpl << 3, fb);
 	vesa_draw_rectangle(0, 0, vbe_width - 1, vbe_height - 1, terminal_background);
 	terminal_x = 0;
 	terminal_y = 0;

@@ -1,13 +1,13 @@
 #include <syscall.h>
+#include <stdio.h>
 
 void main()
 {
-	syscall_putch('\n');
-	syscall_putch('>');
-	syscall_putch(' ');
+	printf("Test for printf! %d\n", 42);
+	printf("[~] ");
 
 	while (1) {
-		syscall_putch(syscall_getch());
+		putch(getch());
 	}
 
 	syscall_halt();
