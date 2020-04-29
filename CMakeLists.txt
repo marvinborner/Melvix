@@ -34,6 +34,7 @@ file(GLOB_RECURSE kernel_sources src/kernel/*.c src/kernel/*.asm)
 file(GLOB_RECURSE resources_sources src/resources/*.c)
 file(GLOB_RECURSE user_sources src/userspace/programs/*.c)
 file(GLOB_RECURSE user_libc_sources src/userspace/libc/*.c)
+file(GLOB_RECURSE user_libgui_sources src/userspace/libgui/*.c)
 
 # KERNEL
 add_executable(kernel ${kernel_sources})
@@ -52,14 +53,21 @@ add_custom_command(
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# USERSPACE
-add_library(userspace_lib ${user_libc_sources})
-target_include_directories(userspace_lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/")
+# USERSPACE LIBC
+add_library(userspace_libc ${user_libc_sources})
+target_include_directories(userspace_libc PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/")
+
+# USERSPACE LIBGUI
+add_library(userspace_libgui ${user_libgui_sources})
+target_link_libraries(userspace_libgui userspace_libc)
+target_include_directories(userspace_libgui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/" "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libgui/")
+
+# USERSPACE PROGRAMS
 foreach(loop_file ${user_sources})
 	get_filename_component(testname ${loop_file} NAME_WE)
 	add_executable(${testname} ${loop_file})
 	target_compile_options(${testname} PRIVATE "-nostdinc")
-	target_include_directories(${testname} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/")
-	target_link_libraries(${testname} userspace_lib "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/linker.ld")
+	target_include_directories(${testname} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/" "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libgui/")
+	target_link_libraries(${testname} userspace_libc userspace_libgui "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/linker.ld")
 	set_target_properties(${testname} PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/user/${testname}")
 endforeach(loop_file ${user_sources})

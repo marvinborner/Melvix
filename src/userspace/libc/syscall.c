@@ -14,3 +14,5 @@ DEFN_SYSCALL0(getch, 3);
 DEFN_SYSCALL1(malloc, 4, u32);
 
 DEFN_SYSCALL1(free, 5, u32);
+
+DEFN_SYSCALL0(pointers, 6);

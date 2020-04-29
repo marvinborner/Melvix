@@ -17,4 +17,6 @@ uint32_t sys_malloc(uint32_t count);
 
 uint32_t sys_free(uint32_t ptr);
 
+uint32_t sys_pointers();
+
 #endif

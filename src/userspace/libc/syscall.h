@@ -80,4 +80,6 @@ DECL_SYSCALL1(malloc, u32);
 
 DECL_SYSCALL1(free, u32);
 
+DECL_SYSCALL0(pointers);
+
 #endif

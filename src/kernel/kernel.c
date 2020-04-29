@@ -64,7 +64,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 
 	load_binaries();
 	set_optimal_resolution();
-	printf("Content of /etc/test: %s", read_file("/etc/test"));
+	log("Content of /etc/test: %s", read_file("/etc/test"));
 
 	syscalls_install();
 	kexec("/bin/init");

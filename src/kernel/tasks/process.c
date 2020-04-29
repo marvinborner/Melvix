@@ -217,6 +217,7 @@ uint32_t kexec(char *path)
 	proc->stdout = NULL;
 	proc->stderr = NULL;
 	process_init(proc);
+	return 0;
 }
 
 uint32_t uexec(char *path)

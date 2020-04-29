@@ -251,8 +251,8 @@ int vbe_bpl;
 /**
  * The framebuffer interface
  */
-unsigned char *fb;
+uint8_t *fb;
 
-unsigned char *cursor_buffer;
+uint8_t *cursor_buffer;
 
 #endif

@@ -12,7 +12,8 @@ uint32_t (*syscalls[])() = { [0] = (uint32_t(*)())halt_loop, // DEBUG!
 			     [2] = (uint32_t(*)())sys_putch,
 			     [3] = sys_getch,
 			     [4] = sys_malloc,
-			     [5] = sys_free };
+			     [5] = sys_free,
+			     [6] = sys_pointers };
 
 void syscall_handler(struct regs *r)
 {

@@ -187,9 +187,7 @@ void set_optimal_resolution()
 	uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
 	/* cursor_buffer = kmalloc(fb_size); */
 	for (uint32_t z = 0; z < fb_size; z += PAGE_S) {
-		paging_map(paging_root_directory, (uint32_t)fb + z, (uint32_t)fb + z);
-		/* paging_map(paging_root_directory, (uint32_t)cursor_buffer + z, */
-		/* 	   (uint32_t)cursor_buffer + z); */
+		paging_map_user(paging_root_directory, (uint32_t)fb + z, (uint32_t)fb + z);
 	}
 
 	if (vbe_height > 1440)
@@ -198,11 +196,11 @@ void set_optimal_resolution()
 		vesa_set_font(24);
 	else
 		vesa_set_font(16);
-	vesa_set_color(default_text_color);
-	vesa_clear();
+	//vesa_set_color(default_text_color);
+	//vesa_clear();
 
-	vesa_set_color(vesa_blue);
-	vesa_set_color(default_text_color);
+	//vesa_set_color(vesa_blue);
+	//vesa_set_color(default_text_color);
 
 	info("Successfully switched to video mode!");
 
@@ -253,7 +251,7 @@ void vesa_convert_color(uint32_t *color_array, uint32_t color)
 
 void vesa_set_pixel(uint16_t x, uint16_t y, const uint32_t color[3])
 {
-	unsigned pos = (unsigned int)(x * vbe_bpl + y * vbe_pitch);
+	uint8_t pos = (uint8_t)(x * vbe_bpl + y * vbe_pitch);
 	char *draw = (char *)&fb[pos];
 	draw[pos] = (char)color[2];
 	draw[pos + 1] = (char)color[1];
