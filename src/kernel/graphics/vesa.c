@@ -125,6 +125,7 @@ void set_optimal_resolution()
 			debug("Found mode: %dx%dx%d", mode_info->width, mode_info->height,
 			      mode_info->bpp);
 			highest = *mode;
+			current_mode_info = mode_info;
 			vbe_width = mode_info->width;
 			vbe_height = mode_info->height;
 			vbe_pitch = mode_info->pitch;
@@ -220,33 +221,6 @@ void vesa_set_font(int height)
 {
 	font_width = height / 2;
 	font_height = height;
-}
-
-void vesa_convert_color(uint32_t *color_array, uint32_t color)
-{
-	uint8_t red = (uint8_t)((color >> 16) & 255);
-	uint8_t green = (uint8_t)((color >> 8) & 255);
-	uint8_t blue = (uint8_t)(color & 255);
-
-	if ((vbe_bpl << 3) == 8) {
-		uint32_t new_color =
-			((red * 7 / 255) << 5) + ((green * 7 / 255) << 2) + (blue * 3 / 255);
-		color_array[0] = (new_color >> 16) & 255;
-		color_array[1] = (new_color >> 8) & 255;
-		color_array[2] = new_color & 255;
-	} else if ((vbe_bpl << 3) == 16) {
-		uint32_t new_color =
-			(((red & 0b11111000) << 8) + ((green & 0b11111100) << 3) + (blue >> 3));
-		color_array[0] = (new_color >> 16) & 255;
-		color_array[1] = (new_color >> 8) & 255;
-		color_array[2] = new_color & 255;
-	} else if ((vbe_bpl << 3) == 24 || (vbe_bpl << 3) == 32) {
-		color_array[0] = red;
-		color_array[1] = green;
-		color_array[2] = blue;
-	} else {
-		panic("Unknown color bpp!");
-	}
 }
 
 void vesa_set_pixel(uint16_t x, uint16_t y, const uint32_t color[3])
@@ -362,10 +336,4 @@ void vesa_draw_cursor(int x, int y)
 		draw += vbe_pitch;
 		prev += vbe_pitch;
 	}
-}
-
-void vesa_set_color(uint32_t color)
-{
-	vesa_convert_color(terminal_color, color);
-	vesa_convert_color(terminal_background, default_background_color);
 }

@@ -128,21 +128,6 @@ void vbe_set_mode(unsigned short mode);
 void set_optimal_resolution();
 
 /**
- * Draws a efficient rectangle
- * @param x1 First X coordinate
- * @param y1 First Y coordinate
- * @param x2 Second X coordinate
- * @param y2 Second Y coordinate
- * @param color Rectangle color
- */
-void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const uint32_t color[3]);
-
-/**
- * Clears the screen with black
- */
-void vesa_clear();
-
-/**
  * Sets one of the fonts inside the font header file
  * @param height The desired font height
  */
@@ -226,7 +211,7 @@ char text[1024];
 /**
  * The current video mode
  */
-int vbe_current_mode;
+struct vbe_mode_info *current_mode_info;
 
 /**
  * The width of the current video mode

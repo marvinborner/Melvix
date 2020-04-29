@@ -4,6 +4,7 @@
 #include <kernel/system.h>
 #include <kernel/lib/stdio.h>
 #include <kernel/io/io.h>
+#include <kernel/tasks/process.h>
 
 typedef uint32_t (*syscall_func)(uint32_t, ...);
 
@@ -18,7 +19,6 @@ uint32_t (*syscalls[])() = { [0] = (uint32_t(*)())halt_loop, // DEBUG!
 void syscall_handler(struct regs *r)
 {
 	cli();
-	log("Received syscall!");
 
 	if (r->eax >= sizeof(syscalls) / sizeof(*syscalls))
 		return;
@@ -27,10 +27,11 @@ void syscall_handler(struct regs *r)
 	if (!location)
 		return;
 
-	log("[SYSCALL] %d (0x%x) 0x%x 0x%x 0x%x 0x%x 0x%x", r->eax, location, r->ebx, r->ecx,
-	    r->edx, r->esi, r->edi);
+	log("[SYSCALL] %s called %d with 0x%x 0x%x 0x%x 0x%x 0x%x", current_proc->name, r->eax,
+	    location, r->ebx, r->ecx, r->edx, r->esi, r->edi);
 
 	r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
+
 	sti();
 }
 
