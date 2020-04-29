@@ -5,15 +5,15 @@
 
 int atoi(char *str)
 {
-	u8 s_str = strlen(str);
+	u32 s_str = strlen(str);
 	if (!s_str)
 		return 0;
 
-	u8 negative = 0;
+	u32 negative = 0;
 	if (str[0] == '-')
 		negative = 1;
 
-	u8 i = 0;
+	u32 i = 0;
 	if (negative)
 		i++;
 

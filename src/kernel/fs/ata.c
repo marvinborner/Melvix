@@ -81,7 +81,7 @@ void ata_init()
 	if (sel_base_port == 0)
 		log("No drives attached! What's going on?");
 	else {
-		log("Found a drive!\nSelected drive is the %s on the %s bus",
+		log("Found drive: Selecting %s on the %s bus",
 		    sel_master_or_slave == SEL_MASTER ? "master" : "slave",
 		    sel_base_port == PRIMARY_BASE ? "primary" : "secondary");
 		log("Max LBA value is %d", max_sector);

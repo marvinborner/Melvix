@@ -3,7 +3,7 @@
 
 void strdisponce(char *str)
 {
-	for (u8 i = sizeof(str) + 2; i > 0; i--)
+	for (u32 i = sizeof(str) + 2; i > 0; i--)
 		str[i] = str[i - 1];
 	str[0] = 0;
 }

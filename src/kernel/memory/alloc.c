@@ -5,6 +5,7 @@
 #include <kernel/system.h>
 #include <kernel/lib/lib.h>
 
+extern uint32_t end;
 uint32_t placement_address;
 
 struct heap_header *kheap = NULL;
@@ -12,7 +13,8 @@ struct heap_header *uheap = NULL;
 
 void kheap_init()
 {
-	placement_address = &ASM_KERNEL_END;
+	end = &end;
+	placement_address = end;
 	kheap = (struct heap_header *)fmalloc(KHEAP_SIZE);
 	init_heap(kheap, KHEAP_SIZE);
 
@@ -24,7 +26,7 @@ void kheap_init()
 
 void *fmalloc(uint32_t size)
 {
-	//assert(placement_address + size < MEM_END);
+	assert(placement_address + size < MEM_END);
 	uint32_t hold = placement_address;
 	memset((void *)hold, 0, size);
 	placement_address += size;
@@ -33,7 +35,7 @@ void *fmalloc(uint32_t size)
 
 void *kmalloc_a(uint32_t size)
 {
-	//assert(((placement_address & 0xFFFFF000) + 0x1000) + size < MEM_END);
+	assert(((placement_address & 0xFFFFF000) + 0x1000) + size < MEM_END);
 	placement_address &= 0xFFFFF000;
 	placement_address += 0x1000;
 
@@ -94,7 +96,7 @@ void free_internal(struct heap_header *heap, void *address)
 {
 	struct heap_header *head = (struct heap_header *)((uint32_t)address - HEAP_S);
 	if (head == heap) {
-		warn("Can't collapse top of heap");
+		//warn("Can't collapse top of heap"); // TODO: Fix "can't collapse top of heap" at start
 		head->free = true;
 		return;
 	}

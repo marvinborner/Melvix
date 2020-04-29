@@ -4,6 +4,6 @@
 
 void puts(char *data)
 {
-	for (u8 i = 0; i < strlen(data); i++)
+	for (u32 i = 0; i < strlen(data); i++)
 		putch(data[i]);
 }

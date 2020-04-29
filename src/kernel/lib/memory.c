@@ -57,11 +57,11 @@ uint32_t memory_get_free()
 
 void memory_print()
 {
-	if (meminfo != NULL) {
-		// TODO: Fix multiboot mem lower/upper
+	// TODO: Fix multiboot mem lower/upper
+	/*if (meminfo != NULL) {
 		info("Mem lower: 0x%x", meminfo->mem_lower);
 		info("Mem upper: 0x%x", meminfo->mem_upper);
-	}
+	}*/
 	info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
 	info("Total free memory: %dMiB", (memory_get_free() >> 10) + 1);
 }

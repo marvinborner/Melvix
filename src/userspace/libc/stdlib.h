@@ -12,7 +12,7 @@ int htoi(char *str);
 // Exit functions
 
 // Memory management
-void *malloc(u8 size);
+void *malloc(u32 size);
 void free(void *addr);
 
 #endif

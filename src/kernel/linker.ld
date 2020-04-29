@@ -27,8 +27,5 @@ SECTIONS
 		*(.bss)
 	}
 
-	.end_section BLOCK(4K) : ALIGN(4K)
-	{
-		*(.end_section)
-	}
+	end = .; _end = .; __end = .;
 }

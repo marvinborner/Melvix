@@ -13,7 +13,7 @@ char *itoa(int n)
 		ret[1] = 0;
 		return ret;
 	}
-	u8 negative = (u8)(n < 0);
+	u32 negative = (u32)(n < 0);
 	if (negative)
 		n *= -1;
 

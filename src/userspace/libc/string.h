@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-u8 strlen(char *str);
+u32 strlen(char *str);
 
 void strcpy(char *dest, char *orig);
 

@@ -45,7 +45,3 @@ section .text
 		call kernel_main
 		; cli
 		jmp $
-
-section .end_section
-	global ASM_KERNEL_END
-	ASM_KERNEL_END:

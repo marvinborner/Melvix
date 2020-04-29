@@ -126,7 +126,7 @@ void paging_install()
 	info("Installed paging");
 
 	// Test mallocing
-	uintptr_t a = (uintptr_t)kmalloc(4096); // TODO: Fix "can't collapse top of heap"
+	uintptr_t a = (uintptr_t)kmalloc(4096);
 	uintptr_t b = (uintptr_t)kmalloc(4096);
 	kfree((void *)b);
 	kfree((void *)a);

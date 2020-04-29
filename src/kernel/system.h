@@ -6,11 +6,6 @@
 #include <kernel/multiboot.h>
 
 /**
- * The kernel end
- */
-extern void ASM_KERNEL_END();
-
-/**
  * The ASM registers as packed structure
  */
 typedef struct __attribute__((packed)) {

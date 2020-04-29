@@ -3,7 +3,7 @@
 
 void strinv(char *str)
 {
-	u8 s_str = strlen(str);
+	u32 s_str = strlen(str);
 
 	int iterations = (int)s_str / 2;
 	for (int i = 0; i < iterations; i++) {
