@@ -32,7 +32,7 @@ void fs_close(struct fs_node *node)
 		node->close(node);
 }
 
-struct dirent *fs_read_directory(struct fs_node *node, uint32_t index)
+struct dirent *fs_read_dir(struct fs_node *node, uint32_t index)
 {
 	if ((node->type & DIR_NODE) != 0 && node->find_dir != NULL)
 		return node->read_dir(node, index);
@@ -40,7 +40,7 @@ struct dirent *fs_read_directory(struct fs_node *node, uint32_t index)
 		return (struct dirent *)NULL;
 }
 
-struct fs_node *fs_find_directory(struct fs_node *node, char *name)
+struct fs_node *fs_find_dir(struct fs_node *node, char *name)
 {
 	if ((node->type & DIR_NODE) != 0 && node->find_dir != NULL)
 		return node->find_dir(node, name);

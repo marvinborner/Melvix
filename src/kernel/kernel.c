@@ -8,6 +8,7 @@
 #include <kernel/input/input.h>
 #include <kernel/acpi/acpi.h>
 #include <kernel/lib/lib.h>
+#include <kernel/lib/stdlib.h>
 #include <kernel/syscall/syscall.h>
 #include <kernel/pci/pci.h>
 #include <kernel/net/network.h>
@@ -62,7 +63,6 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 
 	ata_init();
 	ext2_init_fs();
-	ext2_mount(fs_root);
 
 	load_binaries();
 	set_optimal_resolution();

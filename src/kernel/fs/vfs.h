@@ -57,7 +57,7 @@ uint32_t fs_read(struct fs_node *node, uint32_t offset, uint32_t size, char *buf
 uint32_t fs_write(struct fs_node *node, uint32_t offset, uint32_t size, char *buf);
 void fs_open(struct fs_node *node);
 void fs_close(struct fs_node *node);
-struct dirent *fs_read_directory(struct fs_node *node, uint32_t index);
-struct fs_node *fs_find_directory(struct fs_node *node, char *name);
+struct dirent *fs_read_dir(struct fs_node *node, uint32_t index);
+struct fs_node *fs_find_dir(struct fs_node *node, char *name);
 
 #endif

@@ -30,16 +30,38 @@ void ext2_init_fs()
 	debug("Type & perms: 0x%x", root_inode.type_and_permissions);
 	debug("Size: %d", root_inode.size);
 
-	debug("Files:");
+	/* debug("Files:"); */
 
-	struct ext2_file file;
-	ext2_open_inode(ROOT_INODE, &file);
-	struct ext2_dirent dirent;
+	/* struct ext2_file file; */
+	/* ext2_open_inode(ROOT_INODE, &file); */
+	/* struct ext2_dirent dirent; */
 
-	while (ext2_next_dirent(&file, &dirent))
-		debug("Inode %d, name '%s'", dirent.inode_num, dirent.name);
+	/* while (ext2_next_dirent(&file, &dirent)) */
+	/* 	debug("Inode %d, name '%s'", dirent.inode_num, dirent.name); */
 
-	kfree(file.buf);
+	/* kfree(file.buf); */
+
+	fs_root = (struct fs_node *)kmalloc(sizeof(struct fs_node));
+	strcpy(fs_root->name, "/");
+	fs_root->type = DIR_NODE;
+	ext2_mount(fs_root);
+
+	// TODO: Fix file tree
+	struct fs_node *root = fs_root->node_ptr;
+	root->open(root);
+	struct dirent *dirent;
+	int i = 0;
+	int count = 0;
+	while ((dirent = fs_read_dir(root, i)) != NULL) {
+		struct fs_node *node = fs_find_dir(root, dirent->name);
+		log("%s", dirent->name);
+
+		if (node->type == FILE_NODE)
+			count++;
+
+		i++;
+	}
+	log("%d", count);
 }
 
 static void read_block(uint32_t block_num, void *buf)
