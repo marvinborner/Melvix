@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <kernel/fs/ata.h>
 #include <kernel/fs/ext2.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/system.h>
 #include <kernel/memory/alloc.h>
 #include <kernel/lib/lib.h>
@@ -251,4 +252,95 @@ uint8_t *read_file(char *path)
 		warn("File not found");
 		return NULL;
 	}
+}
+
+void ext2_vfs_open(struct fs_node *node)
+{
+	node->inode = ext2_look_up_path(node->name);
+
+	if (node->inode != 0) {
+		struct ext2_file *file = kmalloc(sizeof *file);
+		ext2_open_inode(node->inode, file);
+
+		node->impl = file;
+
+		// TODO: More file metadata
+	}
+}
+
+void ext2_vfs_close(struct fs_node *node)
+{
+	kfree(node->impl);
+}
+
+uint32_t ext2_vfs_read(struct fs_node *node, size_t offset, size_t size, char *buf)
+{
+	if (offset != ((struct ext2_file *)node->impl)->pos) {
+		panic("Seeking is currently unsupported for Ext2 files\n");
+		return 0;
+	}
+
+	return (uint32_t)ext2_read(node->impl, (uint8_t *)buf, size);
+}
+
+uint32_t ext2_vfs_write(struct fs_node *node, size_t offset, size_t size, char *buf)
+{
+	panic("Writing to Ext2 is currently unsupported\n");
+
+	return 0;
+}
+
+struct dirent *ext2_vfs_read_dir(struct fs_node *node, size_t index)
+{
+	struct ext2_dirent ext2_dir;
+
+	if (ext2_next_dirent(node->impl, &ext2_dir)) {
+		struct dirent *dir = kmalloc(sizeof *dir);
+
+		dir->inode = ext2_dir.inode_num;
+		strcpy(dir->name, (char *)ext2_dir.name);
+
+		return dir;
+	} else {
+		return NULL;
+	}
+}
+
+struct fs_node *ext2_vfs_find_dir(struct fs_node *node, char *name)
+{
+	uint32_t inode = ext2_find_in_dir(node->inode, name);
+	if (inode == 0) {
+		return NULL;
+	} else {
+		struct fs_node *found = kmalloc(sizeof *found);
+		found->inode = inode;
+
+		return found;
+	}
+}
+
+void ext2_mount(struct fs_node *mountpoint)
+{
+	assert(mountpoint->node_ptr == NULL && (mountpoint->type & MOUNTPOINT_NODE) == 0);
+	assert((mountpoint->type & DIR_NODE) != 0);
+
+	struct fs_node *ext2_root = (struct fs_node *)kmalloc(sizeof(struct fs_node));
+	ext2_root->name[0] = '\0';
+	ext2_root->permissions = 0;
+	ext2_root->uid = 0;
+	ext2_root->gid = 0;
+	ext2_root->inode = ROOT_INODE;
+	ext2_root->length = 0;
+	ext2_root->type = DIR_NODE;
+	ext2_root->read = ext2_vfs_read;
+	ext2_root->write = ext2_vfs_write;
+	ext2_root->open = ext2_vfs_open;
+	ext2_root->close = ext2_vfs_close;
+	ext2_root->read_dir = ext2_vfs_read_dir;
+	ext2_root->find_dir = ext2_vfs_find_dir;
+	ext2_root->node_ptr = NULL;
+	ext2_root->impl = NULL;
+
+	mountpoint->type |= MOUNTPOINT_NODE;
+	mountpoint->node_ptr = ext2_root;
 }

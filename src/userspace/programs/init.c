@@ -5,8 +5,9 @@
 
 void main()
 {
-	printf("Initializing userspace...\n");
 	gui_init();
+	gui_screen_clear();
+	printf("Initializing userspace...\n");
 	syscall_exec("/bin/sh");
 
 	while (1) {

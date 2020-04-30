@@ -1,9 +1,9 @@
-#include <syscall.h>
 #include <stdio.h>
+#include <syscall.h>
+#include <gui.h>
 
 void main()
 {
-	printf("Test for printf! %d\n", 42);
 	printf("[~] ");
 
 	while (1) {

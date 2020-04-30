@@ -20,7 +20,7 @@ void gui_init()
 	// TODO: Why tf is the kheap magic stored in the first few bytes?!
 	fb = (pointers->mode_info->framebuffer << 16);
 
-	gui_screen_clear();
-	printf("%dx%dx%d\n", vbe_width, vbe_height, vbe_bpl << 3);
-	printf("0x%x\n", fb);
+	/* gui_screen_clear(); */
+	/* printf("%dx%dx%d\n", vbe_width, vbe_height, vbe_bpl << 3); */
+	/* printf("0x%x\n", fb); */
 }

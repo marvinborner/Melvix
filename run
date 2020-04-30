@@ -121,6 +121,7 @@ make_build() {
 	mkdir -p ./mnt/etc/
 	mkdir -p ./mnt/usr/
 	mkdir -p ./mnt/bin/
+	mkdir -p ./mnt/dev/
 	cp ./build/res/font.bin ./mnt/bin/font
 	cp ./build/user/* ./mnt/bin/
 	echo "Hello world, ext2!" | tee -a ./mnt/etc/test

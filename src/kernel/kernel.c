@@ -16,6 +16,7 @@
 #include <kernel/lib/stdio.h>
 #include <kernel/fs/ata.h>
 #include <kernel/fs/ext2.h>
+#include <kernel/fs/vfs.h>
 #include <kernel/cmos/rtc.h>
 #include <kernel/memory/alloc.h>
 
@@ -61,6 +62,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 
 	ata_init();
 	ext2_init_fs();
+	ext2_mount(fs_root);
 
 	load_binaries();
 	set_optimal_resolution();
