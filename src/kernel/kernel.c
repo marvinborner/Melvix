@@ -66,7 +66,16 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 
 	load_binaries();
 	set_optimal_resolution();
-	log("Content of /etc/test: %s", read_file("/etc/test"));
+
+	struct fs_node *test = (struct fs_node *)kmalloc(sizeof(struct fs_node));
+	strcpy(test->name, "/etc/test");
+	ext2_root->open(test);
+	uint32_t size = ((struct ext2_file *)test->impl)->inode.size;
+	char buf[size];
+	ext2_root->read(test, 0, size, buf);
+	buf[size - 1] = '\0';
+	log("Content of /etc/test: %s", buf);
+	ext2_root->close(test);
 
 	syscalls_install();
 	kexec("/bin/init");

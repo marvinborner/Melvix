@@ -115,6 +115,8 @@ struct ext2_inode {
 #define DUMP_IGNORE 0x00040
 #define NO_UPDATE_ACCESS 0x00080
 
+struct fs_node *ext2_root;
+
 struct ext2_dirent {
 	uint32_t inode_num;
 	uint16_t total_len;
