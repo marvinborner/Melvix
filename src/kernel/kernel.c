@@ -18,6 +18,7 @@
 #include <kernel/fs/ata.h>
 #include <kernel/fs/ext2.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/fs/dev.h>
 #include <kernel/cmos/rtc.h>
 #include <kernel/memory/alloc.h>
 
@@ -76,6 +77,10 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 	buf[size - 1] = '\0';
 	log("Content of /etc/test: %s", buf);
 	ext2_root->close(test);
+
+	dev_stdin();
+	dev_stdout();
+	dev_stderr();
 
 	syscalls_install();
 	kexec("/bin/init");

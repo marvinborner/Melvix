@@ -65,8 +65,8 @@ const char *random_message[10] = { "Uh... Did I do that?",
 void _panic(const char *f, const char *msg)
 {
 	cli();
-	_log(f, RED "PNC: %s - System halted!" RES, msg);
-	printf("[%s] PNC: %s - System halted!\n\n", f, msg);
+	_log(f, RED "PNC: %s - Halting system!" RES, msg);
+	printf("[%s] PNC: %s - Halting system!\n\n", f, msg);
 	printf("> %s", random_message[get_time() % 10]);
 	halt_loop();
 }
@@ -80,6 +80,7 @@ void _assert(const char *f, int x)
 
 void halt_loop()
 {
+	debug("Halted.");
 	cli();
 loop:
 	hlt();

@@ -34,6 +34,7 @@ struct fs_node {
 	uint32_t gid;
 	enum node_type type;
 
+	struct dev *dev;
 	struct fs_node *node_ptr;
 
 	void *impl;

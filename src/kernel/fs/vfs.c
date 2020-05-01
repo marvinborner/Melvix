@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/lib/stdlib.h>
 
 struct fs_node *fs_root = NULL;
 
