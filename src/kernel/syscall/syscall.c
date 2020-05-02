@@ -32,7 +32,10 @@ void syscall_handler(struct regs *r)
 	log("[SYSCALL] %d at [0x%x] with 0x%x 0x%x 0x%x 0x%x", r->eax, location, r->ebx, r->ecx,
 	    r->edx, r->esi, r->edi);
 
-	r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
+	if (r->eax == 2) // TODO: Fix hardcoded fork parameters
+		r->eax = location(r);
+	else
+		r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
 
 	sti();
 }

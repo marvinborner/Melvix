@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <kernel/fs/vfs.h>
+#include <kernel/fs/ext2.h>
 #include <kernel/lib/stdlib.h>
 
 struct fs_node *fs_root = NULL;
@@ -25,12 +26,16 @@ void fs_open(struct fs_node *node)
 {
 	if (node->open != NULL)
 		node->open(node);
+	else // TODO: Better ext2 default open workaround
+		ext2_root->open(node);
 }
 
 void fs_close(struct fs_node *node)
 {
 	if (node->close != NULL)
 		node->close(node);
+	else
+		ext2_root->open(node);
 }
 
 struct dirent *fs_read_dir(struct fs_node *node, uint32_t index)

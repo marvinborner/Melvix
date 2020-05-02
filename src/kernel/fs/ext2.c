@@ -265,11 +265,9 @@ void ext2_vfs_open(struct fs_node *node)
 
 	if (node->inode != 0) {
 		struct ext2_file *file = kmalloc(sizeof *file);
+		ext2_node_init(node);
 		ext2_open_inode(node->inode, file);
-
 		node->impl = file;
-
-		// TODO: More file metadata
 	}
 }
 
@@ -281,7 +279,7 @@ void ext2_vfs_close(struct fs_node *node)
 uint32_t ext2_vfs_read(struct fs_node *node, size_t offset, size_t size, char *buf)
 {
 	if (offset != ((struct ext2_file *)node->impl)->pos) {
-		panic("Seeking is currently unsupported for Ext2 files\n");
+		panic("Seeking is currently unsupported for Ext2 files");
 		return 0;
 	}
 
@@ -290,7 +288,7 @@ uint32_t ext2_vfs_read(struct fs_node *node, size_t offset, size_t size, char *b
 
 uint32_t ext2_vfs_write(struct fs_node *node, size_t offset, size_t size, char *buf)
 {
-	panic("Writing to Ext2 is currently unsupported\n");
+	warn(RED "Writing to Ext2 is currently unsupported" RES);
 
 	return 0;
 }
@@ -324,6 +322,22 @@ struct fs_node *ext2_vfs_find_dir(struct fs_node *node, char *name)
 	}
 }
 
+void ext2_node_init(struct fs_node *node)
+{
+	node->permissions = 0;
+	node->uid = 0;
+	node->gid = 0;
+	node->length = 0;
+	node->read = ext2_vfs_read;
+	node->write = ext2_vfs_write;
+	node->open = ext2_vfs_open;
+	node->close = ext2_vfs_close;
+	node->read_dir = ext2_vfs_read_dir;
+	node->find_dir = ext2_vfs_find_dir;
+	node->node_ptr = NULL;
+	node->impl = NULL;
+}
+
 void ext2_mount(struct fs_node *mountpoint)
 {
 	assert(mountpoint->node_ptr == NULL && (mountpoint->type & MOUNTPOINT_NODE) == 0);
@@ -331,20 +345,9 @@ void ext2_mount(struct fs_node *mountpoint)
 
 	struct fs_node *ext2_root = (struct fs_node *)kmalloc(sizeof(struct fs_node));
 	strcpy(ext2_root->name, "/.");
-	ext2_root->permissions = 0;
-	ext2_root->uid = 0;
-	ext2_root->gid = 0;
 	ext2_root->inode = ROOT_INODE;
-	ext2_root->length = 0;
 	ext2_root->type = DIR_NODE;
-	ext2_root->read = ext2_vfs_read;
-	ext2_root->write = ext2_vfs_write;
-	ext2_root->open = ext2_vfs_open;
-	ext2_root->close = ext2_vfs_close;
-	ext2_root->read_dir = ext2_vfs_read_dir;
-	ext2_root->find_dir = ext2_vfs_find_dir;
-	ext2_root->node_ptr = NULL;
-	ext2_root->impl = NULL;
+	ext2_node_init(ext2_root);
 
 	mountpoint->type |= MOUNTPOINT_NODE;
 	mountpoint->node_ptr = ext2_root;

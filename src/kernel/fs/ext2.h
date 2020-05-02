@@ -141,6 +141,7 @@ uint32_t ext2_find_in_dir(uint32_t dir_inode, const char *name);
 uint32_t ext2_look_up_path(char *path);
 
 uint8_t *read_file(char *path);
+void ext2_node_init(struct fs_node *node);
 void ext2_mount(struct fs_node *mountpoint);
 
 #endif

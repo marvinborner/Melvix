@@ -11,8 +11,8 @@ u32 fork();
 
 u32 get_pid();
 
-u32 sys_read(char *path, u32 offset, u32 count, char *buf);
+u32 read(char *path, u32 offset, u32 count, char *buf);
 
-u32 sys_write(char *path, u32 offset, u32 count, char *buf);
+u32 write(char *path, u32 offset, u32 count, char *buf);
 
 #endif

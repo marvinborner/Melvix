@@ -88,12 +88,11 @@ void paging_map(struct page_directory *dir, uint32_t phys, uint32_t virt)
 	short id = virt >> 22;
 	struct page_table *tab = paging_make_table();
 
-	dir->tables[id] = ((struct page_table *)((uint32_t)tab | 3 | 4)); // RW
+	dir->tables[id] = ((struct page_table *)((uint32_t)tab | 3)); // RW
 
 	for (int i = 0; i < 1024; i++) {
 		tab->pages[i].frame = phys >> 12;
 		tab->pages[i].present = 1;
-		tab->pages[i].user = 1; // TODO: Remove all-user paging!
 		phys += 4096;
 	}
 }

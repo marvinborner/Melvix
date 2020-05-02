@@ -12,14 +12,14 @@ void dev_make(char *name, read read, write write)
 {
 	struct fs_node *dev_node = (struct fs_node *)kmalloc(sizeof(struct fs_node));
 	strcpy(dev_node->name, "/dev");
-	ext2_root->open(dev_node);
+	fs_open(dev_node);
 
 	if (dev_node->inode == 0) {
 		warn("Can't make device, no path for /dev");
 		return;
 	}
 
-	ext2_root->close(dev_node);
+	fs_close(dev_node);
 
 	char *path = (char *)kmalloc(strlen(name) + strlen("/dev/") + 2);
 	strcpy(path, "/dev/");
@@ -28,7 +28,7 @@ void dev_make(char *name, read read, write write)
 	// TODO: Touch dev files in the vfs instead of opening it via ext2
 	struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node));
 	strcpy(node->name, path);
-	ext2_root->open(node);
+	fs_open(node);
 	kfree(path);
 
 	if (node->inode == 0) {
@@ -78,7 +78,7 @@ void dev_stdin()
 	dev_make("stdout", (read)stdin_read, NULL);
 	struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node));
 	strcpy(node->name, "/dev/stdin");
-	ext2_root->open(node);
+	fs_open(node);
 	node->dev->block_size = 0;
 	node->length = 0xFFFFFFFF;
 }
@@ -94,7 +94,7 @@ void dev_stdout()
 	dev_make("stdout", NULL, (write)stdout_write);
 	struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node));
 	strcpy(node->name, "/dev/stdout");
-	ext2_root->open(node);
+	fs_open(node);
 	node->dev->block_size = 0;
 }
 
@@ -109,6 +109,6 @@ void dev_stderr()
 	dev_make("stderr", NULL, (write)stderr_write);
 	struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node));
 	strcpy(node->name, "/dev/stderr");
-	ext2_root->open(node);
+	fs_open(node);
 	node->dev->block_size = 0;
 }

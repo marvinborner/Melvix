@@ -6,7 +6,6 @@
 #include <kernel/memory/alloc.h>
 #include <kernel/memory/paging.h>
 #include <kernel/fs/dev.h>
-#include <kernel/fs/ext2.h>
 
 void vbe_error()
 {
@@ -179,10 +178,11 @@ void set_optimal_resolution()
 	}
 
 	dev_make("fb", NULL, (write)fb_write);
-	struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node));
-	strcpy(node->name, "/dev/fb");
-	ext2_root->open(node);
-	node->dev->block_size = 0;
+	/* struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node)); */
+	/* strcpy(node->name, "/dev/fb"); */
+	/* fs_open(node); */
+	/* node->write = (write)fb_write; */
+	/* node->dev->block_size = 0; */
 
 	if (vbe_height > 1440)
 		vesa_set_font(32);

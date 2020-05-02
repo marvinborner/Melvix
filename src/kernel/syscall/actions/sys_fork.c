@@ -3,6 +3,7 @@
 #include <kernel/memory/paging.h>
 #include <kernel/tasks/process.h>
 #include <kernel/lib/lib.h>
+#include <kernel/system.h>
 
 uint32_t sys_fork(struct regs *r)
 {
