@@ -10,7 +10,8 @@ u32 terminal_background[3] = { 0x1d, 0x1f, 0x24 };
 
 void gui_init()
 {
-	pointers = syscall_pointers();
+	// TODO: Implement framebuffer device
+	// pointers = syscall_pointers();
 
 	vbe_width = pointers->mode_info->width;
 	vbe_height = pointers->mode_info->height;

@@ -65,7 +65,8 @@ char shift_keymap[128] = {
 char *getch()
 {
 	// TODO: Add shift support
-	u8 scancode = syscall_scancode();
+	// TODO: Implement keyboard dev driver
+	u8 scancode = 42; //syscall_scancode();
 	if ((scancode & 0x80) == 0) { // Press
 		return keymap[scancode];
 	} else { // Release

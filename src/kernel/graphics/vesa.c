@@ -5,6 +5,8 @@
 #include <kernel/lib/stdio.h>
 #include <kernel/memory/alloc.h>
 #include <kernel/memory/paging.h>
+#include <kernel/fs/dev.h>
+#include <kernel/fs/ext2.h>
 
 void vbe_error()
 {
@@ -79,6 +81,12 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode)
 	ret->framebuffer = mode_info->framebuffer;
 
 	return ret;
+}
+
+uint32_t fb_write(struct fs_node *node, uint32_t offset, uint32_t size, uint8_t *buffer)
+{
+	log("FB WRITE!");
+	return 0;
 }
 
 void set_optimal_resolution()
@@ -169,6 +177,12 @@ void set_optimal_resolution()
 	for (uint32_t z = 0; z < fb_size; z += PAGE_S) {
 		paging_map_user(paging_root_directory, (uint32_t)fb + z, (uint32_t)fb + z);
 	}
+
+	dev_make("fb", NULL, (write)fb_write);
+	struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node));
+	strcpy(node->name, "/dev/fb");
+	ext2_root->open(node);
+	node->dev->block_size = 0;
 
 	if (vbe_height > 1440)
 		vesa_set_font(32);

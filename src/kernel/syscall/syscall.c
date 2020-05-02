@@ -9,12 +9,14 @@
 typedef uint32_t (*syscall_func)(uint32_t, ...);
 
 uint32_t (*syscalls[])() = { [0] = (uint32_t(*)())halt_loop, // DEBUG!
-			     [1] = sys_exec,
-			     [2] = (uint32_t(*)())sys_putch,
-			     [3] = sys_scancode,
-			     [4] = sys_malloc,
-			     [5] = sys_free,
-			     [6] = sys_pointers };
+			     [1] = sys_exit,
+			     [2] = sys_fork,
+			     [3] = sys_read,
+			     [4] = sys_write,
+			     [5] = sys_exec,
+			     [6] = sys_get_pid,
+			     [7] = sys_malloc,
+			     [8] = sys_free };
 
 void syscall_handler(struct regs *r)
 {

@@ -70,16 +70,20 @@
  */
 DECL_SYSCALL0(halt);
 
+DECL_SYSCALL1(exit, u32);
+
+DECL_SYSCALL0(fork);
+
+DECL_SYSCALL4(read, char *, u32, u32, char *);
+
+DECL_SYSCALL4(write, char *, u32, u32, char *);
+
 DECL_SYSCALL1(exec, char *);
 
-DECL_SYSCALL1(putch, char *);
-
-DECL_SYSCALL0(scancode);
+DECL_SYSCALL0(get_pid);
 
 DECL_SYSCALL1(malloc, u32);
 
 DECL_SYSCALL1(free, u32);
-
-DECL_SYSCALL0(pointers);
 
 #endif
