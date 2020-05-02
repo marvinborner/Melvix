@@ -58,7 +58,7 @@ struct bgd {
 } __attribute__((packed));
 
 struct ext2_inode {
-	uint16_t type_and_permissions;
+	uint16_t mode;
 	uint16_t uid;
 	uint32_t size;
 
@@ -92,6 +92,14 @@ struct ext2_inode {
 #define S_IFREG 0x8000
 #define S_IFLNK 0xA000
 #define S_IFSOCK 0xC000
+
+#define S_ISDIR(m) ((m & 0170000) == 0040000)
+#define S_ISCHR(m) ((m & 0170000) == 0020000)
+#define S_ISBLK(m) ((m & 0170000) == 0060000)
+#define S_ISREG(m) ((m & 0170000) == 0100000)
+#define S_ISFIFO(m) ((m & 0170000) == 0010000)
+#define S_ISLNK(m) ((m & 0170000) == 0120000)
+#define S_ISSOCK(m) ((m & 0170000) == 0140000)
 
 #define S_ISUID 04000
 #define S_ISGID 02000

@@ -25,11 +25,7 @@ void dev_make(char *name, read read, write write)
 	strcpy(path, "/dev/");
 	strcpy(&path[strlen("/dev/")], name);
 
-	// TODO: Touch dev files in the vfs instead of opening it via ext2
-	struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node));
-	strcpy(node->name, path);
-	fs_open(node);
-	kfree(path);
+	struct fs_node *node = vfs_touch(fs_root, path);
 
 	if (node->inode == 0) {
 		warn("Couldn't resolve path");

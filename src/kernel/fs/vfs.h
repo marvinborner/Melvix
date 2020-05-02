@@ -36,6 +36,7 @@ struct fs_node {
 
 	struct dev *dev;
 	struct fs_node *node_ptr;
+	struct fs_node *link;
 
 	void *impl;
 
@@ -60,5 +61,11 @@ void fs_open(struct fs_node *node);
 void fs_close(struct fs_node *node);
 struct dirent *fs_read_dir(struct fs_node *node, uint32_t index);
 struct fs_node *fs_find_dir(struct fs_node *node, char *name);
+
+char *basename(char *name);
+void vfs_ls(char *path);
+struct fs_node *vfs_get_dir(struct fs_node *node, char *name);
+struct fs_node *vfs_touch(struct fs_node *node, char *name);
+struct fs_node *vfs_mkdir(struct fs_node *node, char *name);
 
 #endif

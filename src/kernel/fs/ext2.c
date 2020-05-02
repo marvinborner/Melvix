@@ -27,24 +27,24 @@ void ext2_init_fs()
 	read_inode(&root_inode, ROOT_INODE);
 	debug("Creation time: %d", root_inode.creation_time);
 	debug("UID: %d", root_inode.uid);
-	debug("Type & perms: 0x%x", root_inode.type_and_permissions);
+	debug("Type & perms: 0x%x", root_inode.mode);
 	debug("Size: %d", root_inode.size);
 
 	fs_root = (struct fs_node *)kmalloc(sizeof(struct fs_node));
 	strcpy(fs_root->name, "root");
 	fs_root->type = DIR_NODE;
 	ext2_mount(fs_root);
+	fs_root = fs_root->node_ptr; // why not? :)
 
 	log("Files in /");
-	ext2_root = fs_root->node_ptr;
-	fs_open(ext2_root);
+	fs_open(fs_root);
 	struct dirent *dirent;
 	int i = 0;
-	while ((dirent = fs_read_dir(ext2_root, i)) != NULL) {
+	while ((dirent = fs_read_dir(fs_root, i)) != NULL) {
 		log("%s", dirent->name);
 		i++;
 	}
-	/* fs_close(ext2_root); */
+	/* fs_close(fs_root); */
 }
 
 static void read_block(uint32_t block_num, void *buf)
@@ -238,10 +238,66 @@ uint32_t ext2_look_up_path(char *path)
 	return inode;
 }
 
+struct fs_node *ext2_index(char *dir)
+{
+	log("\n\n");
+	struct fs_node *start = (struct fs_node *)kmalloc(sizeof(struct fs_node));
+	ext2_node_init(start);
+	strcpy(start->name, dir);
+	start->inode = ext2_look_up_path(dir);
+	start->type = DIR_NODE;
+	fs_open(start);
+	log("%d", start->inode);
+	struct fs_node *parent = start;
+
+	struct dirent *dirent;
+	int i = 0;
+	while ((dirent = fs_read_dir(start, i)) != NULL) {
+		i++;
+		if (dirent->name[0] == '.')
+			continue;
+
+		char *name = dir;
+		strcat(name, "/");
+		strcat(name, dirent->name);
+		log(name);
+
+		struct fs_node *sub = fs_find_dir(start, dirent->name);
+		ext2_node_init(sub);
+		strcpy(sub->name, name);
+		fs_open(sub);
+
+		if (sub->type == DIR_NODE) {
+			sub = ext2_index(name);
+		} else if (sub->type == FILE_NODE) {
+			sub = (struct fs_node *)kmalloc(sizeof(struct fs_node));
+			ext2_node_init(sub);
+			strcpy(sub->name, name);
+			sub->inode = ext2_look_up_path(name);
+		} else if (sub->type == (enum node_type)NULL) {
+			warn("No node type!");
+		} else {
+			warn("Unsupported node type!");
+		}
+
+		if (parent->node_ptr == NULL) {
+			parent->node_ptr = sub;
+			start = sub;
+		} else {
+			start->link = sub;
+			start = sub;
+		}
+	}
+
+	return parent;
+}
+
 // Interface
 
 uint8_t *read_file(char *path)
 {
+	ext2_index("/.");
+	halt_loop();
 	uint32_t inode = ext2_look_up_path(path);
 	struct ext2_file file;
 	ext2_open_inode(inode, &file);
@@ -268,6 +324,13 @@ void ext2_vfs_open(struct fs_node *node)
 		ext2_node_init(node);
 		ext2_open_inode(node->inode, file);
 		node->impl = file;
+
+		if (S_ISDIR(file->inode.mode))
+			node->type = DIR_NODE;
+		else if (S_ISREG(file->inode.mode))
+			node->type = FILE_NODE;
+		else // TODO: Add missing
+			warn("Unsupported filetype!");
 	}
 }
 
