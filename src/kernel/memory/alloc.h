@@ -26,11 +26,13 @@ struct heap_footer {
 void kheap_init();
 
 void *fmalloc(uint32_t size);
+void *kcalloc(uint32_t num, uint32_t size);
 void *kmalloc(uint32_t size);
 void *kmalloc_a(uint32_t size);
 void kfree(void *ptr);
 
 void *umalloc(size_t size);
+void *ucalloc(uint32_t num, uint32_t size);
 void ufree(void *address);
 
 void init_heap(struct heap_header *heap, size_t size);

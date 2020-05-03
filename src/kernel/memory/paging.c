@@ -112,6 +112,14 @@ void paging_map_user(struct page_directory *dir, uint32_t phys, uint32_t virt)
 	}
 }
 
+// Hmm
+uint32_t paging_get_phys(uint32_t virt)
+{
+	uint32_t pdi = virt >> 22;
+	uint32_t pti = (virt >> 12) & 0x03FF;
+	return (*(uint32_t *)&paging_current_directory->tables[pdi]->pages[pti]) & 0xFFFFF000;
+}
+
 void paging_install()
 {
 	kheap_init();

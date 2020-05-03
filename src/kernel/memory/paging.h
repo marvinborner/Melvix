@@ -36,6 +36,7 @@ void paging_switch_directory(struct page_directory *dir);
 struct page_directory *paging_make_directory();
 struct page_table *paging_make_table();
 
+uint32_t paging_get_phys(uint32_t virt);
 void paging_install();
 
 void paging_map(struct page_directory *cr3, uint32_t virt, uint32_t phys);

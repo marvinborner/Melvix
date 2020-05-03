@@ -165,6 +165,13 @@ void *kmalloc(uint32_t size)
 	return malloc_internal(kheap, size);
 }
 
+void *kcalloc(uint32_t num, uint32_t size)
+{
+	void *ptr = kmalloc(num * size);
+	memset(ptr, 0, num * size);
+	return ptr;
+}
+
 void kfree(void *address)
 {
 	if (kheap == NULL)
@@ -176,6 +183,13 @@ void kfree(void *address)
 void *umalloc(size_t size)
 {
 	return malloc_internal(uheap, size);
+}
+
+void *ucalloc(uint32_t num, uint32_t size)
+{
+	void *ptr = umalloc(num * size);
+	memset(ptr, 0, num * size);
+	return ptr;
 }
 
 void ufree(void *address)
