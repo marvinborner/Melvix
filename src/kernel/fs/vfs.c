@@ -6,6 +6,7 @@
 #include <kernel/memory/alloc.h>
 #include <kernel/system.h>
 
+struct tree *fs_tree;
 struct fs_node *fs_root = NULL;
 
 uint32_t fs_read(struct fs_node *node, uint32_t offset, uint32_t size, char *buf)
@@ -154,8 +155,7 @@ struct fs_node *vfs_get_dir(struct fs_node *node, char *name)
 
 char *basename(char *name)
 {
-	int i;
-	for (i = strlen(name); i >= 0; i--)
+	for (int i = strlen(name); i >= 0; i--)
 		if (name[i] == '/')
 			return &name[i + 1];
 

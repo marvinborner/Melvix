@@ -238,18 +238,10 @@ uint32_t ext2_look_up_path(char *path)
 	return inode;
 }
 
-struct fs_node *ext2_index(char *dir)
+struct fs_node *ext2_index(struct fs_node *start)
 {
 	log("\n\n");
-	struct fs_node *start = (struct fs_node *)kmalloc(sizeof(struct fs_node));
-	ext2_node_init(start);
-	strcpy(start->name, dir);
-	start->inode = ext2_look_up_path(dir);
-	start->type = DIR_NODE;
 	fs_open(start);
-	log("%d", start->inode);
-	struct fs_node *parent = start;
-
 	struct dirent *dirent;
 	int i = 0;
 	while ((dirent = fs_read_dir(start, i)) != NULL) {
@@ -257,46 +249,39 @@ struct fs_node *ext2_index(char *dir)
 		if (dirent->name[0] == '.')
 			continue;
 
-		char *name = dir;
+		char name[256];
+		strcpy(name, start->name);
 		strcat(name, "/");
 		strcat(name, dirent->name);
-		log(name);
+		log("%s", start->name);
+		log("%s", dirent->name);
+		log("%s", name);
 
 		struct fs_node *sub = fs_find_dir(start, dirent->name);
 		ext2_node_init(sub);
-		strcpy(sub->name, name);
-		fs_open(sub);
+		strcpy(sub->name, dirent->name);
+		//fs_open(sub);
+		log("%d", sub->inode);
 
 		if (sub->type == DIR_NODE) {
-			sub = ext2_index(name);
+			debug("Directory %s", name);
 		} else if (sub->type == FILE_NODE) {
-			sub = (struct fs_node *)kmalloc(sizeof(struct fs_node));
-			ext2_node_init(sub);
-			strcpy(sub->name, name);
-			sub->inode = ext2_look_up_path(name);
+			debug("File %s", name);
 		} else if (sub->type == (enum node_type)NULL) {
-			warn("No node type!");
+			warn("No file type %s", name);
 		} else {
-			warn("Unsupported node type!");
-		}
-
-		if (parent->node_ptr == NULL) {
-			parent->node_ptr = sub;
-			start = sub;
-		} else {
-			start->link = sub;
-			start = sub;
+			warn("Unsupported file type!");
 		}
 	}
 
-	return parent;
+	return start;
 }
 
 // Interface
 
 uint8_t *read_file(char *path)
 {
-	ext2_index("/.");
+	ext2_index(fs_root);
 	halt_loop();
 	uint32_t inode = ext2_look_up_path(path);
 	struct ext2_file file;
@@ -376,9 +361,10 @@ struct fs_node *ext2_vfs_find_dir(struct fs_node *node, char *name)
 {
 	uint32_t inode = ext2_find_in_dir(node->inode, name);
 	if (inode == 0) {
+		warn("Couldn't find file");
 		return NULL;
 	} else {
-		struct fs_node *found = kmalloc(sizeof *found);
+		struct fs_node *found = kmalloc(sizeof(struct fs_node));
 		found->inode = inode;
 
 		return found;

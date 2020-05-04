@@ -132,7 +132,6 @@ void *list_peek_back(struct list *list)
 	return list->tail->val;
 }
 
-
 int list_contain(struct list *list, void *val)
 {
 	int idx = 0;
