@@ -5,7 +5,6 @@
 #include <kernel/lib/stdio.h>
 #include <kernel/memory/alloc.h>
 #include <kernel/memory/paging.h>
-#include <kernel/fs/dev.h>
 
 void vbe_error()
 {
@@ -177,7 +176,7 @@ void set_optimal_resolution()
 		paging_map_user(paging_root_directory, (uint32_t)fb + z, (uint32_t)fb + z);
 	}
 
-	dev_make("fb", NULL, (write)fb_write);
+	/* dev_make("fb", NULL, (write)fb_write); */
 	/* struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node)); */
 	/* strcpy(node->name, "/dev/fb"); */
 	/* fs_open(node); */

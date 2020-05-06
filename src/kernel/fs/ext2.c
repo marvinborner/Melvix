@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <kernel/fs/ata.h>
 #include <kernel/fs/ext2.h>
-#include <kernel/fs/vfs.h>
 #include <kernel/system.h>
 #include <kernel/memory/alloc.h>
 #include <kernel/lib/lib.h>
@@ -30,21 +29,13 @@ void ext2_init_fs()
 	debug("Type & perms: 0x%x", root_inode.mode);
 	debug("Size: %d", root_inode.size);
 
-	fs_root = (struct fs_node *)kmalloc(sizeof(struct fs_node));
-	strcpy(fs_root->name, "root");
-	fs_root->type = DIR_NODE;
-	ext2_mount(fs_root);
-	fs_root = fs_root->node_ptr; // why not? :)
+	debug("Files:");
+	struct ext2_file file;
+	ext2_open_inode(ROOT_INODE, &file);
+	struct ext2_dirent dirent;
 
-	log("Files in /");
-	fs_open(fs_root);
-	struct dirent *dirent;
-	int i = 0;
-	while ((dirent = fs_read_dir(fs_root, i)) != NULL) {
-		log("%s", dirent->name);
-		i++;
-	}
-	/* fs_close(fs_root); */
+	while (ext2_next_dirent(&file, &dirent))
+		debug("Inode %d, name '%s'", dirent.inode_num, dirent.name);
 }
 
 static void read_block(uint32_t block_num, void *buf)
@@ -236,168 +227,4 @@ uint32_t ext2_look_up_path(char *path)
 		return 0;
 
 	return inode;
-}
-
-struct fs_node *ext2_index(struct fs_node *start)
-{
-	log("\n\n");
-	fs_open(start);
-	struct dirent *dirent;
-	int i = 0;
-	while ((dirent = fs_read_dir(start, i)) != NULL) {
-		i++;
-		if (dirent->name[0] == '.')
-			continue;
-
-		char name[256];
-		strcpy(name, start->name);
-		strcat(name, "/");
-		strcat(name, dirent->name);
-		log("%s", start->name);
-		log("%s", dirent->name);
-		log("%s", name);
-
-		struct fs_node *sub = fs_find_dir(start, dirent->name);
-		ext2_node_init(sub);
-		strcpy(sub->name, dirent->name);
-		//fs_open(sub);
-		log("%d", sub->inode);
-
-		if (sub->type == DIR_NODE) {
-			debug("Directory %s", name);
-		} else if (sub->type == FILE_NODE) {
-			debug("File %s", name);
-		} else if (sub->type == (enum node_type)NULL) {
-			warn("No file type %s", name);
-		} else {
-			warn("Unsupported file type!");
-		}
-	}
-
-	return start;
-}
-
-// Interface
-
-uint8_t *read_file(char *path)
-{
-	ext2_index(fs_root);
-	halt_loop();
-	uint32_t inode = ext2_look_up_path(path);
-	struct ext2_file file;
-	ext2_open_inode(inode, &file);
-	if (inode != 0) {
-		size_t size = file.inode.size;
-		debug("Reading %s: %dKiB", path, size >> 10);
-		uint8_t *buf = kmalloc(size);
-		ext2_read(&file, buf, size);
-		kfree(file.buf);
-		buf[size - 1] = '\0';
-		return buf;
-	} else {
-		warn("File not found");
-		return NULL;
-	}
-}
-
-void ext2_vfs_open(struct fs_node *node)
-{
-	node->inode = ext2_look_up_path(node->name);
-
-	if (node->inode != 0) {
-		struct ext2_file *file = kmalloc(sizeof *file);
-		ext2_node_init(node);
-		ext2_open_inode(node->inode, file);
-		node->impl = file;
-
-		if (S_ISDIR(file->inode.mode))
-			node->type = DIR_NODE;
-		else if (S_ISREG(file->inode.mode))
-			node->type = FILE_NODE;
-		else // TODO: Add missing
-			warn("Unsupported filetype!");
-	}
-}
-
-void ext2_vfs_close(struct fs_node *node)
-{
-	kfree(node->impl);
-}
-
-uint32_t ext2_vfs_read(struct fs_node *node, size_t offset, size_t size, char *buf)
-{
-	if (offset != ((struct ext2_file *)node->impl)->pos) {
-		panic("Seeking is currently unsupported for Ext2 files");
-		return 0;
-	}
-
-	return (uint32_t)ext2_read(node->impl, (uint8_t *)buf, size);
-}
-
-uint32_t ext2_vfs_write(struct fs_node *node, size_t offset, size_t size, char *buf)
-{
-	warn(RED "Writing to Ext2 is currently unsupported" RES);
-
-	return 0;
-}
-
-struct dirent *ext2_vfs_read_dir(struct fs_node *node, size_t index)
-{
-	struct ext2_dirent ext2_dir;
-
-	if (ext2_next_dirent(node->impl, &ext2_dir)) {
-		struct dirent *dir = kmalloc(sizeof *dir);
-
-		dir->inode = ext2_dir.inode_num;
-		strcpy(dir->name, (char *)ext2_dir.name);
-
-		return dir;
-	} else {
-		return NULL;
-	}
-}
-
-struct fs_node *ext2_vfs_find_dir(struct fs_node *node, char *name)
-{
-	uint32_t inode = ext2_find_in_dir(node->inode, name);
-	if (inode == 0) {
-		warn("Couldn't find file");
-		return NULL;
-	} else {
-		struct fs_node *found = kmalloc(sizeof(struct fs_node));
-		found->inode = inode;
-
-		return found;
-	}
-}
-
-void ext2_node_init(struct fs_node *node)
-{
-	node->permissions = 0;
-	node->uid = 0;
-	node->gid = 0;
-	node->length = 0;
-	node->read = ext2_vfs_read;
-	node->write = ext2_vfs_write;
-	node->open = ext2_vfs_open;
-	node->close = ext2_vfs_close;
-	node->read_dir = ext2_vfs_read_dir;
-	node->find_dir = ext2_vfs_find_dir;
-	node->node_ptr = NULL;
-	node->impl = NULL;
-}
-
-void ext2_mount(struct fs_node *mountpoint)
-{
-	assert(mountpoint->node_ptr == NULL && (mountpoint->type & MOUNTPOINT_NODE) == 0);
-	assert((mountpoint->type & DIR_NODE) != 0);
-
-	struct fs_node *ext2_root = (struct fs_node *)kmalloc(sizeof(struct fs_node));
-	strcpy(ext2_root->name, "/.");
-	ext2_root->inode = ROOT_INODE;
-	ext2_root->type = DIR_NODE;
-	ext2_node_init(ext2_root);
-
-	mountpoint->type |= MOUNTPOINT_NODE;
-	mountpoint->node_ptr = ext2_root;
 }

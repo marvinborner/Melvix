@@ -9,9 +9,9 @@ DEFN_SYSCALL1(exit, 1, u32);
 
 DEFN_SYSCALL0(fork, 2);
 
-DEFN_SYSCALL4(read, 3, char *, u32, u32, char *);
+DEFN_SYSCALL4(read, 3, char *, u32, u32, u8 *);
 
-DEFN_SYSCALL4(write, 4, char *, u32, u32, char *);
+DEFN_SYSCALL4(write, 4, char *, u32, u32, u8 *);
 
 DEFN_SYSCALL1(exec, 5, char *);
 

@@ -74,9 +74,9 @@ DECL_SYSCALL1(exit, u32);
 
 DECL_SYSCALL0(fork);
 
-DECL_SYSCALL4(read, char *, u32, u32, char *);
+DECL_SYSCALL4(read, char *, u32, u32, u8 *);
 
-DECL_SYSCALL4(write, char *, u32, u32, char *);
+DECL_SYSCALL4(write, char *, u32, u32, u8 *);
 
 DECL_SYSCALL1(exec, char *);
 

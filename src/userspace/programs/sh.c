@@ -5,7 +5,6 @@
 
 void main()
 {
-	write("/dev/fb", 0, 5, "hallo");
 	printf("[~] ");
 
 	while (1) {

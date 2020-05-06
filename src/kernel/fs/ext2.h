@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <kernel/fs/vfs.h>
 
 #define ROOT_INODE 2
 

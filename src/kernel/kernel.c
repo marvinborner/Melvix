@@ -17,8 +17,6 @@
 #include <kernel/lib/stdio.h>
 #include <kernel/fs/ata.h>
 #include <kernel/fs/ext2.h>
-#include <kernel/fs/vfs.h>
-#include <kernel/fs/dev.h>
 #include <kernel/cmos/rtc.h>
 #include <kernel/memory/alloc.h>
 
@@ -67,20 +65,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
 
 	load_binaries();
 	set_optimal_resolution();
-
-	struct fs_node *test = (struct fs_node *)kmalloc(sizeof(struct fs_node));
-	strcpy(test->name, "/etc/test");
-	fs_open(test);
-	uint32_t size = ((struct ext2_file *)test->impl)->inode.size;
-	char buf[size];
-	fs_read(test, 0, size, buf);
-	buf[size - 1] = '\0';
-	log("Content of /etc/test: %s", buf);
-	fs_close(test);
-
-	dev_stdin();
-	dev_stdout();
-	dev_stderr();
+	log("Content of /etc/test: %s", read_file("/etc/test"));
 
 	syscalls_install();
 	kexec("/bin/init");
