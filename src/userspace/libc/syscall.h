@@ -86,4 +86,8 @@ DECL_SYSCALL1(malloc, u32);
 
 DECL_SYSCALL1(free, u32);
 
+DECL_SYSCALL1(get, u32);
+
+DECL_SYSCALL2(map, u32, u8 *);
+
 #endif

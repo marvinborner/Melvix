@@ -1,3 +1,5 @@
+#include <common.h>
+#include <events/event.h>
 #include <interrupts/interrupts.h>
 #include <io/io.h>
 #include <graphics/vesa.h>
@@ -10,6 +12,9 @@ u8 scancode;
 void keyboard_handler(struct regs *r)
 {
 	scancode = inb(0x60);
+	struct keyboard_event *event = umalloc(sizeof(struct keyboard_event));
+	event->scancode = scancode;
+	event_trigger(MAP_KEYBOARD, (u8 *)event);
 }
 
 void keyboard_acknowledge()

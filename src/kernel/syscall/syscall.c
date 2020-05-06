@@ -17,7 +17,9 @@ u32 (*syscalls[])() = { [SYS_HALT] = (u32(*)())halt_loop, // DEBUG!
 			[SYS_EXEC] = sys_exec,
 			[SYS_GET_PID] = sys_get_pid,
 			[SYS_MALLOC] = sys_malloc,
-			[SYS_FREE] = sys_free };
+			[SYS_FREE] = sys_free,
+			[SYS_GET] = sys_get,
+			[SYS_MAP] = sys_map };
 
 void syscall_handler(struct regs *r)
 {

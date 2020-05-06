@@ -24,4 +24,8 @@ u32 sys_malloc(u32 count);
 
 u32 sys_free(u32 ptr);
 
+u32 sys_get(u32 id);
+
+u32 sys_map(u32 id, u32 *function);
+
 #endif

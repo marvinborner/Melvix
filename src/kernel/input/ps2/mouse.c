@@ -1,3 +1,6 @@
+#include <common.h>
+#include <events/event.h>
+#include <memory/alloc.h>
 #include <interrupts/interrupts.h>
 #include <io/io.h>
 #include <graphics/vesa.h>
@@ -11,7 +14,9 @@ int mouse_but_1 = 0;
 int mouse_but_2 = 0;
 int mouse_but_3 = 0;
 
-void mouse_handler(struct regs *a_r)
+struct mouse_event *event;
+
+void mouse_handler(struct regs *r)
 {
 	switch (mouse_cycle) {
 	case 0:
@@ -42,14 +47,18 @@ void mouse_handler(struct regs *a_r)
 			mouse_x = vbe_width - 1;
 		if (mouse_y > vbe_height - 1)
 			mouse_y = vbe_height - 1;
-		vesa_draw_cursor(mouse_x, mouse_y);
+		// vesa_draw_cursor(mouse_x, mouse_y);
+
+		event->mouse_x = mouse_x;
+		event->mouse_y = mouse_y;
+		event_trigger(MAP_MOUSE, (u8 *)event);
 		break;
 	default:
 		break;
 	}
 }
 
-void mouse_wait(unsigned char a_type)
+void mouse_wait(u8 a_type)
 {
 	unsigned int time_out = 100000;
 	if (a_type == 0) {
@@ -65,7 +74,7 @@ void mouse_wait(unsigned char a_type)
 	}
 }
 
-void mouse_write(unsigned char a_write)
+void mouse_write(u8 a_write)
 {
 	mouse_wait(1);
 	outb(0x64, 0xD4);
@@ -81,7 +90,8 @@ char mouse_read()
 
 void mouse_install()
 {
-	unsigned char status;
+	event = umalloc(sizeof(struct mouse_event));
+	u8 status;
 
 	// Enable auxiliary mouse device
 	mouse_wait(1);
@@ -91,7 +101,7 @@ void mouse_install()
 	mouse_wait(1);
 	outb(0x64, 0x20);
 	mouse_wait(0);
-	status = (unsigned char)(inb(0x60) | 3);
+	status = (u8)(inb(0x60) | 3);
 	mouse_wait(1);
 	outb(0x64, 0x60);
 	mouse_wait(1);
@@ -115,7 +125,7 @@ void mouse_install()
 	mouse_read();
 	mouse_write(0xF2);
 	mouse_read();
-	status = (unsigned char)mouse_read();
+	status = (u8)mouse_read();
 	if (status == 3)
 		log("Scrollwheel support!");
 
@@ -137,7 +147,7 @@ void mouse_install()
 	mouse_read();
 	mouse_write(0xF2);
 	mouse_read();
-	status = (unsigned char)mouse_read();
+	status = (u8)mouse_read();
 	if (status == 4)
 		log("4th and 5th mouse button support!");
 
