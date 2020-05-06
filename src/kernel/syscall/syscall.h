@@ -2,26 +2,26 @@
 #define MELVIX_SYSCALL_H
 
 #include <stdint.h>
-#include <kernel/interrupts/interrupts.h>
+#include <interrupts/interrupts.h>
 
 extern void idt_syscall();
 
 void syscalls_install();
 
-uint32_t sys_exit(uint32_t code);
+u32 sys_exit(u32 code);
 
-uint32_t sys_fork(struct regs *r);
+u32 sys_fork(struct regs *r);
 
-uint32_t sys_read(char *path, uint32_t offset, uint32_t count, uint8_t *buf);
+u32 sys_read(char *path, u32 offset, u32 count, u8 *buf);
 
-uint32_t sys_write(char *path, uint32_t offset, uint32_t count, uint8_t *buf);
+u32 sys_write(char *path, u32 offset, u32 count, u8 *buf);
 
-uint32_t sys_exec(char *path);
+u32 sys_exec(char *path);
 
-uint32_t sys_get_pid();
+u32 sys_get_pid();
 
-uint32_t sys_malloc(uint32_t count);
+u32 sys_malloc(u32 count);
 
-uint32_t sys_free(uint32_t ptr);
+u32 sys_free(u32 ptr);
 
 #endif

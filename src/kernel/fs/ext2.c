@@ -1,21 +1,21 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <kernel/fs/ata.h>
-#include <kernel/fs/ext2.h>
-#include <kernel/system.h>
-#include <kernel/memory/alloc.h>
-#include <kernel/lib/lib.h>
-#include <kernel/lib/stdlib.h>
+#include <fs/ata.h>
+#include <fs/ext2.h>
+#include <system.h>
+#include <memory/alloc.h>
+#include <lib/lib.h>
+#include <lib/stdlib.h>
 
 static struct ext2_superblock superblock;
 static struct bgd *bgdt;
-static size_t block_size;
-static size_t num_groups;
-static void read_block(uint32_t block_num, void *buf);
+static u32 block_size;
+static u32 num_groups;
+static void read_block(u32 block_num, void *buf);
 static void load_superblock();
 static void load_bgdt();
-static void read_inode(struct ext2_inode *inode, uint32_t inode_num);
+static void read_inode(struct ext2_inode *inode, u32 inode_num);
 
 void ext2_init_fs()
 {
@@ -38,17 +38,17 @@ void ext2_init_fs()
 		debug("Inode %d, name '%s'", dirent.inode_num, dirent.name);
 }
 
-static void read_block(uint32_t block_num, void *buf)
+static void read_block(u32 block_num, void *buf)
 {
-	uint32_t lba = block_num * block_size / SECTOR_SIZE;
-	size_t sectors = block_size / SECTOR_SIZE;
+	u32 lba = block_num * block_size / SECTOR_SIZE;
+	u32 sectors = block_size / SECTOR_SIZE;
 
 	read_abs_sectors(lba, sectors, buf);
 }
 
 static void load_superblock()
 {
-	uint16_t buf[SUPERBLOCK_LENGTH / 2];
+	u16 buf[SUPERBLOCK_LENGTH / 2];
 
 	read_abs_sectors(SUPERBLOCK_LBA, SUPERBLOCK_SECTORS, buf);
 	memcpy(&superblock, buf, sizeof(struct ext2_superblock));
@@ -70,38 +70,38 @@ static void load_superblock()
 
 static void load_bgdt()
 {
-	size_t bgdt_sectors = (sizeof(struct bgd) * num_groups) / SECTOR_SIZE + 1;
-	size_t bgdt_block = (SUPERBLOCK_OFFSET + SUPERBLOCK_LENGTH) / block_size + 1;
-	uint32_t bgdt_lba = bgdt_block * block_size / SECTOR_SIZE;
+	u32 bgdt_sectors = (sizeof(struct bgd) * num_groups) / SECTOR_SIZE + 1;
+	u32 bgdt_block = (SUPERBLOCK_OFFSET + SUPERBLOCK_LENGTH) / block_size + 1;
+	u32 bgdt_lba = bgdt_block * block_size / SECTOR_SIZE;
 
-	uint16_t buf[bgdt_sectors * SECTOR_SIZE / 2];
+	u16 buf[bgdt_sectors * SECTOR_SIZE / 2];
 	read_abs_sectors(bgdt_lba, bgdt_sectors, buf);
 
-	size_t bgdt_size = sizeof(struct bgd) * num_groups;
+	u32 bgdt_size = sizeof(struct bgd) * num_groups;
 	bgdt = kmalloc(bgdt_size);
 	memcpy(bgdt, buf, bgdt_size);
 }
 
-static void read_inode(struct ext2_inode *inode, uint32_t inode_num)
+static void read_inode(struct ext2_inode *inode, u32 inode_num)
 {
 	inode_num--;
-	size_t block_group = inode_num / superblock.inodes_per_group;
+	u32 block_group = inode_num / superblock.inodes_per_group;
 
 	struct bgd *bgd = &bgdt[block_group];
-	uint32_t i_table_block = bgd->inode_table_addr;
+	u32 i_table_block = bgd->inode_table_addr;
 
-	size_t index = inode_num % superblock.inodes_per_group;
-	size_t block_offset = (index * INODE_SIZE) / block_size;
-	size_t offset_in_block = (index * INODE_SIZE) % block_size;
-	size_t block = i_table_block + block_offset;
+	u32 index = inode_num % superblock.inodes_per_group;
+	u32 block_offset = (index * INODE_SIZE) / block_size;
+	u32 offset_in_block = (index * INODE_SIZE) % block_size;
+	u32 block = i_table_block + block_offset;
 
-	size_t num_sectors = sizeof(struct ext2_inode) / SECTOR_SIZE + 1;
-	uint16_t buf[num_sectors * SECTOR_SIZE / 2];
+	u32 num_sectors = sizeof(struct ext2_inode) / SECTOR_SIZE + 1;
+	u16 buf[num_sectors * SECTOR_SIZE / 2];
 	read_abs_sectors(block * block_size / SECTOR_SIZE, num_sectors, buf);
 	memcpy(inode, &buf[offset_in_block / 2], sizeof(struct ext2_inode));
 }
 
-void ext2_open_inode(uint32_t inode_num, struct ext2_file *file)
+void ext2_open_inode(u32 inode_num, struct ext2_file *file)
 {
 	read_inode(&file->inode, inode_num);
 	file->pos = 0;
@@ -112,15 +112,15 @@ void ext2_open_inode(uint32_t inode_num, struct ext2_file *file)
 	read_block(file->inode.dbp[0], file->buf);
 }
 
-size_t ext2_read(struct ext2_file *file, uint8_t *buf, size_t count)
+u32 ext2_read(struct ext2_file *file, u8 *buf, u32 count)
 {
 	if (file->pos + count > file->inode.size)
 		count = file->inode.size - file->pos;
 
-	size_t bytes_left = count;
+	u32 bytes_left = count;
 
 	while (bytes_left > 0) {
-		size_t to_copy = bytes_left;
+		u32 to_copy = bytes_left;
 
 		bool new_block = file->curr_block_pos + to_copy >= block_size;
 		if (new_block)
@@ -136,7 +136,7 @@ size_t ext2_read(struct ext2_file *file, uint8_t *buf, size_t count)
 			file->block_index++;
 			if (file->block_index >= 12) {
 				// TODO: Add triple block pointer support
-				uint32_t *tmp = kmalloc(block_size);
+				u32 *tmp = kmalloc(block_size);
 				read_block(file->inode.ibp, tmp);
 				read_block(tmp[file->block_index - 12], file->buf);
 			} else {
@@ -148,36 +148,36 @@ size_t ext2_read(struct ext2_file *file, uint8_t *buf, size_t count)
 	return count;
 }
 
-#define READ_SIZE (sizeof(struct ext2_dirent) - sizeof(uint8_t *))
+#define READ_SIZE (sizeof(struct ext2_dirent) - sizeof(u8 *))
 
 bool ext2_next_dirent(struct ext2_file *file, struct ext2_dirent *dir)
 {
-	uint8_t buf[READ_SIZE];
+	u8 buf[READ_SIZE];
 	if (ext2_read(file, buf, READ_SIZE) != READ_SIZE)
 		return false;
 
 	memcpy(dir, buf, READ_SIZE);
 
-	size_t size = dir->name_len + 1;
-	uint8_t *name = kmalloc(size);
+	u32 size = dir->name_len + 1;
+	u8 *name = kmalloc(size);
 	if (ext2_read(file, name, size - 1) != size - 1)
 		return false;
 
 	dir->name = name;
 	dir->name[size - 1] = '\0';
 
-	size_t bytes_left = dir->total_len - (READ_SIZE + size - 1);
+	u32 bytes_left = dir->total_len - (READ_SIZE + size - 1);
 	if (bytes_left > 0) {
-		uint8_t dummy[bytes_left];
+		u8 dummy[bytes_left];
 		ext2_read(file, dummy, bytes_left);
 	}
 
 	return true;
 }
 
-uint32_t ext2_find_in_dir(uint32_t dir_inode, const char *name)
+u32 ext2_find_in_dir(u32 dir_inode, const char *name)
 {
-	uint32_t inode;
+	u32 inode;
 	struct ext2_file dir;
 	struct ext2_dirent dirent;
 
@@ -196,16 +196,16 @@ cleanup:
 	return inode;
 }
 
-uint32_t ext2_look_up_path(char *path)
+u32 ext2_look_up_path(char *path)
 {
 	if (path[0] != '/')
 		return 0;
 
 	path++;
-	uint32_t curr_dir_inode = ROOT_INODE;
+	u32 curr_dir_inode = ROOT_INODE;
 
 	while (1) {
-		size_t j;
+		u32 j;
 		for (j = 0; path[j] != '/' && path[j] != '\0'; j++)
 			;
 
@@ -222,7 +222,7 @@ uint32_t ext2_look_up_path(char *path)
 		path += j + 1;
 	}
 
-	uint32_t inode = ext2_find_in_dir(curr_dir_inode, path);
+	u32 inode = ext2_find_in_dir(curr_dir_inode, path);
 	if (inode == 0)
 		return 0;
 

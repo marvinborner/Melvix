@@ -1,11 +1,11 @@
 #include <stdint.h>
-#include <kernel/fs/ext2.h>
-#include <kernel/system.h>
-#include <kernel/memory/alloc.h>
+#include <fs/ext2.h>
+#include <system.h>
+#include <memory/alloc.h>
 
-uint32_t get_file_size(char *path)
+u32 get_file_size(char *path)
 {
-	uint32_t inode = ext2_look_up_path(path);
+	u32 inode = ext2_look_up_path(path);
 	struct ext2_file file;
 	ext2_open_inode(inode, &file);
 	if (inode != 0) {
@@ -17,9 +17,9 @@ uint32_t get_file_size(char *path)
 }
 
 // TODO: Implement offset
-uint32_t read(char *path, uint32_t offset, uint32_t count, uint8_t *buf)
+u32 read(char *path, u32 offset, u32 count, u8 *buf)
 {
-	uint32_t inode = ext2_look_up_path(path);
+	u32 inode = ext2_look_up_path(path);
 	struct ext2_file file;
 	ext2_open_inode(inode, &file);
 	if (inode != 0) {
@@ -35,21 +35,21 @@ uint32_t read(char *path, uint32_t offset, uint32_t count, uint8_t *buf)
 }
 
 // TODO: Implement writing
-uint32_t write(char *path, uint32_t offset, uint32_t count, uint8_t *buf)
+u32 write(char *path, u32 offset, u32 count, u8 *buf)
 {
 	warn("Writing is not supported!");
 	return -1;
 }
 
-uint8_t *read_file(char *path)
+u8 *read_file(char *path)
 {
-	uint32_t inode = ext2_look_up_path(path);
+	u32 inode = ext2_look_up_path(path);
 	struct ext2_file file;
 	ext2_open_inode(inode, &file);
 	if (inode != 0) {
-		size_t size = file.inode.size;
+		u32 size = file.inode.size;
 		debug("Reading %s: %dKiB", path, size >> 10);
-		uint8_t *buf = kmalloc(size);
+		u8 *buf = kmalloc(size);
 		ext2_read(&file, buf, size);
 		kfree(file.buf);
 		buf[size - 1] = '\0';

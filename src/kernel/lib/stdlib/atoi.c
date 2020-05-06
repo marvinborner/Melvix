@@ -1,19 +1,19 @@
-#include <kernel/lib/math.h>
+#include <lib/math.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <kernel/lib/string.h>
+#include <lib/string.h>
 
 int atoi(char *str)
 {
-	size_t s_str = strlen(str);
+	u32 s_str = strlen(str);
 	if (!s_str)
 		return 0;
 
-	uint8_t negative = 0;
+	u8 negative = 0;
 	if (str[0] == '-')
 		negative = 1;
 
-	size_t i = 0;
+	u32 i = 0;
 	if (negative)
 		i++;
 

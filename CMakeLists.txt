@@ -23,7 +23,7 @@ set(CMAKE_ASM_LINKER_PREFERENCE ${CMAKE_LINKER})
 set(CMAKE_C_LINKER_PREFERENCE ${CMAKE_LINKER})
 
 # Compiler and linker flags
-set(CMAKE_C_FLAGS "-Wall -Wno-int-conversion -fstrength-reduce -fomit-frame-pointer -finline-functions -nostdlib -ffreestanding -std=gnu99 -g -ggdb -c")
+set(CMAKE_C_FLAGS "-Wall -Wno-int-conversion -fstrength-reduce -fomit-frame-pointer -finline-functions -nostdlib -nostdinc -ffreestanding -std=gnu99 -g -ggdb -c")
 set(CMAKE_EXE_LINKER_FLAGS "-ffreestanding -O2 -nostdlib -g -ggdb")
 set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <SOURCE> -o <OBJECT> -f elf32 -O0")
 set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_LINKER> ${CMAKE_EXE_LINKER_FLAGS} <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
@@ -38,13 +38,14 @@ file(GLOB_RECURSE user_libgui_sources src/userspace/libgui/*.c)
 
 # KERNEL
 add_executable(kernel ${kernel_sources})
-target_include_directories(kernel PRIVATE "src")
+target_include_directories(kernel PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/" "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/")
 set_target_properties(kernel PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/kernel/kernel.bin")
 target_compile_options(kernel PRIVATE "-D ${NETWORK}")
 target_link_libraries(kernel PRIVATE "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/linker.ld")
 
 # RESOURCES
 add_executable(resources ${resources_sources})
+target_include_directories(resources PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/")
 set_target_properties(resources PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/res/font.o")
 target_compile_options(resources PRIVATE "-Os") # This is needed to preserve my fixed function order ig
 add_custom_command(
@@ -55,7 +56,7 @@ add_custom_command(
 
 # USERSPACE LIBC
 add_library(userspace_libc ${user_libc_sources})
-target_include_directories(userspace_libc PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/")
+target_include_directories(userspace_libc PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/" "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/")
 
 # USERSPACE LIBGUI
 add_library(userspace_libgui ${user_libgui_sources})
@@ -66,7 +67,6 @@ target_include_directories(userspace_libgui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/
 foreach(loop_file ${user_sources})
 	get_filename_component(testname ${loop_file} NAME_WE)
 	add_executable(${testname} ${loop_file})
-	target_compile_options(${testname} PRIVATE "-nostdinc")
 	target_include_directories(${testname} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/" "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libgui/")
 	target_link_libraries(${testname} userspace_libc userspace_libgui "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/linker.ld")
 	set_target_properties(${testname} PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/user/${testname}")

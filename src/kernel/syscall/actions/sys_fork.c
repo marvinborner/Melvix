@@ -1,11 +1,11 @@
 #include <stdint.h>
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/memory/paging.h>
-#include <kernel/tasks/process.h>
-#include <kernel/lib/lib.h>
-#include <kernel/system.h>
+#include <interrupts/interrupts.h>
+#include <memory/paging.h>
+#include <tasks/process.h>
+#include <lib/lib.h>
+#include <system.h>
 
-uint32_t sys_fork(struct regs *r)
+u32 sys_fork(struct regs *r)
 {
 	struct page_directory *dir = paging_copy_user_directory(current_proc->cr3);
 	struct process *proc = process_make_new();

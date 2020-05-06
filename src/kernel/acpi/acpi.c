@@ -2,15 +2,15 @@
 // HPET: https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/software-developers-hpet-spec-1-0a.pdf
 
 #include <stddef.h>
-#include <kernel/system.h>
-#include <kernel/multiboot.h>
-#include <kernel/io/io.h>
-#include <kernel/lib/lib.h>
-#include <kernel/lib/stdlib.h>
-#include <kernel/lib/stdio.h>
-#include <kernel/acpi/acpi.h>
-#include <kernel/memory/paging.h>
-#include <kernel/memory/alloc.h>
+#include <system.h>
+#include <multiboot.h>
+#include <io/io.h>
+#include <lib/lib.h>
+#include <lib/stdlib.h>
+#include <lib/stdio.h>
+#include <acpi/acpi.h>
+#include <memory/paging.h>
+#include <memory/alloc.h>
 
 struct rsdt *rsdt;
 struct fadt *fadt;
@@ -19,9 +19,9 @@ struct madt *madt;
 
 int check_sum(struct sdt_header *header)
 {
-	uint8_t sum = 0;
+	u8 sum = 0;
 
-	for (uint32_t i = 0; i < header->length; i++)
+	for (u32 i = 0; i < header->length; i++)
 		sum += ((char *)header)[i];
 
 	return sum == 0;
@@ -44,11 +44,11 @@ void acpi_init(struct rsdp *rsdp)
 		if (!check_sum((struct sdt_header *)rsdt)) {
 			warn("Corrupted RSDT!");
 		} else {
-			uint32_t *pointer = (uint32_t *)(rsdt + 1);
-			uint32_t *end = (uint32_t *)((uint8_t *)rsdt + rsdt->header.length);
+			u32 *pointer = (u32 *)(rsdt + 1);
+			u32 *end = (u32 *)((u8 *)rsdt + rsdt->header.length);
 
 			while (pointer < end) {
-				uint32_t address = *pointer++;
+				u32 address = *pointer++;
 				memcpy(header, (void *)address, sizeof(struct sdt_header));
 
 				if (strncmp(header->signature, "FACP", 4) == 0) {
@@ -103,7 +103,7 @@ void reboot()
 		outb(fadt->reset_reg.address, fadt->reset_value);
 		halt_loop();
 	} else {
-		uint8_t good = 0x02;
+		u8 good = 0x02;
 		while (good & 0x02)
 			good = inb(0x64);
 		outb(0x64, 0xFE);

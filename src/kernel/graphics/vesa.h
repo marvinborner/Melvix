@@ -2,7 +2,7 @@
 #define MELVIX_VESA_H
 
 #include <stdint.h>
-#include <kernel/system.h>
+#include <system.h>
 
 /**
  * The CPUs response to the 0x4F00 call
@@ -10,15 +10,15 @@
  */
 struct vbe_info {
 	char signature[4];
-	uint16_t version;
-	uint32_t oem;
-	uint32_t capabilities;
-	uint32_t video_modes;
-	uint16_t video_memory;
-	uint16_t software_rev;
-	uint32_t vendor;
-	uint32_t product_name;
-	uint32_t product_rev;
+	u16 version;
+	u32 oem;
+	u32 capabilities;
+	u32 video_modes;
+	u16 video_memory;
+	u16 software_rev;
+	u32 vendor;
+	u32 product_name;
+	u32 product_rev;
 	char reserved[222];
 	char oem_data[256];
 } __attribute__((packed));
@@ -28,51 +28,51 @@ struct vbe_info {
  * Used to get information about a specific video mode code
  */
 struct vbe_mode_info_all {
-	uint16_t attributes;
-	uint8_t window_a;
-	uint8_t window_b;
-	uint16_t granularity;
-	uint16_t window_size;
-	uint16_t segment_a;
-	uint16_t segment_b;
-	uint32_t win_func_ptr;
-	uint16_t pitch;
-	uint16_t width;
-	uint16_t height;
-	uint8_t w_char;
-	uint8_t y_char;
-	uint8_t planes;
-	uint8_t bpp;
-	uint8_t banks;
-	uint8_t memory_model;
-	uint8_t bank_size;
-	uint8_t image_pages;
-	uint8_t reserved0;
+	u16 attributes;
+	u8 window_a;
+	u8 window_b;
+	u16 granularity;
+	u16 window_size;
+	u16 segment_a;
+	u16 segment_b;
+	u32 win_func_ptr;
+	u16 pitch;
+	u16 width;
+	u16 height;
+	u8 w_char;
+	u8 y_char;
+	u8 planes;
+	u8 bpp;
+	u8 banks;
+	u8 memory_model;
+	u8 bank_size;
+	u8 image_pages;
+	u8 reserved0;
 
-	uint8_t red_mask;
-	uint8_t red_position;
-	uint8_t green_mask;
-	uint8_t green_position;
-	uint8_t blue_mask;
-	uint8_t blue_position;
-	uint8_t reserved_mask;
-	uint8_t reserved_position;
-	uint8_t direct_color_attributes;
+	u8 red_mask;
+	u8 red_position;
+	u8 green_mask;
+	u8 green_position;
+	u8 blue_mask;
+	u8 blue_position;
+	u8 reserved_mask;
+	u8 reserved_position;
+	u8 direct_color_attributes;
 
-	uint32_t framebuffer;
-	uint32_t off_screen_mem_off;
-	uint16_t off_screen_mem_size;
-	uint8_t reserved1[206];
+	u32 framebuffer;
+	u32 off_screen_mem_off;
+	u16 off_screen_mem_size;
+	u8 reserved1[206];
 } __attribute__((packed));
 
 struct vbe_mode_info {
-	uint16_t attributes;
-	uint16_t pitch;
-	uint16_t width;
-	uint16_t height;
-	uint8_t bpp;
-	uint8_t memory_model;
-	uint32_t framebuffer;
+	u16 attributes;
+	u16 pitch;
+	u16 width;
+	u16 height;
+	u8 bpp;
+	u8 memory_model;
+	u32 framebuffer;
 } __attribute__((packed));
 
 /**
@@ -129,7 +129,7 @@ void vesa_draw_cursor(int x, int y);
  * Sets the color using a rgb number
  * @param color The color
  */
-void vesa_set_color(uint32_t color);
+void vesa_set_color(u32 color);
 
 /**
  * An enum with vesa colors
@@ -157,12 +157,12 @@ enum vesa_color {
 /**
  * The default text color
  */
-const uint32_t default_text_color;
+const u32 default_text_color;
 
 /**
  * The current text color (as normalized array)
  */
-uint32_t terminal_color[3];
+u32 terminal_color[3];
 
 /**
  * The current input
@@ -197,8 +197,8 @@ int vbe_bpl;
 /**
  * The framebuffer interface
  */
-uint8_t *fb;
+u8 *fb;
 
-uint8_t *cursor_buffer;
+u8 *cursor_buffer;
 
 #endif

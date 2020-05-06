@@ -1,7 +1,7 @@
 #include <stdint.h>
-#include <kernel/tasks/process.h>
+#include <tasks/process.h>
 
-uint32_t sys_exit(uint32_t code)
+u32 sys_exit(u32 code)
 {
 	current_proc->state = PROC_ASLEEP;
 	return code;

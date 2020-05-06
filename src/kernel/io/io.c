@@ -1,23 +1,23 @@
 #include <stdint.h>
-#include <kernel/system.h>
+#include <system.h>
 
-uint8_t inb(uint16_t port)
+u8 inb(u16 port)
 {
-	uint8_t value;
+	u8 value;
 	asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
 	return value;
 }
 
-uint16_t inw(uint16_t port)
+u16 inw(u16 port)
 {
-	uint16_t value;
+	u16 value;
 	asm volatile("inw %1, %0" : "=a"(value) : "Nd"(port));
 	return value;
 }
 
-uint32_t inl(uint16_t port)
+u32 inl(u16 port)
 {
-	uint32_t value;
+	u32 value;
 	asm volatile("inl %1, %0" : "=a"(value) : "Nd"(port));
 	return value;
 }
@@ -37,17 +37,17 @@ void hlt()
 	asm volatile("hlt");
 }
 
-void outb(uint16_t port, uint8_t data)
+void outb(u16 port, u8 data)
 {
 	asm volatile("outb %0, %1" ::"a"(data), "Nd"(port));
 }
 
-void outw(uint16_t port, uint16_t data)
+void outw(u16 port, u16 data)
 {
 	asm volatile("outw %0, %1" ::"a"(data), "Nd"(port));
 }
 
-void outl(uint16_t port, uint32_t data)
+void outl(u16 port, u32 data)
 {
 	asm volatile("outl %0, %1" ::"a"(data), "Nd"(port));
 }
@@ -73,5 +73,5 @@ void serial_put(char ch)
 {
 	while (is_transmit_empty() == 0)
 		;
-	outb(0x3f8, (uint8_t)ch);
+	outb(0x3f8, (u8)ch);
 }

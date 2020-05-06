@@ -1,22 +1,22 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <kernel/system.h>
-#include <kernel/tasks/userspace.h>
-#include <kernel/tasks/process.h>
-#include <kernel/memory/paging.h>
-#include <kernel/io/io.h>
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/lib/lib.h>
+#include <system.h>
+#include <tasks/userspace.h>
+#include <tasks/process.h>
+#include <memory/paging.h>
+#include <io/io.h>
+#include <interrupts/interrupts.h>
+#include <lib/lib.h>
 
 struct process *proc_bottom = NULL;
 
-uint32_t hl_cr3;
-uint32_t hl_eip;
-uint32_t hl_esp;
+u32 hl_cr3;
+u32 hl_eip;
+u32 hl_esp;
 
-uint32_t spawn_child(struct process *child)
+u32 spawn_child(struct process *child)
 {
-	return (uint32_t)-1;
+	return (u32)-1;
 }
 
 void userspace_enter(struct process *proc)
@@ -48,12 +48,12 @@ void single_yield(struct process *proc, struct regs *regs)
 	paging_switch_directory(proc->cr3);
 }
 
-uint32_t single_exit(struct regs *regs)
+u32 single_exit(struct regs *regs)
 {
 	//close(current_proc->stdout);
 	//close(current_proc->stderr);
 
-	uint32_t hold = regs->ebx;
+	u32 hold = regs->ebx;
 	proc_bottom = proc_bottom->next;
 
 	if (proc_bottom == NULL)

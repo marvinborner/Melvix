@@ -2,7 +2,7 @@
 #define MELVIX_TIMER_H
 
 #include <stdint.h>
-#include <kernel/interrupts/interrupts.h>
+#include <interrupts/interrupts.h>
 
 void timer_handler(struct regs *r);
 
@@ -21,6 +21,6 @@ void timer_wait(int ticks);
  * Get the current timer ticks
  * @return The current timer ticks (1000 ticks = 1 second)
  */
-uint32_t get_time();
+u32 get_time();
 
 #endif

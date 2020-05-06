@@ -1,9 +1,9 @@
-#include <kernel/lib/string.h>
+#include <lib/string.h>
 
 void strcati(char *dest, const char *orig)
 {
-	size_t s_orig = strlen(orig);
+	u32 s_orig = strlen(orig);
 	strdisp(dest, (int)s_orig);
-	for (size_t i = 0; i < s_orig; i++)
+	for (u32 i = 0; i < s_orig; i++)
 		dest[i] = orig[i];
 }

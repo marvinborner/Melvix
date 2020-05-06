@@ -1,14 +1,14 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <kernel/system.h>
-#include <kernel/fs/elf.h>
-#include <kernel/lib/stdio.h>
-#include <kernel/memory/alloc.h>
-#include <kernel/lib/lib.h>
-#include <kernel/memory/paging.h>
-#include <kernel/fs/ext2.h>
-#include <kernel/gdt/gdt.h>
-#include <kernel/tasks/process.h>
+#include <system.h>
+#include <fs/elf.h>
+#include <lib/stdio.h>
+#include <memory/alloc.h>
+#include <lib/lib.h>
+#include <memory/paging.h>
+#include <fs/ext2.h>
+#include <gdt/gdt.h>
+#include <tasks/process.h>
 
 int is_elf(struct elf_header *header)
 {
@@ -23,7 +23,7 @@ int is_elf(struct elf_header *header)
 
 struct process *elf_load(char *path)
 {
-	uint8_t *file = read_file(path);
+	u8 *file = read_file(path);
 	if (!file) {
 		warn("File or directory not found: %s", path);
 		return NULL;
@@ -44,7 +44,7 @@ struct process *elf_load(char *path)
 	proc->registers.eip = header->entry;
 
 	paging_switch_directory(proc->cr3);
-	uint32_t stk = (uint32_t)kmalloc_a(PAGE_S);
+	u32 stk = (u32)kmalloc_a(PAGE_S);
 	proc->registers.useresp = 0x40000000 - (PAGE_S / 2);
 	proc->registers.ebp = proc->registers.useresp;
 	proc->registers.esp = proc->registers.useresp;
@@ -56,10 +56,10 @@ struct process *elf_load(char *path)
 			break;
 		case 1:
 			debug("Allocating space for ELF binary section...");
-			uint32_t loc = (uint32_t)kmalloc_a(PAGE_S);
+			u32 loc = (u32)kmalloc_a(PAGE_S);
 			paging_map_user(proc->cr3, loc, program_header->vaddr);
 			memcpy((void *)program_header->vaddr,
-			       ((void *)((uint32_t)file) + program_header->offset),
+			       ((void *)((u32)file) + program_header->offset),
 			       program_header->filesz);
 			if (program_header->filesz > PAGE_S)
 				panic("ELF binary section too large");

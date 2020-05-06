@@ -1,32 +1,32 @@
 #include <stdint.h>
-#include <kernel/io/io.h>
-#include <kernel/timer/timer.h>
+#include <io/io.h>
+#include <timer/timer.h>
 
-void play_sound(uint32_t frequency)
+void play_sound(u32 frequency)
 {
-	uint32_t divided;
-	uint8_t tmp;
+	u32 divided;
+	u8 tmp;
 
 	divided = 1193180 / frequency;
 	outb(0x43, 0xb6);
-	outb(0x42, (uint8_t)(divided));
-	outb(0x42, (uint8_t)(divided >> 8));
+	outb(0x42, (u8)(divided));
+	outb(0x42, (u8)(divided >> 8));
 
 	tmp = inb(0x61);
 	if (tmp != (tmp | 3)) {
-		outb(0x61, (uint8_t)(tmp | 3));
+		outb(0x61, (u8)(tmp | 3));
 	}
 }
 
 static void shut_up()
 {
-	uint8_t tmp = (uint8_t)(inb(0x61) & 0xFC);
+	u8 tmp = (u8)(inb(0x61) & 0xFC);
 
 	outb(0x61, tmp);
 }
 
 // Make a beep
-void beep(uint32_t frequency, uint32_t ticks)
+void beep(u32 frequency, u32 ticks)
 {
 	play_sound(frequency);
 	timer_wait((int)ticks);

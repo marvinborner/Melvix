@@ -2,15 +2,15 @@
 #define MELVIX_SMBIOS_H
 
 #include <stdint.h>
-#include <kernel/multiboot.h>
+#include <multiboot.h>
 
 struct smbios_0 {
 	char *vendor;
 	char *bios_version;
-	uint16_t bios_start;
+	u16 bios_start;
 	char *bios_release_data;
-	uint8_t bios_size;
-	uint64_t bios_characteristics;
+	u8 bios_size;
+	u64 bios_characteristics;
 };
 
 struct smbios_1 {
@@ -18,8 +18,8 @@ struct smbios_1 {
 	char *product_name;
 	char *version;
 	char *serial_number;
-	uint8_t uuid[16];
-	uint8_t wakeup_type;
+	u8 uuid[16];
+	u8 wakeup_type;
 };
 
 void smbios_init(struct multiboot_tag_smbios *tag);

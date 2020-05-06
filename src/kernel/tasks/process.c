@@ -1,22 +1,22 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <kernel/tasks/process.h>
-#include <kernel/tasks/userspace.h>
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/system.h>
-#include <kernel/lib/lib.h>
-#include <kernel/memory/paging.h>
-#include <kernel/memory/alloc.h>
-#include <kernel/timer/timer.h>
-#include <kernel/fs/elf.h>
+#include <tasks/process.h>
+#include <tasks/userspace.h>
+#include <interrupts/interrupts.h>
+#include <system.h>
+#include <lib/lib.h>
+#include <memory/paging.h>
+#include <memory/alloc.h>
+#include <timer/timer.h>
+#include <fs/elf.h>
 
-uint32_t pid = 0;
+u32 pid = 0;
 struct process *root;
 struct process *current_proc = NULL;
 
 struct regs hold_root;
 
-extern uint32_t stack_hold;
+extern u32 stack_hold;
 
 void scheduler(struct regs *regs)
 {
@@ -54,7 +54,7 @@ void process_init(struct process *proc)
 	userspace_enter(proc);
 }
 
-void process_kill(uint32_t pid)
+void process_kill(u32 pid)
 {
 	struct process *proc = process_from_pid(pid);
 
@@ -71,7 +71,7 @@ void process_kill(uint32_t pid)
 	}
 }
 
-uint32_t process_spawn(struct process *process)
+u32 process_spawn(struct process *process)
 {
 	process->next = root->next;
 	root->next = process;
@@ -84,7 +84,7 @@ uint32_t process_spawn(struct process *process)
 	return process->pid;
 }
 
-int process_wait_gid(uint32_t gid, int *status)
+int process_wait_gid(u32 gid, int *status)
 {
 	struct process *i = root;
 
@@ -101,7 +101,7 @@ int process_wait_gid(uint32_t gid, int *status)
 	return WAIT_OKAY;
 }
 
-int process_wait_pid(uint32_t pid, int *status)
+int process_wait_pid(u32 pid, int *status)
 {
 	struct process *i = current_proc->next;
 
@@ -120,7 +120,7 @@ int process_wait_pid(uint32_t pid, int *status)
 	return WAIT_ERROR;
 }
 
-void process_suspend(uint32_t pid)
+void process_suspend(u32 pid)
 {
 	struct process *proc = process_from_pid(pid);
 
@@ -132,7 +132,7 @@ void process_suspend(uint32_t pid)
 	proc->state = PROC_ASLEEP;
 }
 
-void process_wake(uint32_t pid)
+void process_wake(u32 pid)
 {
 	struct process *proc = process_from_pid(pid);
 
@@ -142,7 +142,7 @@ void process_wake(uint32_t pid)
 	proc->state = PROC_RUNNING;
 }
 
-uint32_t process_child(struct process *child, uint32_t pid)
+u32 process_child(struct process *child, u32 pid)
 {
 	process_suspend(pid);
 
@@ -157,7 +157,7 @@ uint32_t process_child(struct process *child, uint32_t pid)
 	return process_spawn(child);
 }
 
-uint32_t process_fork(uint32_t pid)
+u32 process_fork(u32 pid)
 {
 	warn("Fork is not implemented");
 
@@ -173,7 +173,7 @@ uint32_t process_fork(uint32_t pid)
 	return 0; //pid++;
 }
 
-struct process *process_from_pid(uint32_t pid)
+struct process *process_from_pid(u32 pid)
 {
 	struct process *proc = root;
 
@@ -205,7 +205,7 @@ struct process *process_make_new()
 	return proc;
 }
 
-uint32_t kexec(char *path)
+u32 kexec(char *path)
 {
 	struct process *proc = elf_load(path);
 	if (proc == NULL)
@@ -219,7 +219,7 @@ uint32_t kexec(char *path)
 	return 0;
 }
 
-uint32_t uexec(char *path)
+u32 uexec(char *path)
 {
 	process_suspend(current_proc->pid);
 

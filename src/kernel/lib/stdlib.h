@@ -5,7 +5,7 @@
 
 #ifndef MELVIX_STRING_H
 
-#include <kernel/lib/string.h>
+#include <lib/string.h>
 
 #endif
 
@@ -13,7 +13,7 @@ char *itoa(int n);
 
 int atoi(char *str);
 
-char *htoa(uint32_t n);
+char *htoa(u32 n);
 
 int htoi(char *str);
 

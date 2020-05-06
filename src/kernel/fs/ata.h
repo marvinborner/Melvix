@@ -40,6 +40,6 @@
 
 void ata_init();
 
-void read_abs_sectors(uint32_t lba, uint8_t sector_count, uint16_t buf[]);
+void read_abs_sectors(u32 lba, u8 sector_count, u16 buf[]);
 
 #endif

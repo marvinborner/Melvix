@@ -1,33 +1,33 @@
-#include <kernel/io/io.h>
-#include <kernel/pci/pci.h>
-#include <kernel/system.h>
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/lib/stdio.h>
-#include <kernel/memory/alloc.h>
+#include <io/io.h>
+#include <pci/pci.h>
+#include <system.h>
+#include <interrupts/interrupts.h>
+#include <lib/stdio.h>
+#include <memory/alloc.h>
 
 int rtl_irq = 0;
-uint8_t mac[6];
-uint8_t *rtl_rx_buffer;
-uint32_t rtl_iobase = 0;
-uint32_t rtl_device_pci = 0x00000000;
+u8 mac[6];
+u8 *rtl_rx_buffer;
+u32 rtl_iobase = 0;
+u32 rtl_device_pci = 0x00000000;
 
-void find_rtl(uint32_t device, uint16_t vendor_id, uint16_t device_id, void *extra)
+void find_rtl(u32 device, u16 vendor_id, u16 device_id, void *extra)
 {
 	if ((vendor_id == 0x10ec) && (device_id == 0x8139)) {
-		*((uint32_t *)extra) = device;
+		*((u32 *)extra) = device;
 	}
 }
 
 void rtl8139_irq_handler(struct regs *r)
 {
 	log("RTL INT!");
-	uint16_t status = inw((uint16_t)(rtl_iobase + 0x3E));
+	u16 status = inw((u16)(rtl_iobase + 0x3E));
 	if (!status)
 		return;
-	outw((uint16_t)(rtl_iobase + 0x3E), status);
+	outw((u16)(rtl_iobase + 0x3E), status);
 
 	if (status & 0x01 || status & 0x02) {
-		while ((inw((uint16_t)(rtl_iobase + 0x37)) & 0x01) == 0) {
+		while ((inw((u16)(rtl_iobase + 0x37)) & 0x01) == 0) {
 			log("RECEIVE");
 			// RECEIVE
 		}
@@ -37,7 +37,7 @@ void rtl8139_irq_handler(struct regs *r)
 int rtl8139_init(void)
 {
 	if (rtl_device_pci) {
-		uint16_t command_reg = (uint16_t)pci_read_field(rtl_device_pci, PCI_COMMAND, 4);
+		u16 command_reg = (u16)pci_read_field(rtl_device_pci, PCI_COMMAND, 4);
 
 		if (command_reg & (1 << 2)) {
 		} else {
@@ -48,8 +48,8 @@ int rtl8139_init(void)
 		rtl_irq = pci_get_interrupt(rtl_device_pci);
 		irq_install_handler(rtl_irq, rtl8139_irq_handler);
 
-		uint32_t rtl_bar0 = pci_read_field(rtl_device_pci, PCI_BAR0, 4);
-		// uint32_t rtl_bar1 = pci_read_field(rtl_device_pci, PCI_BAR1, 4);
+		u32 rtl_bar0 = pci_read_field(rtl_device_pci, PCI_BAR0, 4);
+		// u32 rtl_bar1 = pci_read_field(rtl_device_pci, PCI_BAR1, 4);
 
 		rtl_iobase = 0x00000000;
 
@@ -60,30 +60,30 @@ int rtl8139_init(void)
 
 		// Get mac address
 		for (int i = 0; i < 6; ++i)
-			mac[i] = inb((uint16_t)(rtl_iobase + 0x00 + i));
+			mac[i] = inb((u16)(rtl_iobase + 0x00 + i));
 		debug("Mac address: %2x:%2x:%2x:%2x:%2x:%2x", mac[0], mac[1], mac[2], mac[3],
 		      mac[4], mac[5]);
 
 		// Activate (turn on)
-		outb((uint16_t)(rtl_iobase + 0x52), 0x0);
+		outb((u16)(rtl_iobase + 0x52), 0x0);
 
 		// Reset
-		outb((uint16_t)(rtl_iobase + 0x37), 0x10);
-		while ((inb((uint16_t)(rtl_iobase + 0x37)) & 0x10) != 0) {
+		outb((u16)(rtl_iobase + 0x37), 0x10);
+		while ((inb((u16)(rtl_iobase + 0x37)) & 0x10) != 0) {
 		}
 
 		// Set receive buffer
-		rtl_rx_buffer = (uint8_t *)kmalloc(8192 + 16);
-		outl((uint16_t)(rtl_iobase + 0x30), (uintptr_t)rtl_rx_buffer);
+		rtl_rx_buffer = (u8 *)kmalloc(8192 + 16);
+		outl((u16)(rtl_iobase + 0x30), (u32)rtl_rx_buffer);
 
 		// Enable ISR
-		outw((uint16_t)(rtl_iobase + 0x3C), 0x0005);
+		outw((u16)(rtl_iobase + 0x3C), 0x0005);
 
 		// Accept packets
-		outl((uint16_t)(rtl_iobase + 0x44), 0xf | (1 << 7));
+		outl((u16)(rtl_iobase + 0x44), 0xf | (1 << 7));
 
 		// Enable receive and transmitter
-		outb((uint16_t)(rtl_iobase + 0x37), 0x0C);
+		outb((u16)(rtl_iobase + 0x37), 0x0C);
 	} else {
 		return -1;
 	}

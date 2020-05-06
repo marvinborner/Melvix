@@ -1,19 +1,19 @@
 #include <stdarg.h>
 #include <stdint.h>
-#include <kernel/lib/stdio.h>
-#include <kernel/lib/string.h>
-#include <kernel/lib/stdlib.h>
-#include <kernel/memory/alloc.h>
+#include <lib/stdio.h>
+#include <lib/string.h>
+#include <lib/stdlib.h>
+#include <memory/alloc.h>
 
 void _puts(const char *data)
 {
-	for (size_t i = 0; i < strlen(data); i++)
+	for (u32 i = 0; i < strlen(data); i++)
 		putch(data[i]);
 }
 
 void vprintf(const char *fmt, va_list args)
 {
-	uint8_t readyToFormat = 0;
+	u8 readyToFormat = 0;
 
 	char buff = 0;
 
@@ -31,7 +31,7 @@ void vprintf(const char *fmt, va_list args)
 				_puts(str);
 				readyToFormat = 0;
 			} else if (buff == 'x') {
-				char *p = htoa((uint32_t)va_arg(args, int));
+				char *p = htoa((u32)va_arg(args, int));
 				_puts(p);
 				kfree(p);
 				readyToFormat = 0;

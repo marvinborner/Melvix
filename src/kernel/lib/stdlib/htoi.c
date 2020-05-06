@@ -1,12 +1,12 @@
-#include <kernel/lib/math.h>
+#include <lib/math.h>
 #include <stddef.h>
-#include <kernel/lib/string.h>
+#include <lib/string.h>
 
 int htoi(char *str)
 {
-	size_t s_str = strlen(str);
+	u32 s_str = strlen(str);
 
-	size_t i = 0;
+	u32 i = 0;
 	int ret = 0;
 	for (; i < s_str; i++) {
 		char c = str[i];

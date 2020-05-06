@@ -1,8 +1,8 @@
-#include <kernel/lib/string.h>
+#include <lib/string.h>
 
-size_t strlen(const char *str)
+u32 strlen(const char *str)
 {
-	size_t len = 0;
+	u32 len = 0;
 	while (str[len])
 		len++;
 	return len;

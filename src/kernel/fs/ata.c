@@ -1,16 +1,16 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <kernel/fs/ata.h>
-#include <kernel/system.h>
-#include <kernel/io/io.h>
+#include <fs/ata.h>
+#include <system.h>
+#include <io/io.h>
 
-static uint16_t sel_base_port = 0;
-static uint8_t sel_master_or_slave = 0;
+static u16 sel_base_port = 0;
+static u8 sel_master_or_slave = 0;
 
-static uint32_t max_sector;
+static u32 max_sector;
 
-static uint8_t read_stat(uint16_t base)
+static u8 read_stat(u16 base)
 {
 	inb(base + COM_STAT);
 	inb(base + COM_STAT);
@@ -20,7 +20,7 @@ static uint8_t read_stat(uint16_t base)
 	return inb(base + COM_STAT);
 }
 
-static void check_drive(uint16_t base, uint8_t master_or_slave)
+static void check_drive(u16 base, u8 master_or_slave)
 {
 	if (sel_base_port != 0)
 		return;
@@ -33,7 +33,7 @@ static void check_drive(uint16_t base, uint8_t master_or_slave)
 	outb(base + LBA_HIGH, 0);
 
 	outb(base + COM_STAT, IDENTIFY);
-	uint8_t stat = read_stat(base);
+	u8 stat = read_stat(base);
 
 	if (stat == 0)
 		return;
@@ -47,8 +47,8 @@ static void check_drive(uint16_t base, uint8_t master_or_slave)
 	if ((stat & ERR) != 0)
 		return;
 
-	uint16_t drive_data[256];
-	for (size_t i = 0; i < 256; i++)
+	u16 drive_data[256];
+	for (u32 i = 0; i < 256; i++)
 		drive_data[i] = inw(base + DATA);
 
 	max_sector = drive_data[MAX_28LBA_SECTORS] | drive_data[MAX_28LBA_SECTORS + 1] << 16;
@@ -59,8 +59,8 @@ static void check_drive(uint16_t base, uint8_t master_or_slave)
 
 void ata_init()
 {
-	uint8_t pri_status = inb(PRIMARY_BASE + COM_STAT);
-	uint8_t sec_status = inb(SECONDARY_BASE + COM_STAT);
+	u8 pri_status = inb(PRIMARY_BASE + COM_STAT);
+	u8 sec_status = inb(SECONDARY_BASE + COM_STAT);
 	bool primary_floating = false;
 	bool secondary_floating = false;
 	if (pri_status == 0xFF)
@@ -90,14 +90,14 @@ void ata_init()
 
 static void poll()
 {
-	uint8_t stat;
+	u8 stat;
 
 	do
 		stat = read_stat(sel_base_port);
 	while ((stat & BSY) != 0);
 }
 
-void read_abs_sectors(uint32_t lba, uint8_t sector_count, uint16_t buf[])
+void read_abs_sectors(u32 lba, u8 sector_count, u16 buf[])
 {
 	assert(lba >> LBA_BITS == 0);
 
@@ -110,7 +110,7 @@ void read_abs_sectors(uint32_t lba, uint8_t sector_count, uint16_t buf[])
 
 	outb(sel_base_port + COM_STAT, READ_SECTORS);
 
-	size_t i = 0;
+	u32 i = 0;
 	for (; sector_count > 0; sector_count--) {
 		poll();
 

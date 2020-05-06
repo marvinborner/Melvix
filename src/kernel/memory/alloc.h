@@ -1,8 +1,8 @@
 #ifndef MELVIX_ALLOC_H
 #define MELVIX_ALLOC_H
 
-#include <stddef.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 
 #define KHEAP_MAGIC 0x04206969
@@ -11,31 +11,31 @@
 #define MEM_END 0x8000000
 
 struct heap_header {
-	uint32_t magic;
+	u32 magic;
 	bool free;
-	uint32_t size;
-	uint32_t magic2;
+	u32 size;
+	u32 magic2;
 };
 
 struct heap_footer {
-	uint32_t magic;
-	uint32_t size;
-	uint32_t magic2;
+	u32 magic;
+	u32 size;
+	u32 magic2;
 };
 
 void kheap_init();
 
-void *fmalloc(uint32_t size);
-void *kcalloc(uint32_t num, uint32_t size);
-void *kmalloc(uint32_t size);
-void *kmalloc_a(uint32_t size);
+void *fmalloc(u32 size);
+void *kcalloc(u32 num, u32 size);
+void *kmalloc(u32 size);
+void *kmalloc_a(u32 size);
 void kfree(void *ptr);
 
-void *umalloc(size_t size);
-void *ucalloc(uint32_t num, uint32_t size);
+void *umalloc(u32 size);
+void *ucalloc(u32 num, u32 size);
 void ufree(void *address);
 
-void init_heap(struct heap_header *heap, size_t size);
+void init_heap(struct heap_header *heap, u32 size);
 
 #define KHEAP_SIZE 0xFFFFF
 #define UHEAP_SIZE 0xFFFFF

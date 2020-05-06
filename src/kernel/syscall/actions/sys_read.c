@@ -1,7 +1,7 @@
 #include <stdint.h>
-#include <kernel/fs/fs.h>
+#include <fs/fs.h>
 
-uint32_t sys_read(char *path, uint32_t offset, uint32_t count, uint8_t *buf)
+u32 sys_read(char *path, u32 offset, u32 count, u8 *buf)
 {
 	return read(path, offset, count, buf);
 }

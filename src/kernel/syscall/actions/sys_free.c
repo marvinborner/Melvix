@@ -1,7 +1,7 @@
 #include <stdint.h>
-#include <kernel/memory/alloc.h>
+#include <memory/alloc.h>
 
-uint32_t sys_free(uint32_t ptr)
+u32 sys_free(u32 ptr)
 {
 	ufree((void *)ptr);
 	return 0;

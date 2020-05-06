@@ -17,71 +17,71 @@
 #define SUPERBLOCK_SECTORS (SUPERBLOCK_LENGTH / SECTOR_SIZE)
 
 struct ext2_superblock {
-	uint32_t total_inodes;
-	uint32_t total_blocks;
-	uint32_t su_res_blocks; // Superuser reserved
-	uint32_t free_blocks;
-	uint32_t free_inodes;
-	uint32_t superblock_block_num;
-	uint32_t log2_block_size;
-	uint32_t log2_frag_size;
-	uint32_t blocks_per_group;
-	uint32_t frags_per_group;
-	uint32_t inodes_per_group;
-	uint32_t last_mount_time;
-	uint32_t last_write_time;
-	uint16_t mounts_since_fsck;
-	uint16_t max_mounts_since_fsck;
-	uint16_t signature;
-	uint16_t state; // 1 clean; 2 errors
-	uint16_t error_action;
-	uint16_t minor_version;
-	uint32_t last_fsck_time;
-	uint32_t max_time_since_fsck;
-	uint32_t creator_os_id;
-	uint32_t major_version;
-	uint16_t res_block_uid;
-	uint16_t res_block_gid;
+	u32 total_inodes;
+	u32 total_blocks;
+	u32 su_res_blocks; // Superuser reserved
+	u32 free_blocks;
+	u32 free_inodes;
+	u32 superblock_block_num;
+	u32 log2_block_size;
+	u32 log2_frag_size;
+	u32 blocks_per_group;
+	u32 frags_per_group;
+	u32 inodes_per_group;
+	u32 last_mount_time;
+	u32 last_write_time;
+	u16 mounts_since_fsck;
+	u16 max_mounts_since_fsck;
+	u16 signature;
+	u16 state; // 1 clean; 2 errors
+	u16 error_action;
+	u16 minor_version;
+	u32 last_fsck_time;
+	u32 max_time_since_fsck;
+	u32 creator_os_id;
+	u32 major_version;
+	u16 res_block_uid;
+	u16 res_block_gid;
 } __attribute__((packed));
 
 // Block group descriptor
 struct bgd {
-	uint32_t block_bitmap_addr;
-	uint32_t inode_bitmap_addr;
-	uint32_t inode_table_addr;
-	uint16_t free_blocks;
-	uint16_t free_inodes;
-	uint16_t used_dirs;
-	uint16_t pad;
-	uint8_t bg_reserved[12];
+	u32 block_bitmap_addr;
+	u32 inode_bitmap_addr;
+	u32 inode_table_addr;
+	u16 free_blocks;
+	u16 free_inodes;
+	u16 used_dirs;
+	u16 pad;
+	u8 bg_reserved[12];
 } __attribute__((packed));
 
 struct ext2_inode {
-	uint16_t mode;
-	uint16_t uid;
-	uint32_t size;
+	u16 mode;
+	u16 uid;
+	u32 size;
 
-	uint32_t last_access_time;
-	uint32_t creation_time;
-	uint32_t last_modification_time;
-	uint32_t deletion_time;
+	u32 last_access_time;
+	u32 creation_time;
+	u32 last_modification_time;
+	u32 deletion_time;
 
-	uint16_t gid;
-	uint16_t link_count;
-	uint32_t sectors_used;
-	uint32_t flags;
-	uint32_t os_specific_val1;
-	uint32_t dbp[12];
-	uint32_t ibp;
-	uint32_t dibp;
-	uint32_t tibp;
-	uint32_t gen_number;
+	u16 gid;
+	u16 link_count;
+	u32 sectors_used;
+	u32 flags;
+	u32 os_specific_val1;
+	u32 dbp[12];
+	u32 ibp;
+	u32 dibp;
+	u32 tibp;
+	u32 gen_number;
 
-	uint32_t reserved1;
-	uint32_t reserved2;
+	u32 reserved1;
+	u32 reserved2;
 
-	uint32_t fragment_addr;
-	uint8_t os_specific_val2[12];
+	u32 fragment_addr;
+	u8 os_specific_val2[12];
 } __attribute__((packed));
 
 #define S_IFIFO 0x1000
@@ -125,29 +125,29 @@ struct ext2_inode {
 struct fs_node *ext2_root;
 
 struct ext2_dirent {
-	uint32_t inode_num;
-	uint16_t total_len;
-	uint8_t name_len;
-	uint8_t type_indicator;
-	uint8_t *name;
+	u32 inode_num;
+	u16 total_len;
+	u8 name_len;
+	u8 type_indicator;
+	u8 *name;
 } __attribute__((packed));
 
 struct ext2_file {
 	struct ext2_inode inode;
-	size_t pos;
-	uint8_t block_index;
-	uint8_t *buf;
-	size_t curr_block_pos;
+	u32 pos;
+	u8 block_index;
+	u8 *buf;
+	u32 curr_block_pos;
 };
 
 void ext2_init_fs();
-void ext2_open_inode(uint32_t inode_num, struct ext2_file *file);
-size_t ext2_read(struct ext2_file *file, uint8_t *buf, size_t count);
+void ext2_open_inode(u32 inode_num, struct ext2_file *file);
+u32 ext2_read(struct ext2_file *file, u8 *buf, u32 count);
 bool ext2_next_dirent(struct ext2_file *file, struct ext2_dirent *dir);
-uint32_t ext2_find_in_dir(uint32_t dir_inode, const char *name);
-uint32_t ext2_look_up_path(char *path);
+u32 ext2_find_in_dir(u32 dir_inode, const char *name);
+u32 ext2_look_up_path(char *path);
 
-uint8_t *read_file(char *path);
+u8 *read_file(char *path);
 void ext2_node_init(struct fs_node *node);
 void ext2_mount(struct fs_node *mountpoint);
 

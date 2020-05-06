@@ -2,33 +2,33 @@
 #define MELVIX_PROCESS_H
 
 #include <stdint.h>
-#include <kernel/memory/paging.h>
-#include <kernel/interrupts/interrupts.h>
+#include <memory/paging.h>
+#include <interrupts/interrupts.h>
 
 struct mmap {
-	uint32_t text;
-	uint32_t bss;
-	uint32_t data;
-	uint32_t stack;
+	u32 text;
+	u32 bss;
+	u32 data;
+	u32 stack;
 };
 
 struct process {
 	struct page_directory *cr3;
 	struct regs registers;
 
-	uint32_t pid;
-	uint32_t gid;
+	u32 pid;
+	u32 gid;
 	char *name;
 
 	int state;
 	int thread;
 
-	uint32_t stdin;
-	uint32_t stdout;
-	uint32_t stderr;
+	u32 stdin;
+	u32 stdout;
+	u32 stderr;
 
-	uint32_t brk;
-	uint32_t handlers[6];
+	u32 brk;
+	u32 handlers[6];
 
 	struct process *parent;
 	struct process *next;
@@ -36,31 +36,31 @@ struct process {
 
 void scheduler(struct regs *regs);
 
-void process_kill(uint32_t pid);
+void process_kill(u32 pid);
 
-uint32_t process_spawn(struct process *process);
+u32 process_spawn(struct process *process);
 
-void process_suspend(uint32_t pid);
-void process_wake(uint32_t pid);
-uint32_t process_child(struct process *process, uint32_t pid);
-uint32_t process_fork(uint32_t pid);
+void process_suspend(u32 pid);
+void process_wake(u32 pid);
+u32 process_child(struct process *process, u32 pid);
+u32 process_fork(u32 pid);
 
-int process_wait_gid(uint32_t gid, int *status);
-int process_wait_pid(uint32_t pid, int *status);
+int process_wait_gid(u32 gid, int *status);
+int process_wait_pid(u32 pid, int *status);
 
-struct process *process_from_pid(uint32_t pid);
+struct process *process_from_pid(u32 pid);
 
 void process_init(struct process *proc);
 
 struct process *process_make_new();
 
-uint32_t kexec(char *path);
+u32 kexec(char *path);
 
-uint32_t uexec(char *path);
+u32 uexec(char *path);
 
 extern struct process *current_proc;
 
-extern uint32_t stack_hold;
+extern u32 stack_hold;
 
 #define PID_NOT_FOUND ((struct process *)0xFFFFFFFF)
 

@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include <kernel/lib/data.h>
-#include <kernel/memory/alloc.h>
+#include <lib/data.h>
+#include <memory/alloc.h>
 
 struct tree *tree_create()
 {

@@ -1,7 +1,7 @@
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/io/io.h>
-#include <kernel/graphics/vesa.h>
-#include <kernel/lib/stdio.h>
+#include <interrupts/interrupts.h>
+#include <io/io.h>
+#include <graphics/vesa.h>
+#include <lib/stdio.h>
 
 char mouse_cycle = 0;
 char mouse_byte[3];

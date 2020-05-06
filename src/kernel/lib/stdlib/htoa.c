@@ -1,10 +1,10 @@
 #include <stdint.h>
-#include <kernel/lib/string.h>
-#include <kernel/memory/alloc.h>
+#include <lib/string.h>
+#include <memory/alloc.h>
 
 static const char HTOA_TABLE[] = "0123456789ABCDEF";
 
-char *htoa(uint32_t n)
+char *htoa(u32 n)
 {
 	char *ret = (char *)kmalloc(10);
 

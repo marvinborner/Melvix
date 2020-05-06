@@ -1,12 +1,12 @@
 #include <stdint.h>
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/system.h>
-#include <kernel/lib/string.h>
-#include <kernel/lib/stdio.h>
-#include <kernel/lib/lib.h>
-#include <kernel/graphics/vesa.h>
-#include <kernel/tasks/process.h>
-#include <kernel/io/io.h>
+#include <interrupts/interrupts.h>
+#include <system.h>
+#include <lib/string.h>
+#include <lib/stdio.h>
+#include <lib/lib.h>
+#include <graphics/vesa.h>
+#include <tasks/process.h>
+#include <io/io.h>
 
 // Install ISRs in IDT
 void isrs_install()
@@ -55,13 +55,13 @@ void isrs_install()
 irq_handler_t isr_routines[256] = { 0 };
 
 // Install custom IRQ handler
-void isr_install_handler(size_t isr, irq_handler_t handler)
+void isr_install_handler(u32 isr, irq_handler_t handler)
 {
 	isr_routines[isr] = handler;
 }
 
 // Remove the custom IRQ handler
-void isr_uninstall_handler(size_t isr)
+void isr_uninstall_handler(u32 isr)
 {
 	isr_routines[isr] = 0;
 }
@@ -111,7 +111,7 @@ void fault_handler(struct regs *r)
 		handler(r);
 	} else {
 		cli();
-		uint32_t faulting_address;
+		u32 faulting_address;
 		asm("mov %%cr2, %0" : "=r"(faulting_address));
 
 		log("\n[DEBUG]\nEIP: 0x%x\nEAX: 0x%x\nEBX: 0x%x\nECX: 0x%x\nEDX: 0x%x\nESP: 0x%x\nFault addr: 0x%x\nErr flag: 0x%x\nErr code: 0x%x\nINT code: 0x%x\nINT msg: %s",
@@ -133,7 +133,7 @@ void fault_handler(struct regs *r)
 			scheduler(r);
 			sti();
 		} else {
-			if (faulting_address != (uint32_t)fb) {
+			if (faulting_address != (u32)fb) {
 				panic("Page fault before multitasking started!");
 			} else {
 				debug(RED "Fatal video error!" RES);

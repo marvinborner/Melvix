@@ -39,59 +39,59 @@
 
 #define PCI_NONE 0xFFFF
 
-typedef void (*pci_func_t)(uint32_t device, uint16_t vendor_id, uint16_t device_id, void *extra);
+typedef void (*pci_func_t)(u32 device, u16 vendor_id, u16 device_id, void *extra);
 
 struct pci_device_descriptor {
-	uint32_t port_base;
-	uint32_t interrupt;
+	u32 port_base;
+	u32 interrupt;
 
-	uint8_t bus;
-	uint8_t slot;
-	uint8_t function;
+	u8 bus;
+	u8 slot;
+	u8 function;
 
-	uint16_t vendor_id;
-	uint16_t device_id;
+	u16 vendor_id;
+	u16 device_id;
 
-	uint8_t class_id;
-	uint8_t subclass_id;
-	uint8_t interface_id;
+	u8 class_id;
+	u8 subclass_id;
+	u8 interface_id;
 
-	uint8_t revision;
+	u8 revision;
 };
 
-static inline int pci_extract_bus(uint32_t device)
+static inline int pci_extract_bus(u32 device)
 {
-	return (uint8_t)((device >> 16));
+	return (u8)((device >> 16));
 }
 
-static inline int pci_extract_slot(uint32_t device)
+static inline int pci_extract_slot(u32 device)
 {
-	return (uint8_t)((device >> 8));
+	return (u8)((device >> 8));
 }
 
-static inline int pci_extract_func(uint32_t device)
+static inline int pci_extract_func(u32 device)
 {
-	return (uint8_t)(device);
+	return (u8)(device);
 }
 
-static inline uint32_t pci_get_addr(uint32_t device, int field)
+static inline u32 pci_get_addr(u32 device, int field)
 {
 	return 0x80000000 | (pci_extract_bus(device) << 16) | (pci_extract_slot(device) << 11) |
 	       (pci_extract_func(device) << 8) | ((field)&0xFC);
 }
 
-static inline uint32_t pci_box_device(int bus, int slot, int func)
+static inline u32 pci_box_device(int bus, int slot, int func)
 {
-	return (uint32_t)((bus << 16) | (slot << 8) | func);
+	return (u32)((bus << 16) | (slot << 8) | func);
 }
 
-uint32_t pci_read_field(uint32_t device, int field, int size);
+u32 pci_read_field(u32 device, int field, int size);
 
-void pci_write_field(uint32_t device, int field, uint32_t value);
+void pci_write_field(u32 device, int field, u32 value);
 
-uint16_t pci_find_type(uint32_t dev);
+u16 pci_find_type(u32 dev);
 
-void pci_scan_hit(pci_func_t f, uint32_t dev, void *extra);
+void pci_scan_hit(pci_func_t f, u32 dev, void *extra);
 
 void pci_scan_func(pci_func_t f, int type, int bus, int slot, int func, void *extra);
 
@@ -103,6 +103,6 @@ void pci_scan(pci_func_t f, int type, void *extra);
 
 void pci_remap();
 
-int pci_get_interrupt(uint32_t device);
+int pci_get_interrupt(u32 device);
 
 #endif

@@ -1,49 +1,49 @@
 #include <stdint.h>
-#include <kernel/system.h>
-#include <kernel/pci/pci.h>
-#include <kernel/io/io.h>
-#include <kernel/lib/lib.h>
+#include <system.h>
+#include <pci/pci.h>
+#include <io/io.h>
+#include <lib/lib.h>
 
-void pci_write_field(uint32_t device, int field, uint32_t value)
+void pci_write_field(u32 device, int field, u32 value)
 {
 	outl(PCI_ADDRESS_PORT, pci_get_addr(device, field));
 	outl(PCI_VALUE_PORT, value);
 }
 
-uint32_t pci_read_field(uint32_t device, int field, int size)
+u32 pci_read_field(u32 device, int field, int size)
 {
 	outl(PCI_ADDRESS_PORT, pci_get_addr(device, field));
 
 	if (size == 4) {
-		uint32_t t = inl(PCI_VALUE_PORT);
+		u32 t = inl(PCI_VALUE_PORT);
 		return t;
 	} else if (size == 2) {
-		uint16_t t = inw((uint16_t)(PCI_VALUE_PORT + (field & 2)));
+		u16 t = inw((u16)(PCI_VALUE_PORT + (field & 2)));
 		return t;
 	} else if (size == 1) {
-		uint8_t t = inb((uint16_t)(PCI_VALUE_PORT + (field & 3)));
+		u8 t = inb((u16)(PCI_VALUE_PORT + (field & 3)));
 		return t;
 	}
 	return 0xFFFF;
 }
 
-uint16_t pci_find_type(uint32_t dev)
+u16 pci_find_type(u32 dev)
 {
-	return (uint16_t)((pci_read_field(dev, PCI_CLASS, 1) << 8) |
-			  pci_read_field(dev, PCI_SUBCLASS, 1));
+	return (u16)((pci_read_field(dev, PCI_CLASS, 1) << 8) |
+		     pci_read_field(dev, PCI_SUBCLASS, 1));
 }
 
-void pci_scan_hit(pci_func_t f, uint32_t dev, void *extra)
+void pci_scan_hit(pci_func_t f, u32 dev, void *extra)
 {
 	int dev_vend = (int)pci_read_field(dev, PCI_VENDOR_ID, 2);
 	int dev_dvid = (int)pci_read_field(dev, PCI_DEVICE_ID, 2);
 
-	f(dev, (uint16_t)dev_vend, (uint16_t)dev_dvid, extra);
+	f(dev, (u16)dev_vend, (u16)dev_dvid, extra);
 }
 
 void pci_scan_func(pci_func_t f, int type, int bus, int slot, int func, void *extra)
 {
-	uint32_t dev = pci_box_device(bus, slot, func);
+	u32 dev = pci_box_device(bus, slot, func);
 	if (type == -1 || type == pci_find_type(dev))
 		pci_scan_hit(f, dev, extra);
 	if (pci_find_type(dev) == PCI_TYPE_BRIDGE)
@@ -52,7 +52,7 @@ void pci_scan_func(pci_func_t f, int type, int bus, int slot, int func, void *ex
 
 void pci_scan_slot(pci_func_t f, int type, int bus, int slot, void *extra)
 {
-	uint32_t dev = pci_box_device(bus, slot, 0);
+	u32 dev = pci_box_device(bus, slot, 0);
 	if (pci_read_field(dev, PCI_VENDOR_ID, 2) == PCI_NONE)
 		return;
 	pci_scan_func(f, type, bus, slot, 0, extra);
@@ -79,7 +79,7 @@ void pci_scan(pci_func_t f, int type, void *extra)
 	}
 
 	for (int func = 0; func < 8; ++func) {
-		uint32_t dev = pci_box_device(0, 0, func);
+		u32 dev = pci_box_device(0, 0, func);
 		if (pci_read_field(dev, PCI_VENDOR_ID, 2) != PCI_NONE)
 			pci_scan_bus(f, type, func, extra);
 		else
@@ -87,35 +87,35 @@ void pci_scan(pci_func_t f, int type, void *extra)
 	}
 }
 
-static void find_isa_bridge(uint32_t device, uint16_t vendor_id, uint16_t device_id, void *extra)
+static void find_isa_bridge(u32 device, u16 vendor_id, u16 device_id, void *extra)
 {
 	if (vendor_id == 0x8086 && (device_id == 0x7000 || device_id == 0x7110))
-		*((uint32_t *)extra) = device;
+		*((u32 *)extra) = device;
 }
 
-static uint32_t pci_isa = 0;
-static uint8_t pci_remaps[4] = { 0 };
+static u32 pci_isa = 0;
+static u8 pci_remaps[4] = { 0 };
 
 void pci_remap()
 {
 	pci_scan(&find_isa_bridge, -1, &pci_isa);
 	if (pci_isa) {
 		for (int i = 0; i < 4; ++i) {
-			pci_remaps[i] = (uint8_t)pci_read_field(pci_isa, 0x60 + i, 1);
+			pci_remaps[i] = (u8)pci_read_field(pci_isa, 0x60 + i, 1);
 			if (pci_remaps[i] == 0x80) {
-				pci_remaps[i] = (uint8_t)(10 + (i % 1));
+				pci_remaps[i] = (u8)(10 + (i % 1));
 			}
 		}
-		uint32_t out = 0;
+		u32 out = 0;
 		memcpy(&out, &pci_remaps, 4);
 		pci_write_field(pci_isa, 0x60, out);
 	}
 }
 
-int pci_get_interrupt(uint32_t device)
+int pci_get_interrupt(u32 device)
 {
 	if (pci_isa) {
-		uint32_t irq_pin = pci_read_field(device, 0x3D, 1);
+		u32 irq_pin = pci_read_field(device, 0x3D, 1);
 		if (irq_pin == 0)
 			return (int)pci_read_field(device, PCI_INTERRUPT_LINE, 1);
 		int pirq = (int)(irq_pin + pci_extract_slot(device) - 2) % 4;
@@ -124,10 +124,10 @@ int pci_get_interrupt(uint32_t device)
 		if (pci_remaps[pirq] >= 0x80) {
 			if (int_line == 0xFF) {
 				int_line = 10;
-				pci_write_field(device, PCI_INTERRUPT_LINE, (uint32_t)int_line);
+				pci_write_field(device, PCI_INTERRUPT_LINE, (u32)int_line);
 			}
-			pci_remaps[pirq] = (uint8_t)int_line;
-			uint32_t out = 0;
+			pci_remaps[pirq] = (u8)int_line;
+			u32 out = 0;
 			memcpy(&out, &pci_remaps, 4);
 			pci_write_field(pci_isa, 0x60, out);
 			return int_line;

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <kernel/multiboot.h>
+#include <multiboot.h>
 
 /**
  * The ASM registers as packed structure
@@ -72,7 +72,7 @@ void halt_loop();
  * @param code The interrupt code
  * @param regs The registers
  */
-void v86(uint8_t code, regs16_t *regs);
+void v86(u8 code, regs16_t *regs);
 
 // Colors
 #define RED "\x1B[31m"

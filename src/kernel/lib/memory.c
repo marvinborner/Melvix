@@ -1,11 +1,11 @@
 #include <stddef.h>
 #include <stdint.h>
-#include <kernel/system.h>
-#include <kernel/lib/stdio.h>
-#include <kernel/memory/paging.h>
-#include <kernel/multiboot.h>
+#include <system.h>
+#include <lib/stdio.h>
+#include <memory/paging.h>
+#include <multiboot.h>
 
-void *memcpy(void *dest, const void *src, size_t count)
+void *memcpy(void *dest, const void *src, u32 count)
 {
 	const char *sp = (const char *)src;
 	char *dp = (char *)dest;
@@ -14,7 +14,7 @@ void *memcpy(void *dest, const void *src, size_t count)
 	return dest;
 }
 
-void *memset(void *dest, char val, size_t count)
+void *memset(void *dest, char val, u32 count)
 {
 	char *temp = (char *)dest;
 	for (; count != 0; count--)
@@ -22,11 +22,11 @@ void *memset(void *dest, char val, size_t count)
 	return dest;
 }
 
-int memcmp(const void *a_ptr, const void *b_ptr, size_t size)
+int memcmp(const void *a_ptr, const void *b_ptr, u32 size)
 {
 	const unsigned char *a = (const unsigned char *)a_ptr;
 	const unsigned char *b = (const unsigned char *)b_ptr;
-	for (size_t i = 0; i < size; i++) {
+	for (u32 i = 0; i < size; i++) {
 		if (a[i] < b[i])
 			return -1;
 		else if (b[i] < a[i])
@@ -35,10 +35,10 @@ int memcmp(const void *a_ptr, const void *b_ptr, size_t size)
 	return 0;
 }
 
-uint32_t total = 0;
+u32 total = 0;
 struct multiboot_tag_basic_meminfo *meminfo = NULL;
 
-uint32_t memory_get_all()
+u32 memory_get_all()
 {
 	if (total != 0) {
 		return total;
@@ -50,7 +50,7 @@ uint32_t memory_get_all()
 	}
 }
 
-uint32_t memory_get_free()
+u32 memory_get_free()
 {
 	return memory_get_all() /*- paging_get_used_pages() * 4*/;
 }
@@ -73,12 +73,12 @@ void memory_info_init(struct multiboot_tag_basic_meminfo *tag)
 
 void memory_mmap_init(struct multiboot_tag_mmap *tag)
 {
-	uint32_t sum = 0;
+	u32 sum = 0;
 	struct multiboot_mmap_entry *mmap;
 
 	for (mmap = ((struct multiboot_tag_mmap *)tag)->entries;
-	     (multiboot_uint8_t *)mmap < (multiboot_uint8_t *)tag + tag->size;
-	     mmap = (multiboot_memory_map_t *)((uint32_t)mmap +
+	     (multiboot_u8 *)mmap < (multiboot_u8 *)tag + tag->size;
+	     mmap = (multiboot_memory_map_t *)((u32)mmap +
 					       ((struct multiboot_tag_mmap *)tag)->entry_size)) {
 		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
 			debug("Found free memory");

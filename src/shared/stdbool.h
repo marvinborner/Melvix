@@ -1,6 +1,8 @@
 #ifndef MELVIX_STDBOOL_H
 #define MELVIX_STDBOOL_H
 
+typedef int bool;
+
 #define true 1
 #define false 0
 

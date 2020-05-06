@@ -1,14 +1,14 @@
-#include <kernel/system.h>
-#include <kernel/io/io.h>
-#include <kernel/acpi/acpi.h>
-#include <kernel/lib/stdio.h>
+#include <system.h>
+#include <io/io.h>
+#include <acpi/acpi.h>
+#include <lib/stdio.h>
 
-uint8_t second;
-uint8_t minute;
-uint8_t hour;
-uint8_t day;
-uint8_t month;
-uint32_t year;
+u8 second;
+u8 minute;
+u8 hour;
+u8 day;
+u8 month;
+u32 year;
 
 int get_update_in_progress_flag()
 {
@@ -16,23 +16,23 @@ int get_update_in_progress_flag()
 	return (inb(0x71) & 0x80);
 }
 
-uint8_t get_rtc_register(int reg)
+u8 get_rtc_register(int reg)
 {
-	outb(0x70, (uint8_t)reg);
+	outb(0x70, (u8)reg);
 	return inb(0x71);
 }
 
 void read_rtc()
 {
-	uint32_t century = 20;
-	uint8_t last_second;
-	uint8_t last_minute;
-	uint8_t last_hour;
-	uint8_t last_day;
-	uint8_t last_month;
-	uint8_t last_year;
-	uint8_t last_century;
-	uint8_t registerB;
+	u32 century = 20;
+	u8 last_second;
+	u8 last_minute;
+	u8 last_hour;
+	u8 last_day;
+	u8 last_month;
+	u8 last_year;
+	u8 last_century;
+	u8 registerB;
 
 	while (get_update_in_progress_flag()) {
 	};
@@ -51,8 +51,8 @@ void read_rtc()
 		last_hour = hour;
 		last_day = day;
 		last_month = month;
-		last_year = (uint8_t)year;
-		last_century = (uint8_t)century;
+		last_year = (u8)year;
+		last_century = (u8)century;
 
 		while (get_update_in_progress_flag()) {
 		};
@@ -70,11 +70,11 @@ void read_rtc()
 	registerB = get_rtc_register(0x0B);
 
 	if (!(registerB & 0x04)) {
-		second = (uint8_t)((second & 0x0F) + ((second / 16) * 10));
-		minute = (uint8_t)((minute & 0x0F) + ((minute / 16) * 10));
-		hour = (uint8_t)(((hour & 0x0F) + (((hour & 0x70) / 16) * 10)) | (hour & 0x80));
-		day = (uint8_t)((day & 0x0F) + ((day / 16) * 10));
-		month = (uint8_t)((month & 0x0F) + ((month / 16) * 10));
+		second = (u8)((second & 0x0F) + ((second / 16) * 10));
+		minute = (u8)((minute & 0x0F) + ((minute / 16) * 10));
+		hour = (u8)(((hour & 0x0F) + (((hour & 0x70) / 16) * 10)) | (hour & 0x80));
+		day = (u8)((day & 0x0F) + ((day / 16) * 10));
+		month = (u8)((month & 0x0F) + ((month / 16) * 10));
 		year = (year & 0x0F) + ((year / 16) * 10);
 		century = (century & 0x0F) + ((century / 16) * 10);
 	}
@@ -83,7 +83,7 @@ void read_rtc()
 
 	// Convert to 24h if necessary
 	if (!(registerB & 0x02) && (hour & 0x80)) {
-		hour = (uint8_t)(((hour & 0x7F) + 12) % 24);
+		hour = (u8)(((hour & 0x7F) + 12) % 24);
 	}
 }
 

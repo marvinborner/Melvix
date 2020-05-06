@@ -1,10 +1,10 @@
 #include <stdint.h>
-#include <kernel/lib/stdlib.h>
+#include <lib/stdlib.h>
 
 char *strstr(const char *in, const char *str)
 {
 	char c;
-	uint32_t len;
+	u32 len;
 
 	c = *str++;
 	if (!c)

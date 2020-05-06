@@ -1,22 +1,23 @@
 #include <stdint.h>
-#include <kernel/syscall/syscall.h>
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/system.h>
-#include <kernel/lib/stdio.h>
-#include <kernel/io/io.h>
-#include <kernel/tasks/process.h>
+#include <common.h>
+#include <syscall/syscall.h>
+#include <interrupts/interrupts.h>
+#include <system.h>
+#include <lib/stdio.h>
+#include <io/io.h>
+#include <tasks/process.h>
 
-typedef uint32_t (*syscall_func)(uint32_t, ...);
+typedef u32 (*syscall_func)(u32, ...);
 
-uint32_t (*syscalls[])() = { [0] = (uint32_t(*)())halt_loop, // DEBUG!
-			     [1] = sys_exit,
-			     [2] = sys_fork,
-			     [3] = sys_read,
-			     [4] = sys_write,
-			     [5] = sys_exec,
-			     [6] = sys_get_pid,
-			     [7] = sys_malloc,
-			     [8] = sys_free };
+u32 (*syscalls[])() = { [SYS_HALT] = (u32(*)())halt_loop, // DEBUG!
+			[SYS_EXIT] = sys_exit,
+			[SYS_FORK] = sys_fork,
+			[SYS_READ] = sys_read,
+			[SYS_WRITE] = sys_write,
+			[SYS_EXEC] = sys_exec,
+			[SYS_GET_PID] = sys_get_pid,
+			[SYS_MALLOC] = sys_malloc,
+			[SYS_FREE] = sys_free };
 
 void syscall_handler(struct regs *r)
 {

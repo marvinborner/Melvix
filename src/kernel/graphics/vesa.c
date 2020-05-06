@@ -1,10 +1,10 @@
-#include <kernel/graphics/vesa.h>
-#include <kernel/fs/load.h>
-#include <kernel/system.h>
-#include <kernel/lib/stdlib.h>
-#include <kernel/lib/stdio.h>
-#include <kernel/memory/alloc.h>
-#include <kernel/memory/paging.h>
+#include <graphics/vesa.h>
+#include <fs/load.h>
+#include <system.h>
+#include <lib/stdlib.h>
+#include <lib/stdio.h>
+#include <memory/alloc.h>
+#include <memory/paging.h>
 
 void vbe_error()
 {
@@ -25,7 +25,7 @@ void vbe_set_mode(unsigned short mode)
 		vbe_error();
 }
 
-uint16_t *vbe_get_modes()
+u16 *vbe_get_modes()
 {
 	char *info_address = (char *)0x7E00;
 	strcpy(info_address, "VBE2");
@@ -44,19 +44,19 @@ uint16_t *vbe_get_modes()
 		vbe_error();
 
 	// Get number of modes
-	uint16_t *mode_ptr = (uint16_t *)info->video_modes;
-	size_t number_modes = 1;
-	for (uint16_t *p = mode_ptr; *p != 0xFFFF; p++)
+	u16 *mode_ptr = (u16 *)info->video_modes;
+	u32 number_modes = 1;
+	for (u16 *p = mode_ptr; *p != 0xFFFF; p++)
 		number_modes++;
 
-	uint16_t *ret = (uint16_t *)kmalloc(sizeof(uint16_t) * number_modes);
-	for (size_t i = 0; i < number_modes; i++)
-		ret[i] = ((uint16_t *)info->video_modes)[i];
+	u16 *ret = (u16 *)kmalloc(sizeof(u16) * number_modes);
+	for (u32 i = 0; i < number_modes; i++)
+		ret[i] = ((u16 *)info->video_modes)[i];
 
 	return ret;
 }
 
-struct vbe_mode_info *vbe_get_mode_info(uint16_t mode)
+struct vbe_mode_info *vbe_get_mode_info(u16 mode)
 {
 	regs16_t regs;
 	regs.ax = 0x4F01;
@@ -81,21 +81,15 @@ struct vbe_mode_info *vbe_get_mode_info(uint16_t mode)
 	return ret;
 }
 
-uint32_t fb_write(struct fs_node *node, uint32_t offset, uint32_t size, uint8_t *buffer)
-{
-	log("FB WRITE!");
-	return 0;
-}
-
 void set_optimal_resolution()
 {
 	log("Switching to graphics mode");
 	log("Trying to detect available modes");
-	uint16_t *video_modes = vbe_get_modes();
+	u16 *video_modes = vbe_get_modes();
 
-	uint16_t highest = 0;
+	u16 highest = 0;
 
-	for (uint16_t *mode = video_modes; *mode != 0xFFFF; mode++) {
+	for (u16 *mode = video_modes; *mode != 0xFFFF; mode++) {
 		struct vbe_mode_info *mode_info = vbe_get_mode_info(*mode);
 
 		if (mode_info == 0 || (mode_info->attributes & 0x90) != 0x90 ||
@@ -141,8 +135,8 @@ void set_optimal_resolution()
 			271, 270, 269, // 320x200
 		};
 
-		for (size_t i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
-			mode_info = vbe_get_mode_info((uint16_t)modes[i]);
+		for (u32 i = 0; i < sizeof(modes) / sizeof(modes[0]); i++) {
+			mode_info = vbe_get_mode_info((u16)modes[i]);
 			if (mode_info == 0 || (mode_info->attributes & 0x90) != 0x90 ||
 			    (mode_info->memory_model != 4 && mode_info->memory_model != 6)) {
 				kfree(mode_info);
@@ -151,7 +145,7 @@ void set_optimal_resolution()
 
 			if ((mode_info->width > vbe_width ||
 			     (mode_info->width == vbe_width && (mode_info->bpp >> 3) > vbe_bpl))) {
-				highest = (uint16_t)modes[i];
+				highest = (u16)modes[i];
 				vbe_width = mode_info->width;
 				vbe_height = mode_info->height;
 				vbe_pitch = mode_info->pitch;
@@ -170,10 +164,10 @@ void set_optimal_resolution()
 
 	vbe_set_mode(highest);
 
-	uint32_t fb_size = vbe_width * vbe_height * vbe_bpl;
+	u32 fb_size = vbe_width * vbe_height * vbe_bpl;
 	/* cursor_buffer = kmalloc(fb_size); */
-	for (uint32_t z = 0; z < fb_size; z += PAGE_S) {
-		paging_map_user(paging_root_directory, (uint32_t)fb + z, (uint32_t)fb + z);
+	for (u32 z = 0; z < fb_size; z += PAGE_S) {
+		paging_map_user(paging_root_directory, (u32)fb + z, (u32)fb + z);
 	}
 
 	/* dev_make("fb", NULL, (write)fb_write); */
@@ -200,12 +194,12 @@ void set_optimal_resolution()
 	log("Using mode: (0x%x) %dx%dx%d", highest, vbe_width, vbe_height, vbe_bpl << 3);
 }
 
-const uint32_t default_text_color = vesa_white;
-const uint32_t default_background_color = vesa_black;
-uint32_t terminal_color[3] = { 0xab, 0xb2, 0xbf };
-uint32_t terminal_background[3] = { 0x1d, 0x1f, 0x24 };
-uint16_t terminal_x = 0;
-uint16_t terminal_y = 0;
+const u32 default_text_color = vesa_white;
+const u32 default_background_color = vesa_black;
+u32 terminal_color[3] = { 0xab, 0xb2, 0xbf };
+u32 terminal_background[3] = { 0x1d, 0x1f, 0x24 };
+u16 terminal_x = 0;
+u16 terminal_y = 0;
 int font_width;
 int font_height;
 
@@ -215,16 +209,16 @@ void vesa_set_font(int height)
 	font_height = height;
 }
 
-void vesa_set_pixel(uint16_t x, uint16_t y, const uint32_t color[3])
+void vesa_set_pixel(u16 x, u16 y, const u32 color[3])
 {
-	uint8_t pos = (uint8_t)(x * vbe_bpl + y * vbe_pitch);
+	u8 pos = (u8)(x * vbe_bpl + y * vbe_pitch);
 	char *draw = (char *)&fb[pos];
 	draw[pos] = (char)color[2];
 	draw[pos + 1] = (char)color[1];
 	draw[pos + 2] = (char)color[0];
 }
 
-void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const uint32_t color[3])
+void vesa_draw_rectangle(int x1, int y1, int x2, int y2, const u32 color[3])
 {
 	int pos1 = x1 * vbe_bpl + y1 * vbe_pitch;
 	char *draw = (char *)&fb[pos1];
@@ -251,7 +245,7 @@ void vesa_draw_char(char ch)
 	if (ch >= ' ') {
 		int pos = terminal_x * vbe_bpl + terminal_y * vbe_pitch;
 		char *draw = (char *)&fb[pos];
-		uint16_t bitmap = 0;
+		u16 bitmap = 0;
 
 		for (int cy = 0; cy <= font_height; cy++) {
 			if (font_height == 16)

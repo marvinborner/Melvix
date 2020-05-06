@@ -1,6 +1,6 @@
-#include <kernel/io/io.h>
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/system.h>
+#include <io/io.h>
+#include <interrupts/interrupts.h>
+#include <system.h>
 
 extern void irq0();
 

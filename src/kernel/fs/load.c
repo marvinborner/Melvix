@@ -1,8 +1,8 @@
-#include <kernel/fs/load.h>
-#include <kernel/system.h>
-#include <kernel/lib/stdio.h>
-#include <kernel/lib/lib.h>
-#include <kernel/fs/ext2.h>
+#include <fs/load.h>
+#include <system.h>
+#include <lib/stdio.h>
+#include <lib/lib.h>
+#include <fs/ext2.h>
 
 void load_binaries()
 {

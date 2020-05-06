@@ -1,9 +1,9 @@
 #include <stdint.h>
 #include <stddef.h>
-#include <kernel/lib/lib.h>
-#include <kernel/lib/stdlib.h>
-#include <kernel/lib/data.h>
-#include <kernel/memory/alloc.h>
+#include <lib/lib.h>
+#include <lib/stdlib.h>
+#include <lib/data.h>
+#include <memory/alloc.h>
 
 struct list *list_create()
 {
@@ -11,7 +11,7 @@ struct list *list_create()
 	return list;
 }
 
-uint32_t list_size(struct list *list)
+u32 list_size(struct list *list)
 {
 	if (!list)
 		return 0;
@@ -182,7 +182,7 @@ void listnode_destroy(struct list_node *node)
 
 // Conversion
 
-struct list *str_split(const char *str, const char *delim, uint32_t *numtokens)
+struct list *str_split(const char *str, const char *delim, u32 *numtokens)
 {
 	struct list *ret_list = list_create();
 	char *s = strdup(str);

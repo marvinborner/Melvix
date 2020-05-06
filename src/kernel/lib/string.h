@@ -1,9 +1,10 @@
 #ifndef MELVIX_STRING_H
 #define MELVIX_STRING_H
 
+#include <stdint.h>
 #include <stddef.h>
 
-size_t strlen(const char *str);
+u32 strlen(const char *str);
 
 void strcpy(char *dest, const char *orig);
 

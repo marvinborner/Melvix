@@ -1,19 +1,19 @@
 #include <stdint.h>
-#include <kernel/graphics/vesa.h>
-#include <kernel/system.h>
-#include <kernel/multiboot.h>
-#include <kernel/smbios/smbios.h>
-#include <kernel/acpi/acpi.h>
-#include <kernel/lib/lib.h>
-#include <kernel/lib/stdio.h>
+#include <graphics/vesa.h>
+#include <system.h>
+#include <multiboot.h>
+#include <smbios/smbios.h>
+#include <acpi/acpi.h>
+#include <lib/lib.h>
+#include <lib/stdio.h>
 
-void multiboot_parse(uint32_t multiboot_address)
+void multiboot_parse(u32 multiboot_address)
 {
 	struct multiboot_tag *tag;
 
 	for (tag = (struct multiboot_tag *)(multiboot_address + 8);
 	     tag->type != MULTIBOOT_TAG_TYPE_END;
-	     tag = (struct multiboot_tag *)((multiboot_uint8_t *)tag + ((tag->size + 7) & ~7))) {
+	     tag = (struct multiboot_tag *)((multiboot_u8 *)tag + ((tag->size + 7) & ~7))) {
 		switch (tag->type) {
 		case MULTIBOOT_TAG_TYPE_CMDLINE:
 			// TODO: Add cmdline config support

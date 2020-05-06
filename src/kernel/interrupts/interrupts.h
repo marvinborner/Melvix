@@ -40,13 +40,13 @@ void isrs_install();
  */
 typedef void (*irq_handler_t)(struct regs *);
 
-void isr_install_handler(size_t isr, irq_handler_t handler);
+void isr_install_handler(u32 isr, irq_handler_t handler);
 
 /**
  * Uninstall a handler by index
  * @param irq The index of the IRQ routine that should be removed
  */
-void isr_uninstall_handler(size_t isr);
+void isr_uninstall_handler(u32 isr);
 
 /**
  * Initialize the Interrupt Requests by mapping the ISRs to the correct

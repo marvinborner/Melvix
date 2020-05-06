@@ -1,28 +1,28 @@
-#include <kernel/multiboot.h>
-#include <kernel/graphics/vesa.h>
-#include <kernel/gdt/gdt.h>
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/io/io.h>
-#include <kernel/timer/timer.h>
-#include <kernel/memory/paging.h>
-#include <kernel/input/input.h>
-#include <kernel/acpi/acpi.h>
-#include <kernel/lib/lib.h>
-#include <kernel/lib/stdlib.h>
-#include <kernel/syscall/syscall.h>
-#include <kernel/pci/pci.h>
-#include <kernel/net/network.h>
-#include <kernel/fs/load.h>
-#include <kernel/fs/elf.h>
-#include <kernel/lib/stdio.h>
-#include <kernel/fs/ata.h>
-#include <kernel/fs/ext2.h>
-#include <kernel/cmos/rtc.h>
-#include <kernel/memory/alloc.h>
+#include <multiboot.h>
+#include <graphics/vesa.h>
+#include <gdt/gdt.h>
+#include <interrupts/interrupts.h>
+#include <io/io.h>
+#include <timer/timer.h>
+#include <memory/paging.h>
+#include <input/input.h>
+#include <acpi/acpi.h>
+#include <lib/lib.h>
+#include <lib/stdlib.h>
+#include <syscall/syscall.h>
+#include <pci/pci.h>
+#include <net/network.h>
+#include <fs/load.h>
+#include <fs/elf.h>
+#include <lib/stdio.h>
+#include <fs/ata.h>
+#include <fs/ext2.h>
+#include <cmos/rtc.h>
+#include <memory/alloc.h>
 
-uint32_t stack_hold;
+u32 stack_hold;
 
-void kernel_main(uint32_t magic, uint32_t multiboot_address, uint32_t esp)
+void kernel_main(u32 magic, u32 multiboot_address, u32 esp)
 {
 	stack_hold = esp;
 

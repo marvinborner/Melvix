@@ -1,7 +1,7 @@
 #ifndef MELVIX_STDDEF_H
 #define MELVIX_STDDEF_H
 
-// size_t
+// u32
 
 #define NULL ((void *)0)
 

@@ -1,7 +1,7 @@
 #include <stdint.h>
-#include <kernel/memory/alloc.h>
+#include <memory/alloc.h>
 
-uint32_t sys_malloc(uint32_t count)
+u32 sys_malloc(u32 count)
 {
-	return (uint32_t)umalloc(count);
+	return (u32)umalloc(count);
 }

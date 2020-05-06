@@ -1,10 +1,10 @@
-#include <kernel/lib/string.h>
+#include <lib/string.h>
 
 void strcpy(char *dest, const char *orig)
 {
-	size_t s_orig = strlen(orig);
+	u32 s_orig = strlen(orig);
 
-	for (size_t i = 0; i < s_orig; i++)
+	for (u32 i = 0; i < s_orig; i++)
 		dest[i] = orig[i];
 	dest[s_orig] = 0;
 }

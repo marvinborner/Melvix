@@ -14,14 +14,14 @@ struct list_node {
 struct list {
 	struct list_node *head;
 	struct list_node *tail;
-	uint32_t size;
+	u32 size;
 };
 
 #define foreach(t, list) for (struct list_node *t = list->head; t != NULL; t = t->next)
 
 struct list *list_create();
 
-uint32_t list_size(struct list *list);
+u32 list_size(struct list *list);
 
 struct list_node *list_insert_front(struct list *list, void *val);
 
@@ -55,7 +55,7 @@ struct list_node *list_get_node_by_index(struct list *list, int index);
 
 void *list_remove_by_index(struct list *list, int index);
 
-struct list *str_split(const char *str, const char *delim, uint32_t *numtokens);
+struct list *str_split(const char *str, const char *delim, u32 *numtokens);
 char *list_to_str(struct list *list, const char *delim);
 
 // Tree

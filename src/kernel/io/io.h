@@ -8,21 +8,21 @@
  * @param port The hardware port
  * @return The hardware response
  */
-uint8_t inb(uint16_t port);
+u8 inb(u16 port);
 
 /**
  * Receive from specified hardware port
  * @param port The hardware port
  * @return The hardware response
  */
-uint16_t inw(uint16_t port);
+u16 inw(u16 port);
 
 /**
  * Receive from specified hardware port
  * @param port The hardware port
  * @return The hardware response
  */
-uint32_t inl(uint16_t port);
+u32 inl(u16 port);
 
 void cli();
 void sti();
@@ -33,21 +33,21 @@ void hlt();
  * @param port The hardware port
  * @param data The data that should be sent
  */
-void outb(uint16_t port, uint8_t data);
+void outb(u16 port, u8 data);
 
 /**
  * Send data to the specified hardware port
  * @param port The hardware port
  * @param data The data that should be sent
  */
-void outw(uint16_t port, uint16_t data);
+void outw(u16 port, u16 data);
 
 /**
  * Send data to the specified hardware port
  * @param port The hardware port
  * @param data The data that should be sent
  */
-void outl(uint16_t port, uint32_t data);
+void outl(u16 port, u32 data);
 
 /**
  * Initialize the serial conenction

@@ -4,13 +4,13 @@
 #include <stdint.h>
 
 struct page {
-	uint32_t present : 1;
-	uint32_t rw : 1;
-	uint32_t user : 1;
-	uint32_t accessed : 1;
-	uint32_t dirty : 1;
-	uint32_t unused : 7;
-	uint32_t frame : 20;
+	u32 present : 1;
+	u32 rw : 1;
+	u32 user : 1;
+	u32 accessed : 1;
+	u32 dirty : 1;
+	u32 unused : 7;
+	u32 frame : 20;
 };
 
 struct page_table {
@@ -24,10 +24,10 @@ struct page_directory {
 struct page_directory *paging_root_directory;
 
 struct page_table *get_cr3();
-uint32_t get_cr0();
+u32 get_cr0();
 
 void set_cr3(struct page_directory *dir);
-void set_cr0(uint32_t new_cr0);
+void set_cr0(u32 new_cr0);
 
 void paging_disable();
 void paging_enable();
@@ -36,11 +36,11 @@ void paging_switch_directory(struct page_directory *dir);
 struct page_directory *paging_make_directory();
 struct page_table *paging_make_table();
 
-uint32_t paging_get_phys(uint32_t virt);
+u32 paging_get_phys(u32 virt);
 void paging_install();
 
-void paging_map(struct page_directory *cr3, uint32_t virt, uint32_t phys);
-void paging_map_user(struct page_directory *cr3, uint32_t virt, uint32_t phys);
+void paging_map(struct page_directory *cr3, u32 virt, u32 phys);
+void paging_map_user(struct page_directory *cr3, u32 virt, u32 phys);
 
 void paging_convert_page(struct page_directory *kdir);
 

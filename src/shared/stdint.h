@@ -1,8 +1,6 @@
 #ifndef MELVIX_STDINT_H
 #define MELVIX_STDINT_H
 
-// TODO: Use shorter fixed length integers as stdint in kernel
-
 typedef signed char s8;
 typedef unsigned char u8;
 

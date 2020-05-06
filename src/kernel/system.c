@@ -1,10 +1,10 @@
-#include <kernel/timer/timer.h>
-#include <kernel/io/io.h>
-#include <kernel/graphics/vesa.h>
-#include <kernel/lib/string.h>
-#include <kernel/lib/stdlib.h>
-#include <kernel/memory/paging.h>
-#include <kernel/lib/stdio.h>
+#include <timer/timer.h>
+#include <io/io.h>
+#include <graphics/vesa.h>
+#include <lib/string.h>
+#include <lib/stdlib.h>
+#include <memory/paging.h>
+#include <lib/stdio.h>
 #include <stdarg.h>
 
 void _debug(const char *f, const char *fmt, ...)
@@ -87,7 +87,7 @@ loop:
 	goto loop;
 }
 
-void v86(uint8_t code, regs16_t *regs)
+void v86(u8 code, regs16_t *regs)
 {
 	paging_disable();
 	int32(code, regs);

@@ -1,11 +1,11 @@
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/io/io.h>
-#include <kernel/graphics/vesa.h>
-#include <kernel/input/input.h>
-#include <kernel/lib/string.h>
-#include <kernel/memory/alloc.h>
+#include <interrupts/interrupts.h>
+#include <io/io.h>
+#include <graphics/vesa.h>
+#include <input/input.h>
+#include <lib/string.h>
+#include <memory/alloc.h>
 
-uint8_t scancode;
+u8 scancode;
 
 void keyboard_handler(struct regs *r)
 {

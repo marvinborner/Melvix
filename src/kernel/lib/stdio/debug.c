@@ -1,19 +1,19 @@
 #include <stdarg.h>
 #include <stdint.h>
-#include <kernel/lib/string.h>
-#include <kernel/lib/stdlib.h>
-#include <kernel/io/io.h>
-#include <kernel/memory/alloc.h>
+#include <lib/string.h>
+#include <lib/stdlib.h>
+#include <io/io.h>
+#include <memory/alloc.h>
 
 void serial_print(const char *data)
 {
-	for (size_t i = 0; i < strlen(data); i++)
+	for (u32 i = 0; i < strlen(data); i++)
 		serial_put(data[i]);
 }
 
 void serial_vprintf(const char *fmt, va_list args)
 {
-	uint8_t readyToFormat = 0;
+	u8 readyToFormat = 0;
 
 	char buff = 0;
 
@@ -31,7 +31,7 @@ void serial_vprintf(const char *fmt, va_list args)
 				serial_print(str);
 				readyToFormat = 0;
 			} else if (buff == 'x') {
-				char *p = htoa((uint32_t)va_arg(args, int));
+				char *p = htoa((u32)va_arg(args, int));
 				serial_print(p);
 				kfree(p);
 				readyToFormat = 0;

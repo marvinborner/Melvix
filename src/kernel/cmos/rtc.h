@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 
-uint8_t second;
-uint8_t minute;
-uint8_t hour;
-uint8_t day;
-uint8_t month;
+u8 second;
+u8 minute;
+u8 hour;
+u8 day;
+u8 month;
 unsigned int year;
 
 void read_rtc();

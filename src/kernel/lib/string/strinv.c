@@ -1,8 +1,8 @@
-#include <kernel/lib/string.h>
+#include <lib/string.h>
 
 void strinv(char *str)
 {
-	size_t s_str = strlen(str);
+	u32 s_str = strlen(str);
 
 	int iterations = (int)s_str / 2;
 	for (int i = 0; i < iterations; i++) {

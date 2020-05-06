@@ -1,4 +1,4 @@
-#include <kernel/graphics/vesa.h>
+#include <graphics/vesa.h>
 
 void putch(char c)
 {

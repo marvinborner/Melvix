@@ -8,6 +8,6 @@
  * @param frequency The frequency of the beep
  * @param ticks The duration in ticks
  */
-void beep(uint32_t frequency, uint32_t ticks);
+void beep(u32 frequency, u32 ticks);
 
 #endif

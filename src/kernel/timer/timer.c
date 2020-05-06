@@ -1,7 +1,7 @@
 #include <stdint.h>
-#include <kernel/interrupts/interrupts.h>
-#include <kernel/io/io.h>
-#include <kernel/system.h>
+#include <interrupts/interrupts.h>
+#include <io/io.h>
+#include <system.h>
 
 unsigned long timer_ticks = 0;
 
@@ -9,8 +9,8 @@ void timer_phase(int hz)
 {
 	int divisor = (int)(3579545.0 / 3.0 / (double)hz);
 	outb(0x43, 0x36); // 01 10 11 0b // CTR, RW, MODE, BCD
-	outb(0x40, (uint8_t)(divisor & 0xFF));
-	outb(0x40, (uint8_t)(divisor >> 8));
+	outb(0x40, (u8)(divisor & 0xFF));
+	outb(0x40, (u8)(divisor >> 8));
 }
 
 // Executed 1000 times per second
@@ -22,7 +22,7 @@ void timer_handler(struct regs *r)
 // "Delay" function with CPU sleep
 void timer_wait(int ticks)
 {
-	uint32_t eticks;
+	u32 eticks;
 
 	eticks = timer_ticks + ticks;
 	while (timer_ticks < eticks) {
@@ -30,7 +30,7 @@ void timer_wait(int ticks)
 	}
 }
 
-uint32_t get_time()
+u32 get_time()
 {
 	return timer_ticks;
 }
