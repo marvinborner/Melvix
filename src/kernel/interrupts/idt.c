@@ -10,7 +10,7 @@ struct idt_entry {
 } __attribute__((packed));
 
 struct idt_ptr {
-	unsigned short limit;
+	u16 limit;
 	void *base;
 } __attribute__((packed));
 
@@ -21,7 +21,7 @@ struct idt_ptr idtp;
 // Defined in idt.asm
 extern void idt_load();
 
-void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags)
+void idt_set_gate(u8 num, unsigned long base, u16 sel, u8 flags)
 {
 	// Specify the interrupt routine's base address
 	idt[num].base_low = (u16)(base & 0xFFFF);

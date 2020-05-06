@@ -80,7 +80,7 @@ struct vbe_mode_info {
  * a video mode code
  * @param mode The requested video mode code from 0x4F00 call
  */
-void vbe_set_mode(unsigned short mode);
+void vbe_set_mode(u16 mode);
 
 /**
  * Find the highest resolution using 0x4F00 and call

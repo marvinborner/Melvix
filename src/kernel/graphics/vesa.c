@@ -13,7 +13,7 @@ void vbe_error()
 	halt_loop();
 }
 
-void vbe_set_mode(unsigned short mode)
+void vbe_set_mode(u16 mode)
 {
 	regs16_t regs;
 	regs.ax = 0x4F02;
@@ -109,7 +109,7 @@ void set_optimal_resolution()
 			vbe_height = mode_info->height;
 			vbe_pitch = mode_info->pitch;
 			vbe_bpl = mode_info->bpp >> 3;
-			fb = (unsigned char *)mode_info->framebuffer;
+			fb = (u8 *)mode_info->framebuffer;
 		}
 		kfree(mode_info);
 	}
@@ -150,7 +150,7 @@ void set_optimal_resolution()
 				vbe_height = mode_info->height;
 				vbe_pitch = mode_info->pitch;
 				vbe_bpl = mode_info->bpp >> 3;
-				fb = (unsigned char *)mode_info->framebuffer;
+				fb = (u8 *)mode_info->framebuffer;
 			}
 			kfree(mode_info);
 		}
@@ -164,11 +164,11 @@ void set_optimal_resolution()
 
 	vbe_set_mode(highest);
 
-	u32 fb_size = vbe_width * vbe_height * vbe_bpl;
+	/* u32 fb_size = vbe_width * vbe_height * vbe_bpl; */
 	/* cursor_buffer = kmalloc(fb_size); */
-	for (u32 z = 0; z < fb_size; z += PAGE_S) {
-		paging_map_user(paging_root_directory, (u32)fb + z, (u32)fb + z);
-	}
+	/* for (u32 z = 0; z < fb_size; z += PAGE_S) { */
+	/* 	paging_map_user(paging_root_directory, (u32)fb + z, (u32)fb + z); */
+	/* } */
 
 	/* dev_make("fb", NULL, (write)fb_write); */
 	/* struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node)); */

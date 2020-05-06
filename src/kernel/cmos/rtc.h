@@ -8,7 +8,7 @@ u8 minute;
 u8 hour;
 u8 day;
 u8 month;
-unsigned int year;
+u32 year;
 
 void read_rtc();
 

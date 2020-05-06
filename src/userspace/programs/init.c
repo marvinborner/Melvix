@@ -5,17 +5,18 @@
 #include <unistd.h>
 #include <gui.h>
 
-void test(u8 *data)
-{
-	syscall_halt();
-}
-
 void main()
 {
-	/* gui_init(); */
-	/* gui_screen_clear(); */
-	//printf("Initializing userspace...\n");
-	syscall_map(MAP_KEYBOARD, (u8 *)&test);
+	// TODO: Fix page fault when mallocing
+	printf("Initializing userspace...\n");
+
+	// TODO: Implement wait syscall
+	int x;
+	int f = fork();
+	if (f == 0)
+		; //wait(&x);
+	else
+		exec("/bin/sh");
 
 	//syscall_exec("/bin/sh");
 

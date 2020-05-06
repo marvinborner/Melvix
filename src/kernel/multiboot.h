@@ -18,6 +18,8 @@
  *  IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <stdint.h>
+
 #ifndef MULTIBOOT_HEADER
 #define MULTIBOOT_HEADER 1
 
@@ -88,9 +90,9 @@
 
 #ifndef ASM_FILE
 
-typedef unsigned char multiboot_u8;
-typedef unsigned short multiboot_u16;
-typedef unsigned int multiboot_u32;
+typedef u8 multiboot_u8;
+typedef u16 multiboot_u16;
+typedef u32 multiboot_u32;
 typedef unsigned long long multiboot_u64;
 
 struct multiboot_header {

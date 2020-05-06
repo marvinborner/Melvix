@@ -16,16 +16,16 @@ void idt_install();
  * @param sel The kernel code segment (0x08)
  * @param flags The IDT access byte entry (P DPL 01110)
  */
-void idt_set_gate(unsigned char num, unsigned long base, unsigned short sel, unsigned char flags);
+void idt_set_gate(u8 num, unsigned long base, u16 sel, u8 flags);
 
 /**
  * Registers that get passed into an IRQ handler
  */
 struct regs {
-	unsigned int gs, fs, es, ds;
-	unsigned int edi, esi, ebp, esp, ebx, edx, ecx, eax;
-	unsigned int int_no, err_code;
-	unsigned int eip, cs, eflags, useresp, ss;
+	u32 gs, fs, es, ds;
+	u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
+	u32 int_no, err_code;
+	u32 eip, cs, eflags, useresp, ss;
 };
 
 /**

@@ -5,16 +5,16 @@
 #include <memory/alloc.h>
 
 struct gdt_entry {
-	unsigned short limit_low;
-	unsigned short base_low;
-	unsigned char base_middle;
-	unsigned char access;
-	unsigned char granularity;
-	unsigned char base_high;
+	u16 limit_low;
+	u16 base_low;
+	u8 base_middle;
+	u8 access;
+	u8 granularity;
+	u8 base_high;
 } __attribute__((packed));
 
 struct gdt_ptr {
-	unsigned short limit;
+	u16 limit;
 	void *base;
 } __attribute__((packed));
 
@@ -58,13 +58,13 @@ extern void gdt_flush();
 void gdt_set_gate(s32 num, u32 base, u32 limit, u8 access, u8 gran)
 {
 	// Set descriptor base address
-	gdt[num].base_low = (unsigned short)(base & 0xFFFF);
-	gdt[num].base_middle = (unsigned char)((base >> 16) & 0xFF);
-	gdt[num].base_high = (unsigned char)((base >> 24) & 0xFF);
+	gdt[num].base_low = (u16)(base & 0xFFFF);
+	gdt[num].base_middle = (u8)((base >> 16) & 0xFF);
+	gdt[num].base_high = (u8)((base >> 24) & 0xFF);
 
 	// Set descriptor limits
-	gdt[num].limit_low = (unsigned short)(limit & 0xFFFF);
-	gdt[num].granularity = (unsigned char)((limit >> 16) & 0x0F);
+	gdt[num].limit_low = (u16)(limit & 0xFFFF);
+	gdt[num].granularity = (u8)((limit >> 16) & 0x0F);
 
 	// Set granularity and access flags
 	gdt[num].granularity |= (gran & 0xF0);

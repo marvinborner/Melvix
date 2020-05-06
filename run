@@ -186,8 +186,7 @@ make_font() {
 }
 
 make_clean() {
-	#rm -rf ./build ./iso
-	rm -rf ./iso ./build/*.img ./build/*.o ./build/*.bin
+	rm -rf ./iso ./build/
 }
 
 if [ "${mode}" = "cross" ]; then
@@ -200,7 +199,6 @@ elif [ "${mode}" = "clean" ]; then
 	make_clean
 elif [ "${mode}" = "test" ]; then
 	make_cross
-	make_clean
 	make_build
 	make_test
 elif [ "${mode}" = "again" ]; then
@@ -214,7 +212,6 @@ elif [ "${mode}" = "image_debug" ]; then
 	make_image_debug
 elif [ "${mode}" = "image" ]; then
 	make_cross
-	make_clean
 	make_build
 	make_image
 elif [ "${mode}" = "sync" ]; then
@@ -230,7 +227,6 @@ elif [ "${mode}" = "help" ]; then
 	echo "./run {cross | build | clean | test | debug | image | sync | tidy | font} [-y]"
 else # TODO: Prevent code duplication in build script via functions?
 	make_cross
-	make_clean
 	make_build
 	make_test
 fi

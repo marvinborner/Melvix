@@ -60,7 +60,7 @@ void mouse_handler(struct regs *r)
 
 void mouse_wait(u8 a_type)
 {
-	unsigned int time_out = 100000;
+	u32 time_out = 100000;
 	if (a_type == 0) {
 		while (time_out--)
 			if ((inb(0x64) & 1) == 1)

@@ -24,8 +24,8 @@ void *memset(void *dest, char val, u32 count)
 
 int memcmp(const void *a_ptr, const void *b_ptr, u32 size)
 {
-	const unsigned char *a = (const unsigned char *)a_ptr;
-	const unsigned char *b = (const unsigned char *)b_ptr;
+	const u8 *a = (const u8 *)a_ptr;
+	const u8 *b = (const u8 *)b_ptr;
 	for (u32 i = 0; i < size; i++) {
 		if (a[i] < b[i])
 			return -1;

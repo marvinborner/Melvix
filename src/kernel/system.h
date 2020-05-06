@@ -9,8 +9,8 @@
  * The ASM registers as packed structure
  */
 typedef struct __attribute__((packed)) {
-	unsigned short di, si, bp, sp, bx, dx, cx, ax;
-	unsigned short gs, fs, es, ds, eflags;
+	u16 di, si, bp, sp, bx, dx, cx, ax;
+	u16 gs, fs, es, ds, eflags;
 } regs16_t;
 
 /**
@@ -18,7 +18,7 @@ typedef struct __attribute__((packed)) {
  * @param intnum The interrupt number (e.g. 0x10)
  * @param regs The ASM registers
  */
-extern void int32(unsigned char intnum, regs16_t *regs);
+extern void int32(u8 intnum, regs16_t *regs);
 
 /**
  * Display a general log message
