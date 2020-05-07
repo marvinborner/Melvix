@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <syscall.h>
+#include <unistd.h>
 
 // This process only exists because it can't crash
 void main()

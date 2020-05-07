@@ -1,12 +1,12 @@
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <fs/ata.h>
 #include <fs/ext2.h>
-#include <system.h>
-#include <memory/alloc.h>
 #include <lib/lib.h>
 #include <lib/stdlib.h>
+#include <memory/alloc.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <system.h>
 
 static struct ext2_superblock superblock;
 static struct bgd *bgdt;

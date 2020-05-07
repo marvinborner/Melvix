@@ -1,9 +1,9 @@
+#include <common.h>
+#include <gui.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <common.h>
 #include <syscall.h>
 #include <unistd.h>
-#include <gui.h>
 
 void test(u8 *data)
 {
@@ -21,7 +21,7 @@ void main()
 	printf("Initializing userspace...\n");
 
 	// TODO: Find out, why init gets PID 1 and stops
-	syscall_map(MAP_KEYBOARD, (u8)&test);
+	syscall_map(MAP_KEYBOARD, (u32)&test);
 
 	// TODO: Fix occasional race conditions with cli/sti
 	// TODO: Fix scheduler turning off randomly..

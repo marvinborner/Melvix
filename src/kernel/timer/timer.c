@@ -1,6 +1,6 @@
-#include <stdint.h>
 #include <interrupts/interrupts.h>
 #include <io/io.h>
+#include <stdint.h>
 #include <system.h>
 
 unsigned long timer_ticks = 0;

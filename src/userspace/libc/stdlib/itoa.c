@@ -1,6 +1,6 @@
+#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <math.h>
 #include <string.h>
 
 static const char ITOA_TABLE[] = "0123456789";

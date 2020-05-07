@@ -1,11 +1,11 @@
-#include <timer/timer.h>
-#include <io/io.h>
 #include <graphics/vesa.h>
-#include <lib/string.h>
-#include <lib/stdlib.h>
-#include <memory/paging.h>
+#include <io/io.h>
 #include <lib/stdio.h>
+#include <lib/stdlib.h>
+#include <lib/string.h>
+#include <memory/paging.h>
 #include <stdarg.h>
+#include <timer/timer.h>
 
 void _debug(const char *f, const char *fmt, ...)
 {

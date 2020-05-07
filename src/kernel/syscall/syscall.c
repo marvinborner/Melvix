@@ -1,10 +1,10 @@
-#include <stdint.h>
 #include <common.h>
-#include <syscall/syscall.h>
 #include <interrupts/interrupts.h>
-#include <system.h>
-#include <lib/stdio.h>
 #include <io/io.h>
+#include <lib/stdio.h>
+#include <stdint.h>
+#include <syscall/syscall.h>
+#include <system.h>
 #include <tasks/process.h>
 
 typedef u32 (*syscall_func)(u32, ...);

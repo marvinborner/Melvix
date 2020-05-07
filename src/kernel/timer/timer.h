@@ -1,8 +1,8 @@
 #ifndef MELVIX_TIMER_H
 #define MELVIX_TIMER_H
 
-#include <stdint.h>
 #include <interrupts/interrupts.h>
+#include <stdint.h>
 
 void timer_handler(struct regs *r);
 

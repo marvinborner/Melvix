@@ -1,9 +1,9 @@
 #ifndef MELVIX_USERSPACE_H
 #define MELVIX_USERSPACE_H
 
+#include <interrupts/interrupts.h>
 #include <stdint.h>
 #include <tasks/process.h>
-#include <interrupts/interrupts.h>
 
 u32 spawn_child(struct process *child);
 

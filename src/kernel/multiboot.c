@@ -1,11 +1,11 @@
-#include <stdint.h>
-#include <graphics/vesa.h>
-#include <system.h>
-#include <multiboot.h>
-#include <smbios/smbios.h>
 #include <acpi/acpi.h>
+#include <graphics/vesa.h>
 #include <lib/lib.h>
 #include <lib/stdio.h>
+#include <multiboot.h>
+#include <smbios/smbios.h>
+#include <stdint.h>
+#include <system.h>
 
 void multiboot_parse(u32 multiboot_address)
 {

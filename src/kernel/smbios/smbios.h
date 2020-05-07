@@ -1,8 +1,8 @@
 #ifndef MELVIX_SMBIOS_H
 #define MELVIX_SMBIOS_H
 
-#include <stdint.h>
 #include <multiboot.h>
+#include <stdint.h>
 
 struct smbios_0 {
 	char *vendor;

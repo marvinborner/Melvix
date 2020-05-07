@@ -1,5 +1,5 @@
-#include <io/io.h>
 #include <interrupts/interrupts.h>
+#include <io/io.h>
 #include <system.h>
 
 extern void irq0();

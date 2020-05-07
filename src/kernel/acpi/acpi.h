@@ -1,8 +1,8 @@
 #ifndef MELVIX_ACPI_H
 #define MELVIX_ACPI_H
 
-#include <stdint.h>
 #include <multiboot.h>
+#include <stdint.h>
 
 /**
  * Initialize the ACP interface

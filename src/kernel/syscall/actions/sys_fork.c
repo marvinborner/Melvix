@@ -1,10 +1,10 @@
-#include <stdint.h>
 #include <interrupts/interrupts.h>
-#include <memory/paging.h>
-#include <tasks/process.h>
-#include <lib/lib.h>
-#include <system.h>
 #include <io/io.h>
+#include <lib/lib.h>
+#include <memory/paging.h>
+#include <stdint.h>
+#include <system.h>
+#include <tasks/process.h>
 
 u32 sys_fork(struct regs *r)
 {

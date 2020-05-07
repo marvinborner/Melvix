@@ -1,9 +1,9 @@
-#include <stdint.h>
-#include <stddef.h>
+#include <lib/data.h>
 #include <lib/lib.h>
 #include <lib/stdlib.h>
-#include <lib/data.h>
 #include <memory/alloc.h>
+#include <stddef.h>
+#include <stdint.h>
 
 struct list *list_create()
 {

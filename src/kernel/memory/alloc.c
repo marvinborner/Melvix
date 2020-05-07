@@ -1,9 +1,9 @@
+#include <lib/lib.h>
+#include <memory/alloc.h>
+#include <memory/paging.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <memory/paging.h>
-#include <memory/alloc.h>
 #include <system.h>
-#include <lib/lib.h>
 
 extern u32 end;
 u32 placement_address;

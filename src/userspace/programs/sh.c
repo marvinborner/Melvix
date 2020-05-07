@@ -1,10 +1,10 @@
+#include <common.h>
+#include <gui.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stddef.h>
-#include <common.h>
-#include <unistd.h>
 #include <syscall.h>
-#include <gui.h>
+#include <unistd.h>
 
 void main()
 {

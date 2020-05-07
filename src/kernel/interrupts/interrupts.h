@@ -1,8 +1,8 @@
 #ifndef MELVIX_INTERRUPTS_H
 #define MELVIX_INTERRUPTS_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 /**
  * Initialize the Interrupt Descriptor Table with 256 entries

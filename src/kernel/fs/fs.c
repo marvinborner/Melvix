@@ -1,7 +1,7 @@
-#include <stdint.h>
 #include <fs/ext2.h>
-#include <system.h>
 #include <memory/alloc.h>
+#include <stdint.h>
+#include <system.h>
 
 u32 get_file_size(char *path)
 {

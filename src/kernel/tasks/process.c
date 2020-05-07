@@ -1,15 +1,15 @@
-#include <stdint.h>
+#include <fs/elf.h>
+#include <interrupts/interrupts.h>
+#include <io/io.h>
+#include <lib/lib.h>
+#include <memory/alloc.h>
+#include <memory/paging.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <system.h>
 #include <tasks/process.h>
 #include <tasks/userspace.h>
-#include <io/io.h>
-#include <interrupts/interrupts.h>
-#include <system.h>
-#include <lib/lib.h>
-#include <memory/paging.h>
-#include <memory/alloc.h>
 #include <timer/timer.h>
-#include <fs/elf.h>
 
 u32 pid = 0;
 struct process *root;

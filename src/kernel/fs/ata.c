@@ -1,9 +1,9 @@
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include <fs/ata.h>
-#include <system.h>
 #include <io/io.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <system.h>
 
 static u16 sel_base_port = 0;
 static u8 sel_master_or_slave = 0;

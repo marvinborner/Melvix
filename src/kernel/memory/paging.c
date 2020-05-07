@@ -1,12 +1,12 @@
-#include <stdint.h>
-#include <memory/paging.h>
-#include <memory/alloc.h>
-#include <system.h>
-#include <lib/lib.h>
-#include <io/io.h>
 #include <acpi/acpi.h>
-#include <tasks/process.h>
 #include <interrupts/interrupts.h>
+#include <io/io.h>
+#include <lib/lib.h>
+#include <memory/alloc.h>
+#include <memory/paging.h>
+#include <stdint.h>
+#include <system.h>
+#include <tasks/process.h>
 
 struct page_directory *paging_current_directory = NULL;
 struct page_directory *paging_root_directory = NULL;

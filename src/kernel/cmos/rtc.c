@@ -1,7 +1,7 @@
-#include <system.h>
-#include <io/io.h>
 #include <acpi/acpi.h>
+#include <io/io.h>
 #include <lib/stdio.h>
+#include <system.h>
 
 u8 second;
 u8 minute;

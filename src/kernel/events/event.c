@@ -1,6 +1,6 @@
-#include <stdint.h>
-#include <stddef.h>
 #include <common.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <system.h>
 
 typedef u32 (*event_func)(u8 *);

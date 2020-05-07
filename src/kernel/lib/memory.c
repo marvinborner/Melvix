@@ -1,9 +1,9 @@
-#include <stddef.h>
-#include <stdint.h>
-#include <system.h>
 #include <lib/stdio.h>
 #include <memory/paging.h>
 #include <multiboot.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <system.h>
 
 void *memcpy(void *dest, const void *src, u32 count)
 {

@@ -1,7 +1,7 @@
+#include <gui.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <syscall.h>
-#include <gui.h>
 
 struct pointers *pointers;
 

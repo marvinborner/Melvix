@@ -1,8 +1,8 @@
-#include <stdint.h>
 #include <gdt/gdt.h>
-#include <system.h>
 #include <lib/lib.h>
 #include <memory/alloc.h>
+#include <stdint.h>
+#include <system.h>
 
 struct gdt_entry {
 	u16 limit_low;

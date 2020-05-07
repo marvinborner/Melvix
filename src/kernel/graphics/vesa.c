@@ -1,10 +1,10 @@
-#include <graphics/vesa.h>
 #include <fs/load.h>
-#include <system.h>
-#include <lib/stdlib.h>
+#include <graphics/vesa.h>
 #include <lib/stdio.h>
+#include <lib/stdlib.h>
 #include <memory/alloc.h>
 #include <memory/paging.h>
+#include <system.h>
 
 void vbe_error()
 {

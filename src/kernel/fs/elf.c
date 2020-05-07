@@ -1,13 +1,14 @@
-#include <stdint.h>
-#include <stddef.h>
-#include <system.h>
 #include <fs/elf.h>
-#include <lib/stdio.h>
-#include <memory/alloc.h>
-#include <lib/lib.h>
-#include <memory/paging.h>
 #include <fs/ext2.h>
 #include <gdt/gdt.h>
+#include <lib/lib.h>
+#include <lib/stdio.h>
+#include <lib/stdlib.h>
+#include <memory/alloc.h>
+#include <memory/paging.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <system.h>
 #include <tasks/process.h>
 
 int is_elf(struct elf_header *header)

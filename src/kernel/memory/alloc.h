@@ -1,9 +1,9 @@
 #ifndef MELVIX_ALLOC_H
 #define MELVIX_ALLOC_H
 
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #define KHEAP_MAGIC 0x04206969
 #define KHEAP_MAGIC2 0xDEADBEEF

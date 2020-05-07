@@ -1,8 +1,8 @@
 #include <lib/math.h>
-#include <stdint.h>
 #include <lib/string.h>
 #include <memory/alloc.h>
 #include <memory/paging.h>
+#include <stdint.h>
 
 static const char ITOA_TABLE[] = "0123456789";
 

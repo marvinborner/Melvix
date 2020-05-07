@@ -1,10 +1,10 @@
 #include <common.h>
 #include <events/event.h>
-#include <memory/alloc.h>
+#include <graphics/vesa.h>
 #include <interrupts/interrupts.h>
 #include <io/io.h>
-#include <graphics/vesa.h>
 #include <lib/stdio.h>
+#include <memory/alloc.h>
 
 char mouse_cycle = 0;
 char mouse_byte[3];

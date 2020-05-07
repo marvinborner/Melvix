@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include <events/event.h>
+#include <stdint.h>
 
 u32 sys_map(u32 id, u8 *function)
 {

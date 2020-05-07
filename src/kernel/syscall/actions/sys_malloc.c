@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include <memory/alloc.h>
+#include <stdint.h>
 
 u32 sys_malloc(u32 count)
 {

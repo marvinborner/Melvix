@@ -1,9 +1,9 @@
 #ifndef MELVIX_PROCESS_H
 #define MELVIX_PROCESS_H
 
-#include <stdint.h>
-#include <memory/paging.h>
 #include <interrupts/interrupts.h>
+#include <memory/paging.h>
+#include <stdint.h>
 
 struct mmap {
 	u32 text;

@@ -1,8 +1,8 @@
 #ifndef MELVIX_STRING_H
 #define MELVIX_STRING_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 u32 strlen(const char *str);
 

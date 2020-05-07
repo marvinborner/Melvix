@@ -1,6 +1,6 @@
 #include <lib/math.h>
-#include <stddef.h>
 #include <lib/string.h>
+#include <stddef.h>
 
 int htoi(char *str)
 {

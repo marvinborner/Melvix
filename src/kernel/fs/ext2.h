@@ -1,9 +1,9 @@
 #ifndef MELVIX_EXT2_H
 #define MELVIX_EXT2_H
 
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #define ROOT_INODE 2
 

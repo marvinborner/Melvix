@@ -1,5 +1,5 @@
-#include <stdarg.h>
 #include <lib/stdio.h>
+#include <stdarg.h>
 
 void printf(const char *fmt, ...)
 {

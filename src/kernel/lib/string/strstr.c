@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include <lib/stdlib.h>
+#include <stdint.h>
 
 char *strstr(const char *in, const char *str)
 {

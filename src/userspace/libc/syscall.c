@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include <common.h>
+#include <stdint.h>
 #include <syscall.h>
 
 /**

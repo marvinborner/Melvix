@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include <gui.h>
+#include <stdint.h>
 
 void gui_convert_color(u32 *color_array, u32 color)
 {

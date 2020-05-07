@@ -1,9 +1,9 @@
+#include <lib/stdio.h>
+#include <lib/stdlib.h>
+#include <lib/string.h>
+#include <memory/alloc.h>
 #include <stdarg.h>
 #include <stdint.h>
-#include <lib/stdio.h>
-#include <lib/string.h>
-#include <lib/stdlib.h>
-#include <memory/alloc.h>
 
 void _puts(const char *data)
 {

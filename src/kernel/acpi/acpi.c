@@ -1,16 +1,16 @@
 // Important specification: https://uefi.org/sites/default/files/resources/ACPI_6_2.pdf
 // HPET: https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/software-developers-hpet-spec-1-0a.pdf
 
-#include <stddef.h>
-#include <system.h>
-#include <multiboot.h>
+#include <acpi/acpi.h>
 #include <io/io.h>
 #include <lib/lib.h>
-#include <lib/stdlib.h>
 #include <lib/stdio.h>
-#include <acpi/acpi.h>
-#include <memory/paging.h>
+#include <lib/stdlib.h>
 #include <memory/alloc.h>
+#include <memory/paging.h>
+#include <multiboot.h>
+#include <stddef.h>
+#include <system.h>
 
 struct rsdt *rsdt;
 struct fadt *fadt;

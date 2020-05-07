@@ -1,9 +1,9 @@
+#include <io/io.h>
+#include <lib/stdlib.h>
+#include <lib/string.h>
+#include <memory/alloc.h>
 #include <stdarg.h>
 #include <stdint.h>
-#include <lib/string.h>
-#include <lib/stdlib.h>
-#include <io/io.h>
-#include <memory/alloc.h>
 
 void serial_print(const char *data)
 {

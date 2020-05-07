@@ -1,9 +1,9 @@
 #ifndef MELVIX_LIB_H
 #define MELVIX_LIB_H
 
+#include <multiboot.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <multiboot.h>
 
 /**
  * Copy n data from src to dest

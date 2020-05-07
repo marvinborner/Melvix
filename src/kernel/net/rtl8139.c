@@ -1,9 +1,9 @@
-#include <io/io.h>
-#include <pci/pci.h>
-#include <system.h>
 #include <interrupts/interrupts.h>
+#include <io/io.h>
 #include <lib/stdio.h>
 #include <memory/alloc.h>
+#include <pci/pci.h>
+#include <system.h>
 
 int rtl_irq = 0;
 u8 mac[6];

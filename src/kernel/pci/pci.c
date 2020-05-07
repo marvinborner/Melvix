@@ -1,8 +1,8 @@
-#include <stdint.h>
-#include <system.h>
-#include <pci/pci.h>
 #include <io/io.h>
 #include <lib/lib.h>
+#include <pci/pci.h>
+#include <stdint.h>
+#include <system.h>
 
 void pci_write_field(u32 device, int field, u32 value)
 {

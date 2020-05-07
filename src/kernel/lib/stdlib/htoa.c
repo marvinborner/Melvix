@@ -1,6 +1,6 @@
-#include <stdint.h>
 #include <lib/string.h>
 #include <memory/alloc.h>
+#include <stdint.h>
 
 static const char HTOA_TABLE[] = "0123456789ABCDEF";
 

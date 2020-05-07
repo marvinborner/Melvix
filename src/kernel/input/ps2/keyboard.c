@@ -1,9 +1,9 @@
 #include <common.h>
 #include <events/event.h>
-#include <interrupts/interrupts.h>
-#include <io/io.h>
 #include <graphics/vesa.h>
 #include <input/input.h>
+#include <interrupts/interrupts.h>
+#include <io/io.h>
 #include <lib/string.h>
 #include <memory/alloc.h>
 

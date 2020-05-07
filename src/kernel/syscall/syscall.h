@@ -1,8 +1,8 @@
 #ifndef MELVIX_SYSCALL_H
 #define MELVIX_SYSCALL_H
 
-#include <stdint.h>
 #include <interrupts/interrupts.h>
+#include <stdint.h>
 
 extern void idt_syscall();
 

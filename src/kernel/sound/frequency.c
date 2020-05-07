@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include <io/io.h>
+#include <stdint.h>
 #include <timer/timer.h>
 
 void play_sound(u32 frequency)

@@ -1,7 +1,7 @@
+#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <math.h>
 
 int atoi(char *str)
 {

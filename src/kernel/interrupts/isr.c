@@ -1,12 +1,12 @@
-#include <stdint.h>
-#include <interrupts/interrupts.h>
-#include <system.h>
-#include <lib/string.h>
-#include <lib/stdio.h>
-#include <lib/lib.h>
 #include <graphics/vesa.h>
-#include <tasks/process.h>
+#include <interrupts/interrupts.h>
 #include <io/io.h>
+#include <lib/lib.h>
+#include <lib/stdio.h>
+#include <lib/string.h>
+#include <stdint.h>
+#include <system.h>
+#include <tasks/process.h>
 
 // Install ISRs in IDT
 void isrs_install()
