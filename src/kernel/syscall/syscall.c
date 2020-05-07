@@ -40,7 +40,6 @@ void syscall_handler(struct regs *r)
 		r->eax = location(r);
 	else
 		r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
-
 	sti();
 }
 

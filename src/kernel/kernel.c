@@ -68,7 +68,7 @@ void kernel_main(u32 magic, u32 multiboot_address, u32 esp)
 	log("Content of /etc/test: %s", read_file("/etc/test"));
 
 	syscalls_install();
-	kexec("/bin/init");
+	kexec("/bin/root");
 
 	halt_loop();
 	// asm ("div %0" :: "r"(0)); // Exception testing x/0

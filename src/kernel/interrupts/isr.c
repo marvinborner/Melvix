@@ -106,11 +106,12 @@ const char *exception_messages[32] = { "Division By Zero",
 // Master exception/interrupt/fault handler - halt via panic
 void fault_handler(struct regs *r)
 {
+	cli();
 	irq_handler_t handler = isr_routines[r->int_no];
 	if (handler) {
 		handler(r);
+		sti();
 	} else {
-		cli();
 		u32 faulting_address;
 		asm("mov %%cr2, %0" : "=r"(faulting_address));
 
@@ -118,20 +119,19 @@ void fault_handler(struct regs *r)
 		    r->eip, r->eax, r->ebx, r->ecx, r->edx, r->esp, faulting_address, r->eflags,
 		    r->err_code, r->int_no, exception_messages[r->int_no]);
 
-		char *message;
+		char message[128];
 		if (r->int_no <= 32) {
-			message = (char *)exception_messages[r->int_no];
+			strcpy(message, (char *)exception_messages[r->int_no]);
 			strcat(message, " Exception");
 		} else {
-			message = "Unknown Exception";
+			strcpy(message, "Unknown Exception");
 		}
 
 		if (current_proc != NULL) {
+			warn("%s: Halting process %d", message, current_proc->pid);
 			memcpy(&current_proc->registers, r, sizeof(struct regs));
 			process_suspend(current_proc->pid);
-			warn("%s: Halting process %d", message, current_proc->pid);
 			scheduler(r);
-			sti();
 		} else {
 			if (faulting_address != (u32)fb) {
 				panic("Page fault before multitasking started!");

@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <tasks/process.h>
 #include <tasks/userspace.h>
+#include <io/io.h>
 #include <interrupts/interrupts.h>
 #include <system.h>
 #include <lib/lib.h>
@@ -20,6 +21,7 @@ extern u32 stack_hold;
 
 void scheduler(struct regs *regs)
 {
+	cli();
 	memcpy(&current_proc->registers, regs, sizeof(struct regs));
 
 	timer_handler(regs);
@@ -29,7 +31,7 @@ void scheduler(struct regs *regs)
 		current_proc = root;
 	}
 
-	//debug("Task switch to %s", current_proc->name);
+	debug("Task switch to %s with pid %d", current_proc->name, current_proc->pid);
 
 	while (current_proc->state == PROC_ASLEEP) {
 		current_proc = current_proc->next;
@@ -39,6 +41,7 @@ void scheduler(struct regs *regs)
 
 	memcpy(regs, &current_proc->registers, sizeof(struct regs));
 	paging_switch_directory(current_proc->cr3);
+	sti();
 }
 
 void process_init(struct process *proc)
@@ -125,7 +128,7 @@ void process_suspend(u32 pid)
 	struct process *proc = process_from_pid(pid);
 
 	if (proc == PID_NOT_FOUND) {
-		warn("couldn't find PID for suspension");
+		warn("Couldn't find PID for suspension");
 		return;
 	}
 
