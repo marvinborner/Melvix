@@ -31,12 +31,15 @@ void scheduler(struct regs *regs)
 		current_proc = root;
 	}
 
+	debug("Max pid: %d", pid);
 	debug("Task switch to %s with pid %d", current_proc->name, current_proc->pid);
 
 	while (current_proc->state == PROC_ASLEEP) {
 		current_proc = current_proc->next;
-		if (current_proc == NULL)
+		if (current_proc == NULL) {
+			warn("No next process!");
 			current_proc = root;
+		}
 	}
 
 	memcpy(regs, &current_proc->registers, sizeof(struct regs));
@@ -46,6 +49,8 @@ void scheduler(struct regs *regs)
 
 void process_init(struct process *proc)
 {
+	log("Initializing process %d", pid + 1);
+	cli();
 	root = proc;
 	root->pid = pid++;
 	root->next = NULL;
@@ -59,6 +64,7 @@ void process_init(struct process *proc)
 
 void process_kill(u32 pid)
 {
+	debug("Killing process %d", pid);
 	struct process *proc = process_from_pid(pid);
 
 	if (proc == PID_NOT_FOUND)
@@ -76,6 +82,7 @@ void process_kill(u32 pid)
 
 u32 process_spawn(struct process *process)
 {
+	debug("Spawning process %d", process->pid);
 	process->next = root->next;
 	root->next = process;
 	process->state = PROC_RUNNING;
@@ -125,6 +132,7 @@ u32 process_wait_pid(u32 pid, u32 *status)
 
 void process_suspend(u32 pid)
 {
+	debug("Suspending process %d", pid);
 	struct process *proc = process_from_pid(pid);
 
 	if (proc == PID_NOT_FOUND) {
@@ -137,6 +145,7 @@ void process_suspend(u32 pid)
 
 void process_wake(u32 pid)
 {
+	debug("Waking process %d", pid);
 	struct process *proc = process_from_pid(pid);
 
 	if (proc == PID_NOT_FOUND)
@@ -147,13 +156,13 @@ void process_wake(u32 pid)
 
 u32 process_child(struct process *child, u32 pid)
 {
+	debug("Spawning child process %d", pid);
 	process_suspend(pid);
 
 	struct process *parent = process_from_pid(pid);
 
-	if (parent == PID_NOT_FOUND) {
+	if (parent == PID_NOT_FOUND)
 		panic("Child process spawned without parent");
-	}
 
 	child->parent = parent;
 
@@ -192,6 +201,7 @@ struct process *process_from_pid(u32 pid)
 
 struct process *process_make_new()
 {
+	debug("Making new process %d", pid);
 	struct process *proc = (struct process *)kmalloc_a(sizeof(struct process));
 	proc->registers.cs = 0x1B;
 	proc->registers.ds = 0x23;
@@ -210,6 +220,7 @@ struct process *process_make_new()
 
 u32 kexec(char *path)
 {
+	debug("Starting kernel process %s", path);
 	struct process *proc = elf_load(path);
 	if (proc == NULL)
 		return -1;
@@ -224,6 +235,7 @@ u32 kexec(char *path)
 
 u32 uexec(char *path)
 {
+	debug("Starting user process %s", path);
 	process_suspend(current_proc->pid);
 
 	struct process *proc = elf_load(path);

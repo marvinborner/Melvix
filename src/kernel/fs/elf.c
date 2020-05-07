@@ -40,7 +40,7 @@ struct process *elf_load(char *path)
 	}
 
 	struct process *proc = process_make_new();
-	proc->name = path;
+	strcpy(proc->name, path);
 	proc->registers.eip = header->entry;
 
 	paging_switch_directory(proc->cr3);
@@ -54,8 +54,7 @@ struct process *elf_load(char *path)
 		switch (program_header->type) {
 		case 0:
 			break;
-		case 1:
-			debug("Allocating space for ELF binary section...");
+		case 1: {
 			u32 loc = (u32)kmalloc_a(PAGE_S);
 			paging_map_user(proc->cr3, loc, program_header->vaddr);
 			memcpy((void *)program_header->vaddr,
@@ -64,6 +63,7 @@ struct process *elf_load(char *path)
 			if (program_header->filesz > PAGE_S)
 				panic("ELF binary section too large");
 			break;
+		}
 		default:
 			warn("Unknown header type");
 		}
