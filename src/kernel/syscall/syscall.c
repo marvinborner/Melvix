@@ -15,6 +15,7 @@ u32 (*syscalls[])() = { [SYS_HALT] = (u32(*)())halt_loop, // DEBUG!
 			[SYS_READ] = sys_read,
 			[SYS_WRITE] = sys_write,
 			[SYS_EXEC] = sys_exec,
+			[SYS_WAIT] = sys_wait,
 			[SYS_GET_PID] = sys_get_pid,
 			[SYS_MALLOC] = sys_malloc,
 			[SYS_FREE] = sys_free,

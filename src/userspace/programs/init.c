@@ -10,15 +10,12 @@ void main()
 	// TODO: Fix page fault when mallocing
 	printf("Initializing userspace...\n");
 
-	// TODO: Implement wait syscall
-	int x;
-	int f = fork();
+	u32 x;
+	u32 f = fork();
 	if (f == 0)
-		; //wait(&x);
+		wait(&x);
 	else
 		exec("/bin/sh");
-
-	//syscall_exec("/bin/sh");
 
 	while (1) {
 	};

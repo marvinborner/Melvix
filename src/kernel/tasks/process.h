@@ -45,8 +45,8 @@ void process_wake(u32 pid);
 u32 process_child(struct process *process, u32 pid);
 u32 process_fork(u32 pid);
 
-int process_wait_gid(u32 gid, int *status);
-int process_wait_pid(u32 pid, int *status);
+u32 process_wait_gid(u32 gid, u32 *status);
+u32 process_wait_pid(u32 pid, u32 *status);
 
 struct process *process_from_pid(u32 pid);
 

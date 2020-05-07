@@ -18,6 +18,8 @@ u32 sys_write(char *path, u32 offset, u32 count, u8 *buf);
 
 u32 sys_exec(char *path);
 
+u32 sys_wait(u32 pid, u32 *status, u32 options);
+
 u32 sys_get_pid();
 
 u32 sys_malloc(u32 count);

@@ -8,11 +8,12 @@
 #define SYS_READ 3 // Read file
 #define SYS_WRITE 4 // Write file
 #define SYS_EXEC 5 // Execute file
-#define SYS_GET_PID 6 // Get process id
-#define SYS_MALLOC 7 // Allocate memory
-#define SYS_FREE 8 // Free memory
-#define SYS_GET 9 // Get kernel variable
-#define SYS_MAP 10 // Map input to function
+#define SYS_WAIT 6 // Wait for PID
+#define SYS_GET_PID 7 // Get process id
+#define SYS_MALLOC 8 // Allocate memory
+#define SYS_FREE 9 // Free memory
+#define SYS_GET 10 // Get kernel variable
+#define SYS_MAP 11 // Map input to function
 
 // Get
 #define GET_FRAMEBUFFER 0

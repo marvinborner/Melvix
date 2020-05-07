@@ -84,7 +84,7 @@ u32 process_spawn(struct process *process)
 	return process->pid;
 }
 
-int process_wait_gid(u32 gid, int *status)
+u32 process_wait_gid(u32 gid, u32 *status)
 {
 	struct process *i = root;
 
@@ -101,7 +101,7 @@ int process_wait_gid(u32 gid, int *status)
 	return WAIT_OKAY;
 }
 
-int process_wait_pid(u32 pid, int *status)
+u32 process_wait_pid(u32 pid, u32 *status)
 {
 	struct process *i = current_proc->next;
 

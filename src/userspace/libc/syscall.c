@@ -17,6 +17,8 @@ DEFN_SYSCALL4(write, SYS_WRITE, char *, u32, u32, u8 *);
 
 DEFN_SYSCALL1(exec, SYS_EXEC, char *);
 
+DEFN_SYSCALL3(wait, SYS_WAIT, u32, u32 *, u32);
+
 DEFN_SYSCALL0(get_pid, SYS_GET_PID);
 
 DEFN_SYSCALL1(malloc, SYS_MALLOC, u32);
