@@ -19,7 +19,7 @@ void main()
 	// TODO: Fix occasional race conditions with cli/sti
 	// TODO: Fix scheduler turning off at some point
 	spawn("/bin/sh");
-	printf("ok");
+	printf("AWESOME");
 
 	while (1) {
 		//printf("B");

@@ -3,6 +3,6 @@
 
 u32 sys_exit(u32 code)
 {
-	current_proc->state = PROC_ASLEEP;
+	process_suspend(current_proc->pid);
 	return code;
 }

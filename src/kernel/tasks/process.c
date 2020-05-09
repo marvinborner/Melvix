@@ -33,13 +33,12 @@ void scheduler(struct regs *regs)
 
 	/* debug("Max pid: %d", pid); */
 	/* debug("Task switch to %s with pid %d", current_proc->name, current_proc->pid); */
-	serial_put('.');
+	serial_put('+');
 
 	while (current_proc->state == PROC_ASLEEP) {
 		current_proc = current_proc->next;
 		if (current_proc == NULL) {
-			warn("No next process!");
-			halt_loop();
+			//warn("No next process!");
 			current_proc = root;
 		}
 	}
@@ -51,8 +50,8 @@ void scheduler(struct regs *regs)
 
 void process_init(struct process *proc)
 {
-	log("Initializing process %d", pid);
 	cli();
+	log("Initializing process %d", pid);
 	root = proc;
 	root->pid = pid++;
 	root->next = NULL;
@@ -61,23 +60,8 @@ void process_init(struct process *proc)
 
 	current_proc = root;
 	irq_install_handler(0, scheduler);
+	sti();
 	userspace_enter(proc);
-}
-
-void process_kill(u32 pid)
-{
-	debug("Killing process %d", pid);
-	struct process *proc = process_from_pid(pid);
-
-	if (proc == PID_NOT_FOUND)
-		panic("Can't kill unknown PID");
-
-	proc->state = PROC_ASLEEP;
-
-	if (proc->parent != NULL) {
-		//warn("Child had parent");
-		//process_wake(proc->parent->pid);
-	}
 }
 
 u32 process_spawn(struct process *process)
@@ -98,6 +82,7 @@ u32 process_spawn(struct process *process)
 
 u32 process_wait_gid(u32 gid, u32 *status)
 {
+	cli(); // ?
 	struct process *i = root;
 
 	while (i != NULL) {
@@ -110,11 +95,13 @@ u32 process_wait_gid(u32 gid, u32 *status)
 		i = i->next;
 	}
 
+	sti();
 	return WAIT_OKAY;
 }
 
 u32 process_wait_pid(u32 pid, u32 *status)
 {
+	cli(); // ?
 	struct process *i = current_proc->next;
 
 	while (i != NULL) {
@@ -129,11 +116,13 @@ u32 process_wait_pid(u32 pid, u32 *status)
 		i = i->next;
 	}
 
+	sti();
 	return WAIT_ERROR;
 }
 
 void process_suspend(u32 pid)
 {
+	cli();
 	debug("Suspending process %d", pid);
 	struct process *proc = process_from_pid(pid);
 
@@ -143,10 +132,12 @@ void process_suspend(u32 pid)
 	}
 
 	proc->state = PROC_ASLEEP;
+	sti();
 }
 
 void process_wake(u32 pid)
 {
+	cli();
 	debug("Waking process %d", pid);
 	struct process *proc = process_from_pid(pid);
 
@@ -154,10 +145,12 @@ void process_wake(u32 pid)
 		return;
 
 	proc->state = PROC_RUNNING;
+	sti();
 }
 
 u32 process_child(struct process *child, u32 pid)
 {
+	cli();
 	debug("Spawning child process %d", pid);
 	process_suspend(pid);
 
@@ -168,27 +161,13 @@ u32 process_child(struct process *child, u32 pid)
 
 	child->parent = parent;
 
+	sti();
 	return process_spawn(child);
-}
-
-u32 process_fork(u32 pid)
-{
-	warn("Fork is not implemented");
-
-	// With struct regs *regs
-	/*struct page_directory *dir = paging_copy_user_directory(current_proc->cr3);
-	struct process *proc = process_make_new();
-	proc->cr3 = dir;
-	memcpy(&proc->registers, regs, sizeof(struct regs));
-	proc->registers.eax = proc->pid;
-	proc->pid = current_proc->pid;
-
-	process_spawn(proc);*/
-	return 0; //pid++;
 }
 
 struct process *process_from_pid(u32 pid)
 {
+	cli();
 	struct process *proc = root;
 
 	while (proc != NULL) {
@@ -198,11 +177,13 @@ struct process *process_from_pid(u32 pid)
 		proc = proc->next;
 	}
 
+	sti();
 	return PID_NOT_FOUND;
 }
 
 struct process *process_make_new()
 {
+	cli();
 	debug("Making new process %d", pid);
 	struct process *proc = (struct process *)kmalloc_a(sizeof(struct process));
 	proc->registers.cs = 0x1B;
@@ -216,23 +197,26 @@ struct process *process_make_new()
 		proc->cr3->tables[i] = paging_root_directory->tables[i];
 
 	proc->pid = pid++;
-
+	sti();
 	return proc;
 }
 
 u32 kexec(char *path)
 {
+	cli();
 	debug("Starting kernel process %s", path);
 	struct process *proc = elf_load(path);
 	if (proc == NULL)
 		return -1;
 
 	process_init(proc);
+	sti();
 	return 0;
 }
 
 u32 uexec(char *path)
 {
+	cli();
 	debug("Starting user process %s", path);
 	process_suspend(current_proc->pid);
 
@@ -244,11 +228,13 @@ u32 uexec(char *path)
 	proc->gid = current_proc->pid;
 	process_spawn(proc);
 	log("Spawned");
+	sti();
 	return 0;
 }
 
 u32 uspawn(char *path)
 {
+	cli();
 	debug("Spawning user process %s", path);
 
 	struct process *proc = elf_load(path);
@@ -259,5 +245,6 @@ u32 uspawn(char *path)
 	proc->gid = current_proc->pid;
 	process_spawn(proc);
 	log("Spawned");
+	sti();
 	return 0;
 }

@@ -21,6 +21,7 @@ u32 spawn_child(struct process *child)
 
 void userspace_enter(struct process *proc)
 {
+	cli();
 	proc_bottom = proc;
 	proc->next = NULL;
 	hl_eip = proc->registers.eip;
