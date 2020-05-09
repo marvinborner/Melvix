@@ -49,13 +49,11 @@ void kernel_main(u32 magic, u32 multiboot_address, u32 esp)
 	paging_install();
 
 	// Install drivers
-	cli();
 	timer_install();
 	mouse_install();
 	keyboard_install();
 	pci_remap();
 	network_install();
-	sti();
 
 	memory_print();
 	rtc_print();
@@ -67,6 +65,7 @@ void kernel_main(u32 magic, u32 multiboot_address, u32 esp)
 	set_optimal_resolution();
 	log("Content of /etc/test: %s", read_file("/etc/test"));
 
+	sti(); // Disabled until now
 	syscalls_install();
 	kexec("/bin/init");
 

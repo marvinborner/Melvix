@@ -24,8 +24,6 @@ u32 (*syscalls[])() = { [SYS_HALT] = (u32(*)())halt_loop, // DEBUG!
 
 void syscall_handler(struct regs *r)
 {
-	cli();
-
 	if (r->eax >= sizeof(syscalls) / sizeof(*syscalls))
 		return;
 
@@ -37,7 +35,6 @@ void syscall_handler(struct regs *r)
 	    r->edx, r->esi, r->edi);
 
 	r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
-	sti();
 }
 
 void syscalls_install()

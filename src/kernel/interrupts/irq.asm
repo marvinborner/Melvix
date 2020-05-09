@@ -1,10 +1,10 @@
 %macro IRQ 2
   global irq%1
   irq%1:
-    cli
-    push byte 0
-    push byte %2
-    jmp irq_common_stub
+	cli
+	push byte 0
+	push byte %2
+	jmp irq_common_stub
 %endmacro
 
 IRQ 0, 32
@@ -26,29 +26,30 @@ IRQ 15, 47
 
 extern irq_handler
 irq_common_stub:
-    pusha
+	pusha
 
-    push ds
-    push es
-    push fs
-    push gs
+	push ds
+	push es
+	push fs
+	push gs
 
-    mov ax, 0x10
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    cld
+	mov ax, 0x10
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	cld
 
-    push esp
-    call irq_handler
-    add esp, 4
+	push esp
+	call irq_handler
+	add esp, 4
 
-    pop gs
-    pop fs
-    pop es
-    pop ds
-    popa
+	pop gs
+	pop fs
+	pop es
+	pop ds
+	popa
 
-    add esp, 8
-    iret
+	add esp, 8
+	sti
+	iret

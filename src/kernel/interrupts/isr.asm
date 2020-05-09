@@ -1,18 +1,18 @@
 %macro ISR_NOERRCODE 1
-    global isr%1
-    isr%1:
-        cli
-        push byte 0
-        push %1
-        jmp isr_common_stub
+	global isr%1
+	isr%1:
+		cli
+		push byte 0
+		push %1
+		jmp isr_common_stub
 %endmacro
 
 %macro ISR_ERRCODE 1
-    global isr%1
-    isr%1:
-        cli
-        push byte %1
-        jmp isr_common_stub
+	global isr%1
+	isr%1:
+		cli
+		push byte %1
+		jmp isr_common_stub
 %endmacro
 
 ISR_NOERRCODE 0
@@ -51,11 +51,11 @@ ISR_NOERRCODE 128
 
 extern fault_handler
 isr_common_stub:
-    pusha
+	pusha
 
-    push ds
-    push es
-    push fs
+	push ds
+	push es
+	push fs
 	push gs
 
 	mov ax, 0x10
@@ -70,10 +70,11 @@ isr_common_stub:
 	add esp, 4
 
 	pop gs
-    pop fs
-    pop es
+	pop fs
+	pop es
 	pop ds
-    popa
+	popa
 
-    add esp, 8
+	add esp, 8
+	sti
 	iret

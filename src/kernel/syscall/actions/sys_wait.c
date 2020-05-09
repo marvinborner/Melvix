@@ -4,7 +4,6 @@
 
 u32 sys_wait(u32 pid, u32 *status, u32 options)
 {
-	sti();
 	u32 ret;
 
 	if (pid < 0) { // Wait for any process in gid to die

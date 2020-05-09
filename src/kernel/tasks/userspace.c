@@ -21,7 +21,6 @@ u32 spawn_child(struct process *child)
 
 void userspace_enter(struct process *proc)
 {
-	cli();
 	proc_bottom = proc;
 	proc->next = NULL;
 	hl_eip = proc->registers.eip;
@@ -31,7 +30,7 @@ void userspace_enter(struct process *proc)
 	current_proc = proc;
 
 	debug("Jumping to userspace!");
-	sti(); // TODO: Prevent race conditions in userspace jumping
+	//sti(); // TODO: Prevent race conditions in userspace jumping
 	jump_userspace();
 }
 

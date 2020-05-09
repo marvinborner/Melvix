@@ -22,6 +22,20 @@ u32 inl(u16 port)
 	return value;
 }
 
+u32 cpu_flags()
+{
+	u32 flags;
+	asm volatile("pushf\n"
+		     "pop %0\n"
+		     : "=rm"(flags)::"memory");
+	return flags;
+}
+
+int interrupts_enabled()
+{
+	return (cpu_flags() & 0x200) == 0x200;
+}
+
 void cli()
 {
 	asm volatile("cli");

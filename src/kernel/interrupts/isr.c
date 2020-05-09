@@ -103,14 +103,12 @@ const char *exception_messages[32] = { "Division By Zero",
 				       "Reserved",
 				       "Reserved" };
 
-// Master exception/interrupt/fault handler - halt via panic
+// Master exception/interrupt/fault handler - called by asm
 void fault_handler(struct regs *r)
 {
-	cli();
 	irq_handler_t handler = isr_routines[r->int_no];
 	if (handler) {
 		handler(r);
-		sti();
 	} else {
 		u32 faulting_address;
 		asm("mov %%cr2, %0" : "=r"(faulting_address));

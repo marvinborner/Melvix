@@ -24,6 +24,7 @@ u16 inw(u16 port);
  */
 u32 inl(u16 port);
 
+int interrupts_enabled();
 void cli();
 void sti();
 void hlt();

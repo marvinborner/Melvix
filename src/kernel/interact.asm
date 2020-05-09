@@ -77,10 +77,10 @@ section .text
       pop  fs                                ; load fs from 16bit stack
       pop  es                                ; load es from 16bit stack
       pop  ds                                ; load ds from 16bit stack
-      ; sti                                    ; enable interrupts
+      ;sti                                   ; enable interrupts
       db 0xCD                                ; opcode of INT instruction with immediate byte
    ib: db 0x00
-      cli                                    ; disable interrupts
+      ;cli                                   ; disable interrupts
       xor  sp, sp                            ; zero sp so we can reuse it
       mov  ss, sp                            ; set ss so the stack is valid
       mov  sp, INT32_BASE                    ; set correct stack position so we can copy back
