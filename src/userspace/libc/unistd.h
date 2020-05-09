@@ -5,9 +5,9 @@
 
 u32 exec(char *path);
 
-void exit(u32 code);
+u32 spawn(char *path);
 
-u32 fork();
+void exit(u32 code);
 
 u32 get_pid();
 

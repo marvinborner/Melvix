@@ -4,10 +4,10 @@
 // Syscalls
 #define SYS_HALT 0 // Halt (debug)
 #define SYS_EXIT 1 // Exit process
-#define SYS_FORK 2 // Fork process
-#define SYS_READ 3 // Read file
-#define SYS_WRITE 4 // Write file
-#define SYS_EXEC 5 // Execute file
+#define SYS_READ 2 // Read file
+#define SYS_WRITE 3 // Write file
+#define SYS_EXEC 4 // Execute file and kill parent
+#define SYS_SPAWN 5 // Execute file and let parent alive
 #define SYS_WAIT 6 // Wait for PID
 #define SYS_GET_PID 7 // Get process id
 #define SYS_MALLOC 8 // Allocate memory

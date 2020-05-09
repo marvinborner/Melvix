@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <tasks/process.h>
 
-u32 sys_exec(char *path)
+u32 sys_spawn(char *path)
 {
-	return uexec(path);
+	return uspawn(path);
 }

@@ -122,13 +122,6 @@ make_build() {
 	mkdir -p ./mnt/usr/
 	mkdir -p ./mnt/bin/
 
-	# TODO: Device file touching should be in kernel
-	mkdir -p ./mnt/dev/
-	touch ./mnt/dev/stdin
-	touch ./mnt/dev/stdout
-	touch ./mnt/dev/stderr
-	touch ./mnt/dev/fb
-
 	cp ./build/res/font.bin ./mnt/bin/font
 	cp ./build/user/* ./mnt/bin/
 	echo "Hello world, ext2!" | tee -a ./mnt/etc/test

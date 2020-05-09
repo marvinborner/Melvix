@@ -31,13 +31,15 @@ void scheduler(struct regs *regs)
 		current_proc = root;
 	}
 
-	debug("Max pid: %d", pid);
-	debug("Task switch to %s with pid %d", current_proc->name, current_proc->pid);
+	/* debug("Max pid: %d", pid); */
+	/* debug("Task switch to %s with pid %d", current_proc->name, current_proc->pid); */
+	serial_put('.');
 
 	while (current_proc->state == PROC_ASLEEP) {
 		current_proc = current_proc->next;
 		if (current_proc == NULL) {
 			warn("No next process!");
+			halt_loop();
 			current_proc = root;
 		}
 	}
@@ -49,7 +51,7 @@ void scheduler(struct regs *regs)
 
 void process_init(struct process *proc)
 {
-	log("Initializing process %d", pid + 1);
+	log("Initializing process %d", pid);
 	cli();
 	root = proc;
 	root->pid = pid++;
@@ -70,8 +72,6 @@ void process_kill(u32 pid)
 	if (proc == PID_NOT_FOUND)
 		panic("Can't kill unknown PID");
 
-	// flush(proc->stdout);
-	// flush(proc->stderr);
 	proc->state = PROC_ASLEEP;
 
 	if (proc->parent != NULL) {
@@ -82,6 +82,7 @@ void process_kill(u32 pid)
 
 u32 process_spawn(struct process *process)
 {
+	cli();
 	debug("Spawning process %d", process->pid);
 	process->next = root->next;
 	root->next = process;
@@ -91,6 +92,7 @@ u32 process_spawn(struct process *process)
 
 	//process_suspend(current_proc->pid);
 
+	sti();
 	return process->pid;
 }
 
@@ -225,10 +227,6 @@ u32 kexec(char *path)
 	if (proc == NULL)
 		return -1;
 
-	// TODO: Add stdin etc support (?)
-	proc->stdin = NULL;
-	proc->stdout = NULL;
-	proc->stderr = NULL;
 	process_init(proc);
 	return 0;
 }
@@ -242,12 +240,24 @@ u32 uexec(char *path)
 	if (proc == NULL)
 		return -1;
 
-	proc->stdin = NULL;
-	proc->stdout = NULL;
-	proc->stderr = NULL;
+	proc->parent = current_proc;
+	proc->gid = current_proc->pid;
+	process_spawn(proc);
+	log("Spawned");
+	return 0;
+}
+
+u32 uspawn(char *path)
+{
+	debug("Spawning user process %s", path);
+
+	struct process *proc = elf_load(path);
+	if (proc == NULL)
+		return -1;
 
 	proc->parent = current_proc;
 	proc->gid = current_proc->pid;
 	process_spawn(proc);
+	log("Spawned");
 	return 0;
 }

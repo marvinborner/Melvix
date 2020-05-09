@@ -50,9 +50,6 @@ void single_yield(struct process *proc, struct regs *regs)
 
 u32 single_exit(struct regs *regs)
 {
-	//close(current_proc->stdout);
-	//close(current_proc->stderr);
-
 	u32 hold = regs->ebx;
 	proc_bottom = proc_bottom->next;
 

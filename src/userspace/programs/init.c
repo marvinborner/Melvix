@@ -5,14 +5,9 @@
 #include <syscall.h>
 #include <unistd.h>
 
-void test(u8 *data)
-{
-	printf(".");
-}
-
 void main()
 {
-	if (get_pid() != 2) {
+	if (get_pid() != 1) {
 		printf("Wrong PID!\n");
 		exit(1);
 	}
@@ -20,20 +15,11 @@ void main()
 	// TODO: Fix page fault when mallocing
 	printf("Initializing userspace...\n");
 
-	// TODO: Find out, why init gets PID 1 and stops
-	syscall_map(MAP_KEYBOARD, (u32)&test);
-
+	// TODO: Find out, why processes change pid randomly
 	// TODO: Fix occasional race conditions with cli/sti
-	// TODO: Fix scheduler turning off randomly..
-	/* u32 x; */
-	/* u32 f = fork(); */
-	/* if (f == 0) { */
-	/* 	printf("Waiting...\n"); */
-	/* 	wait(&x); */
-	/* } else { */
-	/* 	printf("Executing...\n"); */
-	/* 	exec("/bin/sh"); */
-	/* } */
+	// TODO: Fix scheduler turning off at some point
+	spawn("/bin/sh");
+	printf("ok");
 
 	while (1) {
 		//printf("B");

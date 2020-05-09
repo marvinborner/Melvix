@@ -80,6 +80,8 @@ DECL_SYSCALL4(write, char *, u32, u32, u8 *);
 
 DECL_SYSCALL1(exec, char *);
 
+DECL_SYSCALL1(spawn, char *);
+
 DECL_SYSCALL3(wait, u32, u32 *, u32);
 
 DECL_SYSCALL0(get_pid);

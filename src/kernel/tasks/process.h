@@ -23,10 +23,6 @@ struct process {
 	int state;
 	int thread;
 
-	u32 stdin;
-	u32 stdout;
-	u32 stderr;
-
 	u32 brk;
 	u32 handlers[6];
 
@@ -57,6 +53,7 @@ struct process *process_make_new();
 u32 kexec(char *path);
 
 u32 uexec(char *path);
+u32 uspawn(char *path);
 
 extern struct process *current_proc;
 

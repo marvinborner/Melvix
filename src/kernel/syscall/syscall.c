@@ -11,10 +11,10 @@ typedef u32 (*syscall_func)(u32, ...);
 
 u32 (*syscalls[])() = { [SYS_HALT] = (u32(*)())halt_loop, // DEBUG!
 			[SYS_EXIT] = sys_exit,
-			[SYS_FORK] = sys_fork,
 			[SYS_READ] = sys_read,
 			[SYS_WRITE] = sys_write,
 			[SYS_EXEC] = sys_exec,
+			[SYS_SPAWN] = sys_spawn,
 			[SYS_WAIT] = sys_wait,
 			[SYS_GET_PID] = sys_get_pid,
 			[SYS_MALLOC] = sys_malloc,
@@ -36,10 +36,7 @@ void syscall_handler(struct regs *r)
 	log("[SYSCALL] %d at [0x%x] with 0x%x 0x%x 0x%x 0x%x", r->eax, location, r->ebx, r->ecx,
 	    r->edx, r->esi, r->edi);
 
-	if (r->eax == SYS_FORK) // TODO: Fix hardcoded fork parameters
-		r->eax = location(r);
-	else
-		r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
+	r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
 	sti();
 }
 
