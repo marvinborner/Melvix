@@ -66,6 +66,14 @@ void outl(u16 port, u32 data)
 	asm volatile("outl %0, %1" ::"a"(data), "Nd"(port));
 }
 
+void spinlock(int *ptr)
+{
+	int prev;
+	do
+		asm volatile("lock xchgl %0,%1" : "=a"(prev) : "m"(*ptr), "a"(1));
+	while (prev);
+}
+
 void init_serial()
 {
 	outb(0x3f8 + 1, 0x00);
