@@ -12,6 +12,7 @@
 #include <timer/timer.h>
 
 u32 pid = 0;
+u32 quantum = 42; // In ms
 struct process *root;
 struct process *current_proc = NULL;
 
@@ -21,15 +22,22 @@ extern u32 stack_hold;
 
 void scheduler(struct regs *regs)
 {
+	log("%d", quantum);
+	if (quantum == 0 || current_proc->state != PROC_RUNNING) {
+		quantum = 42; // For next process
+	} else {
+		quantum--;
+		return;
+	}
+
 	serial_put('+');
 	memcpy(&current_proc->registers, regs, sizeof(struct regs));
 
 	timer_handler(regs);
 
 	current_proc = current_proc->next;
-	if (current_proc == NULL) {
+	if (current_proc == NULL)
 		current_proc = root;
-	}
 
 	/* debug("Max pid: %d", pid); */
 	/* debug("Task switch to %s with pid %d", current_proc->name, current_proc->pid); */
