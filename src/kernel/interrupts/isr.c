@@ -126,7 +126,8 @@ void fault_handler(struct regs *r)
 		}
 
 		if (current_proc != NULL) {
-			warn("%s: Halting process %d", message, current_proc->pid);
+			warn("%s: Suspending process %s with ID %d", message, current_proc->name,
+			     current_proc->pid);
 			memcpy(&current_proc->registers, r, sizeof(struct regs));
 			process_suspend(current_proc->pid);
 			process_force_switch(r);

@@ -74,6 +74,21 @@ void process_init(struct process *proc)
 	userspace_enter(proc);
 }
 
+// Only for debugging purposes
+void process_print_tree()
+{
+	serial_put('\n');
+	info("PROCESS TREE");
+	struct process *proc = root;
+
+	while (proc != NULL) {
+		info("%s with PID %d (state: %s)", proc->name, proc->pid,
+		     proc->state == PROC_RUNNING ? "running" : "sleeping");
+		proc = proc->next;
+	}
+	serial_put('\n');
+}
+
 u32 process_spawn(struct process *process)
 {
 	debug("Spawning process %d", process->pid);
@@ -82,6 +97,7 @@ u32 process_spawn(struct process *process)
 	process->state = PROC_RUNNING;
 
 	process->parent = current_proc;
+	process_print_tree();
 
 	//process_suspend(current_proc->pid);
 

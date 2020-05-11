@@ -18,7 +18,7 @@ struct process {
 
 	u32 pid;
 	u32 gid;
-	char *name;
+	char name[256];
 
 	int state;
 	int thread;
