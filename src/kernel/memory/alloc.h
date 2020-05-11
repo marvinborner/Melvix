@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define KHEAP_MAGIC 0x04206969
+#define KHEAP_MAGIC 0xCAFEBABE
 #define KHEAP_MAGIC2 0xDEADBEEF
 #define KHEAP_END 0xFFFFDEAD
 #define MEM_END 0x8000000

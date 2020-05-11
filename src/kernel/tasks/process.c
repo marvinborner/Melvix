@@ -22,7 +22,7 @@ extern u32 stack_hold;
 
 void scheduler(struct regs *regs)
 {
-	log("%d", quantum);
+	serial_put('.');
 	if (quantum == 0 || current_proc->state != PROC_RUNNING) {
 		quantum = 42; // For next process
 	} else {
@@ -54,6 +54,12 @@ void scheduler(struct regs *regs)
 	paging_switch_directory(current_proc->cr3);
 }
 
+void process_force_switch(struct regs *regs)
+{
+	quantum = 0;
+	scheduler(regs);
+}
+
 void process_init(struct process *proc)
 {
 	log("Initializing process %d", pid);
@@ -71,8 +77,8 @@ void process_init(struct process *proc)
 u32 process_spawn(struct process *process)
 {
 	debug("Spawning process %d", process->pid);
-	process->next = root->next;
-	root->next = process;
+	process->next = current_proc->next;
+	current_proc->next = process;
 	process->state = PROC_RUNNING;
 
 	process->parent = current_proc;
@@ -209,8 +215,6 @@ u32 uexec(char *path)
 	if (proc == NULL)
 		return -1;
 
-	proc->parent = current_proc;
-	proc->gid = current_proc->pid;
 	process_spawn(proc);
 	log("Spawned");
 	return 0;
@@ -224,8 +228,6 @@ u32 uspawn(char *path)
 	if (proc == NULL)
 		return -1;
 
-	proc->parent = current_proc;
-	proc->gid = current_proc->pid;
 	process_spawn(proc);
 	log("Spawned");
 	return 0;

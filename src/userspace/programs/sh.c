@@ -27,23 +27,11 @@ int interrupts_enabled()
 
 void main()
 {
-	/* if (get_pid() != 1) { */
-	/* 	printf("Wrong PID!\n"); */
-	/* 	exit(1); */
-	/* } */
+	printf("Shell started\n");
 
-	if (interrupts_enabled())
-		printf("INTs enabled :)\n");
-	else
-		printf("INTs disabled :(\n");
-	printf("[~] ");
-
-	/* while (1) { */
-	/* 	putch(getch()); */
-	/* } */
 	//syscall_map(MAP_KEYBOARD, (u32)&test);
 
-	/* syscall_halt(); */
+	printf("Looping in shell\n");
 	while (1) {
 		//printf("A");
 	};

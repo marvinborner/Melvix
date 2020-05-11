@@ -35,6 +35,7 @@ void syscall_handler(struct regs *r)
 	    r->edx, r->esi, r->edi);
 
 	r->eax = location(r->ebx, r->ecx, r->edx, r->esi, r->edi);
+	debug("Finished syscall");
 }
 
 void syscalls_install()

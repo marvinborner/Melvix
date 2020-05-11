@@ -43,5 +43,4 @@ section .text
 		push eax
 		cli
 		call kernel_main
-		cli
 		jmp $

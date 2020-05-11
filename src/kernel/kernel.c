@@ -69,6 +69,5 @@ void kernel_main(u32 magic, u32 multiboot_address, u32 esp)
 	syscalls_install();
 	kexec("/bin/init");
 
-	halt_loop();
 	// asm ("div %0" :: "r"(0)); // Exception testing x/0
 }

@@ -79,7 +79,6 @@ make_cross() {
 
 		cd "${DIR}/.."
 	else
-		# Should be sourced to take effect
 		cd cross
 		DIR=$(pwd)
 		export PREFIX="${DIR}/opt"
