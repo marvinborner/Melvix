@@ -21,10 +21,10 @@ int interrupts_enabled()
 
 void main()
 {
-	if (get_pid() != 1) {
-		printf("Wrong PID!\n");
-		exit(1);
-	}
+	/* if (get_pid() != 1) { */
+	/* 	printf("Wrong PID!\n"); */
+	/* 	exit(1); */
+	/* } */
 
 	if (interrupts_enabled())
 		printf("INTs enabled :)\n");
@@ -44,6 +44,6 @@ void main()
 		printf("INTs disabled :(\n");
 
 	while (1) {
-		//printf("B");
+		printf("B");
 	};
 }

@@ -214,12 +214,12 @@ elif [ "${mode}" = "tidy" ]; then
 elif [ "${mode}" = "font" ]; then
 	make_font
 	make_tidy
-elif [ "${mode}" = "help" ]; then
-	echo "Please use the following syntax:"
-	echo "The default option is 'test'"
-	echo "./run {cross | build | clean | test | debug | image | sync | tidy | font} [-y]"
-else # TODO: Prevent code duplication in build script via functions?
+elif [ "${mode}" = "" ]; then # TODO: Prevent code duplication in build script via functions?
 	make_cross
 	make_build
 	make_test
+else
+	echo "Please use the following syntax:"
+	echo "./run {cross | build | clean | test | debug | image | sync | tidy | font} [-y]"
+	echo "The default option is 'test'"
 fi

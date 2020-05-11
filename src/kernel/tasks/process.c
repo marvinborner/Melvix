@@ -21,6 +21,7 @@ extern u32 stack_hold;
 
 void scheduler(struct regs *regs)
 {
+	serial_put('+');
 	memcpy(&current_proc->registers, regs, sizeof(struct regs));
 
 	timer_handler(regs);
@@ -32,7 +33,6 @@ void scheduler(struct regs *regs)
 
 	/* debug("Max pid: %d", pid); */
 	/* debug("Task switch to %s with pid %d", current_proc->name, current_proc->pid); */
-	serial_put('+');
 
 	while (current_proc->state == PROC_ASLEEP) {
 		current_proc = current_proc->next;

@@ -47,7 +47,7 @@ void isrs_install()
 	idt_set_gate(30, (unsigned)isr30, 0x08, 0x8E);
 	idt_set_gate(31, (unsigned)isr31, 0x08, 0x8E);
 
-	idt_set_gate(0x80, (unsigned)isr128, 0x08, 0xEE);
+	idt_set_gate(0x80, (unsigned)isr128, 0x08, 0x8E);
 
 	info("Installed Interrupt Service Routines");
 }

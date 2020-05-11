@@ -32,7 +32,7 @@ endstruc
 section .text
    int32: use32                               ; by Napalm
    _int32:
-      cli                                    ; disable interrupts
+      ;cli                                    ; disable interrupts
       pusha                                  ; save register state to 32bit stack
       mov  esi, reloc                        ; set source to code below
       mov  edi, INT32_BASE                   ; set destination to new base address
@@ -113,7 +113,7 @@ section .text
       cld                                    ; clear direction flag (so we copy forward)
       rep  movsb                             ; do the actual copy (16bit stack to 32bit stack)
       popa                                   ; restore registers
-      ; sti                                    ; enable interrupts
+      ;sti                                    ; enable interrupts
       ret                                    ; return to caller
 
    resetpic:                                  ; reset's 8259 master and slave pic vectors
