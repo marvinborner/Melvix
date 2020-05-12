@@ -31,7 +31,7 @@ struct process {
 };
 
 void scheduler(struct regs *regs);
-void process_force_switch(struct regs *regs);
+void process_force_switch();
 
 u32 process_spawn(struct process *process);
 void process_suspend(u32 pid);

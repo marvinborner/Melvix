@@ -54,10 +54,11 @@ void scheduler(struct regs *regs)
 	paging_switch_directory(current_proc->cr3);
 }
 
-void process_force_switch(struct regs *regs)
+void process_force_switch()
 {
 	quantum = 0;
-	scheduler(regs);
+	timer_wait(1);
+	//scheduler(regs);
 }
 
 void process_init(struct process *proc)
@@ -246,5 +247,6 @@ u32 uspawn(char *path)
 
 	process_spawn(proc);
 	log("Spawned");
+	process_force_switch();
 	return 0;
 }

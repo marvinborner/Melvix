@@ -130,7 +130,7 @@ void fault_handler(struct regs *r)
 			     current_proc->pid);
 			memcpy(&current_proc->registers, r, sizeof(struct regs));
 			process_suspend(current_proc->pid);
-			process_force_switch(r);
+			process_force_switch();
 		} else {
 			if (faulting_address != (u32)fb) {
 				panic("Page fault before multitasking started!");
