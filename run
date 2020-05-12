@@ -135,7 +135,10 @@ make_test() {
 }
 
 make_debug() {
-	qemu_with_flags -s -cdrom ./build/melvix.iso #-drive file=./build/hdd10M.img,format=raw
+	objcopy --only-keep-debug ./build/kernel/kernel.bin ./build/kernel/debug
+	qemu-system-i386 -vga std -S -s -cdrom ./build/melvix.iso -hda ./build/disk.img & sleep 2
+	(echo target remote 127.0.0.1:1234; cat) | gdb -s ./build/kernel/debug ./build/kernel/kernel.bin
+	pkill "qemu*"
 }
 
 make_image_debug() {
@@ -196,6 +199,8 @@ elif [ "${mode}" = "test" ]; then
 elif [ "${mode}" = "again" ]; then
 	make_test
 elif [ "${mode}" = "debug" ]; then
+	make_cross
+	make_build
 	make_debug
 elif [ "${mode}" = "image_debug" ]; then
 	make_cross
