@@ -132,12 +132,8 @@ void fault_handler(struct regs *r)
 			process_suspend(current_proc->pid);
 			process_force_switch();
 		} else {
-			if (faulting_address != (u32)fb) {
-				panic("Page fault before multitasking started!");
-			} else {
-				debug(RED "Fatal video error!" RES);
-				halt_loop();
-			}
+			debug(RED "%s before multitasking started!" RES, message);
+			halt_loop();
 		}
 	}
 }
