@@ -22,11 +22,15 @@ extern u32 stack_hold;
 
 void scheduler(struct regs *regs)
 {
+	static int locked = 0;
+	spinlock(&locked);
+
 	serial_put('.');
 	if (quantum == 0 || current_proc->state != PROC_RUNNING) {
 		quantum = 42; // For next process
 	} else {
 		quantum--;
+		locked = 0;
 		return;
 	}
 
@@ -45,13 +49,14 @@ void scheduler(struct regs *regs)
 	while (current_proc->state == PROC_ASLEEP) {
 		current_proc = current_proc->next;
 		if (current_proc == NULL) {
-			//warn("No next process!");
+			warn("No next process!");
 			current_proc = root;
 		}
 	}
 
 	memcpy(regs, &current_proc->registers, sizeof(struct regs));
 	paging_switch_directory(current_proc->cr3);
+	locked = 0;
 }
 
 void process_force_switch()
@@ -66,7 +71,7 @@ void process_init(struct process *proc)
 	log("Initializing process %d", pid);
 	root = proc;
 	root->pid = pid++;
-	root->next = NULL;
+	root->next = proc;
 	root->state = PROC_RUNNING;
 
 	current_proc = root;
@@ -85,6 +90,8 @@ void process_print_tree()
 		info("%s with PID %d (state: %s)", proc->name, proc->pid,
 		     proc->state == PROC_RUNNING ? "running" : "sleeping");
 		proc = proc->next;
+		if (proc->pid == 1)
+			break;
 	}
 	serial_put('\n');
 }

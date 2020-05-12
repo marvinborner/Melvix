@@ -25,6 +25,7 @@ u16 inw(u16 port);
 u32 inl(u16 port);
 
 int interrupts_enabled();
+void interrupts_print();
 void cli();
 void sti();
 void hlt();
@@ -60,5 +61,14 @@ void init_serial();
  * @param ch The char
  */
 void serial_put(char ch);
+
+// Spinlock
+static inline void spinlock(int *ptr)
+{
+	int prev;
+	do
+		asm volatile("lock xchgl %0,%1" : "=a"(prev) : "m"(*ptr), "a"(1));
+	while (prev);
+}
 
 #endif

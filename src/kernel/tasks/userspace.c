@@ -22,14 +22,11 @@ u32 spawn_child(struct process *child)
 void userspace_enter(struct process *proc)
 {
 	proc_bottom = proc;
-	proc->next = NULL;
 	hl_eip = proc->registers.eip;
 	hl_esp = proc->registers.esp;
 	paging_switch_directory(proc->cr3);
 
-	current_proc = proc;
-
-	debug("Jumping to userspace!");
+	//debug("Jumping to userspace!");
 	jump_userspace();
 }
 

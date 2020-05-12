@@ -28,6 +28,10 @@ int interrupts_enabled()
 void main()
 {
 	printf("Shell started\n");
+	if (interrupts_enabled())
+		printf("INTs enabled :)\n");
+	else
+		printf("INTs disabled :(\n");
 
 	//syscall_map(MAP_KEYBOARD, (u32)&test);
 

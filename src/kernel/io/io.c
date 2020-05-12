@@ -36,6 +36,14 @@ int interrupts_enabled()
 	return (cpu_flags() & 0x200) == 0x200;
 }
 
+void interrupts_print()
+{
+	if (interrupts_enabled())
+		log(GRN "Interrupts are enabled!" RES);
+	else
+		log(RED "Interrupts are disabled!" RES);
+}
+
 void cli()
 {
 	asm volatile("cli");
@@ -64,14 +72,6 @@ void outw(u16 port, u16 data)
 void outl(u16 port, u32 data)
 {
 	asm volatile("outl %0, %1" ::"a"(data), "Nd"(port));
-}
-
-void spinlock(int *ptr)
-{
-	int prev;
-	do
-		asm volatile("lock xchgl %0,%1" : "=a"(prev) : "m"(*ptr), "a"(1));
-	while (prev);
 }
 
 void init_serial()
