@@ -67,7 +67,6 @@ void process_init(struct process *proc)
 	root = proc;
 	root->pid = pid++;
 	root->next = NULL;
-	root->thread = PROC_ROOT; // Unkillable
 	root->state = PROC_RUNNING;
 
 	current_proc = root;
@@ -105,23 +104,6 @@ u32 process_spawn(struct process *process)
 	return process->pid;
 }
 
-u32 process_wait_gid(u32 gid, u32 *status)
-{
-	struct process *i = root;
-
-	while (i != NULL) {
-		if (i->gid == gid)
-			if (i->state == PROC_ASLEEP) {
-				*status = i->registers.ebx;
-				return i->pid;
-			}
-
-		i = i->next;
-	}
-
-	return WAIT_OKAY;
-}
-
 u32 process_wait_pid(u32 pid, u32 *status)
 {
 	struct process *i = current_proc->next;
@@ -144,6 +126,9 @@ u32 process_wait_pid(u32 pid, u32 *status)
 void process_suspend(u32 pid)
 {
 	debug("Suspending process %d", pid);
+	if (pid == 1)
+		panic("Root process died");
+
 	struct process *proc = process_from_pid(pid);
 
 	if (proc == PID_NOT_FOUND) {
@@ -152,6 +137,7 @@ void process_suspend(u32 pid)
 	}
 
 	proc->state = PROC_ASLEEP;
+	process_force_switch();
 }
 
 void process_wake(u32 pid)
@@ -163,6 +149,7 @@ void process_wake(u32 pid)
 		return;
 
 	proc->state = PROC_RUNNING;
+	process_force_switch();
 }
 
 u32 process_child(struct process *child, u32 pid)
@@ -220,6 +207,7 @@ u32 kexec(char *path)
 		return -1;
 
 	process_init(proc);
+	process_force_switch();
 	return 0;
 }
 

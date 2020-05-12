@@ -14,6 +14,12 @@ jump_userspace:
 	push 0x23
 	push eax
 	pushf
+
+	; Enable interrupts
+        pop eax
+        or eax, 0x200
+        push eax
+
 	push 0x1B
 	push dword [hl_eip]
 

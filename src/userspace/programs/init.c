@@ -34,9 +34,7 @@ void main()
 	// TODO: Fix page fault when mallocing
 	printf("Initializing userspace...\n");
 
-	// TODO: Find out, why processes change pid randomly
-	// TODO: Fix occasional race conditions with cli/sti
-	// TODO: Fix scheduler turning off at some point
+	// TODO: Fix scheduler turning off after spawn
 	spawn("/bin/sh");
 
 	printf("Looping in init\n");

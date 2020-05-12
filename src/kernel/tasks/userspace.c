@@ -30,7 +30,6 @@ void userspace_enter(struct process *proc)
 	current_proc = proc;
 
 	debug("Jumping to userspace!");
-	//sti(); // TODO: Prevent race conditions in userspace jumping
 	jump_userspace();
 }
 

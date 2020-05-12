@@ -8,6 +8,7 @@
 #define LBA_BITS 28
 
 // Port bases and offsets
+// TODO: Support other emulators/devices by using PCI ATA detection
 #define PRIMARY_BASE 0x1F0
 #define SECONDARY_BASE 0x170
 #define DATA 0

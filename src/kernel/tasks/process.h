@@ -17,11 +17,9 @@ struct process {
 	struct regs registers;
 
 	u32 pid;
-	u32 gid;
 	char name[256];
 
 	int state;
-	int thread;
 
 	u32 brk;
 	u32 handlers[6];

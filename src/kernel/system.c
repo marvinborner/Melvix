@@ -66,8 +66,8 @@ void _panic(const char *f, const char *msg)
 {
 	cli();
 	_log(f, RED "PNC: %s - Halting system!" RES, msg);
-	printf("[%s] PNC: %s - Halting system!\n\n", f, msg);
-	printf("> %s", random_message[get_time() % 10]);
+	//printf("[%s] PNC: %s - Halting system!\n\n", f, msg);
+	//printf("> %s", random_message[get_time() % 10]);
 	halt_loop();
 }
 
