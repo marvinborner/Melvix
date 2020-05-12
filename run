@@ -136,14 +136,17 @@ make_test() {
 
 make_debug() {
 	objcopy --only-keep-debug ./build/kernel/kernel.bin ./build/kernel/debug
-	qemu-system-i386 -vga std -S -s -cdrom ./build/melvix.iso -hda ./build/disk.img & sleep 2
-	(echo target remote 127.0.0.1:1234; cat) | gdb -s ./build/kernel/debug ./build/kernel/kernel.bin
+	qemu-system-i386 -vga std -S -s -cdrom ./build/melvix.iso -hda ./build/disk.img &
+	sleep 2
+	(
+		echo target remote 127.0.0.1:1234
+		cat
+	) | gdb -s ./build/kernel/debug ./build/kernel/kernel.bin
 	pkill "qemu*"
 }
 
-make_image_debug() {
-	qemu_with_flags -cdrom ./build/melvix.iso #-drive file=./build/hdd10M.img,format=raw
-	#qemu_with_flags -drive file=./build/hdd10M.img,format=raw
+make_disasm() {
+	objdump -drwC -Mintel ./build/kernel/kernel.bin --visualize-jumps=color | less -R
 }
 
 make_image() {
@@ -202,11 +205,10 @@ elif [ "${mode}" = "debug" ]; then
 	make_cross
 	make_build
 	make_debug
-elif [ "${mode}" = "image_debug" ]; then
+elif [ "${mode}" = "disasm" ]; then
 	make_cross
-	make_clean
 	make_build
-	make_image_debug
+	make_disasm
 elif [ "${mode}" = "image" ]; then
 	make_cross
 	make_build
@@ -224,6 +226,6 @@ elif [ "${mode}" = "" ]; then # TODO: Prevent code duplication in build script v
 	make_test
 else
 	echo "Please use the following syntax:"
-	echo "./run {cross | build | clean | test | debug | image | sync | tidy | font} [-y]"
+	echo "./run {cross | build | clean | test | debug | disasm | image | sync | tidy | font} [-y]"
 	echo "The default option is 'test'"
 fi
