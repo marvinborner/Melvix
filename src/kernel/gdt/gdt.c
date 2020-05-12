@@ -18,7 +18,7 @@ struct gdt_ptr {
 	void *base;
 } __attribute__((packed));
 
-struct gdt_entry gdt[6];
+struct gdt_entry gdt[8];
 struct gdt_ptr gp;
 
 struct tss_entry_struct {
