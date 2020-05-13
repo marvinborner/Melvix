@@ -10,7 +10,7 @@ static int locked = 0;
 
 int liballoc_lock()
 {
-	spinlock(locked);
+	spinlock(&locked);
 	return 0;
 }
 

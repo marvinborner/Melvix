@@ -14,14 +14,13 @@ void paging_init(struct page_directory *dir, int user)
 {
 	for (u32 i = 0; i < 1024; i++) {
 		for (u32 j = 0; j < 1024; j++) {
-			paging_directory->tables[i]->pages[j] =
+			dir->tables[i]->pages[j] =
 				((j * 0x1000) + (i * PAGE_SIZE)) | PT_RW | (user ? PT_USER : 0);
 		}
 	}
 
 	for (u32 i = 0; i < 1024; i++) {
-		paging_directory->tables[i] = ((u32)paging_directory->tables[i]) | PD_RW |
-					      PD_PRESENT | (user ? PD_USER : 0);
+		dir->tables[i] = ((u32)dir->tables[i]) | PD_RW | PD_PRESENT | (user ? PD_USER : 0);
 	}
 }
 
@@ -38,7 +37,7 @@ extern u32 end;
 void paging_install(u32 multiboot_address)
 {
 	// Kernel paging
-	paging_switch_directory(paging_directory);
+	paging_switch_directory(paging_kernel_directory);
 	paging_init(paging_directory, 0);
 
 	if (!memory_init(multiboot_address))
