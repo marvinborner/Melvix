@@ -198,6 +198,7 @@ elif [ "${mode}" = "clean" ]; then
 elif [ "${mode}" = "test" ]; then
 	make_cross
 	make_build
+	make_sync &
 	make_test
 elif [ "${mode}" = "again" ]; then
 	make_test
@@ -220,9 +221,11 @@ elif [ "${mode}" = "tidy" ]; then
 elif [ "${mode}" = "font" ]; then
 	make_font
 	make_tidy
+	make_sync &
 elif [ "${mode}" = "" ]; then # TODO: Prevent code duplication in build script via functions?
 	make_cross
 	make_build
+	make_sync &
 	make_test
 else
 	echo "Please use the following syntax:"
