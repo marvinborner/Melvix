@@ -7,8 +7,6 @@ u32 exec(char *path);
 
 u32 spawn(char *path);
 
-void exit(u32 code);
-
 u32 get_pid();
 
 u32 read(char *path, u32 offset, u32 count, u8 *buf);
