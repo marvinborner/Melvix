@@ -12,7 +12,7 @@ u8 scancode;
 void keyboard_handler(struct regs *r)
 {
 	scancode = inb(0x60);
-	struct keyboard_event *event = umalloc(sizeof(struct keyboard_event));
+	struct keyboard_event *event = malloc(sizeof(struct keyboard_event));
 	event->scancode = scancode;
 	event_trigger(MAP_KEYBOARD, (u8 *)event);
 }

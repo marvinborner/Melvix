@@ -13,7 +13,7 @@ void multiboot_parse(u32 multiboot_address)
 
 	for (tag = (struct multiboot_tag *)(multiboot_address + 8);
 	     tag->type != MULTIBOOT_TAG_TYPE_END;
-	     tag = (struct multiboot_tag *)((multiboot_u8 *)tag + ((tag->size + 7) & ~7))) {
+	     tag = (struct multiboot_tag *)((u8 *)tag + ((tag->size + 7) & ~7))) {
 		switch (tag->type) {
 		case MULTIBOOT_TAG_TYPE_CMDLINE:
 			// TODO: Add cmdline config support
@@ -28,14 +28,14 @@ void multiboot_parse(u32 multiboot_address)
 			break;
 		case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
 			debug("Got memory info");
-			memory_info_init((struct multiboot_tag_basic_meminfo *)tag);
+			/* memory_info_init((struct multiboot_tag_basic_meminfo *)tag); */
 			break;
 		case MULTIBOOT_TAG_TYPE_BOOTDEV:
 			debug("Got boot device");
 			break;
 		case MULTIBOOT_TAG_TYPE_MMAP:
 			debug("Got memory map");
-			memory_mmap_init((struct multiboot_tag_mmap *)tag);
+			/* memory_mmap_init((struct multiboot_tag_mmap *)tag); */
 			break;
 		case MULTIBOOT_TAG_TYPE_VBE:
 			debug("Got VBE");

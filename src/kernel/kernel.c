@@ -45,8 +45,8 @@ void kernel_main(u32 magic, u32 multiboot_address, u32 esp)
 	isrs_install();
 	irq_install();
 
+	paging_install(multiboot_address);
 	multiboot_parse(multiboot_address);
-	paging_install();
 
 	// Install drivers
 	timer_install();

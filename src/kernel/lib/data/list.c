@@ -7,7 +7,7 @@
 
 struct list *list_create()
 {
-	struct list *list = kcalloc(sizeof(struct list), 1);
+	struct list *list = calloc(sizeof(struct list), 1);
 	return list;
 }
 
@@ -29,13 +29,13 @@ void *list_remove_node(struct list *list, struct list_node *node)
 		node->next->prev = node->prev;
 		node->prev->next = node->next;
 		list->size--;
-		kfree(node);
+		free(node);
 	}
 	return val;
 }
 struct list_node *list_insert_front(struct list *list, void *val)
 {
-	struct list_node *t = kcalloc(sizeof(struct list_node), 1);
+	struct list_node *t = calloc(sizeof(struct list_node), 1);
 	list->head->prev = t;
 	t->next = list->head;
 	t->val = val;
@@ -50,7 +50,7 @@ struct list_node *list_insert_front(struct list *list, void *val)
 
 void list_insert_back(struct list *list, void *val)
 {
-	struct list_node *t = kcalloc(sizeof(struct list_node), 1);
+	struct list_node *t = calloc(sizeof(struct list_node), 1);
 	t->prev = list->tail;
 	if (list->tail)
 		list->tail->next = t;
@@ -72,7 +72,7 @@ void *list_remove_front(struct list *list)
 	list->head = t->next;
 	if (list->head)
 		list->head->prev = NULL;
-	kfree(t);
+	free(t);
 	list->size--;
 	return val;
 }
@@ -86,7 +86,7 @@ void *list_remove_back(struct list *list)
 	list->tail = t->prev;
 	if (list->tail)
 		list->tail->next = NULL;
-	kfree(t);
+	free(t);
 	list->size--;
 	return val;
 }
@@ -170,14 +170,14 @@ void list_destroy(struct list *list)
 	while (node != NULL) {
 		struct list_node *save = node;
 		node = node->next;
-		kfree(save);
+		free(save);
 	}
-	kfree(list);
+	free(list);
 }
 
 void listnode_destroy(struct list_node *node)
 {
-	kfree(node);
+	free(node);
 }
 
 // Conversion
@@ -199,13 +199,13 @@ struct list *str_split(const char *str, const char *delim, u32 *numtokens)
 		if (numtokens)
 			(*numtokens)++;
 	}
-	kfree(s);
+	free(s);
 	return ret_list;
 }
 
 char *list_to_str(struct list *list, const char *delim)
 {
-	char *ret = kmalloc(256);
+	char *ret = malloc(256);
 	memset(ret, 0, 256);
 	int len = 0, ret_len = 256;
 	while (list_size(list) > 0) {
@@ -213,8 +213,7 @@ char *list_to_str(struct list *list, const char *delim)
 		int len_temp = strlen(temp);
 		if (len + len_temp + 1 + 1 > ret_len) {
 			ret_len = ret_len * 2;
-			/* ret = krealloc(ret, ret_len); */
-			ret = kmalloc(ret_len);
+			ret = realloc(ret, ret_len);
 			len = len + len_temp + 1;
 		}
 		strcat(ret, delim);

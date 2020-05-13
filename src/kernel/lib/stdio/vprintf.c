@@ -33,12 +33,12 @@ void vprintf(const char *fmt, va_list args)
 			} else if (buff == 'x') {
 				char *p = htoa((u32)va_arg(args, int));
 				_puts(p);
-				kfree(p);
+				free(p);
 				readyToFormat = 0;
 			} else if (buff == 'd') {
 				char *p = itoa(va_arg(args, int));
 				_puts(p);
-				kfree(p);
+				free(p);
 				readyToFormat = 0;
 			} else if (buff == 'c') {
 				putch((char)va_arg(args, int));

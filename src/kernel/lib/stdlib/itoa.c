@@ -9,7 +9,7 @@ static const char ITOA_TABLE[] = "0123456789";
 char *itoa(int n)
 {
 	if (!n) {
-		char *ret = (char *)kmalloc(2);
+		char *ret = (char *)malloc(2);
 		ret[0] = '0';
 		ret[1] = 0;
 		return ret;
@@ -22,7 +22,7 @@ char *itoa(int n)
 	for (sz = 0; n % pow(10, sz) != n; sz++) {
 	}
 
-	char *ret = (char *)kmalloc((u32)(sz + 1));
+	char *ret = (char *)malloc((u32)(sz + 1));
 
 	for (int i = 0; i < sz; i++) {
 		int digit = (n % pow(10, i + 1)) / pow(10, i);
@@ -31,11 +31,11 @@ char *itoa(int n)
 	ret[sz] = 0;
 
 	if (negative) {
-		char *aux = (char *)kmalloc((u32)(sz + 2));
+		char *aux = (char *)malloc((u32)(sz + 2));
 		strcpy(aux, ret);
 		aux[sz] = '-';
 		aux[sz + 1] = 0;
-		kfree(ret);
+		free(ret);
 		ret = aux;
 	}
 

@@ -1,3 +1,4 @@
+#include <io/io.h>
 #include <lib/lib.h>
 #include <memory/alloc.h>
 #include <memory/paging.h>
@@ -5,192 +6,477 @@
 #include <stdint.h>
 #include <system.h>
 
-extern u32 end;
-u32 placement_address;
+static int locked = 0;
 
-struct heap_header *kheap = NULL;
-struct heap_header *uheap = NULL;
-
-void kheap_init()
+int liballoc_lock()
 {
-	end = &end;
-	placement_address = end;
-	kheap = (struct heap_header *)fmalloc(KHEAP_SIZE);
-	init_heap(kheap, KHEAP_SIZE);
-
-	// Make user heap
-	uheap = (struct heap_header *)kmalloc_a(UHEAP_SIZE);
-	init_heap(uheap, UHEAP_SIZE);
-	paging_map_user(paging_root_directory, (u32)&uheap, (u32)&uheap);
+	spinlock(locked);
+	return 0;
 }
 
-void *fmalloc(u32 size)
+int liballoc_unlock()
 {
-	assert(placement_address + size < MEM_END);
-	u32 hold = placement_address;
-	memset((void *)hold, 0, size);
-	placement_address += size;
-	return (void *)hold;
+	locked = 0;
+	return 0;
 }
 
-void *kmalloc_a(u32 size)
+void *liballoc_alloc(u32 p)
 {
-	assert(((placement_address & 0xFFFFF000) + 0x1000) + size < MEM_END);
-	placement_address &= 0xFFFFF000;
-	placement_address += 0x1000;
-
-	u32 hold = placement_address;
-	placement_address += size;
-
-	return (void *)hold;
+	u32 ptr = paging_alloc_pages((u32)p);
+	return (void *)ptr;
 }
 
-struct heap_header *find_sized_heap(struct heap_header *heap, u32 size)
+int liballoc_free(void *ptr, u32 p)
 {
-	while ((heap->size < HEAP_FIND_SIZE + size) || (heap->free != true)) {
-		assert(heap->magic == KHEAP_MAGIC);
-		assert(heap->magic2 == KHEAP_MAGIC2);
-		struct heap_footer *foot = (struct heap_footer *)((u32)heap + HEAP_S + heap->size);
-		assert(foot->magic == KHEAP_MAGIC);
-		assert(foot->magic2 == KHEAP_MAGIC2);
+	paging_set_free((u32)ptr, (u32)p);
+	return 0;
+}
 
-		if (foot->size == KHEAP_END)
-			panic("Out of heap space");
+#define ALIGNMENT 16ul
+#define ALIGN_TYPE char
+#define ALIGN_INFO sizeof(ALIGN_TYPE) * 16
+#define USE_CASE1
+#define USE_CASE2
+#define USE_CASE3
+#define USE_CASE4
+#define USE_CASE5
 
-		if (foot->size != heap->size)
-			panic("Heap footer/header mismatch");
-
-		heap = (struct heap_header *)((u32)foot + sizeof(struct heap_footer));
+#define ALIGN(ptr)                                                                                 \
+	if (ALIGNMENT > 1) {                                                                       \
+		u32 diff;                                                                          \
+		ptr = (void *)((u32)ptr + ALIGN_INFO);                                             \
+		diff = (u32)ptr & (ALIGNMENT - 1);                                                 \
+		if (diff != 0) {                                                                   \
+			diff = ALIGNMENT - diff;                                                   \
+			ptr = (void *)((u32)ptr + diff);                                           \
+		}                                                                                  \
+		*((ALIGN_TYPE *)((u32)ptr - ALIGN_INFO)) = diff + ALIGN_INFO;                      \
 	}
 
-	return heap;
-}
-
-void split_heap(struct heap_header *heap, u32 size)
-{
-	struct heap_footer *foot = (struct heap_footer *)((u32)heap + HEAP_S + size);
-	foot->magic = KHEAP_MAGIC;
-	foot->magic2 = KHEAP_MAGIC2;
-	foot->size = size;
-
-	u32 new_size = heap->size - HEAP_TOTAL - size;
-	heap->size = size;
-
-	heap = (struct heap_header *)((u32)foot + sizeof(struct heap_footer));
-	heap->size = new_size;
-	heap->free = true;
-	heap->magic = KHEAP_MAGIC;
-	heap->magic2 = KHEAP_MAGIC2;
-
-	foot = (struct heap_footer *)((u32)heap + HEAP_S + heap->size);
-	if ((foot->magic != KHEAP_MAGIC) || (foot->magic2 != KHEAP_MAGIC2)) {
-		warn("Invalid footer in split");
+#define UNALIGN(ptr)                                                                               \
+	if (ALIGNMENT > 1) {                                                                       \
+		u32 diff = *((ALIGN_TYPE *)((u32)ptr - ALIGN_INFO));                               \
+		if (diff < (ALIGNMENT + ALIGN_INFO)) {                                             \
+			ptr = (void *)((u32)ptr - diff);                                           \
+		}                                                                                  \
 	}
 
-	if (foot->size != KHEAP_END)
-		foot->size = new_size;
+#define LIBALLOC_MAGIC 0x900df00d
+#define LIBALLOC_DEAD 0xbaadf00d
+
+struct liballoc_major {
+	struct liballoc_major *prev;
+	struct liballoc_major *next;
+	u32 pages;
+	u32 size;
+	u32 usage;
+	struct liballoc_minor *first;
+};
+
+struct liballoc_minor {
+	struct liballoc_minor *prev;
+	struct liballoc_minor *next;
+	struct liballoc_major *block;
+	u32 magic;
+	u32 size;
+	u32 req_size;
+};
+
+static struct liballoc_major *l_mem_root = NULL;
+static struct liballoc_major *l_best_bet = NULL;
+
+static u32 l_page_size = 4096;
+static u32 l_page_count = 16;
+static u64 l_allocated = 0;
+static u64 l_inuse = 0;
+
+static long long l_warning_count = 0;
+static long long l_error_count = 0;
+static long long l_possible_overruns = 0;
+
+static void *liballoc_memset(void *s, int c, u32 n)
+{
+	u32 i;
+	for (i = 0; i < n; i++)
+		((char *)s)[i] = c;
+
+	return s;
 }
 
-void free_internal(struct heap_header *heap, void *address)
+static void *liballoc_memcpy(void *s1, const void *s2, u32 n)
 {
-	struct heap_header *head = (struct heap_header *)((u32)address - HEAP_S);
-	if (head == heap) {
-		//warn("Can't collapse top of heap"); // TODO: Fix "can't collapse top of heap" at start
-		head->free = true;
+	char *cdest;
+	char *csrc;
+	u32 *ldest = (u32 *)s1;
+	u32 *lsrc = (u32 *)s2;
+
+	while (n >= sizeof(u32)) {
+		*ldest++ = *lsrc++;
+		n -= sizeof(u32);
+	}
+
+	cdest = (char *)ldest;
+	csrc = (char *)lsrc;
+
+	while (n > 0) {
+		*cdest++ = *csrc++;
+		n -= 1;
+	}
+	return s1;
+}
+
+static struct liballoc_major *allocate_new_page(u32 size)
+{
+	u32 st;
+	struct liballoc_major *maj;
+
+	st = size + sizeof(struct liballoc_major);
+	st += sizeof(struct liballoc_minor);
+
+	if ((st % l_page_size) == 0)
+		st = st / (l_page_size);
+	else
+		st = st / (l_page_size) + 1;
+
+	if (st < l_page_count)
+		st = l_page_count;
+
+	maj = (struct liballoc_major *)liballoc_alloc(st);
+
+	if (maj == NULL) {
+		l_warning_count += 1;
+		return NULL;
+	}
+
+	maj->prev = NULL;
+	maj->next = NULL;
+	maj->pages = st;
+	maj->size = st * l_page_size;
+	maj->usage = sizeof(struct liballoc_major);
+	maj->first = NULL;
+
+	l_allocated += maj->size;
+
+	return maj;
+}
+
+void *malloc(u32 req_size)
+{
+	int startedBet = 0;
+	u64 best_size = 0;
+	void *p = NULL;
+	u32 diff;
+	struct liballoc_major *maj;
+	struct liballoc_minor *min;
+	struct liballoc_minor *new_min;
+	u32 size = req_size;
+
+	if (ALIGNMENT > 1) {
+		size += ALIGNMENT + ALIGN_INFO;
+	}
+
+	liballoc_lock();
+
+	if (size == 0) {
+		l_warning_count += 1;
+		liballoc_unlock();
+		return malloc(1);
+	}
+
+	if (l_mem_root == NULL) {
+		l_mem_root = allocate_new_page(size);
+		if (l_mem_root == NULL) {
+			liballoc_unlock();
+			return NULL;
+		}
+	}
+
+	maj = l_mem_root;
+	startedBet = 0;
+
+	if (l_best_bet != NULL) {
+		best_size = l_best_bet->size - l_best_bet->usage;
+
+		if (best_size > (size + sizeof(struct liballoc_minor))) {
+			maj = l_best_bet;
+			startedBet = 1;
+		}
+	}
+
+	while (maj != NULL) {
+		diff = maj->size - maj->usage;
+		if (best_size < diff) {
+			l_best_bet = maj;
+			best_size = diff;
+		}
+
+#ifdef USE_CASE1
+		if (diff < (size + sizeof(struct liballoc_minor))) {
+			if (maj->next != NULL) {
+				maj = maj->next;
+				continue;
+			}
+
+			if (startedBet == 1) {
+				maj = l_mem_root;
+				startedBet = 0;
+				continue;
+			}
+
+			maj->next = allocate_new_page(size);
+			if (maj->next == NULL)
+				break;
+			maj->next->prev = maj;
+			maj = maj->next;
+		}
+#endif
+
+#ifdef USE_CASE2
+		if (maj->first == NULL) {
+			maj->first =
+				(struct liballoc_minor *)((u32)maj + sizeof(struct liballoc_major));
+
+			maj->first->magic = LIBALLOC_MAGIC;
+			maj->first->prev = NULL;
+			maj->first->next = NULL;
+			maj->first->block = maj;
+			maj->first->size = size;
+			maj->first->req_size = req_size;
+			maj->usage += size + sizeof(struct liballoc_minor);
+			l_inuse += size;
+			p = (void *)((u32)(maj->first) + sizeof(struct liballoc_minor));
+			ALIGN(p);
+			liballoc_unlock();
+			return p;
+		}
+#endif
+
+#ifdef USE_CASE3
+		diff = (u32)(maj->first);
+		diff -= (u32)maj;
+		diff -= sizeof(struct liballoc_major);
+
+		if (diff >= (size + sizeof(struct liballoc_minor))) {
+			maj->first->prev =
+				(struct liballoc_minor *)((u32)maj + sizeof(struct liballoc_major));
+			maj->first->prev->next = maj->first;
+			maj->first = maj->first->prev;
+			maj->first->magic = LIBALLOC_MAGIC;
+			maj->first->prev = NULL;
+			maj->first->block = maj;
+			maj->first->size = size;
+			maj->first->req_size = req_size;
+			maj->usage += size + sizeof(struct liballoc_minor);
+			l_inuse += size;
+			p = (void *)((u32)(maj->first) + sizeof(struct liballoc_minor));
+			ALIGN(p);
+			liballoc_unlock();
+			return p;
+		}
+#endif
+
+#ifdef USE_CASE4
+		min = maj->first;
+
+		while (min != NULL) {
+			if (min->next == NULL) {
+				diff = (u32)(maj) + maj->size;
+				diff -= (u32)min;
+				diff -= sizeof(struct liballoc_minor);
+				diff -= min->size;
+				if (diff >= (size + sizeof(struct liballoc_minor))) {
+					min->next = (struct liballoc_minor
+							     *)((u32)min +
+								sizeof(struct liballoc_minor) +
+								min->size);
+					min->next->prev = min;
+					min = min->next;
+					min->next = NULL;
+					min->magic = LIBALLOC_MAGIC;
+					min->block = maj;
+					min->size = size;
+					min->req_size = req_size;
+					maj->usage += size + sizeof(struct liballoc_minor);
+					l_inuse += size;
+					p = (void *)((u32)min + sizeof(struct liballoc_minor));
+					ALIGN(p);
+					liballoc_unlock();
+					return p;
+				}
+			}
+
+			if (min->next != NULL) {
+				diff = (u32)(min->next);
+				diff -= (u32)min;
+				diff -= sizeof(struct liballoc_minor);
+				diff -= min->size;
+
+				if (diff >= (size + sizeof(struct liballoc_minor))) {
+					new_min = (struct liballoc_minor
+							   *)((u32)min +
+							      sizeof(struct liballoc_minor) +
+							      min->size);
+					new_min->magic = LIBALLOC_MAGIC;
+					new_min->next = min->next;
+					new_min->prev = min;
+					new_min->size = size;
+					new_min->req_size = req_size;
+					new_min->block = maj;
+					min->next->prev = new_min;
+					min->next = new_min;
+					maj->usage += size + sizeof(struct liballoc_minor);
+					l_inuse += size;
+					p = (void *)((u32)new_min + sizeof(struct liballoc_minor));
+					ALIGN(p);
+					liballoc_unlock();
+					return p;
+				}
+			}
+
+			min = min->next;
+		}
+#endif
+
+#ifdef USE_CASE5
+		if (maj->next == NULL) {
+			if (startedBet == 1) {
+				maj = l_mem_root;
+				startedBet = 0;
+				continue;
+			}
+			maj->next = allocate_new_page(size);
+			if (maj->next == NULL)
+				break;
+			maj->next->prev = maj;
+		}
+#endif
+		maj = maj->next;
+	}
+
+	liballoc_unlock();
+
+	return NULL;
+}
+
+void free(void *ptr)
+{
+	struct liballoc_minor *min;
+	struct liballoc_major *maj;
+
+	if (ptr == NULL) {
+		l_warning_count += 1;
 		return;
 	}
 
-	if ((head->magic != KHEAP_MAGIC) || (head->magic2 != KHEAP_MAGIC2)) {
-		warn("Invalid header in heap");
+	UNALIGN(ptr);
+	liballoc_lock();
+
+	min = (struct liballoc_minor *)((u32)ptr - sizeof(struct liballoc_minor));
+
+	if (min->magic != LIBALLOC_MAGIC) {
+		l_error_count += 1;
+
+		if (((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) ||
+		    ((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) ||
+		    ((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF))) {
+			l_possible_overruns += 1;
+		}
+
+		liballoc_unlock();
 		return;
 	}
 
-	struct heap_footer *foot = (struct heap_footer *)((u32)head + HEAP_S + head->size);
-	if ((foot->magic != KHEAP_MAGIC) || (foot->magic2 != KHEAP_MAGIC2))
-		panic("Bad heap call");
+	maj = min->block;
+	l_inuse -= min->size;
+	maj->usage -= (min->size + sizeof(struct liballoc_minor));
+	min->magic = LIBALLOC_DEAD;
 
-	foot = (struct heap_footer *)((u32)head - sizeof(struct heap_footer));
-	if ((foot->magic != KHEAP_MAGIC) || (foot->magic2 != KHEAP_MAGIC2)) {
-		warn("Invalid footer in heap");
-		return;
+	if (min->next != NULL)
+		min->next->prev = min->prev;
+	if (min->prev != NULL)
+		min->prev->next = min->next;
+	if (min->prev == NULL)
+		maj->first = min->next;
+	if (maj->first == NULL) {
+		if (l_mem_root == maj)
+			l_mem_root = maj->next;
+		if (l_best_bet == maj)
+			l_best_bet = NULL;
+		if (maj->prev != NULL)
+			maj->prev->next = maj->next;
+		if (maj->next != NULL)
+			maj->next->prev = maj->prev;
+		l_allocated -= maj->size;
+		liballoc_free(maj, maj->pages);
+	} else {
+		if (l_best_bet != NULL) {
+			int best_size = l_best_bet->size - l_best_bet->usage;
+			int maj_size = maj->size - maj->usage;
+			if (maj_size > best_size)
+				l_best_bet = maj;
+		}
+	}
+	liballoc_unlock();
+}
+
+void *calloc(u32 nobj, u32 size)
+{
+	int real_size;
+	void *p;
+
+	real_size = nobj * size;
+
+	p = malloc(real_size);
+
+	liballoc_memset(p, 0, real_size);
+
+	return p;
+}
+
+void *realloc(void *p, u32 size)
+{
+	void *ptr;
+	struct liballoc_minor *min;
+	u32 real_size;
+
+	if (size == 0) {
+		free(p);
+		return NULL;
 	}
 
-	if (foot->size == KHEAP_END)
-		panic("Impossible condition for heap");
+	if (p == NULL)
+		return malloc(size);
 
-	heap = (struct heap_header *)((u32)foot - foot->size - HEAP_S);
-	if ((heap->magic != KHEAP_MAGIC) || (heap->magic2 != KHEAP_MAGIC2)) {
-		warn("Invalid parent in heap");
-		return;
+	ptr = p;
+	UNALIGN(ptr);
+	liballoc_lock();
+	min = (struct liballoc_minor *)((u32)ptr - sizeof(struct liballoc_minor));
+
+	if (min->magic != LIBALLOC_MAGIC) {
+		l_error_count += 1;
+		if (((min->magic & 0xFFFFFF) == (LIBALLOC_MAGIC & 0xFFFFFF)) ||
+		    ((min->magic & 0xFFFF) == (LIBALLOC_MAGIC & 0xFFFF)) ||
+		    ((min->magic & 0xFF) == (LIBALLOC_MAGIC & 0xFF))) {
+			l_possible_overruns += 1;
+		}
+
+		liballoc_unlock();
+		return NULL;
 	}
 
-	foot = (struct heap_footer *)((u32)heap + (heap->size + head->size + HEAP_TOTAL) + HEAP_S);
-	if ((foot->magic != KHEAP_MAGIC) || (foot->magic2 != KHEAP_MAGIC2)) {
-		panic("Fatal arithmetic error in free() call");
-		return;
+	real_size = min->req_size;
+
+	if (real_size >= size) {
+		min->req_size = size;
+		liballoc_unlock();
+		return p;
 	}
 
-	heap->size += head->size + HEAP_TOTAL;
-	foot->size = heap->size;
-}
+	liballoc_unlock();
 
-void *malloc_internal(struct heap_header *heap, u32 size)
-{
-	heap = find_sized_heap(heap, size + 8);
-	heap->free = false;
-	split_heap(heap, size);
-	return (void *)((u32)heap + HEAP_S);
-}
+	ptr = malloc(size);
+	liballoc_memcpy(ptr, p, real_size);
+	free(p);
 
-void init_heap(struct heap_header *heap, u32 size)
-{
-	heap->magic = KHEAP_MAGIC;
-	heap->magic2 = KHEAP_MAGIC2;
-	heap->free = true;
-	heap->size = size - HEAP_TOTAL;
-
-	struct heap_footer *foot = (struct heap_footer *)((u32)heap + HEAP_S + heap->size);
-	foot->magic = KHEAP_MAGIC;
-	foot->magic2 = KHEAP_MAGIC2;
-	foot->size = KHEAP_END;
-}
-
-void *kmalloc(u32 size)
-{
-	if (kheap == NULL)
-		return fmalloc(size);
-
-	return malloc_internal(kheap, size);
-}
-
-void *kcalloc(u32 num, u32 size)
-{
-	void *ptr = kmalloc(num * size);
-	memset(ptr, 0, num * size);
 	return ptr;
-}
-
-void kfree(void *address)
-{
-	if (kheap == NULL)
-		return;
-
-	free_internal(kheap, address);
-}
-
-void *umalloc(u32 size)
-{
-	return malloc_internal(uheap, size);
-}
-
-void *ucalloc(u32 num, u32 size)
-{
-	void *ptr = umalloc(num * size);
-	memset(ptr, 0, num * size);
-	return ptr;
-}
-
-void ufree(void *address)
-{
-	free_internal(uheap, address);
 }

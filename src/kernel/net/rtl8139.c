@@ -73,7 +73,7 @@ int rtl8139_init(void)
 		}
 
 		// Set receive buffer
-		rtl_rx_buffer = (u8 *)kmalloc(8192 + 16);
+		rtl_rx_buffer = (u8 *)malloc(8192 + 16);
 		outl((u16)(rtl_iobase + 0x30), (u32)rtl_rx_buffer);
 
 		// Enable ISR

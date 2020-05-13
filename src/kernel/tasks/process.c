@@ -31,6 +31,7 @@ void scheduler(struct regs *regs)
 	} else {
 		quantum--;
 		locked = 0;
+		sti();
 		return;
 	}
 
@@ -57,6 +58,7 @@ void scheduler(struct regs *regs)
 	memcpy(regs, &current_proc->registers, sizeof(struct regs));
 	paging_switch_directory(current_proc->cr3);
 	locked = 0;
+	cli();
 }
 
 void process_force_switch()
@@ -133,6 +135,7 @@ u32 process_wait_pid(u32 pid, u32 *status)
 void process_suspend(u32 pid)
 {
 	debug("Suspending process %d", pid);
+	process_print_tree();
 	if (pid == 1)
 		panic("Root process died");
 
@@ -159,21 +162,6 @@ void process_wake(u32 pid)
 	process_force_switch();
 }
 
-u32 process_child(struct process *child, u32 pid)
-{
-	debug("Spawning child process %d", pid);
-	process_suspend(pid);
-
-	struct process *parent = process_from_pid(pid);
-
-	if (parent == PID_NOT_FOUND)
-		panic("Child process spawned without parent");
-
-	child->parent = parent;
-
-	return process_spawn(child);
-}
-
 struct process *process_from_pid(u32 pid)
 {
 	struct process *proc = root;
@@ -191,16 +179,16 @@ struct process *process_from_pid(u32 pid)
 struct process *process_make_new()
 {
 	debug("Making new process %d", pid);
-	struct process *proc = (struct process *)kmalloc_a(sizeof(struct process));
+	struct process *proc = (struct process *)malloc(sizeof(struct process));
 	proc->registers.cs = 0x1B;
 	proc->registers.ds = 0x23;
 	proc->registers.ss = 0x23;
-	proc->cr3 = paging_make_directory();
+	proc->cr3 = paging_make_directory(1);
 
 	proc->brk = 0x50000000;
 
 	for (int i = 0; i < 1024; i++)
-		proc->cr3->tables[i] = paging_root_directory->tables[i];
+		proc->cr3->tables[i] = paging_kernel_directory->tables[i];
 
 	proc->pid = pid++;
 	return proc;
@@ -221,13 +209,13 @@ u32 kexec(char *path)
 u32 uexec(char *path)
 {
 	debug("Starting user process %s", path);
-	process_suspend(current_proc->pid);
 
 	struct process *proc = elf_load(path);
 	if (proc == NULL)
 		return -1;
 
 	process_spawn(proc);
+	process_suspend(current_proc->pid);
 	log("Spawned");
 	return 0;
 }

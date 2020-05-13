@@ -46,23 +46,23 @@ struct process *elf_load(char *path)
 	proc->registers.eip = header->entry;
 
 	paging_switch_directory(proc->cr3);
-	u32 stk = (u32)kmalloc_a(PAGE_S);
-	proc->registers.useresp = 0x40000000 - (PAGE_S / 2);
+	u32 stk = (u32)malloc(PAGE_SIZE);
+	proc->registers.useresp = 0x40000000 - (PAGE_SIZE / 2);
 	proc->registers.ebp = proc->registers.useresp;
 	proc->registers.esp = proc->registers.useresp;
-	paging_map_user(proc->cr3, stk, 0x40000000 - PAGE_S);
+	paging_map(stk, 0x40000000 - PAGE_SIZE, PT_USER);
 
 	for (int i = 0; i < header->phnum; i++, program_header++) {
 		switch (program_header->type) {
 		case 0:
 			break;
 		case 1: {
-			u32 loc = (u32)kmalloc_a(PAGE_S);
-			paging_map_user(proc->cr3, loc, program_header->vaddr);
+			u32 loc = (u32)malloc(PAGE_SIZE);
+			paging_map(loc, program_header->vaddr, PT_USER);
 			memcpy((void *)program_header->vaddr,
 			       ((void *)((u32)file) + program_header->offset),
 			       program_header->filesz);
-			if (program_header->filesz > PAGE_S)
+			if (program_header->filesz > PAGE_SIZE)
 				panic("ELF binary section too large");
 			break;
 		}
@@ -71,6 +71,6 @@ struct process *elf_load(char *path)
 		}
 	}
 
-	paging_switch_directory(paging_root_directory);
+	paging_switch_directory(paging_kernel_directory);
 	return proc;
 }

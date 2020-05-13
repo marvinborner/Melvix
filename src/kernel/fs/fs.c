@@ -25,7 +25,7 @@ u32 read(char *path, u32 offset, u32 count, u8 *buf)
 	if (inode != 0) {
 		debug("Reading %s: %dKiB", path, count >> 10);
 		ext2_read(&file, buf, count);
-		kfree(file.buf);
+		free(file.buf);
 		buf[count - 1] = '\0';
 		return buf;
 	} else {
@@ -49,9 +49,9 @@ u8 *read_file(char *path)
 	if (inode != 0) {
 		u32 size = file.inode.size;
 		debug("Reading %s: %dKiB", path, size >> 10);
-		u8 *buf = kmalloc(size);
+		u8 *buf = malloc(size);
 		ext2_read(&file, buf, size);
-		kfree(file.buf);
+		free(file.buf);
 		buf[size - 1] = '\0';
 		return buf;
 	} else {

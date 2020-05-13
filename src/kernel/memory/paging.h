@@ -3,50 +3,59 @@
 
 #include <stdint.h>
 
-struct page {
-	u32 present : 1;
-	u32 rw : 1;
-	u32 user : 1;
-	u32 accessed : 1;
-	u32 dirty : 1;
-	u32 unused : 7;
-	u32 frame : 20;
-};
+#define PAGE_SIZE 0x400000
+
+#define PD_PRESENT 1 << 0
+#define PD_RW 1 << 1
+#define PD_USER 1 << 2
+#define PD_WRITETHR 1 << 3
+#define PD_CACHE_D 1 << 4
+#define PD_ACCESSED 1 << 5
+#define PD_4M_PAGE 1 << 7
+
+#define PT_PRESENT 1 << 0
+#define PT_RW 1 << 1
+#define PT_USER 1 << 2
+#define PT_WRITETHR 1 << 3
+#define PT_CACHE_D 1 << 4
+#define PT_ACCESSED 1 << 5
+#define PT_DIRTY 1 << 6
+#define PT_GLOBAL 1 << 8
+#define PT_USED 1 << 9
 
 struct page_table {
-	struct page pages[1024];
+	u32 pages[1024];
 };
 
 struct page_directory {
 	struct page_table *tables[1024];
 };
 
-struct page_directory *paging_root_directory;
+struct page_directory *paging_kernel_directory;
+int paging_enabled;
 
-struct page_table *get_cr3();
-u32 get_cr0();
-
-void set_cr3(struct page_directory *dir);
-void set_cr0(u32 new_cr0);
-
-void paging_disable();
+void paging_install(u32 multiboot_address);
 void paging_enable();
+void paging_disable();
+
+struct page_directory *paging_make_directory(int user);
 void paging_switch_directory(struct page_directory *dir);
 
-struct page_directory *paging_make_directory();
-struct page_table *paging_make_table();
-
+void paging_map(u32 phy, u32 virt, u16 flags);
 u32 paging_get_phys(u32 virt);
-void paging_install();
+u16 paging_get_flags(u32 virt);
+u32 paging_get_used_pages();
 
-void paging_map(struct page_directory *cr3, u32 virt, u32 phys);
-void paging_map_user(struct page_directory *cr3, u32 virt, u32 phys);
+void paging_set_flags(u32 virt, u32 count, u16 flags);
+void paging_set_flag_up(u32 virt, u32 count, u32 flag);
+void paging_set_flag_down(u32 virt, u32 count, u32 flag);
+void paging_set_present(u32 virt, u32 count);
+void paging_set_absent(u32 virt, u32 count);
+void paging_set_used(u32 virt, u32 count);
+void paging_set_free(u32 virt, u32 count);
+void paging_set_user(u32 virt, u32 count);
 
-void paging_convert_page(struct page_directory *kdir);
-
-struct page_directory *paging_copy_user_directory(struct page_directory *dir);
-
-#define EMPTY_TAB ((struct page_table *)0x00000002)
-#define PAGE_S 0x400000
+u32 paging_find_pages(u32 count);
+u32 paging_alloc_pages(u32 count);
 
 #endif

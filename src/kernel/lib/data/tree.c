@@ -1,15 +1,16 @@
 #include <lib/data.h>
 #include <memory/alloc.h>
+#include <stddef.h>
 #include <stdint.h>
 
 struct tree *tree_create()
 {
-	return (struct tree *)kcalloc(sizeof(struct tree), 1);
+	return (struct tree *)calloc(sizeof(struct tree), 1);
 }
 
 struct tree_node *treenode_create(void *value)
 {
-	struct tree_node *n = kcalloc(sizeof(struct tree_node), 1);
+	struct tree_node *n = calloc(sizeof(struct tree_node), 1);
 	n->value = value;
 	n->children = list_create();
 	return n;
@@ -17,7 +18,7 @@ struct tree_node *treenode_create(void *value)
 
 struct tree_node *tree_insert(struct tree *tree, struct tree_node *subroot, void *value)
 {
-	struct tree_node *treenode = kcalloc(sizeof(struct tree_node), 1);
+	struct tree_node *treenode = calloc(sizeof(struct tree_node), 1);
 	treenode->children = list_create();
 	treenode->value = value;
 
@@ -62,7 +63,7 @@ void tree_remove(struct tree *tree, struct tree_node *remove_node)
 	struct tree_node *parent = tree_find_parent(tree, remove_node, &child_index);
 	if (parent != NULL) {
 		struct tree_node *freethis = list_remove_by_index(parent->children, child_index);
-		kfree(freethis);
+		free(freethis);
 	}
 }
 

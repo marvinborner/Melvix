@@ -78,7 +78,7 @@ static void load_bgdt()
 	read_abs_sectors(bgdt_lba, bgdt_sectors, buf);
 
 	u32 bgdt_size = sizeof(struct bgd) * num_groups;
-	bgdt = kmalloc(bgdt_size);
+	bgdt = malloc(bgdt_size);
 	memcpy(bgdt, buf, bgdt_size);
 }
 
@@ -106,7 +106,7 @@ void ext2_open_inode(u32 inode_num, struct ext2_file *file)
 	read_inode(&file->inode, inode_num);
 	file->pos = 0;
 	file->block_index = 0;
-	file->buf = kmalloc(block_size);
+	file->buf = malloc(block_size);
 	file->curr_block_pos = 0;
 
 	read_block(file->inode.dbp[0], file->buf);
@@ -136,7 +136,7 @@ u32 ext2_read(struct ext2_file *file, u8 *buf, u32 count)
 			file->block_index++;
 			if (file->block_index >= 12) {
 				// TODO: Add triple block pointer support
-				u32 *tmp = kmalloc(block_size);
+				u32 *tmp = malloc(block_size);
 				read_block(file->inode.ibp, tmp);
 				read_block(tmp[file->block_index - 12], file->buf);
 			} else {
@@ -159,7 +159,7 @@ bool ext2_next_dirent(struct ext2_file *file, struct ext2_dirent *dir)
 	memcpy(dir, buf, READ_SIZE);
 
 	u32 size = dir->name_len + 1;
-	u8 *name = kmalloc(size);
+	u8 *name = malloc(size);
 	if (ext2_read(file, name, size - 1) != size - 1)
 		return false;
 
@@ -192,7 +192,7 @@ u32 ext2_find_in_dir(u32 dir_inode, const char *name)
 	inode = 0;
 
 cleanup:
-	kfree(dir.buf);
+	free(dir.buf);
 	return inode;
 }
 

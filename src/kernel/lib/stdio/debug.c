@@ -33,12 +33,12 @@ void serial_vprintf(const char *fmt, va_list args)
 			} else if (buff == 'x') {
 				char *p = htoa((u32)va_arg(args, int));
 				serial_print(p);
-				kfree(p);
+				free(p);
 				readyToFormat = 0;
 			} else if (buff == 'd') {
 				char *p = itoa(va_arg(args, int));
 				serial_print(p);
-				kfree(p);
+				free(p);
 				readyToFormat = 0;
 			} else if (buff == 'c') {
 				serial_put((char)va_arg(args, int));

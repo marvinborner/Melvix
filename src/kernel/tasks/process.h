@@ -34,7 +34,6 @@ void process_force_switch();
 u32 process_spawn(struct process *process);
 void process_suspend(u32 pid);
 void process_wake(u32 pid);
-u32 process_child(struct process *process, u32 pid);
 
 u32 process_wait_gid(u32 gid, u32 *status);
 u32 process_wait_pid(u32 pid, u32 *status);

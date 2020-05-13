@@ -90,7 +90,7 @@ char mouse_read()
 
 void mouse_install()
 {
-	event = umalloc(sizeof(struct mouse_event));
+	event = malloc(sizeof(struct mouse_event));
 	u8 status;
 
 	// Enable auxiliary mouse device

@@ -3,6 +3,6 @@
 
 u32 sys_free(u32 ptr)
 {
-	ufree((void *)ptr);
+	free((void *)ptr);
 	return 0;
 }

@@ -6,7 +6,7 @@ static const char HTOA_TABLE[] = "0123456789ABCDEF";
 
 char *htoa(u32 n)
 {
-	char *ret = (char *)kmalloc(10);
+	char *ret = (char *)malloc(10);
 
 	int i = 0;
 	while (n) {
@@ -23,7 +23,7 @@ char *htoa(u32 n)
 		ret[i] = 0;
 
 	char *aux = strdup(ret);
-	kfree(ret);
+	free(ret);
 	ret = aux;
 
 	strinv(ret);

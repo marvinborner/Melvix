@@ -33,11 +33,10 @@ void *memset(void *dest, char val, u32 count);
 int memcmp(const void *a_ptr, const void *b_ptr, u32 size);
 
 void memory_info_init(struct multiboot_tag_basic_meminfo *tag);
-
 void memory_mmap_init(struct multiboot_tag_mmap *tag);
+int memory_init(u32 multiboot_address);
 
 void memory_print();
-
 u32 memory_get_all();
 
 #endif

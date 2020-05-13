@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <system.h>
 
-unsigned long timer_ticks = 0;
+u64 timer_ticks = 0;
 
 void timer_phase(int hz)
 {

@@ -32,11 +32,11 @@ void acpi_init(struct rsdp *rsdp)
 	// TODO: Fix ACPI table discovering (HPET & MADT missing)
 	// TODO: Fix ACPI breaking VESA (why?!)
 
-	struct sdt_header *header = (struct sdt_header *)kmalloc(sizeof(struct sdt_header));
-	rsdt = (struct rsdt *)kmalloc(sizeof(struct rsdt));
-	fadt = (struct fadt *)kmalloc(sizeof(struct fadt));
-	hpet = (struct hpet *)kmalloc(sizeof(struct hpet));
-	madt = (struct madt *)kmalloc(sizeof(struct madt));
+	struct sdt_header *header = (struct sdt_header *)malloc(sizeof(struct sdt_header));
+	rsdt = (struct rsdt *)malloc(sizeof(struct rsdt));
+	fadt = (struct fadt *)malloc(sizeof(struct fadt));
+	hpet = (struct hpet *)malloc(sizeof(struct hpet));
+	madt = (struct madt *)malloc(sizeof(struct madt));
 
 	if (strncmp(rsdp->signature, "RSD PTR ", 8) == 0) {
 		memcpy(rsdt, rsdp->rsdt_address, sizeof(struct rsdt) + 32);
@@ -72,7 +72,7 @@ void acpi_init(struct rsdp *rsdp)
 	} else {
 		warn("Wrong RSD signature!");
 	}
-	kfree(header);
+	free(header);
 }
 
 void acpi_old_init(struct multiboot_tag_old_acpi *tag)

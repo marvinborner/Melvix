@@ -49,7 +49,7 @@ u16 *vbe_get_modes()
 	for (u16 *p = mode_ptr; *p != 0xFFFF; p++)
 		number_modes++;
 
-	u16 *ret = (u16 *)kmalloc(sizeof(u16) * number_modes);
+	u16 *ret = (u16 *)malloc(sizeof(u16) * number_modes);
 	for (u32 i = 0; i < number_modes; i++)
 		ret[i] = ((u16 *)info->video_modes)[i];
 
@@ -69,7 +69,7 @@ struct vbe_mode_info *vbe_get_mode_info(u16 mode)
 
 	struct vbe_mode_info_all *mode_info = (struct vbe_mode_info_all *)0x7E00;
 
-	struct vbe_mode_info *ret = (struct vbe_mode_info *)kmalloc(sizeof(struct vbe_mode_info));
+	struct vbe_mode_info *ret = (struct vbe_mode_info *)malloc(sizeof(struct vbe_mode_info));
 	ret->attributes = mode_info->attributes;
 	ret->pitch = mode_info->pitch;
 	ret->width = mode_info->width;
@@ -94,7 +94,7 @@ void set_optimal_resolution()
 
 		if (mode_info == 0 || (mode_info->attributes & 0x90) != 0x90 ||
 		    (mode_info->memory_model != 4 && mode_info->memory_model != 6)) {
-			kfree(mode_info);
+			free(mode_info);
 			continue;
 		}
 
@@ -111,10 +111,10 @@ void set_optimal_resolution()
 			vbe_bpl = mode_info->bpp >> 3;
 			fb = (u8 *)mode_info->framebuffer;
 		}
-		kfree(mode_info);
+		free(mode_info);
 	}
 
-	kfree(video_modes);
+	free(video_modes);
 
 	if (highest == 0) {
 		log("Mode detection failed!");
@@ -139,7 +139,7 @@ void set_optimal_resolution()
 			mode_info = vbe_get_mode_info((u16)modes[i]);
 			if (mode_info == 0 || (mode_info->attributes & 0x90) != 0x90 ||
 			    (mode_info->memory_model != 4 && mode_info->memory_model != 6)) {
-				kfree(mode_info);
+				free(mode_info);
 				continue;
 			}
 
@@ -152,7 +152,7 @@ void set_optimal_resolution()
 				vbe_bpl = mode_info->bpp >> 3;
 				fb = (u8 *)mode_info->framebuffer;
 			}
-			kfree(mode_info);
+			free(mode_info);
 		}
 
 		// Everything else failed :(
@@ -165,13 +165,13 @@ void set_optimal_resolution()
 	vbe_set_mode(highest);
 
 	/* u32 fb_size = vbe_width * vbe_height * vbe_bpl; */
-	/* cursor_buffer = kmalloc(fb_size); */
+	/* cursor_buffer = malloc(fb_size); */
 	/* for (u32 z = 0; z < fb_size; z += PAGE_S) { */
-	/* 	paging_map_user(paging_root_directory, (u32)fb + z, (u32)fb + z); */
+	/* 	paging_map_user(paging_kernel_directory, (u32)fb + z, (u32)fb + z); */
 	/* } */
 
 	/* dev_make("fb", NULL, (write)fb_write); */
-	/* struct fs_node *node = (struct fs_node *)kmalloc(sizeof(struct fs_node)); */
+	/* struct fs_node *node = (struct fs_node *)malloc(sizeof(struct fs_node)); */
 	/* strcpy(node->name, "/dev/fb"); */
 	/* fs_open(node); */
 	/* node->write = (write)fb_write; */

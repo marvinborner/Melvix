@@ -32,7 +32,7 @@ void main()
 		printf("INTs disabled :(\n");
 
 	// TODO: Fix page fault when mallocing
-	printf("Initializing userspace...\n");
+	printf("Initializing userspace... %d\n", 42);
 
 	// TODO: Fix scheduler turning off after spawn
 	spawn("/bin/sh");
