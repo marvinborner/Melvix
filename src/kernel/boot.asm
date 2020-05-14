@@ -44,3 +44,7 @@ section .text
 		cli
 		call kernel_main
 		jmp $
+
+section .end
+	global KERNEL_END
+	KERNEL_END:

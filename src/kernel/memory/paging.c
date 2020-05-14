@@ -6,9 +6,8 @@
 
 int paging_enabled = 0;
 
-u32 root_dir[1024][1024] __attribute__((aligned(4096)));
 struct page_directory *paging_directory; // Current
-struct page_directory *paging_kernel_directory = (struct page_directory *)root_dir;
+struct page_directory *paging_kernel_directory = 0x9d000;
 
 void paging_init(struct page_directory *dir, int user)
 {
@@ -33,16 +32,16 @@ struct page_directory *paging_make_directory(int user)
 	return dir;
 }
 
-extern u32 end;
+extern void KERNEL_END();
 void paging_install(u32 multiboot_address)
 {
-	// Kernel paging
 	paging_switch_directory(paging_kernel_directory);
 	paging_init(paging_directory, 0);
 
 	if (!memory_init(multiboot_address))
-		paging_set_present(0, memory_get_all() >> 3); // /4
-	paging_set_used(0, ((u32)end >> 12) + 1); // /4096
+		paging_set_present(0, memory_get_all() >> 3);
+
+	paging_set_used(0, ((u32)KERNEL_END >> 12) + 1); // /4096
 	log("Enabling");
 
 	paging_enable();
@@ -60,7 +59,6 @@ void paging_disable()
 
 void paging_enable()
 {
-	asm("mov %0, %%cr3" ::"r"(paging_directory));
 	u32 cr0;
 	asm("mov %%cr0, %0" : "=r"(cr0));
 	cr0 |= 0x80000000;
@@ -71,7 +69,7 @@ void paging_enable()
 void paging_switch_directory(struct page_directory *dir)
 {
 	paging_directory = dir;
-	asm("mov %0, %%cr3" ::"r"(paging_directory));
+	asm("mov %0, %%cr3" ::"r"(dir));
 }
 
 void invlpg(u32 addr)
