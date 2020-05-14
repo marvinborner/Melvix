@@ -6,8 +6,10 @@
 
 int paging_enabled = 0;
 
+u32 tmp[1024][1024] __attribute__((aligned(4096)));
+struct page_directory *paging_kernel_directory = (struct page_directory *)tmp;
+
 struct page_directory *paging_directory; // Current
-struct page_directory *paging_kernel_directory = 0x9d000;
 
 void paging_init(struct page_directory *dir, int user)
 {
@@ -40,10 +42,9 @@ void paging_install(u32 multiboot_address)
 
 	if (!memory_init(multiboot_address))
 		paging_set_present(0, memory_get_all() >> 3);
-
 	paging_set_used(0, ((u32)KERNEL_END >> 12) + 1); // /4096
-	log("Enabling");
 
+	log("Enabling");
 	paging_enable();
 	log("Installed paging");
 }

@@ -24,11 +24,11 @@
 #define PT_USED 1 << 9
 
 struct page_table {
-	u32 pages[1024];
+	u32 pages[1024] __attribute__((aligned(4096)));
 };
 
 struct page_directory {
-	struct page_table *tables[1024];
+	struct page_table *tables[1024] __attribute__((aligned(4096)));
 };
 
 struct page_directory *paging_kernel_directory;
