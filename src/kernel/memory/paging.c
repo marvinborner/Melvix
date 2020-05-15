@@ -7,9 +7,9 @@
 int paging_enabled = 0;
 
 u32 tmp[1024][1024] __attribute__((aligned(4096)));
-struct page_directory *paging_kernel_directory = (struct page_directory *)tmp;
-
-struct page_directory *paging_directory; // Current
+struct page_directory *paging_kernel_directory __attribute__((aligned(4096))) =
+	(struct page_directory *)tmp;
+struct page_directory *paging_directory __attribute__((aligned(4096))); // Current
 
 void paging_init(struct page_directory *dir, int user)
 {
@@ -47,6 +47,14 @@ void paging_install(u32 multiboot_address)
 	log("Enabling");
 	paging_enable();
 	log("Installed paging");
+
+	u32 a = (u32)malloc(4096);
+	u32 b = (u32)malloc(4096);
+	free((void *)b);
+	free((void *)a);
+	u32 c = (u32)malloc(2048);
+	assert(a == c);
+	info("kmalloc test succeeded!");
 }
 
 void paging_disable()

@@ -162,7 +162,10 @@ static struct liballoc_major *allocate_new_page(u32 size)
 
 void *malloc(u32 req_size)
 {
-	int startedBet = 0;
+	if (!paging_enabled)
+		warn("Mallocing while paging is disabled!");
+
+	int started_bet = 0;
 	u64 best_size = 0;
 	void *p = NULL;
 	u32 diff;
@@ -192,14 +195,14 @@ void *malloc(u32 req_size)
 	}
 
 	maj = l_mem_root;
-	startedBet = 0;
+	started_bet = 0;
 
 	if (l_best_bet != NULL) {
 		best_size = l_best_bet->size - l_best_bet->usage;
 
 		if (best_size > (size + sizeof(struct liballoc_minor))) {
 			maj = l_best_bet;
-			startedBet = 1;
+			started_bet = 1;
 		}
 	}
 
@@ -217,9 +220,9 @@ void *malloc(u32 req_size)
 				continue;
 			}
 
-			if (startedBet == 1) {
+			if (started_bet == 1) {
 				maj = l_mem_root;
-				startedBet = 0;
+				started_bet = 0;
 				continue;
 			}
 
@@ -339,9 +342,9 @@ void *malloc(u32 req_size)
 
 #ifdef USE_CASE5
 		if (maj->next == NULL) {
-			if (startedBet == 1) {
+			if (started_bet == 1) {
 				maj = l_mem_root;
-				startedBet = 0;
+				started_bet = 0;
 				continue;
 			}
 			maj->next = allocate_new_page(size);

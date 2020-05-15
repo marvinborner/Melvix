@@ -31,7 +31,7 @@ struct page_directory {
 	struct page_table *tables[1024] __attribute__((aligned(4096)));
 };
 
-struct page_directory *paging_kernel_directory;
+struct page_directory *paging_kernel_directory __attribute__((aligned(4096)));
 int paging_enabled;
 
 void paging_install(u32 multiboot_address);
