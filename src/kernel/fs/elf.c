@@ -25,6 +25,12 @@ int is_elf(struct elf_header *header)
 
 struct process *elf_load(char *path)
 {
+	u32 *prev_dir;
+	if (current_proc)
+		prev_dir = current_proc->cr3;
+	else
+		prev_dir = current_page_directory;
+
 	u8 *file = read_file(path);
 	if (!file) {
 		warn("File or directory not found: %s", path);
@@ -71,6 +77,6 @@ struct process *elf_load(char *path)
 		}
 	}
 
-	paging_switch_directory(paging_kernel_directory);
+	paging_switch_directory(prev_dir);
 	return proc;
 }
