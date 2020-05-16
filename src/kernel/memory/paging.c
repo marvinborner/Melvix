@@ -13,12 +13,13 @@ void paging_init(u32 *dir, int user)
 {
 	for (u32 i = 0; i < 1024; i++) {
 		for (u32 j = 0; j < 1024; j++) {
-			current_page_tables[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW;
+			current_page_tables[i][j] =
+				((j * 0x1000) + (i * 0x400000)) | PT_RW | (user ? PT_USER : 0);
 		}
 	}
 
 	for (u32 i = 0; i < 1024; i++) {
-		current_page_directory[i] = ((u32)current_page_tables[i]) | PD_RW | PD_PRESENT;
+		dir[i] = ((u32)current_page_tables[i]) | PD_RW | PD_PRESENT | (user ? PD_USER : 0);
 	}
 }
 
@@ -26,6 +27,7 @@ extern void KERNEL_END();
 void paging_install(u32 multiboot_address)
 {
 	paging_switch_directory(kernel_page_directory);
+	current_page_tables = kernel_page_tables;
 	paging_init(current_page_directory, 0);
 
 	// if mmap approach didn't work
@@ -40,7 +42,8 @@ void paging_install(u32 multiboot_address)
 
 u32 *paging_make_directory(int user)
 {
-	u32 *dir = malloc(1024 * 1024 * 32);
+	u32 *dir = valloc(1024 * 1024 * 32);
+	current_page_tables = valloc(1024 * 1024 * 32);
 
 	paging_init(dir, user);
 
@@ -68,9 +71,11 @@ void paging_enable()
 
 void paging_switch_directory(u32 *dir)
 {
-	current_page_tables = kernel_page_tables;
+	current_page_tables = (u32(*)[1024])dir;
 	current_page_directory = dir;
-	asm("mov %0, %%cr3" ::"r"(current_page_directory));
+	log("huh");
+	asm("mov %0, %%cr3" ::"r"(dir));
+	log("huh");
 }
 
 void invlpg(u32 addr)

@@ -51,8 +51,11 @@ struct process *elf_load(char *path)
 	strcpy(proc->name, path);
 	proc->registers.eip = header->entry;
 
+	log("1");
 	paging_switch_directory(proc->cr3);
+	log("2");
 	u32 stk = (u32)malloc(PAGE_SIZE);
+	log("3");
 	proc->registers.useresp = 0x40000000 - (PAGE_SIZE / 2);
 	proc->registers.ebp = proc->registers.useresp;
 	proc->registers.esp = proc->registers.useresp;

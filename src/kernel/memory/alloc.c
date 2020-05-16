@@ -361,6 +361,14 @@ void *malloc(u32 req_size)
 	return NULL;
 }
 
+// Definitely improveable
+void *valloc(u32 req_size)
+{
+	u32 mask = l_page_size - 1;
+	u32 mem = malloc(req_size + l_page_size);
+	return (void *)((mem + mask) & ~mask);
+}
+
 void free(void *ptr)
 {
 	struct liballoc_minor *min;
