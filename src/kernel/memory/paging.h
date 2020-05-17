@@ -23,16 +23,22 @@
 #define PT_GLOBAL 1 << 8
 #define PT_USED 1 << 9
 
-u32 *current_page_directory;
-u32 kernel_page_directory[1024] __attribute__((aligned(4096)));
+typedef u32 (*page_tables)[1024] __attribute__((aligned(4096)));
+
+struct page_dir {
+	page_tables tables;
+};
+
+struct page_dir *current_page_directory;
+struct page_dir kernel_page_directory[1024] __attribute__((aligned(4096)));
 int paging_enabled;
 
 void paging_install(u32 multiboot_address);
 void paging_enable();
 void paging_disable();
 
-u32 *paging_make_directory(int user);
-void paging_switch_directory(u32 *dir);
+struct page_dir *paging_make_directory(int user);
+void paging_switch_directory(struct page_dir *dir);
 
 void paging_map(u32 phy, u32 virt, u16 flags);
 u32 paging_get_phys(u32 virt);
@@ -46,7 +52,6 @@ void paging_set_present(u32 virt, u32 count);
 void paging_set_absent(u32 virt, u32 count);
 void paging_set_used(u32 virt, u32 count);
 void paging_set_free(u32 virt, u32 count);
-void paging_set_user(u32 virt, u32 count);
 
 u32 paging_find_pages(u32 count);
 u32 paging_alloc_pages(u32 count);

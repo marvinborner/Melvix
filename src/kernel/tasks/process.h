@@ -13,7 +13,7 @@ struct mmap {
 };
 
 struct process {
-	u32 *cr3;
+	struct page_dir *cr3;
 	struct regs registers;
 
 	u32 pid;
