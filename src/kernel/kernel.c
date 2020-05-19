@@ -22,8 +22,9 @@
 
 u32 stack_hold;
 
-void kernel_main(u32 magic, u32 multiboot_address, u32 esp)
+void kernel_main(u32 magic, u32 addr, u32 esp)
 {
+	multiboot_address = addr;
 	stack_hold = esp;
 
 	if (magic != MULTIBOOT_BOOTLOADER_MAGIC) {

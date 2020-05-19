@@ -9,40 +9,49 @@ u32 (*current_page_tables)[1024];
 u32 kernel_page_directory[1024] __attribute__((aligned(4096)));
 u32 kernel_page_tables[1024][1024] __attribute__((aligned(4096)));
 
-void paging_init(u32 *dir, int user)
+void paging_init(u32 *dir, u32 tables[1024][1024], int user)
 {
 	for (u32 i = 0; i < 1024; i++) {
 		for (u32 j = 0; j < 1024; j++) {
-			current_page_tables[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW;
+			tables[i][j] =
+				((j * 0x1000) + (i * 0x400000)) | PT_RW | (user ? PT_USER : 0);
 		}
 	}
 
 	for (u32 i = 0; i < 1024; i++) {
-		current_page_directory[i] = ((u32)current_page_tables[i]) | PD_RW | PD_PRESENT;
+		dir[i] = ((u32)tables[i]) | PD_RW | PD_PRESENT | (user ? PD_USER : 0);
 	}
 }
 
 extern void KERNEL_END();
-void paging_install(u32 multiboot_address)
+void paging_install()
 {
+	paging_init(kernel_page_directory, kernel_page_tables, 0);
 	paging_switch_directory(kernel_page_directory);
-	paging_init(current_page_directory, 0);
 
-	// if mmap approach didn't work
-	if (!memory_init(multiboot_address))
-		paging_set_present(0, memory_get_all() >> 3); // /4
-	paging_set_used(0, ((u32)KERNEL_END >> 12) + 1); // /4096
-	// paging_set_user(0, memory_get_all() >> 3); // HMM
+	if (!memory_init())
+		paging_set_present(0, memory_get_all() >> 3);
+	paging_set_used(0, ((u32)KERNEL_END >> 12) + 1);
 
 	paging_enable();
 	log("Installed paging");
+
+	// Test!
+	u32 a = (u32)malloc(4096);
+	u32 b = (u32)malloc(4096);
+	free((void *)b);
+	free((void *)a);
+	u32 c = (u32)malloc(2048);
+	assert(a == c);
+	info("Malloc test succeeded!");
 }
 
 u32 *paging_make_directory(int user)
 {
-	u32 *dir = malloc(1024 * 1024 * 32);
+	u32 *dir = valloc(1024 * 1024 * 32);
+	u32 *tables = valloc(1024 * 1024 * 32);
 
-	paging_init(dir, user);
+	paging_init(dir, tables, user);
 
 	return dir;
 }
@@ -68,7 +77,7 @@ void paging_enable()
 
 void paging_switch_directory(u32 *dir)
 {
-	current_page_tables = kernel_page_tables;
+	current_page_tables = dir;
 	current_page_directory = dir;
 	asm("mov %0, %%cr3" ::"r"(current_page_directory));
 }

@@ -98,7 +98,7 @@ void memory_mmap_init(struct multiboot_tag_mmap *tag)
 	total = sum >> 10; // I want kb
 }
 
-int memory_init(u32 multiboot_address)
+int memory_init()
 {
 	int ret = 0;
 	struct multiboot_tag *tag;

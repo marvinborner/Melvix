@@ -179,7 +179,7 @@ struct process *process_from_pid(u32 pid)
 struct process *process_make_new()
 {
 	debug("Making new process %d", pid);
-	struct process *proc = (struct process *)malloc(sizeof(struct process));
+	struct process *proc = (struct process *)valloc(sizeof(struct process));
 	proc->registers.cs = 0x1B;
 	proc->registers.ds = 0x23;
 	proc->registers.ss = 0x23;

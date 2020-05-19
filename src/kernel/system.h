@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+u32 multiboot_address;
+
 /**
  * The ASM registers as packed structure
  */

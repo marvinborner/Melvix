@@ -25,6 +25,7 @@ int is_elf(struct elf_header *header)
 
 struct process *elf_load(char *path)
 {
+	log("ELF START");
 	u32 *prev_dir;
 	if (current_proc)
 		prev_dir = current_proc->cr3;
@@ -52,7 +53,11 @@ struct process *elf_load(char *path)
 	proc->registers.eip = header->entry;
 
 	paging_switch_directory(proc->cr3);
-	u32 stk = (u32)malloc(PAGE_SIZE);
+	if (!memory_init())
+		paging_set_present(0, memory_get_all() >> 3);
+
+	u32 stk = (u32)valloc(PAGE_SIZE);
+
 	proc->registers.useresp = 0x40000000 - (PAGE_SIZE / 2);
 	proc->registers.ebp = proc->registers.useresp;
 	proc->registers.esp = proc->registers.useresp;
@@ -63,11 +68,14 @@ struct process *elf_load(char *path)
 		case 0:
 			break;
 		case 1: {
-			u32 loc = (u32)malloc(PAGE_SIZE);
+			u32 loc = (u32)valloc(PAGE_SIZE);
+			warn("1");
 			paging_map(loc, program_header->vaddr, PT_USER);
+			warn("2");
 			memcpy((void *)program_header->vaddr,
 			       ((void *)((u32)file) + program_header->offset),
 			       program_header->filesz);
+			warn("3");
 			if (program_header->filesz > PAGE_SIZE)
 				panic("ELF binary section too large");
 			break;
@@ -78,5 +86,6 @@ struct process *elf_load(char *path)
 	}
 
 	paging_switch_directory(prev_dir);
+	log("ELF END");
 	return proc;
 }

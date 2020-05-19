@@ -27,7 +27,7 @@ u32 *current_page_directory;
 u32 kernel_page_directory[1024] __attribute__((aligned(4096)));
 int paging_enabled;
 
-void paging_install(u32 multiboot_address);
+void paging_install();
 void paging_enable();
 void paging_disable();
 
