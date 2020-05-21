@@ -39,11 +39,11 @@ void paging_install()
 	// Test!
 	u32 *a = malloc(4096);
 	u32 *b = malloc(4096);
-	free((void *)b);
-	free((void *)a);
+	free(b);
+	free(a);
 	u32 *c = malloc(2048);
-	assert(&a == &c);
-	c[42] = 4242;
+	assert(a == c);
+	c[42] = 0x4242;
 	free(c);
 	info("Malloc test succeeded!");
 }
