@@ -48,12 +48,14 @@ void paging_install()
 	info("Malloc test succeeded!");
 }
 
-u32 *paging_make_directory(int user)
+u32 **paging_make_directory(int user)
 {
-	u32 *dir = valloc(1024 * 1024 * 32);
-	u32 *tables = valloc(1024 * 1024 * 32);
+	u32 **dir = valloc(1024 * 32);
+	dir[0] = valloc(1024 * 1024 * 32);
+	for (int i = 1; i < 1024; i++)
+		dir[i] = dir[0] + i * 1024;
 
-	paging_init(dir, tables, user);
+	paging_init(dir, user);
 
 	return dir;
 }
