@@ -26,7 +26,7 @@ int is_elf(struct elf_header *header)
 struct process *elf_load(char *path)
 {
 	log("ELF START");
-	u32 *prev_dir;
+	u32 **prev_dir;
 	if (current_proc)
 		prev_dir = current_proc->cr3;
 	else
