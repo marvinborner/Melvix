@@ -183,12 +183,12 @@ struct process *process_make_new()
 	proc->registers.cs = 0x1B;
 	proc->registers.ds = 0x23;
 	proc->registers.ss = 0x23;
-	proc->cr3 = paging_make_directory(1);
+	proc->cr3 = paging_make_directory();
 
 	proc->brk = 0x50000000;
 
-	for (int i = 0; i < 1024; i++)
-		proc->cr3[i] = kernel_page_directory[i];
+	/* for (int i = 0; i < 1024; i++) */
+	/* 	proc->cr3[i] = kernel_page_directory[i]; */
 
 	proc->pid = pid++;
 	return proc;

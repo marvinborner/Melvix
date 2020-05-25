@@ -5,31 +5,49 @@
 #include <system.h>
 
 u32 **current_page_directory;
-u32 *kernel_page_directory[1024] __attribute__((aligned(4096)));
+u32 kernel_page_directory[1024] __attribute__((aligned(4096)));
 u32 kernel_page_tables[1024][1024] __attribute__((aligned(4096)));
+u32 *temp_dir[1024] __attribute__((aligned(4096)));
 
-void paging_init(u32 **dir, int user)
+void paging_init(u32 **dir)
 {
 	for (u32 i = 0; i < 1024; i++) {
 		for (u32 j = 0; j < 1024; j++) {
-			dir[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW | (user ? PT_USER : 0);
+			dir[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW | PT_USER;
 		}
 	}
 
 	for (u32 i = 0; i < 1024; i++) {
-		dir[i] = ((u32)dir[i]) | PD_RW | PD_PRESENT | (user ? PD_USER : 0);
+		dir[i] = ((u32)dir[i]) | PD_RW | PD_PRESENT | PD_USER;
+	}
+}
+
+void paging_kernel_init(u32 *dir)
+{
+	for (u32 i = 0; i < 1024; i++) {
+		for (u32 j = 0; j < 1024; j++) {
+			kernel_page_tables[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW;
+		}
+	}
+
+	for (u32 i = 0; i < 1024; i++) {
+		kernel_page_directory[i] = ((u32)kernel_page_tables[i]) | PD_RW | PD_PRESENT;
+	}
+
+	current_page_directory = temp_dir;
+	for (int i = 0; i < 1024; i++) {
+		current_page_directory[i] = kernel_page_tables[i];
+		for (int j = 0; j < 1024; j++) {
+			current_page_directory[i][j] = kernel_page_tables[i][j];
+		}
 	}
 }
 
 extern void KERNEL_END();
 void paging_install()
 {
-	for (u32 i = 0; i < 1024; i++) {
-		kernel_page_directory[i] = kernel_page_tables[i];
-	}
-
-	paging_init((u32 **)kernel_page_directory, 0);
 	paging_switch_directory((u32 **)kernel_page_directory);
+	paging_kernel_init(kernel_page_directory);
 
 	if (!memory_init())
 		paging_set_present(0, memory_get_all() >> 3);
@@ -51,14 +69,15 @@ void paging_install()
 	info("Malloc test succeeded!");
 }
 
-u32 **paging_make_directory(int user)
+u32 **paging_make_directory()
 {
 	u32 **dir = valloc(1024 * 32);
 	dir[0] = valloc(1024 * 1024 * 32);
 	for (int i = 1; i < 1024; i++)
 		dir[i] = dir[0] + i * 1024;
 
-	paging_init(dir, user);
+	paging_init(dir);
+	paging_set_present(0, memory_get_all() >> 3);
 
 	return dir;
 }
@@ -74,7 +93,6 @@ void paging_disable()
 
 void paging_enable()
 {
-	asm("mov %0, %%cr3" ::"r"(current_page_directory));
 	u32 cr0;
 	asm("mov %%cr0, %0" : "=r"(cr0));
 	cr0 |= 0x80000000;

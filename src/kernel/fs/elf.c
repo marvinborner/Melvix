@@ -48,6 +48,8 @@ struct process *elf_load(char *path)
 		debug("File is valid: %s", path);
 	}
 
+	// TODO: Fix here
+	halt_loop();
 	struct process *proc = process_make_new();
 	strcpy(proc->name, path);
 	proc->registers.eip = header->entry;

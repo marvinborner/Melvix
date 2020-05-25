@@ -24,14 +24,14 @@
 #define PT_USED 1 << 9
 
 u32 **current_page_directory;
-u32 *kernel_page_directory[1024] __attribute__((aligned(4096)));
+u32 kernel_page_directory[1024] __attribute__((aligned(4096)));
 int paging_enabled;
 
 void paging_install();
 void paging_enable();
 void paging_disable();
 
-u32 **paging_make_directory(int user);
+u32 **paging_make_directory();
 void paging_switch_directory(u32 **dir);
 
 void paging_map(u32 phy, u32 virt, u16 flags);
