@@ -3,7 +3,9 @@
 
 #include <stdint.h>
 
-#define PAGE_SIZE 0x400000
+#define PAGE_ALIGN 4096
+#define PAGE_COUNT 1024
+#define PAGE_SIZE PAGE_ALIGN *PAGE_COUNT
 
 #define PD_PRESENT 1 << 0
 #define PD_RW 1 << 1

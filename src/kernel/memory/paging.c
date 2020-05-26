@@ -5,39 +5,39 @@
 #include <system.h>
 
 u32 **current_page_directory;
-u32 kernel_page_directory[1024] __attribute__((aligned(4096)));
-u32 kernel_page_tables[1024][1024] __attribute__((aligned(4096)));
-u32 *temp_dir[1024] __attribute__((aligned(4096)));
+u32 kernel_page_directory[PAGE_COUNT] __attribute__((aligned(PAGE_ALIGN)));
+u32 kernel_page_tables[PAGE_COUNT][PAGE_COUNT] __attribute__((aligned(PAGE_ALIGN)));
+u32 *temp_dir[PAGE_COUNT] __attribute__((aligned(PAGE_ALIGN)));
 
 void paging_init(u32 **dir)
 {
-	for (u32 i = 0; i < 1024; i++) {
-		for (u32 j = 0; j < 1024; j++) {
-			dir[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW | PT_USER;
+	for (u32 i = 0; i < PAGE_COUNT; i++) {
+		for (u32 j = 0; j < PAGE_COUNT; j++) {
+			dir[i][j] = ((j * PAGE_ALIGN) + (i * PAGE_SIZE)) | PT_RW | PT_USER;
 		}
 	}
 
-	for (u32 i = 0; i < 1024; i++) {
+	for (u32 i = 0; i < PAGE_COUNT; i++) {
 		dir[i] = ((u32)dir[i]) | PD_RW | PD_PRESENT | PD_USER;
 	}
 }
 
 void paging_kernel_init(u32 *dir)
 {
-	for (u32 i = 0; i < 1024; i++) {
-		for (u32 j = 0; j < 1024; j++) {
-			kernel_page_tables[i][j] = ((j * 0x1000) + (i * 0x400000)) | PT_RW;
+	for (u32 i = 0; i < PAGE_COUNT; i++) {
+		for (u32 j = 0; j < PAGE_COUNT; j++) {
+			kernel_page_tables[i][j] = ((j * PAGE_ALIGN) + (i * PAGE_SIZE)) | PT_RW;
 		}
 	}
 
-	for (u32 i = 0; i < 1024; i++) {
+	for (u32 i = 0; i < PAGE_COUNT; i++) {
 		kernel_page_directory[i] = ((u32)kernel_page_tables[i]) | PD_RW | PD_PRESENT;
 	}
 
 	current_page_directory = temp_dir;
-	for (int i = 0; i < 1024; i++) {
+	for (int i = 0; i < PAGE_COUNT; i++) {
 		current_page_directory[i] = kernel_page_tables[i];
-		for (int j = 0; j < 1024; j++) {
+		for (int j = 0; j < PAGE_COUNT; j++) {
 			current_page_directory[i][j] = kernel_page_tables[i][j];
 		}
 	}
@@ -53,31 +53,30 @@ void paging_install()
 		paging_set_present(0, memory_get_all() >> 3);
 	paging_set_used(0, ((u32)KERNEL_END >> 12) + 1);
 
-	log("Installing paging");
 	paging_enable();
 	log("Installed paging");
 
 	// Test!
-	u32 *a = malloc(4096);
-	u32 *b = malloc(4096);
+	u32 *a = malloc(PAGE_ALIGN);
+	u32 *b = malloc(PAGE_ALIGN);
 	free(b);
 	free(a);
 	u32 *c = malloc(2048);
 	assert(a == c);
 	c[42] = 0x4242;
+	assert(c[42] == 0x4242);
 	free(c);
 	info("Malloc test succeeded!");
 }
 
 u32 **paging_make_directory()
 {
-	u32 **dir = valloc(1024 * 32);
-	dir[0] = valloc(1024 * 1024 * 32);
-	for (int i = 1; i < 1024; i++)
-		dir[i] = dir[0] + i * 1024;
+	u32 **dir = valloc(PAGE_COUNT * sizeof(*dir));
+	dir[0] = valloc(PAGE_COUNT * PAGE_COUNT * sizeof(u32));
+	for (int i = 1; i < PAGE_COUNT; i++)
+		dir[i] = dir[0] + i * PAGE_COUNT;
 
 	paging_init(dir);
-	paging_set_present(0, memory_get_all() >> 3);
 
 	return dir;
 }
@@ -135,19 +134,19 @@ u16 paging_get_flags(u32 virt)
 
 void paging_set_flag_up(u32 virt, u32 count, u32 flag)
 {
-	u32 page_n = virt / 0x1000;
+	u32 page_n = virt / PAGE_ALIGN;
 	for (u32 i = page_n; i < page_n + count; i++) {
-		current_page_directory[i / 1024][i % 1024] |= flag;
-		invlpg(i * 0x1000);
+		current_page_directory[i / PAGE_COUNT][i % PAGE_COUNT] |= flag;
+		invlpg(i * PAGE_ALIGN);
 	}
 }
 
 void paging_set_flag_down(u32 virt, u32 count, u32 flag)
 {
-	u32 page_n = virt / 0x1000;
+	u32 page_n = virt / PAGE_ALIGN;
 	for (u32 i = page_n; i < page_n + count; i++) {
-		current_page_directory[i / 1024][i % 1024] &= ~flag;
-		invlpg(i * 0x1000);
+		current_page_directory[i / PAGE_COUNT][i % PAGE_COUNT] &= ~flag;
+		invlpg(i * PAGE_ALIGN);
 	}
 }
 
@@ -176,8 +175,8 @@ u32 paging_find_pages(u32 count)
 	u32 continuous = 0;
 	u32 start_dir = 0;
 	u32 start_page = 0;
-	for (u32 i = 0; i < 1024; i++) {
-		for (u32 j = 0; j < 1024; j++) {
+	for (u32 i = 0; i < PAGE_COUNT; i++) {
+		for (u32 j = 0; j < PAGE_COUNT; j++) {
 			if (!(current_page_directory[i][j] & PT_PRESENT) ||
 			    (current_page_directory[i][j] & PT_USED)) {
 				continuous = 0;
@@ -185,7 +184,7 @@ u32 paging_find_pages(u32 count)
 				start_page = j + 1;
 			} else {
 				if (++continuous == count)
-					return (start_dir * 0x400000) + (start_page * 0x1000);
+					return (start_dir * PAGE_SIZE) + (start_page * PAGE_ALIGN);
 			}
 		}
 	}
@@ -204,8 +203,8 @@ u32 paging_alloc_pages(u32 count)
 u32 paging_get_used_pages()
 {
 	u32 n = 0;
-	for (u32 i = 0; i < 1024; i++) {
-		for (u32 j = 0; j < 1024; j++) {
+	for (u32 i = 0; i < PAGE_COUNT; i++) {
+		for (u32 j = 0; j < PAGE_COUNT; j++) {
 			u8 flags = current_page_directory[i][j] & PT_USED;
 			if (flags == 1)
 				n++;

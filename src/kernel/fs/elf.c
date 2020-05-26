@@ -48,16 +48,11 @@ struct process *elf_load(char *path)
 		debug("File is valid: %s", path);
 	}
 
-	// TODO: Fix here
-	halt_loop();
 	struct process *proc = process_make_new();
 	strcpy(proc->name, path);
 	proc->registers.eip = header->entry;
 
 	paging_switch_directory(proc->cr3);
-	if (!memory_init())
-		paging_set_present(0, memory_get_all() >> 3);
-
 	u32 stk = (u32)valloc(PAGE_SIZE);
 
 	proc->registers.useresp = 0x40000000 - (PAGE_SIZE / 2);
