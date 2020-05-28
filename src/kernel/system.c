@@ -71,11 +71,11 @@ void _panic(const char *f, const char *msg)
 	halt_loop();
 }
 
-void _assert(const char *f, int x)
+void _assert(const char *file, int line, const char *func, const char *exp)
 {
-	if (x == 0) {
-		_panic(f, "Assertion failed");
-	}
+	cli();
+	serial_printf(RED "%s:%d: %s: Assertion '%s' failed\n" RES, file, line, func, exp);
+	halt_loop();
 }
 
 void halt_loop()

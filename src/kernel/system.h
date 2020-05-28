@@ -22,6 +22,10 @@ typedef struct __attribute__((packed)) {
  */
 extern void int32(u8 intnum, regs16_t *regs);
 
+// Filename macro
+#define __FILENAME__                                                                               \
+	(__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
+
 /**
  * Display a general log message
  * @param fmt The message
@@ -61,8 +65,8 @@ void _panic(const char *f, const char *msg);
  * Assert that a value is non-zero, else panic
  * @param x The value
  */
-void _assert(const char *f, int x);
-#define assert(x) _assert(__func__, x)
+void _assert(const char *file, int line, const char *func, const char *exp);
+#define assert(exp) (exp) ? 0 : _assert(__FILENAME__, __LINE__, __func__, #exp)
 
 /**
  * Creates an infinite halt loop
