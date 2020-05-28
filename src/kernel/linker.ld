@@ -1,34 +1,32 @@
-ENTRY(_start)
+ENTRY(boot)
+
+phys = 0x100000;
+offset = 0xC0000000;
+virt = offset + phys;
 
 SECTIONS
 {
-	. = 1M;
+	. = virt;
 
-	.text BLOCK(4K) : ALIGN(4K)
+	.text : AT (ADDR (.text) - offset)
 	{
-		*(.multiboot)
-		*(.start_section)
 		*(.text)
-	}
-
-	.rodata BLOCK(4K) : ALIGN(4K)
-	{
 		*(.rodata)
+		. = ALIGN(0x1000);
 	}
 
-	.data BLOCK(4K) : ALIGN(4K)
+	.data : AT (ADDR (.data) - offset)
 	{
 		*(.data)
+		. = ALIGN(0x1000);
 	}
 
-	.bss BLOCK(4K) : ALIGN(4K)
+	.bss : AT (ADDR (.bss) - offset)
 	{
 		*(.COMMON)
 		*(.bss)
+		. = ALIGN(0x1000);
 	}
 
-	.end BLOCK(4K) : ALIGN(4K)
-	{
-		*(.end)
-	}
+	KERNEL_END = .;
 }
