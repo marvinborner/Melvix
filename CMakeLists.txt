@@ -23,7 +23,7 @@ set(CMAKE_ASM_LINKER_PREFERENCE ${CMAKE_LINKER})
 set(CMAKE_C_LINKER_PREFERENCE ${CMAKE_LINKER})
 
 # Compiler and linker flags
-set(CMAKE_C_FLAGS "-Wall -Wno-int-conversion -fstrength-reduce -fomit-frame-pointer -finline-functions -nostdlib -nostdinc -ffreestanding -std=gnu99 -g -ggdb -c")
+set(CMAKE_C_FLAGS "-Wall -Wno-int-conversion -fstrength-reduce -fomit-frame-pointer -finline-functions -nostdlib -nostdinc -ffreestanding -std=gnu99 -g -ggdb3 -c")
 set(CMAKE_EXE_LINKER_FLAGS "-ffreestanding -O2 -nostdlib -g -ggdb")
 set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <SOURCE> -o <OBJECT> -f elf32 -O0")
 set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_LINKER> ${CMAKE_EXE_LINKER_FLAGS} <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
