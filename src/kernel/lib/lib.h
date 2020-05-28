@@ -38,5 +38,6 @@ int memory_init();
 
 void memory_print();
 u32 memory_get_all();
+void bss_clean();
 
 #endif

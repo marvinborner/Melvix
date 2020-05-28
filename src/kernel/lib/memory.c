@@ -35,6 +35,7 @@ int memcmp(const void *a_ptr, const void *b_ptr, u32 size)
 	return 0;
 }
 
+// TODO: Move memory lib!
 u32 total = 0;
 struct multiboot_tag_basic_meminfo *meminfo = NULL;
 
@@ -52,7 +53,7 @@ u32 memory_get_all()
 
 u32 memory_get_free()
 {
-	return memory_get_all() /*- paging_get_used_pages() * 4*/;
+	return memory_get_all() - paging_get_used_pages() * 4;
 }
 
 void memory_print()
@@ -63,6 +64,7 @@ void memory_print()
 		info("Mem upper: 0x%x", meminfo->mem_upper);
 	}
 	info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
+	info("Total used memory: %dMiB", ((memory_get_all() - memory_get_free()) >> 10) + 1);
 	info("Total free memory: %dMiB", (memory_get_free() >> 10) + 1);
 }
 
@@ -116,4 +118,13 @@ int memory_init()
 		}
 	}
 	return ret;
+}
+
+void bss_clean()
+{
+	extern u8 bss_start, kernel_end;
+	u32 start = &bss_start;
+	u32 end = &kernel_end;
+	log("0x%x: 0x%x", start, end - start);
+	memset(start, 0, end - start);
 }

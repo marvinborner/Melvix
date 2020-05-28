@@ -10,6 +10,7 @@
 #endif
 
 char *itoa(int n);
+char *itoa_base(int value, char *result, int base);
 
 int atoi(char *str);
 
