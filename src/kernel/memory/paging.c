@@ -81,6 +81,13 @@ u32 **paging_make_directory()
 	return dir;
 }
 
+void paging_remove_directory(u32 **dir)
+{
+	// TODO: Fix freeing of directory by calculating aligned offset
+	free(dir[0]);
+	free(dir);
+}
+
 void paging_disable()
 {
 	u32 cr0;
