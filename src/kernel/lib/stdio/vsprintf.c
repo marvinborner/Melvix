@@ -27,20 +27,30 @@ int vsprintf(char *str, const char *fmt, va_list args)
 			}
 
 			buf = *fmt;
+
+			// TODO: Improve this repetitive code
 			if (buf == 's') {
 				char *string = va_arg(args, char *);
 				append(str, string, i);
 				i = strlen(str);
 			} else if (buf == 'x') {
-				itoa_base((u32)va_arg(args, int), format_buffer, 16);
+				itoa_base(va_arg(args, u32), format_buffer, 16, 0);
 				append(str, format_buffer, i);
 				i = strlen(str);
-			} else if (buf == 'd') {
-				itoa_base(va_arg(args, int), format_buffer, 10);
+			} else if (buf == 'd' || buf == 'i') {
+				itoa_base(va_arg(args, s32), format_buffer, 10, 1);
+				append(str, format_buffer, i);
+				i = strlen(str);
+			} else if (buf == 'u') {
+				itoa_base(va_arg(args, u32), format_buffer, 10, 0);
 				append(str, format_buffer, i);
 				i = strlen(str);
 			} else if (buf == 'o') {
-				itoa_base(va_arg(args, int), format_buffer, 8);
+				itoa_base(va_arg(args, u32), format_buffer, 8, 0);
+				append(str, format_buffer, i);
+				i = strlen(str);
+			} else if (buf == 'b') {
+				itoa_base(va_arg(args, u32), format_buffer, 2, 0);
 				append(str, format_buffer, i);
 				i = strlen(str);
 			} else if (buf == 'c') {

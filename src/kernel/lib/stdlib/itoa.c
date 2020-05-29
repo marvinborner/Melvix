@@ -44,7 +44,7 @@ char *itoa(int n)
 }
 
 // TODO: Rename itoa_base
-char *itoa_base(int value, char *result, int base)
+char *itoa_base(int value, char *result, int base, int is_signed)
 {
 	if (base < 2 || base > 36) {
 		*result = '\0';
@@ -61,7 +61,7 @@ char *itoa_base(int value, char *result, int base)
 			[35 + (tmp_value - value * base)];
 	} while (value);
 
-	if (tmp_value < 0)
+	if (is_signed && tmp_value < 0)
 		*ptr++ = '-';
 	*ptr-- = '\0';
 	while (ptr1 < ptr) {
