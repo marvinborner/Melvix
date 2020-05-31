@@ -53,7 +53,11 @@ u32 memory_get_all()
 
 u32 memory_get_free()
 {
-	return memory_get_all() - paging_get_used_pages() * 4;
+	int free_memory = memory_get_all() - paging_get_used_pages() * 4;
+	if (free_memory < 0)
+		return 0;
+	else
+		return free_memory;
 }
 
 void memory_print()
@@ -63,9 +67,9 @@ void memory_print()
 		info("Mem lower: 0x%x", meminfo->mem_lower);
 		info("Mem upper: 0x%x", meminfo->mem_upper);
 	}
-	info("Total memory found: %dMiB", (memory_get_all() >> 10) + 1);
-	info("Total used memory: %dMiB", ((memory_get_all() - memory_get_free()) >> 10) + 1);
-	info("Total free memory: %dMiB", (memory_get_free() >> 10) + 1);
+	info("Total memory found: %dMiB", (memory_get_all() >> 10));
+	info("Total used memory: %dMiB", ((memory_get_all() - memory_get_free()) >> 10));
+	info("Total free memory: %dMiB", (memory_get_free() >> 10));
 }
 
 void memory_info_init(struct multiboot_tag_basic_meminfo *tag)

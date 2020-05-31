@@ -190,8 +190,7 @@ u32 paging_get_used_pages()
 	u32 n = 0;
 	for (u32 i = 0; i < PAGE_COUNT; i++) {
 		for (u32 j = 0; j < PAGE_COUNT; j++) {
-			u8 flags = page_tables[i][j] & PT_USED;
-			if (flags == 1)
+			if (page_tables[i][j] & PT_USED)
 				n++;
 		}
 	}
