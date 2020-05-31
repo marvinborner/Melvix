@@ -26,11 +26,6 @@ int is_elf(struct elf_header *header)
 struct process *elf_load(char *path)
 {
 	log("ELF START");
-	u32 **prev_dir;
-	if (current_proc)
-		prev_dir = current_proc->cr3;
-	else
-		prev_dir = page_directory;
 
 	u8 *file = read_file(path);
 	if (!file) {
@@ -52,13 +47,13 @@ struct process *elf_load(char *path)
 	strcpy(proc->name, path);
 	proc->registers.eip = header->entry;
 
-	paging_switch_directory(proc->cr3);
+	//paging_switch_directory(proc->cr3);
 	u32 stk = (u32)valloc(PAGE_SIZE);
 
 	proc->registers.useresp = 0x40000000 - (PAGE_SIZE / 2);
 	proc->registers.ebp = proc->registers.useresp;
 	proc->registers.esp = proc->registers.useresp;
-	paging_map(stk, 0x40000000 - PAGE_SIZE, PT_USER);
+	paging_map_user(stk, 0x40000000 - PAGE_SIZE);
 
 	for (int i = 0; i < header->phnum; i++, program_header++) {
 		switch (program_header->type) {
@@ -66,13 +61,10 @@ struct process *elf_load(char *path)
 			break;
 		case 1: {
 			u32 loc = (u32)valloc(PAGE_SIZE);
-			warn("1");
-			paging_map(loc, program_header->vaddr, PT_USER);
-			warn("2");
+			paging_map_user(loc, program_header->vaddr);
 			memcpy((void *)program_header->vaddr,
 			       ((void *)((u32)file) + program_header->offset),
 			       program_header->filesz);
-			warn("3");
 			assert(program_header->filesz <= PAGE_SIZE);
 			break;
 		}
@@ -81,7 +73,6 @@ struct process *elf_load(char *path)
 		}
 	}
 
-	paging_switch_directory(prev_dir);
-	log("ELF END");
+	/* paging_switch_directory(page_tables); */
 	return proc;
 }

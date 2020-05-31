@@ -85,20 +85,25 @@ void memory_mmap_init(struct multiboot_tag_mmap *tag)
 	for (mmap = ((struct multiboot_tag_mmap *)tag)->entries; (u8 *)mmap < (u8 *)tag + tag->size;
 	     mmap = (multiboot_memory_map_t *)((u32)mmap +
 					       ((struct multiboot_tag_mmap *)tag)->entry_size)) {
+		debug("Found memory of type %d from 0x%x-0x%x: %dKiB", mmap->type, (u32)mmap->addr,
+		      (u32)mmap->addr + (u32)mmap->len, mmap->len >> 10);
+		sum += mmap->len;
+
+		// Translate to pages
 		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
-			debug("Found free memory");
-			paging_set_present(mmap->addr, mmap->len >> 12);
-			sum += mmap->len;
+			paging_set_present(mmap->addr, mmap->len >> 13);
 		} else if (mmap->type == MULTIBOOT_MEMORY_RESERVED) {
-			debug("Found reserved memory");
-			paging_set_present(mmap->addr, mmap->len >> 12);
-			paging_set_used(mmap->addr, mmap->len >> 12);
+			paging_set_present(mmap->addr, mmap->len >> 13);
+			paging_set_used(mmap->addr, mmap->len >> 13);
 		} else if (mmap->type == MULTIBOOT_MEMORY_ACPI_RECLAIMABLE) {
-			debug("Found ACPI reclaimable memory");
+			paging_set_present(mmap->addr, mmap->len >> 13);
+			paging_set_used(mmap->addr, mmap->len >> 13);
 		} else if (mmap->type == MULTIBOOT_MEMORY_NVS) {
-			debug("Found NVS memory");
+			paging_set_present(mmap->addr, mmap->len >> 13);
+			paging_set_used(mmap->addr, mmap->len >> 13);
 		} else if (mmap->type == MULTIBOOT_MEMORY_BADRAM) {
-			warn("Found bad memory!");
+			paging_set_present(mmap->addr, mmap->len >> 13);
+			paging_set_used(mmap->addr, mmap->len >> 13);
 		}
 	}
 	total = sum >> 10; // I want kb

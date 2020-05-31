@@ -25,7 +25,8 @@
 #define PT_GLOBAL 1 << 8
 #define PT_USED 1 << 9
 
-u32 page_directory[1024] __attribute__((aligned(4096)));
+u32 *page_directory[1024] __attribute__((aligned(4096)));
+u32 page_tables[1024][1024] __attribute__((aligned(4096)));
 int paging_enabled;
 
 void paging_install();
@@ -37,6 +38,7 @@ void paging_remove_directory(u32 **dir);
 void paging_switch_directory(u32 **dir);
 
 void paging_map(u32 phy, u32 virt, u16 flags);
+void paging_map_user(u32 phy, u32 virt);
 u32 paging_get_phys(u32 virt);
 u16 paging_get_flags(u32 virt);
 u32 paging_get_used_pages();

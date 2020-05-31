@@ -61,8 +61,8 @@ int rtl8139_init(void)
 		// Get mac address
 		for (int i = 0; i < 6; ++i)
 			mac[i] = inb((u16)(rtl_iobase + 0x00 + i));
-		debug("Mac address: %x:%x:%x:%x:%x:%x", mac[0], mac[1], mac[2], mac[3],
-		      mac[4], mac[5]);
+		debug("Mac address: %x:%x:%x:%x:%x:%x", mac[0], mac[1], mac[2], mac[3], mac[4],
+		      mac[5]);
 
 		// Activate (turn on)
 		outb((u16)(rtl_iobase + 0x52), 0x0);
