@@ -1,32 +1,28 @@
 ENTRY(boot)
 
-phys = 0x100000;
-offset = 0xC0000000;
-virt = offset + phys;
-
 SECTIONS
 {
-	. = virt;
+	. = 1M;
 
-	.text : AT (ADDR (.text) - offset)
+	.text BLOCK(4K) : ALIGN(4K)
 	{
+		text_start = .;
 		*(.text)
 		*(.rodata)
-		. = ALIGN(0x1000);
 	}
 
-	.data : AT (ADDR (.data) - offset)
+	.data BLOCK(4K) : ALIGN(4K)
 	{
+		data_start = .;
 		*(.data)
-		. = ALIGN(0x1000);
 	}
 
-	.bss : AT (ADDR (.bss) - offset)
+	.bss BLOCK(4K) : ALIGN(4K)
 	{
+		bss_start = .;
 		*(.COMMON)
 		*(.bss)
-		. = ALIGN(0x1000);
 	}
 
-	KERNEL_END = .;
+	kernel_end = .;
 }

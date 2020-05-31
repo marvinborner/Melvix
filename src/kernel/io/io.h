@@ -54,7 +54,7 @@ void outl(u16 port, u32 data);
 /**
  * Initialize the serial conenction
  */
-void init_serial();
+void serial_install();
 
 /**
  * Write a single char to the serial port (QEMU logging)

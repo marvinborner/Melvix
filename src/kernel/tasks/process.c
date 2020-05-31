@@ -136,8 +136,7 @@ void process_suspend(u32 pid)
 {
 	debug("Suspending process %d", pid);
 	process_print_tree();
-	if (pid == 1)
-		panic("Root process died");
+	assert(pid != 1);
 
 	struct process *proc = process_from_pid(pid);
 
@@ -184,12 +183,7 @@ struct process *process_make_new()
 	proc->registers.ds = 0x23;
 	proc->registers.ss = 0x23;
 	proc->cr3 = paging_make_directory();
-
 	proc->brk = 0x50000000;
-
-	for (int i = 0; i < 1024; i++)
-		proc->cr3[i] = kernel_page_directory[i];
-
 	proc->pid = pid++;
 	return proc;
 }

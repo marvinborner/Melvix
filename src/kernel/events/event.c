@@ -18,10 +18,7 @@ u32 event_map(u32 id, u8 *function)
 
 u32 event_trigger(u32 id, u8 *data)
 {
-	if (id >= sizeof(event_map) / sizeof(*event_map)) {
-		panic("Unknown event id!");
-		return -1;
-	}
+	assert(id < sizeof(event_map) / sizeof(*event_map));
 
 	event_func location = (event_func)event_table[id];
 	if (!location) {

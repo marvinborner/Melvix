@@ -74,7 +74,7 @@ void outl(u16 port, u32 data)
 	asm volatile("outl %0, %1" ::"a"(data), "Nd"(port));
 }
 
-void init_serial()
+void serial_install()
 {
 	outb(0x3f8 + 1, 0x00);
 	outb(0x3f8 + 3, 0x80);

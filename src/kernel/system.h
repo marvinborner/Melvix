@@ -5,7 +5,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// Passed by low level things
 u32 multiboot_address;
+extern u32 text_start;
+extern u32 data_start;
+extern u32 bss_start;
+extern u32 kernel_end;
 
 /**
  * The ASM registers as packed structure

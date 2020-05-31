@@ -40,14 +40,15 @@ void kernel_main(u32 magic, u32 addr, u32 esp)
 	info("Installing basic features of Melvix...");
 
 	// Install features
+	bss_clean();
 	gdt_install();
-	init_serial();
+	serial_install();
 	idt_install();
 	isrs_install();
 	irq_install();
 
-	paging_install(multiboot_address);
-	multiboot_parse(multiboot_address);
+	paging_install();
+	multiboot_parse();
 
 	// Install drivers
 	timer_install();

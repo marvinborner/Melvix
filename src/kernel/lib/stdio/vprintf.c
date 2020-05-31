@@ -1,6 +1,6 @@
+#include <lib/lib.h>
 #include <lib/stdio.h>
 #include <lib/stdlib.h>
-#include <lib/lib.h>
 #include <stdint.h>
 
 // TODO: Use global formatting function

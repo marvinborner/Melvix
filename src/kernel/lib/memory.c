@@ -122,7 +122,6 @@ int memory_init()
 
 void bss_clean()
 {
-	extern u8 bss_start, kernel_end;
 	u32 start = &bss_start;
 	u32 end = &kernel_end;
 	log("0x%x: 0x%x", start, end - start);

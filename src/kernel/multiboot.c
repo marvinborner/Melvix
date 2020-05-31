@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <system.h>
 
-void multiboot_parse(u32 multiboot_address)
+void multiboot_parse()
 {
 	struct multiboot_tag *tag;
 

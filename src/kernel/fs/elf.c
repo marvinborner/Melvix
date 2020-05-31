@@ -30,7 +30,7 @@ struct process *elf_load(char *path)
 	if (current_proc)
 		prev_dir = current_proc->cr3;
 	else
-		prev_dir = current_page_directory;
+		prev_dir = page_directory;
 
 	u8 *file = read_file(path);
 	if (!file) {
@@ -73,8 +73,7 @@ struct process *elf_load(char *path)
 			       ((void *)((u32)file) + program_header->offset),
 			       program_header->filesz);
 			warn("3");
-			if (program_header->filesz > PAGE_SIZE)
-				panic("ELF binary section too large");
+			assert(program_header->filesz <= PAGE_SIZE);
 			break;
 		}
 		default:

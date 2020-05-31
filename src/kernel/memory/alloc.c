@@ -162,8 +162,7 @@ static struct liballoc_major *allocate_new_page(u32 size)
 
 void *malloc(u32 req_size)
 {
-	if (!paging_enabled)
-		warn("Mallocing while paging is disabled!");
+	assert(paging_enabled);
 
 	int started_bet = 0;
 	u64 best_size = 0;
