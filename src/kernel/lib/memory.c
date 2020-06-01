@@ -1,5 +1,5 @@
 #include <lib/stdio.h>
-#include <memory/paging.h>
+#include <memory/mmap.h>
 #include <multiboot.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -38,6 +38,7 @@ int memcmp(const void *a_ptr, const void *b_ptr, u32 size)
 // TODO: Move memory lib!
 u32 total = 0;
 struct multiboot_tag_basic_meminfo *meminfo = NULL;
+struct multiboot_tag_mmap *mmap = NULL;
 
 u32 memory_get_all()
 {
@@ -53,7 +54,7 @@ u32 memory_get_all()
 
 u32 memory_get_free()
 {
-	int free_memory = memory_get_all() - paging_get_used_pages() * 4;
+	int free_memory = memory_get_all() - 42 * 4; // TODO: Fix free memory
 	if (free_memory < 0)
 		return 0;
 	else
@@ -72,9 +73,8 @@ void memory_print()
 	info("Total free memory: %dMiB", (memory_get_free() >> 10));
 }
 
-void memory_info_init(struct multiboot_tag_basic_meminfo *tag)
+void memory_info_init()
 {
-	meminfo = tag;
 }
 
 void memory_mmap_init(struct multiboot_tag_mmap *tag)
@@ -91,42 +91,43 @@ void memory_mmap_init(struct multiboot_tag_mmap *tag)
 
 		// Translate to pages
 		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
-			paging_set_present(mmap->addr, mmap->len >> 13);
-		} else if (mmap->type == MULTIBOOT_MEMORY_RESERVED) {
-			paging_set_present(mmap->addr, mmap->len >> 13);
-			paging_set_used(mmap->addr, mmap->len >> 13);
-		} else if (mmap->type == MULTIBOOT_MEMORY_ACPI_RECLAIMABLE) {
-			paging_set_present(mmap->addr, mmap->len >> 13);
-			paging_set_used(mmap->addr, mmap->len >> 13);
-		} else if (mmap->type == MULTIBOOT_MEMORY_NVS) {
-			paging_set_present(mmap->addr, mmap->len >> 13);
-			paging_set_used(mmap->addr, mmap->len >> 13);
-		} else if (mmap->type == MULTIBOOT_MEMORY_BADRAM) {
-			paging_set_present(mmap->addr, mmap->len >> 13);
-			paging_set_used(mmap->addr, mmap->len >> 13);
+			for (u32 i = 0; i < mmap->len; i += 0x1000) {
+				if (mmap->addr + i > 0xFFFFFFFF)
+					break;
+				mmap_address_set_free((mmap->addr + i) & 0xFFFFF000);
+			}
+		} else {
+			for (u32 i = 0; i < mmap->len; i += 0x1000) {
+				if (mmap->addr + i > 0xFFFFFFFF)
+					break;
+				mmap_address_set_used((mmap->addr + i) & 0xFFFFF000);
+			}
 		}
+
+		total = sum >> 10; // I want kb
 	}
-	total = sum >> 10; // I want kb
 }
 
-int memory_init()
+void memory_init()
 {
-	int ret = 0;
-	struct multiboot_tag *tag;
+	struct multiboot_tag *tag = NULL;
 
 	for (tag = (struct multiboot_tag *)(multiboot_address + 8);
 	     tag->type != MULTIBOOT_TAG_TYPE_END;
 	     tag = (struct multiboot_tag *)((u8 *)tag + ((tag->size + 7) & ~7))) {
 		if (tag->type == MULTIBOOT_TAG_TYPE_BASIC_MEMINFO) {
 			info("Got memory info");
-			memory_info_init((struct multiboot_tag_basic_meminfo *)tag);
+			meminfo = (struct multiboot_tag_basic_meminfo *)tag;
 		} else if (tag->type == MULTIBOOT_TAG_TYPE_MMAP) {
 			info("Got memory map");
-			memory_mmap_init((struct multiboot_tag_mmap *)tag);
-			ret = 1;
+			mmap = (struct multiboot_tag_mmap *)tag;
 		}
 	}
-	return ret;
+
+	assert(mmap && meminfo);
+	mmap_init(meminfo->mem_lower + meminfo->mem_upper);
+	memory_mmap_init(mmap);
+	mmap_init_finalize();
 }
 
 void bss_clean()

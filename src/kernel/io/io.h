@@ -51,6 +51,11 @@ void outw(u16 port, u16 data);
  */
 void outl(u16 port, u32 data);
 
+u32 cr3_get();
+void cr3_set(u32 cr3);
+u32 cr0_get();
+void cr0_set(u32 cr0);
+
 /**
  * Initialize the serial conenction
  */

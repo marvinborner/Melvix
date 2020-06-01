@@ -1,6 +1,7 @@
 #include <io/io.h>
 #include <lib/lib.h>
 #include <memory/alloc.h>
+#include <memory/mmap.h>
 #include <memory/paging.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -22,13 +23,13 @@ int liballoc_unlock()
 
 void *liballoc_alloc(u32 p)
 {
-	u32 ptr = paging_alloc_pages((u32)p);
+	u32 ptr = kmalloc_frames((u32)p);
 	return (void *)ptr;
 }
 
 int liballoc_free(void *ptr, u32 p)
 {
-	paging_set_free((u32)ptr, (u32)p);
+	kfree_frames((u32)ptr, (u32)p);
 	return 0;
 }
 
@@ -96,8 +97,7 @@ static long long l_possible_overruns = 0;
 
 static void *liballoc_memset(void *s, int c, u32 n)
 {
-	u32 i;
-	for (i = 0; i < n; i++)
+	for (u32 i = 0; i < n; i++)
 		((char *)s)[i] = c;
 
 	return s;

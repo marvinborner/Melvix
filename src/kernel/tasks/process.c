@@ -182,7 +182,7 @@ struct process *process_make_new()
 	proc->registers.cs = 0x1B;
 	proc->registers.ds = 0x23;
 	proc->registers.ss = 0x23;
-	proc->cr3 = paging_make_directory();
+	proc->cr3 = paging_make_dir();
 	proc->brk = 0x50000000;
 	proc->pid = pid++;
 	return proc;

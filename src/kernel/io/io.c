@@ -74,6 +74,30 @@ void outl(u16 port, u32 data)
 	asm volatile("outl %0, %1" ::"a"(data), "Nd"(port));
 }
 
+u32 cr3_get()
+{
+	u32 cr3;
+	asm volatile("movl %%cr3, %%eax" : "=a"(cr3));
+	return cr3;
+}
+
+void cr3_set(u32 cr3)
+{
+	asm volatile("movl %%eax, %%cr3" ::"a"(cr3));
+}
+
+u32 cr0_get()
+{
+	u32 cr0;
+	asm volatile("movl %%cr0, %%eax" : "=a"(cr0));
+	return cr0;
+}
+
+void cr0_set(u32 cr0)
+{
+	asm volatile("movl %%eax, %%cr0" ::"a"(cr0));
+}
+
 void serial_install()
 {
 	outb(0x3f8 + 1, 0x00);

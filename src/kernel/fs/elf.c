@@ -53,7 +53,7 @@ struct process *elf_load(char *path)
 	proc->registers.useresp = 0x40000000 - (PAGE_SIZE / 2);
 	proc->registers.ebp = proc->registers.useresp;
 	proc->registers.esp = proc->registers.useresp;
-	paging_map_user(stk, 0x40000000 - PAGE_SIZE);
+	//paging_map_user(stk, 0x40000000 - PAGE_SIZE);
 
 	for (int i = 0; i < header->phnum; i++, program_header++) {
 		switch (program_header->type) {
@@ -61,7 +61,7 @@ struct process *elf_load(char *path)
 			break;
 		case 1: {
 			u32 loc = (u32)valloc(PAGE_SIZE);
-			paging_map_user(loc, program_header->vaddr);
+			//paging_map_user(loc, program_header->vaddr);
 			memcpy((void *)program_header->vaddr,
 			       ((void *)((u32)file) + program_header->offset),
 			       program_header->filesz);

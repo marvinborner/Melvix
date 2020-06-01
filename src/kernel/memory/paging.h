@@ -3,56 +3,58 @@
 
 #include <stdint.h>
 
-#define PAGE_ALIGN 4096
+#define PAGE_SIZE 0x1000
 #define PAGE_COUNT 1024
-#define PAGE_SIZE PAGE_ALIGN *PAGE_COUNT
+#define SHIFT(address) ((address) >> 12)
+#define UNSHIFT(address) ((address) << 12)
 
-#define PD_PRESENT 1 << 0
-#define PD_RW 1 << 1
-#define PD_USER 1 << 2
-#define PD_WRITETHR 1 << 3
-#define PD_CACHE_D 1 << 4
-#define PD_ACCESSED 1 << 5
-#define PD_4M_PAGE 1 << 7
-
-#define PT_PRESENT 1 << 0
-#define PT_RW 1 << 1
-#define PT_USER 1 << 2
-#define PT_WRITETHR 1 << 3
-#define PT_CACHE_D 1 << 4
-#define PT_ACCESSED 1 << 5
-#define PT_DIRTY 1 << 6
-#define PT_GLOBAL 1 << 8
-#define PT_USED 1 << 9
-
-u32 **page_directory __attribute__((aligned(PAGE_ALIGN)));
-u32 kernel_page_tables[PAGE_COUNT][PAGE_COUNT] __attribute__((aligned(PAGE_ALIGN)));
 int paging_enabled;
+
+struct page_table_entry {
+	u32 present : 1;
+	u32 writable : 1;
+	u32 user : 1;
+	u32 write_through : 1;
+	u32 cache_disable : 1;
+	u32 accessed : 1;
+	u32 dirty : 1;
+	u32 attribute : 1;
+	u32 global : 1;
+	u32 available : 3;
+	u32 address : 20;
+} __attribute__((packed));
+
+struct page_table {
+	struct page_table_entry entries[PAGE_COUNT];
+};
+
+struct page_dir_entry {
+	u32 present : 1;
+	u32 writable : 1;
+	u32 user : 1;
+	u32 write_through : 1;
+	u32 cache_disable : 1;
+	u32 accessed : 1;
+	u32 reserved : 1;
+	u32 page_size : 1;
+	u32 global : 1;
+	u32 available : 3;
+	u32 address : 20;
+} __attribute__((packed));
+
+struct page_dir {
+	struct page_dir_entry entries[PAGE_COUNT];
+};
 
 void paging_install();
 void paging_enable();
 void paging_disable();
+void paging_switch_directory(u32 dir);
 
-u32 **paging_make_directory();
-void paging_remove_directory(u32 **dir);
-void paging_switch_directory(u32 **dir);
-
-void paging_map(u32 phy, u32 virt, u16 flags);
-void paging_map_user(u32 phy, u32 virt);
-u32 paging_get_phys(u32 virt);
-u16 paging_get_flags(u32 virt);
-u32 paging_get_used_pages();
-
-void paging_set_flags(u32 virt, u32 count, u16 flags);
-void paging_set_flag_up(u32 virt, u32 count, u32 flag);
-void paging_set_flag_down(u32 virt, u32 count, u32 flag);
-void paging_set_present(u32 virt, u32 count);
-void paging_set_absent(u32 virt, u32 count);
-void paging_set_used(u32 virt, u32 count);
-void paging_set_free(u32 virt, u32 count);
-void paging_set_user(u32 virt, u32 count);
-
-u32 paging_find_pages(u32 count);
-u32 paging_alloc_pages(u32 count);
+struct page_table_entry *paging_get_page(u32 address, struct page_dir *page_dir);
+void paging_frame_alloc(struct page_table_entry *page);
+void paging_frame_free(struct page_table_entry *page);
+struct page_dir *paging_make_dir();
+void paging_free_dir();
 
 #endif
