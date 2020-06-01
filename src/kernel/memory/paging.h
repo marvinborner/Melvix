@@ -25,8 +25,8 @@
 #define PT_GLOBAL 1 << 8
 #define PT_USED 1 << 9
 
-u32 *page_directory[1024] __attribute__((aligned(4096)));
-u32 page_tables[1024][1024] __attribute__((aligned(4096)));
+u32 **page_directory __attribute__((aligned(PAGE_ALIGN)));
+u32 kernel_page_tables[PAGE_COUNT][PAGE_COUNT] __attribute__((aligned(PAGE_ALIGN)));
 int paging_enabled;
 
 void paging_install();

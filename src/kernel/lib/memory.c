@@ -133,6 +133,5 @@ void bss_clean()
 {
 	u32 start = &bss_start;
 	u32 end = &kernel_end;
-	log("0x%x: 0x%x", start, end - start);
 	memset(start, 0, end - start);
 }

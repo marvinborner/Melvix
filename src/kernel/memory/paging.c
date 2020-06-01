@@ -4,30 +4,46 @@
 #include <stdint.h>
 #include <system.h>
 
-u32 *page_directory[1024] __attribute__((aligned(4096)));
-u32 page_tables[1024][1024] __attribute__((aligned(4096)));
+u32 kernel_page_directory[PAGE_COUNT] __attribute__((aligned(PAGE_ALIGN)));
+u32 kernel_page_tables[PAGE_COUNT][PAGE_COUNT] __attribute__((aligned(PAGE_ALIGN)));
+u32 *temp_dir[PAGE_COUNT] __attribute__((aligned(PAGE_ALIGN)));
 
-void paging_init(u32 **tables)
+u32 **page_directory __attribute__((aligned(PAGE_ALIGN)));
+
+void paging_init(u32 **dir)
 {
-	for (u32 i = 0; i < PAGE_COUNT; i++)
-		tables[i] = page_tables[i];
-
-	for (u32 i = 0; i < PAGE_COUNT; i++)
-		page_directory[i] = (u32)tables[i] | PD_RW | PD_PRESENT | PD_USER;
+	//log("%d", paging_get_used_pages());
+	for (u32 i = 0; i < PAGE_COUNT; i++) {
+		dir[i] = kernel_page_tables[i];
+		for (u32 j = 0; j < PAGE_COUNT; j++) {
+			dir[i][j] = kernel_page_tables[i][j];
+		}
+	}
 }
 
 void paging_kernel_init()
 {
 	for (u32 i = 0; i < PAGE_COUNT; i++)
 		for (u32 j = 0; j < PAGE_COUNT; j++)
-			page_tables[i][j] = ((j * PAGE_ALIGN) + (i * PAGE_SIZE)) | PT_RW | PT_USER;
+			kernel_page_tables[i][j] =
+				((j * PAGE_ALIGN) + (i * PAGE_SIZE)) | PT_RW | PT_USER;
 
 	for (u32 i = 0; i < PAGE_COUNT; i++)
-		page_directory[i] = (u32)page_tables[i] | PD_RW | PD_PRESENT | PD_USER;
+		kernel_page_directory[i] =
+			((u32)kernel_page_tables[i]) | PD_RW | PD_PRESENT | PD_USER;
+
+	page_directory = temp_dir;
+	for (u32 i = 0; i < PAGE_COUNT; i++) {
+		page_directory[i] = kernel_page_tables[i];
+		for (u32 j = 0; j < PAGE_COUNT; j++) {
+			page_directory[i][j] = kernel_page_tables[i][j];
+		}
+	}
 }
 
 void paging_install()
 {
+	paging_switch_directory((u32 **)kernel_page_directory);
 	paging_kernel_init();
 
 	if (!memory_init())
@@ -52,15 +68,25 @@ void paging_install()
 
 u32 **paging_make_directory()
 {
-	u32 **tables = valloc(PAGE_COUNT * sizeof(*tables));
-	tables[0] = valloc(PAGE_COUNT * PAGE_COUNT * sizeof(u32));
-	for (int i = 1; i < PAGE_COUNT; i++)
-		tables[i] = tables[0] + i * PAGE_COUNT;
+	/* u32 **dir = valloc(PAGE_COUNT * sizeof(*dir)); */
+	/* dir[0] = malloc(PAGE_COUNT * PAGE_COUNT * sizeof(**dir)); */
+	/* for (u32 i = 1; i < PAGE_COUNT; i++) */
+	/* 	dir[i] = dir[0] + i * PAGE_COUNT; */
+	u32 **dir = valloc(PAGE_COUNT * sizeof(*dir));
+	for (u32 i = 0; i < PAGE_COUNT; i++)
+		dir[i] = malloc(PAGE_COUNT + sizeof(**dir));
 
-	paging_init(tables);
-	paging_enable();
+	for (u32 i = 0; i < PAGE_COUNT; i++) {
+		dir[i] = kernel_page_directory[i];
+		/* for (u32 j = 0; j < PAGE_COUNT; j++) { */
+		/* 	dir[i][j] = (&kernel_page_directory[i])[j]; */
+		/* } */
+	}
 
-	return tables;
+	paging_switch_directory(dir);
+	log("%d", 42);
+
+	return dir;
 }
 
 void paging_remove_directory(u32 **dir)
@@ -81,7 +107,6 @@ void paging_disable()
 
 void paging_enable()
 {
-	asm("mov %0, %%cr3" ::"r"(page_directory));
 	u32 cr0;
 	asm("mov %%cr0, %0" : "=r"(cr0));
 	cr0 |= 0x80000000;
@@ -89,11 +114,10 @@ void paging_enable()
 	paging_enabled = 1;
 }
 
-void paging_switch_directory(u32 **tables)
+void paging_switch_directory(u32 **dir)
 {
-	for (u32 i = 0; i < PAGE_COUNT; i++)
-		page_directory[i] = (u32)tables[i] | PD_RW | PD_PRESENT | PD_USER;
-	asm("mov %0, %%cr3" ::"r"(page_directory));
+	page_directory = dir;
+	asm("mov %0, %%cr3" ::"r"(dir));
 }
 
 void invlpg(u32 addr)
@@ -105,7 +129,7 @@ void paging_map(u32 phy, u32 virt, u16 flags)
 {
 	u32 pdi = virt >> 22;
 	u32 pti = virt >> 12 & 0x03FF;
-	page_tables[pdi][pti] = phy | flags;
+	page_directory[pdi][pti] = phy | flags;
 	invlpg(virt);
 }
 
@@ -114,7 +138,7 @@ void paging_map_user(u32 phy, u32 virt)
 	u32 pdi = virt >> 22;
 	/* u32 pti = virt >> 12 & 0x03FF; */
 	for (int i = 0; i < 1024; i++) {
-		page_tables[pdi][i] = phy | PT_RW | PT_PRESENT | PT_USER;
+		page_directory[pdi][i] = phy | PT_RW | PT_PRESENT | PT_USER;
 		phy += 4096;
 	}
 	invlpg(virt);
@@ -124,14 +148,14 @@ u32 paging_get_phys(u32 virt)
 {
 	u32 pdi = virt >> 22;
 	u32 pti = (virt >> 12) & 0x03FF;
-	return page_tables[pdi][pti] & 0xFFFFF000;
+	return page_directory[pdi][pti] & 0xFFFFF000;
 }
 
 u16 paging_get_flags(u32 virt)
 {
 	u32 pdi = virt >> 22;
 	u32 pti = (virt >> 12) & 0x03FF;
-	return page_tables[pdi][pti] & 0xFFF;
+	return page_directory[pdi][pti] & 0xFFF;
 }
 
 void paging_set_flag_up(u32 virt, u32 count, u32 flag)
@@ -139,7 +163,7 @@ void paging_set_flag_up(u32 virt, u32 count, u32 flag)
 	//debug("Setting flag %b for %d tables", flag, count);
 	u32 page_n = virt / PAGE_ALIGN;
 	for (u32 i = page_n; i < page_n + count; i++) {
-		page_tables[i / PAGE_COUNT][i % PAGE_COUNT] |= flag;
+		page_directory[i / PAGE_COUNT][i % PAGE_COUNT] |= flag;
 		invlpg(i * PAGE_ALIGN);
 	}
 }
@@ -148,7 +172,7 @@ void paging_set_flag_down(u32 virt, u32 count, u32 flag)
 {
 	u32 page_n = virt / PAGE_ALIGN;
 	for (u32 i = page_n; i < page_n + count; i++) {
-		page_tables[i / PAGE_COUNT][i % PAGE_COUNT] &= ~flag;
+		page_directory[i / PAGE_COUNT][i % PAGE_COUNT] &= ~flag;
 		invlpg(i * PAGE_ALIGN);
 	}
 }
@@ -180,7 +204,8 @@ u32 paging_find_pages(u32 count)
 	u32 start_page = 0;
 	for (u32 i = 0; i < PAGE_COUNT; i++) {
 		for (u32 j = 0; j < PAGE_COUNT; j++) {
-			if (!(page_tables[i][j] & PT_PRESENT) || (page_tables[i][j] & PT_USED)) {
+			if (!(page_directory[i][j] & PT_PRESENT) ||
+			    (page_directory[i][j] & PT_USED)) {
 				continuous = 0;
 				start_dir = i;
 				start_page = j + 1;
@@ -207,7 +232,7 @@ u32 paging_get_used_pages()
 	u32 n = 0;
 	for (u32 i = 0; i < PAGE_COUNT; i++)
 		for (u32 j = 0; j < PAGE_COUNT; j++)
-			if (page_tables[i][j] & PT_USED)
+			if (page_directory[i][j] & PT_USED)
 				n++;
 	return n;
 }
