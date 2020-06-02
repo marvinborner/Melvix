@@ -21,6 +21,8 @@ int interrupts_enabled()
 
 void main()
 {
+	while (1) {
+	};
 	if (get_pid() != 1) {
 		printf("Wrong PID!\n");
 		exit(1);

@@ -98,6 +98,11 @@ void cr0_set(u32 cr0)
 	asm volatile("movl %%eax, %%cr0" ::"a"(cr0));
 }
 
+void invlpg(u32 addr)
+{
+	asm volatile("invlpg (%0)" ::"r"(addr) : "memory");
+}
+
 void serial_install()
 {
 	outb(0x3f8 + 1, 0x00);

@@ -14,7 +14,7 @@ struct mmap {
 
 struct process {
 	u32 cr3;
-	struct regs registers;
+	struct regs regs;
 
 	u32 pid;
 	char name[256];
@@ -34,9 +34,6 @@ void process_force_switch();
 u32 process_spawn(struct process *process);
 void process_suspend(u32 pid);
 void process_wake(u32 pid);
-
-u32 process_wait_gid(u32 gid, u32 *status);
-u32 process_wait_pid(u32 pid, u32 *status);
 
 struct process *process_from_pid(u32 pid);
 

@@ -55,6 +55,7 @@ u32 cr3_get();
 void cr3_set(u32 cr3);
 u32 cr0_get();
 void cr0_set(u32 cr0);
+void invlpg(u32 addr);
 
 /**
  * Initialize the serial conenction

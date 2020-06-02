@@ -34,7 +34,6 @@ struct process *elf_load(char *path)
 	}
 
 	struct elf_header *header = (struct elf_header *)file;
-	struct elf_program_header *program_header = (void *)header + header->phoff;
 
 	if (!is_elf(header)) {
 		warn("File not valid: %s", path);
@@ -44,35 +43,46 @@ struct process *elf_load(char *path)
 	}
 
 	struct process *proc = process_make_new();
-	strcpy(proc->name, path);
-	proc->registers.eip = header->entry;
+	paging_switch_dir(proc->cr3);
 
-	//paging_switch_directory(proc->cr3);
-	u32 stk = (u32)valloc(PAGE_SIZE);
+	u32 image_low = 0xFFFFFFFF;
+	u32 image_high = 0;
 
-	proc->registers.useresp = 0x40000000 - (PAGE_SIZE / 2);
-	proc->registers.ebp = proc->registers.useresp;
-	proc->registers.esp = proc->registers.useresp;
-	//paging_map_user(stk, 0x40000000 - PAGE_SIZE);
+	// Parse ELF
+	for (u32 i = 0; i < header->shentsize * header->shnum; i += header->shentsize) {
+		struct elf_section_header *sh = (void *)header + (header->shoff + i);
+		if (sh->addr != 0) {
+			log("%x", sh->addr);
+			for (u32 j = 0; j < sh->size; j += PAGE_SIZE) {
+				paging_frame_alloc(paging_get_page(sh->addr + j, proc->cr3));
+				invlpg(sh->addr + j);
+				j += PAGE_SIZE;
+			}
 
-	for (int i = 0; i < header->phnum; i++, program_header++) {
-		switch (program_header->type) {
-		case 0:
-			break;
-		case 1: {
-			u32 loc = (u32)valloc(PAGE_SIZE);
-			//paging_map_user(loc, program_header->vaddr);
-			memcpy((void *)program_header->vaddr,
-			       ((void *)((u32)file) + program_header->offset),
-			       program_header->filesz);
-			assert(program_header->filesz <= PAGE_SIZE);
-			break;
-		}
-		default:
-			warn("Unknown header type");
+			if (sh->type == 8) // Is .bss
+				memset(sh->addr, 0, sh->size);
+			else
+				memcpy(sh->addr, header + sh->offset, sh->size);
+
+			if (sh->addr < image_low)
+				image_low = sh->addr;
+
+			if (sh->addr + sh->size > image_high)
+				image_high = sh->addr + sh->size;
 		}
 	}
 
-	/* paging_switch_directory(page_tables); */
+	// Stack
+	struct page_table_entry *stack_page = paging_get_page(0x400000, proc->cr3);
+	paging_frame_alloc(stack_page);
+	stack_page->writable = 1;
+	invlpg(0x400000);
+
+	strcpy(proc->name, path);
+	proc->brk = image_high;
+	proc->regs.eip = header->entry;
+	proc->regs.esp = 0x401000;
+	proc->regs.useresp = 0x401000;
+
 	return proc;
 }

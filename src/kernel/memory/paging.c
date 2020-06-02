@@ -1,5 +1,6 @@
 #include <io/io.h>
 #include <lib/lib.h>
+#include <memory/alloc.h>
 #include <memory/mmap.h>
 #include <memory/paging.h>
 #include <stdint.h>
@@ -27,9 +28,16 @@ void paging_install()
 	kernel_page_directory->entries[0].writable = 1;
 	kernel_page_directory->entries[0].address = SHIFT((u32)page_table);
 
-	paging_switch_directory((u32)kernel_page_directory);
+	paging_switch_dir((u32)kernel_page_directory);
 	paging_enable();
 	info("Installed paging");
+
+	// Test mallocing
+	u32 *c = malloc(2048);
+	c[42] = 0x4242;
+	assert(c[42] == 0x4242);
+	free(c);
+	info("Malloc test succeeded!");
 }
 
 void paging_disable()
@@ -48,7 +56,7 @@ void paging_enable()
 	paging_enabled = 1;
 }
 
-void paging_switch_directory(u32 dir)
+void paging_switch_dir(u32 dir)
 {
 	cr3_set(dir);
 }

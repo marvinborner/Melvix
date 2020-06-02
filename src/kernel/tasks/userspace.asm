@@ -1,9 +1,9 @@
-global jump_userspace
+global userspace_jump
 extern hl_cr3
 extern hl_esp
 extern hl_eip
 
-jump_userspace:
+userspace_jump:
 	mov ax, 0x23
 	mov ds, ax
 	mov es, ax

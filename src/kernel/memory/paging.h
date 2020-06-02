@@ -49,7 +49,7 @@ struct page_dir {
 void paging_install();
 void paging_enable();
 void paging_disable();
-void paging_switch_directory(u32 dir);
+void paging_switch_dir(u32 dir);
 
 struct page_table_entry *paging_get_page(u32 address, struct page_dir *page_dir);
 void paging_frame_alloc(struct page_table_entry *page);

@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <system.h>
 #include <tasks/process.h>
-#include <tasks/userspace.h>
 #include <timer/timer.h>
 
 u32 pid = 0;
@@ -36,7 +35,7 @@ void scheduler(struct regs *regs)
 	}
 
 	serial_put('+');
-	memcpy(&current_proc->registers, regs, sizeof(struct regs));
+	memcpy(&current_proc->regs, regs, sizeof(struct regs));
 
 	timer_handler(regs);
 
@@ -55,10 +54,18 @@ void scheduler(struct regs *regs)
 		}
 	}
 
-	memcpy(regs, &current_proc->registers, sizeof(struct regs));
-	paging_switch_directory(current_proc->cr3);
+	memcpy(regs, &current_proc->regs, sizeof(struct regs));
+	paging_switch_dir(current_proc->cr3);
+	if (regs->cs != 0x1B) {
+		regs->gs = 0x23;
+		regs->fs = 0x23;
+		regs->es = 0x23;
+		regs->ds = 0x23;
+		regs->cs = 0x1B;
+		regs->ss = 0x23;
+	}
+
 	locked = 0;
-	cli();
 }
 
 void process_force_switch()
@@ -68,6 +75,9 @@ void process_force_switch()
 	//scheduler(regs);
 }
 
+u32 hl_cr3;
+u32 hl_eip;
+u32 hl_esp;
 void process_init(struct process *proc)
 {
 	log("Initializing process %d", pid);
@@ -78,7 +88,15 @@ void process_init(struct process *proc)
 
 	current_proc = root;
 	irq_install_handler(0, scheduler);
-	userspace_enter(proc);
+
+	hl_eip = proc->regs.eip;
+	hl_esp = proc->regs.esp;
+	//paging_switch_dir(proc->cr3);
+
+	debug("Jumping to userspace!");
+	extern void userspace_jump();
+	userspace_jump();
+	panic("This should not happen!");
 }
 
 // Only for debugging purposes
@@ -111,25 +129,6 @@ u32 process_spawn(struct process *process)
 	//process_suspend(current_proc->pid);
 
 	return process->pid;
-}
-
-u32 process_wait_pid(u32 pid, u32 *status)
-{
-	struct process *i = current_proc->next;
-
-	while (i != NULL) {
-		if (i->pid == pid) {
-			if (i->state == PROC_ASLEEP) {
-				*status = i->registers.ebx;
-				return i->pid;
-			} else {
-				return WAIT_OKAY;
-			}
-		}
-		i = i->next;
-	}
-
-	return WAIT_ERROR;
 }
 
 void process_suspend(u32 pid)
@@ -175,15 +174,20 @@ struct process *process_from_pid(u32 pid)
 	return PID_NOT_FOUND;
 }
 
+void no_entry()
+{
+	panic("No entry point given!");
+}
+
 struct process *process_make_new()
 {
 	debug("Making new process %d", pid);
 	struct process *proc = (struct process *)valloc(sizeof(struct process));
-	proc->registers.cs = 0x1B;
-	proc->registers.ds = 0x23;
-	proc->registers.ss = 0x23;
+	proc->regs.cs = 0x1B;
+	proc->regs.ds = 0x23;
+	proc->regs.ss = 0x23;
+	proc->regs.eip = no_entry;
 	proc->cr3 = paging_make_dir();
-	proc->brk = 0x50000000;
 	proc->pid = pid++;
 	return proc;
 }
