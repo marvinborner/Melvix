@@ -19,6 +19,7 @@ u32 total_memory;
 
 u32 *frame_table;
 
+// Not to be used externally!
 void *kmalloc(u32 size)
 {
 	void *ret;
