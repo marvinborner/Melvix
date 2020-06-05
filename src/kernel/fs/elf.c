@@ -12,7 +12,7 @@
 #include <system.h>
 #include <tasks/process.h>
 
-int is_elf(struct elf_header *header)
+int elf_verify(struct elf_header *header)
 {
 	if (header->ident[0] == ELF_MAG && header->ident[1] == 'E' && header->ident[2] == 'L' &&
 	    header->ident[3] == 'F' && header->ident[4] == ELF_32 &&
@@ -35,7 +35,7 @@ struct process *elf_load(char *path)
 
 	struct elf_header *header = (struct elf_header *)file;
 
-	if (!is_elf(header)) {
+	if (!elf_verify(header)) {
 		warn("File not valid: %s", path);
 		return NULL;
 	} else {
@@ -49,14 +49,19 @@ struct process *elf_load(char *path)
 	u32 image_high = 0;
 
 	// Parse ELF
+	u32 j = 0;
 	for (u32 i = 0; i < header->shentsize * header->shnum; i += header->shentsize) {
 		struct elf_section_header *sh = (void *)header + (header->shoff + i);
 		if (sh->addr != 0) {
 			log("%x", sh->addr);
-			for (u32 j = 0; j < sh->size; j += PAGE_SIZE) {
+			/* for (u32 j = 0; j < sh->size; j += PAGE_SIZE) { */
+			/* 	paging_frame_alloc(paging_get_page(sh->addr + j, proc->cr3)); */
+			/* 	invlpg(sh->addr + j); */
+			/* } */
+			while (j < sh->size) {
 				paging_frame_alloc(paging_get_page(sh->addr + j, proc->cr3));
 				invlpg(sh->addr + j);
-				j += PAGE_SIZE;
+				j += 0x1000;
 			}
 
 			if (sh->type == 8) // Is .bss
@@ -73,16 +78,17 @@ struct process *elf_load(char *path)
 	}
 
 	// Stack
-	struct page_table_entry *stack_page = paging_get_page(0x400000, proc->cr3);
+	struct page_table_entry *stack_page = paging_get_page(USER_STACK_LOW, proc->cr3);
 	paging_frame_alloc(stack_page);
 	stack_page->writable = 1;
-	invlpg(0x400000);
+	invlpg(USER_STACK_LOW);
 
 	strcpy(proc->name, path);
 	proc->brk = image_high;
+	proc->regs.useresp = USER_STACK_HIGH;
+	proc->regs.ebp = proc->regs.useresp;
+	proc->regs.esp = proc->regs.useresp;
 	proc->regs.eip = header->entry;
-	proc->regs.esp = 0x401000;
-	proc->regs.useresp = 0x401000;
 
 	return proc;
 }

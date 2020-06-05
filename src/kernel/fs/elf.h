@@ -28,6 +28,9 @@
 #define PF_W 0x2
 #define PF_R 0x4
 
+#define USER_STACK_LOW 0x00400000
+#define USER_STACK_HIGH 0x00401000
+
 struct elf_priv_data {
 	u32 sig;
 };

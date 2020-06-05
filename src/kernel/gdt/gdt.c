@@ -18,7 +18,7 @@ struct gdt_ptr {
 	void *base;
 } __attribute__((packed));
 
-struct gdt_entry gdt[8];
+struct gdt_entry gdt[6];
 struct gdt_ptr gp;
 
 struct tss_entry_struct {
@@ -94,9 +94,6 @@ void gdt_install()
 
 	// Write TSS
 	tss_write(5, 0x10, stack_hold);
-
-	gdt_set_gate(6, 0, 0xFFFFF, 0x92, 0x0);
-	gdt_set_gate(7, 0, 0xFFFFF, 0x9A, 0x0);
 
 	// Remove old GDT and install the new changes!
 	gdt_flush();

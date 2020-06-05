@@ -24,15 +24,14 @@ void scheduler(struct regs *regs)
 	static int locked = 0;
 	spinlock(&locked);
 
-	serial_put('.');
-	if (quantum == 0 || current_proc->state != PROC_RUNNING) {
-		quantum = 42; // For next process
-	} else {
-		quantum--;
-		locked = 0;
-		sti();
-		return;
-	}
+	/* serial_put('.'); */
+	/* if (quantum == 0 || current_proc->state != PROC_RUNNING) { */
+	/* 	quantum = 42; // For next process */
+	/* } else { */
+	/* 	quantum--; */
+	/* 	locked = 0; */
+	/* 	return; */
+	/* } */
 
 	serial_put('+');
 	memcpy(&current_proc->regs, regs, sizeof(struct regs));
@@ -56,6 +55,7 @@ void scheduler(struct regs *regs)
 
 	memcpy(regs, &current_proc->regs, sizeof(struct regs));
 	paging_switch_dir(current_proc->cr3);
+	log("%x", regs->cs);
 	if (regs->cs != 0x1B) {
 		regs->gs = 0x23;
 		regs->fs = 0x23;
@@ -75,7 +75,6 @@ void process_force_switch()
 	//scheduler(regs);
 }
 
-u32 hl_cr3;
 u32 hl_eip;
 u32 hl_esp;
 void process_init(struct process *proc)
@@ -91,7 +90,7 @@ void process_init(struct process *proc)
 
 	hl_eip = proc->regs.eip;
 	hl_esp = proc->regs.esp;
-	//paging_switch_dir(proc->cr3);
+	paging_switch_dir(proc->cr3);
 
 	debug("Jumping to userspace!");
 	extern void userspace_jump();

@@ -1,5 +1,4 @@
 global userspace_jump
-extern hl_cr3
 extern hl_esp
 extern hl_eip
 
