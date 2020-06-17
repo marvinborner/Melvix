@@ -117,30 +117,8 @@ make_test() {
 	qemu_with_flags -cdrom ./build/melvix.iso# -hda ./build/disk.img
 }
 
-make_debug() {
-	objcopy --only-keep-debug ./build/kernel/kernel.bin ./build/kernel/debug
-	qemu-system-i386 -vga std -S -s -cdrom ./build/melvix.iso -hda ./build/disk.img &
-	sleep 2
-	(
-		echo target remote 127.0.0.1:1234
-		cat
-	) | gdb -s ./build/kernel/debug ./build/kernel/kernel.bin
-	pkill "qemu*"
-}
-
 make_disasm() {
-	objdump -drwC -Mintel ./build/kernel/kernel.bin --visualize-jumps=color | less -R
-}
-
-make_image() {
-	#start=$(date +%s.%N)
-	#qemu_with_flags -nographic -cdrom ./build/melvix.iso -drive file=./build/hdd10M.img,format=raw >install.log
-	#end=$(date +%s.%N)
-	#cat install.log
-	#printf "[LOG END]\n\n"
-	#tail install.log | grep -q "Installation successful!" && echo Booted and installed within "$(echo "$end - $start" | bc -l)" seconds || echo Installation failed! && exit 1
-	#rm install.log
-	echo "This test is currently disabled"
+	objdump -drwC -Mintel ./build/kernel.bin --visualize-jumps=color | less -R
 }
 
 make_sync() {
@@ -154,20 +132,14 @@ make_sync() {
 }
 
 make_tidy() {
-	find ./src -type f -name "*.sh" | xargs -l -i sh -c 'shfmt -w {}'
 	shfmt -w ./run
 	find ./src -type f -regex '.*\.\(c\|h\)' -exec clang-format -i {} \;
-	find ./src -type f | xargs -l -i sh -c 'printf %s "$(< {})" > {}'
-}
-
-make_font() {
-	cd ./src/resources/
-	sh conv.sh
-	cd ../../
+	# This may or may not work
+	find ./src -type f -print0 | xargs -0 -l -i sh -c '[ -n "$(tail -c1 {})" ] && printf "\n" >> {}'
 }
 
 make_clean() {
-	rm -rf ./iso ./build/
+	rm -rf ./disk/bin/ ./build/
 }
 
 if [ "${mode}" = "cross" ]; then
@@ -185,26 +157,14 @@ elif [ "${mode}" = "test" ]; then
 	make_test
 elif [ "${mode}" = "again" ]; then
 	make_test
-elif [ "${mode}" = "debug" ]; then
-	make_cross
-	make_build
-	make_debug
 elif [ "${mode}" = "disasm" ]; then
 	make_cross
 	make_build
 	make_disasm
-elif [ "${mode}" = "image" ]; then
-	make_cross
-	make_build
-	make_image
 elif [ "${mode}" = "sync" ]; then
 	make_sync
 elif [ "${mode}" = "tidy" ]; then
 	make_tidy
-elif [ "${mode}" = "font" ]; then
-	make_font
-	make_tidy
-	make_sync &
 elif [ "${mode}" = "" ]; then # TODO: Prevent code duplication in build script via functions?
 	make_cross
 	make_build
@@ -212,6 +172,6 @@ elif [ "${mode}" = "" ]; then # TODO: Prevent code duplication in build script v
 	make_test
 else
 	echo "Please use the following syntax:"
-	echo "./run {cross | build | clean | test | debug | disasm | image | sync | tidy | font} [-y]"
+	echo "./run {cross | build | clean | test | disasm | sync | tidy} [-y]"
 	echo "The default option is 'test'"
 fi
