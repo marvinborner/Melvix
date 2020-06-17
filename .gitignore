@@ -6,3 +6,4 @@ build/
 cmake/
 cross/
 disk/bin/
+disk/boot/

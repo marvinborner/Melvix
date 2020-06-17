@@ -1,49 +1,30 @@
-bits 32
+bits 16
 
-kernel_stack equ 0x4000
-multiboot_magic equ 0xe85250d6
+org 0x7c00
 
-section .text
-	align 4
+jmp start
 
-	multiboot:
-	header_start:
-		dd multiboot_magic
-		dd 0
-		dd header_end - header_start
-		dd 0x100000000 - (multiboot_magic + 0 + (header_end - header_start))
+print:
+	mov ah, 0x0E
+	xor bh, bh
+	print_ch:
+		lodsb
+		test al, al
+		jz print_end
+		int 0x10
+		jmp print_ch
+	print_end:
+	ret
 
-		; Information tag
-		align 8
-		dw 1
-		dw 1
-		dd 24
-		dd 2 ; bootloader name
-		dd 4 ; meminfo
-		dd 6 ; mmap
-		dd 13 ; smbios
+start:
+	mov ax, 0x003
+	int 0x10
 
-		; Empty tag
-		align 8
-		dw 0
-		dw 0
-		dd 8
-	header_end:
+	mov si, hello
+	call print
+	jmp $
 
-	global boot
-	;extern kernel_main
-	boot:
-		mov esp, stack_top
-		push esp
-		push ebx
-		push eax
-		cli
-		;call kernel_main
-		hlt
-		jmp $
+hello db "Loading Melvix...", 0x0A, 0x0D, 0x00
 
-section .bss
-	align 32
-	stack_bottom:
-		resb kernel_stack
-	stack_top:
+times 510 - ($ - $$) db 0
+dw 0xAA55

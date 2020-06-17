@@ -89,7 +89,7 @@ make_cross() {
 }
 
 make_build() {
-	mkdir -p build/ disk/bin/
+	mkdir -p build/ disk/bin/ disk/boot
 
 	echo "Building..."
 	cd build/
@@ -98,27 +98,22 @@ make_build() {
 	cd ..
 
 	# Create disk image
-	# make_genext2fs
-	# mkdir ./mnt/
-	# mkdir -p ./mnt/etc/
-	# mkdir -p ./mnt/usr/
-	# mkdir -p ./mnt/bin/
+	make_genext2fs
+	/usr/local/bin/genext2fs -B 4096 -d disk/ -U -N 4096 -b 65536 build/disk.img
 
-	# cp ./build/res/font.bin ./mnt/bin/font
-	# cp ./build/user/* ./mnt/bin/
-	# echo "Hello world, ext2!" | tee -a ./mnt/etc/test
-	# /usr/local/bin/genext2fs -B 4096 -d mnt -U -N 4096 -b 65536 ./build/disk.img
-	# rm -r mnt/
+	nasm ./src/entry.asm -f bin -o disk/boot/boot.bin
+	cp build/melvix.bin disk/boot/
+	dd if=disk/boot/boot.bin bs=512 of=build/disk.img
 
 	printf "Build finshed successfully!\n\n"
 }
 
 make_test() {
-	qemu_with_flags -cdrom ./build/melvix.iso# -hda ./build/disk.img
+	qemu_with_flags -hda ./build/disk.img
 }
 
 make_disasm() {
-	objdump -drwC -Mintel ./build/kernel.bin --visualize-jumps=color | less -R
+	objdump -drwC -Mintel build/kernel.bin --visualize-jumps=color | less -R
 }
 
 make_sync() {
