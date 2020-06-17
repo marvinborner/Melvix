@@ -186,7 +186,7 @@ struct process *process_make_new()
 	proc->regs.ds = 0x23;
 	proc->regs.ss = 0x23;
 	proc->regs.eip = no_entry;
-	proc->cr3 = paging_make_dir();
+	proc->cr3 = (u32)paging_make_dir();
 	proc->pid = pid++;
 	return proc;
 }

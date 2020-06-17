@@ -49,9 +49,10 @@ struct process *elf_load(char *path)
 	u32 image_high = 0;
 
 	// Parse ELF
+	u32 i = 0;
 	u32 j = 0;
-	for (u32 i = 0; i < header->shentsize * header->shnum; i += header->shentsize) {
-		struct elf_section_header *sh = (void *)header + (header->shoff + i);
+	while (i < header->shentsize * header->shnum) {
+		struct elf_section_header *sh = (void *)((u32)header + (header->shoff + i));
 		if (sh->addr != 0) {
 			log("%x", sh->addr);
 			/* for (u32 j = 0; j < sh->size; j += PAGE_SIZE) { */
@@ -64,10 +65,12 @@ struct process *elf_load(char *path)
 				j += 0x1000;
 			}
 
-			if (sh->type == 8) // Is .bss
-				memset(sh->addr, 0, sh->size);
+			if (sh->type == 8)
+				// section is .bss
+				memset((void *)sh->addr, 0, sh->size);
 			else
-				memcpy(sh->addr, header + sh->offset, sh->size);
+				memcpy((void *)sh->addr, (void *)((u32)header + sh->offset),
+				       sh->size);
 
 			if (sh->addr < image_low)
 				image_low = sh->addr;
@@ -75,6 +78,7 @@ struct process *elf_load(char *path)
 			if (sh->addr + sh->size > image_high)
 				image_high = sh->addr + sh->size;
 		}
+		i += header->shentsize;
 	}
 
 	// Stack
@@ -89,6 +93,8 @@ struct process *elf_load(char *path)
 	proc->regs.ebp = proc->regs.useresp;
 	proc->regs.esp = proc->regs.useresp;
 	proc->regs.eip = header->entry;
+
+	debug("Loaded file");
 
 	return proc;
 }
