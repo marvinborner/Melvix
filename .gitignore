@@ -1,11 +1,8 @@
-Melvix.iml
 tags
 compile_commands.json
 
-.idea/
 .clangd/
 build/
 cmake/
 cross/
-cross64/
-iso/
+disk/bin/

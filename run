@@ -89,49 +89,32 @@ make_cross() {
 }
 
 make_build() {
-	mkdir -p iso/
+	mkdir -p build/ disk/bin/
 
 	echo "Building..."
-	mkdir -p build/kernel/
-	mkdir -p build/res/
-	mkdir -p build/user/
 	cd build/
 	cmake .. >/dev/null
 	make
 	cd ..
 
-	# Create ISO
-	mkdir -p ./iso/boot/grub/
-	cp ./build/kernel/kernel.bin ./iso/boot/kernel.bin
-	cp ./src/bootloader/grub.cfg ./iso/boot/grub/
-	grub-mkrescue -o ./build/melvix.iso ./iso/
-
-	# Check ISO
-	if grub-file --is-x86-multiboot2 ./build/kernel/kernel.bin; then
-		echo "Multiboot confirmed"
-	else
-		echo "Kernel is corrupted!"
-		exit 1
-	fi
-
 	# Create disk image
-	make_genext2fs
-	mkdir ./mnt/
-	mkdir -p ./mnt/etc/
-	mkdir -p ./mnt/usr/
-	mkdir -p ./mnt/bin/
+	# make_genext2fs
+	# mkdir ./mnt/
+	# mkdir -p ./mnt/etc/
+	# mkdir -p ./mnt/usr/
+	# mkdir -p ./mnt/bin/
 
-	cp ./build/res/font.bin ./mnt/bin/font
-	cp ./build/user/* ./mnt/bin/
-	echo "Hello world, ext2!" | tee -a ./mnt/etc/test
-	/usr/local/bin/genext2fs -B 4096 -d mnt -U -N 4096 -b 65536 ./build/disk.img
-	rm -r mnt/
+	# cp ./build/res/font.bin ./mnt/bin/font
+	# cp ./build/user/* ./mnt/bin/
+	# echo "Hello world, ext2!" | tee -a ./mnt/etc/test
+	# /usr/local/bin/genext2fs -B 4096 -d mnt -U -N 4096 -b 65536 ./build/disk.img
+	# rm -r mnt/
 
 	printf "Build finshed successfully!\n\n"
 }
 
 make_test() {
-	qemu_with_flags -cdrom ./build/melvix.iso -hda ./build/disk.img
+	qemu_with_flags -cdrom ./build/melvix.iso# -hda ./build/disk.img
 }
 
 make_debug() {

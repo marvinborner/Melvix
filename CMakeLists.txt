@@ -11,9 +11,6 @@ if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif(CCACHE_FOUND)
 
-# Melvix variables
-set(NETWORK "rtl8139")
-
 # Compiler and linker
 set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS " ")
 set(CMAKE_C_COMPILER "${CMAKE_CURRENT_SOURCE_DIR}/cross/opt/bin/i686-elf-gcc")
@@ -23,51 +20,24 @@ set(CMAKE_ASM_LINKER_PREFERENCE ${CMAKE_LINKER})
 set(CMAKE_C_LINKER_PREFERENCE ${CMAKE_LINKER})
 
 # Compiler and linker flags
-set(CMAKE_C_FLAGS "-Wall -Wno-int-conversion -fstrength-reduce -fomit-frame-pointer -finline-functions -nostdlib -nostdinc -ffreestanding -std=gnu99 -g -ggdb3 -c")
-set(CMAKE_EXE_LINKER_FLAGS "-ffreestanding -O2 -nostdlib -g -ggdb")
+set(CMAKE_C_FLAGS "-Wall -Wno-int-conversion -fstrength-reduce -fomit-frame-pointer -finline-functions -nostdlib -nostdinc -ffreestanding -std=gnu99 -pedantic-errors -c -I${CMAKE_CURRENT_SOURCE_DIR}/src/lib/")
+set(CMAKE_EXE_LINKER_FLAGS "-ffreestanding -O2 -nostdlib -nostdinc")
 set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <SOURCE> -o <OBJECT> -f elf32 -O0")
 set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_LINKER> ${CMAKE_EXE_LINKER_FLAGS} <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 set(CMAKE_ASM_LINK_EXECUTABLE "<CMAKE_LINKER> ${CMAKE_EXE_LINKER_FLAGS} <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 
 # Recursive sources
-file(GLOB_RECURSE kernel_sources src/kernel/*.c src/kernel/*.asm)
-file(GLOB_RECURSE resources_sources src/resources/*.c)
-file(GLOB_RECURSE user_sources src/userspace/programs/*.c)
-file(GLOB_RECURSE user_libc_sources src/userspace/libc/*.c)
-file(GLOB_RECURSE user_libgui_sources src/userspace/libgui/*.c)
+file(GLOB_RECURSE sources src/*.c src/*.asm)
+file(GLOB_RECURSE apps_sources apps/*.c)
 
-# KERNEL
-add_executable(kernel ${kernel_sources})
-target_include_directories(kernel PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/" "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/")
-set_target_properties(kernel PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/kernel/kernel.bin")
-target_compile_options(kernel PRIVATE "-D ${NETWORK}")
-target_link_libraries(kernel PRIVATE "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/kernel/linker.ld")
+# MELVIX
+add_executable(melvix ${sources})
+set_target_properties(melvix PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/melvix.bin")
+target_link_libraries(melvix PRIVATE "-T ${CMAKE_CURRENT_SOURCE_DIR}/src/link.ld")
 
-# RESOURCES
-add_executable(resources ${resources_sources})
-target_include_directories(resources PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/")
-set_target_properties(resources PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/res/font.o")
-target_compile_options(resources PRIVATE "-Os") # This is needed to preserve my fixed function order ig
-add_custom_command(
-        TARGET resources POST_BUILD
-        COMMAND cross/opt/bin/i686-elf-objcopy -O binary build/res/font.o build/res/font.bin
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-# USERSPACE LIBC
-add_library(userspace_libc ${user_libc_sources})
-target_include_directories(userspace_libc PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/" "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/")
-
-# USERSPACE LIBGUI
-add_library(userspace_libgui ${user_libgui_sources})
-target_link_libraries(userspace_libgui userspace_libc)
-target_include_directories(userspace_libgui PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/" "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libgui/")
-
-# USERSPACE PROGRAMS
-foreach(loop_file ${user_sources})
+# APPS
+foreach(loop_file ${apps_sources})
 	get_filename_component(testname ${loop_file} NAME_WE)
 	add_executable(${testname} ${loop_file})
-	target_include_directories(${testname} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libc/" "${CMAKE_CURRENT_SOURCE_DIR}/src/userspace/libgui/")
-	target_link_libraries(${testname} userspace_libc userspace_libgui)
-	set_target_properties(${testname} PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/user/${testname}")
+	set_target_properties(${testname} PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/disk/bin/${testname}")
 endforeach(loop_file ${user_sources})

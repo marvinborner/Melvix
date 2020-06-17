@@ -31,14 +31,14 @@ section .text
 	header_end:
 
 	global boot
-	extern kernel_main
+	;extern kernel_main
 	boot:
 		mov esp, stack_top
 		push esp
 		push ebx
 		push eax
 		cli
-		call kernel_main
+		;call kernel_main
 		hlt
 		jmp $
 
