@@ -101,15 +101,15 @@ make_build() {
 	make_genext2fs
 	/usr/local/bin/genext2fs -B 4096 -d disk/ -U -N 4096 -b 65536 build/disk.img
 
-	nasm ./src/entry.asm -f bin -o disk/boot/boot.bin
+	nasm src/entry.asm -f bin -o disk/boot/boot.bin
 	cp build/melvix.bin disk/boot/
-	dd if=disk/boot/boot.bin bs=512 of=build/disk.img
+	dd if=disk/boot/boot.bin of=build/disk.img conv=notrunc
 
 	printf "Build finshed successfully!\n\n"
 }
 
 make_test() {
-	qemu_with_flags -hda ./build/disk.img
+	qemu_with_flags -hdb build/disk.img
 }
 
 make_disasm() {
@@ -134,7 +134,7 @@ make_tidy() {
 }
 
 make_clean() {
-	rm -rf ./disk/bin/ ./build/
+	rm -rf ./disk/bin/ ./disk/boot/ ./build/
 }
 
 if [ "${mode}" = "cross" ]; then
@@ -147,6 +147,7 @@ elif [ "${mode}" = "clean" ]; then
 	make_clean
 elif [ "${mode}" = "test" ]; then
 	make_cross
+	make_clean
 	make_build
 	make_sync &
 	make_test
