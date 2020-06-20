@@ -20,7 +20,7 @@ _start:
 	jnz lba_error
 
 	; Check disk and move dl
-	and dl, 0x80
+	and dl, 0x80 ; Use disk 0
 	jz disk_error
 	mov [drive], dl
 
@@ -89,12 +89,12 @@ dw 0xAA55
 
 stage_two:
 	mov si, stage_two_msg
-	call print
+	call print ; yay!
 
+	; Verify signature
 	mov ax, [superblock +56]
 	cmp ax, 0xEF53
 	jne disk_error
-
 	mov si, disk_success_msg
 	call print
 
@@ -114,7 +114,7 @@ stage_two:
 
 	; TODO: File crawling instead of fixed inode
 	xor bx, bx
-	mov bx, 0x1200 ; First block (4 * 128)
+	mov bx, 0x1200 ; First block (4 * 128 + dest)
 	mov cx, [bx + 28] ; Number of sectors for inode
 	lea di, [bx + 40] ; Address of first block pointer
 
