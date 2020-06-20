@@ -98,8 +98,118 @@ stage_two:
 	mov si, disk_success_msg
 	call print
 
-	jmp $
+	mov ax, [superblock + 1024 + 8] ; Inode table
+	mov cx, 2
+	mul cx ; ax = cx * ax
 
+	mov [lba], ax ; Sector
+
+	mov ax, 2
+	mov [count], ax ; Read 1024 bytes
+
+	mov bx, 0x1000 ; Copy data to 0x1000
+	mov [dest], bx
+
+	call disk_read
+
+	; TODO: File crawling instead of fixed inode
+	xor bx, bx
+	mov bx, 0x1200 ; First block (4 * 128)
+	mov cx, [bx + 28] ; Number of sectors for inode
+	lea di, [bx + 40] ; Address of first block pointer
+
+	mov bx, 0x5000
+	mov [dest + 2], bx
+	mov bx, 0 ; Inode location = 0xF0000
+	mov [dest], bx
+	call stage_three_load
+
+	jmp protected_mode_enter
+
+stage_three_load:
+	xor ax, ax ; Clear ax
+	mov dx, ax ; Clear dx
+	mov ax, [di] ; Set ax = block pointer
+	mov dx, 2 ; Mul 2 for sectors
+	mul dx ; ax = dx * ax
+
+	mov [lba], ax
+	mov [dest], bx
+
+	call disk_read
+
+	add bx, 0x400 ; 1kb increase
+	add di, 0x4 ; Move to next block pointer
+	sub cx, 0x2 ; Read 2 blocks
+	jnz stage_three_load
+	ret
+
+	nop
+	hlt
+
+protected_mode_enter:
+	cli ; Turn off interrupts
+
+	in al, 0x92 ; Enable A20
+	or al, 2
+	out 0x92, al
+
+	; Clear registers
+	xor ax, ax
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+
+	lgdt [gdt_desc] ; Load GDT
+
+	mov eax, cr0
+	or eax, 1 ; Set bit 0
+	mov cr0, eax
+
+	jmp 08h:protected_mode ; JUMP!
+
+bits 32 ; Woah!
+protected_mode:
+	xor eax, eax
+
+	mov ax, 10h ; Set data segement indentifier
+	mov ds, ax
+	mov es, ax
+	mov fs, ax
+	mov gs, ax
+	mov ss, ax ; Stack segment
+	mov esp, 0x00900000 ; Move stack pointer
+
+	mov edx, 0x00050000
+	lea eax, [edx]
+	call eax
+
+; GDT
+align 32
+gdt:
+gdt_null:
+	dd 0
+	dd 0
+gdt_code:
+	dw 0xFFFF
+	dw 0
+	db 0
+	db 0x9A
+	db 0xCF
+	db 0
+gdt_data:
+	dw 0xFFFF
+	dw 0
+	db 0
+	db 0x92
+	db 0xcF
+	db 0
+gdt_end:
+gdt_desc:
+	dw gdt_end - gdt - 1
+	dd gdt
 
 times 1024 - ($ - $$) db 0
+
 superblock:
