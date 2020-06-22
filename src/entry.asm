@@ -68,6 +68,7 @@ disk_error_msg db "Disk error!", 0x0a, 0x0d, 0x00
 lba_error_msg db "LBA error!", 0x0a, 0x0d, 0x00
 stage_two_msg db "Stage2 loaded", 0x0a, 0x0d, 0x00
 disk_success_msg db "Disk is valid", 0x0a, 0x0d, 0x00
+inode_table_msg db "Found inode table", 0x0a, 0x0d, 0x00
 drive db 0
 
 ; Data
@@ -98,23 +99,22 @@ stage_two:
 	mov si, disk_success_msg
 	call print
 
+	; load inode table
 	mov ax, [superblock + 1024 + 8] ; Inode table
 	mov cx, 2
 	mul cx ; ax = cx * ax
-
 	mov [lba], ax ; Sector
-
 	mov ax, 2
 	mov [count], ax ; Read 1024 bytes
-
 	mov bx, 0x1000 ; Copy data to 0x1000
 	mov [dest], bx
-
 	call disk_read
+	mov si, inode_table_msg
+	call print
 
 	; TODO: File crawling instead of fixed inode
 	xor bx, bx
-	mov bx, 0x1200 ; First block (4 * 128 + dest)
+	mov bx, 0x1080 ; First block ((2 - 1) * 128 + dest)
 	mov cx, [bx + 28] ; Number of sectors for inode
 	lea di, [bx + 40] ; Address of first block pointer
 
@@ -150,6 +150,7 @@ stage_three_load:
 protected_mode_enter:
 	cli ; Turn off interrupts
 
+	; TODO: Check A20 support?
 	in al, 0x92 ; Enable A20
 	or al, 2
 	out 0x92, al
