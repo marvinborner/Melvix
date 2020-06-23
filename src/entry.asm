@@ -112,9 +112,14 @@ stage_two:
 	mov si, inode_table_msg
 	call print
 
-	; TODO: File crawling instead of fixed inode
+	; Load root dir
 	xor bx, bx
+	mov ax, bx
 	mov bx, 0x1080 ; First block ((2 - 1) * 128 + dest)
+	mov ax, word [bx + 0] ; Filetype
+	and ax, 0x4000 ; Check if dir
+	cmp ax, 0x4000
+	jne disk_error
 	mov cx, [bx + 28] ; Number of sectors for inode
 	lea di, [bx + 40] ; Address of first block pointer
 
