@@ -1,8 +1,8 @@
 ; Melvin's awesome ext2 bootloader
+; I'm not really good in assembly, there are MANY ways to improve this!
 ; MIT License, Copyright (c) 2020 Marvin Borner
 
 ; Definitions
-
 %define LOCATION 0x7c00 ; Bootloader location
 
 %define NEWLINE 0x0A ; Newline character (\n)
@@ -37,7 +37,6 @@
 %define A20_GATE 0x92 ; Fast A20 gate
 %define A20_ENABLED 0b10 ; Bit 1 defines whether A20 is enabled
 %define A20_EXCLUDE_BIT 0xfe ; Bit 0 may be write-only, causing a crash
-
 ; ENOUGH, let's go!
 
 bits 16
@@ -111,6 +110,8 @@ lba_error_msg db "LBA error!", NEWLINE, RETURN, NULL
 stage_two_msg db "Stage2 loaded", NEWLINE, RETURN, NULL
 disk_success_msg db "Disk is valid", NEWLINE, RETURN, NULL
 inode_table_msg db "Found inode table", NEWLINE, RETURN, NULL
+boot_dir_msg db "Found boot directory", NEWLINE, RETURN, NULL
+boot_dir_name db "boot", NULL
 drive db 0
 
 ; Data
@@ -158,13 +159,12 @@ stage_two:
 	xor bx, bx
 	mov ax, bx
 	mov bx, EXT2_ROOT_DIR ; First block
-	mov ax, word [bx + EXT2_TYPE_OFFSET] ; Filetype
+	mov ax, [bx + EXT2_TYPE_OFFSET] ; Filetype
 	and ax, EXT2_DIR ; Check if directory
 	cmp ax, EXT2_DIR
 	jne disk_error
 	mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of sectors for inode
 	lea di, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
-	jmp $
 
 	; Find kernel
 	xor ax, ax
@@ -173,7 +173,34 @@ stage_two:
 	mov dx, 2
 	mul dx
 	mov [lba], ax
+	mov bx, 0x5000
 	mov [dest], bx
+	call disk_read
+
+	; TODO: Clean up - remove debug things
+	mov cx, bx
+	.file_loop:
+	mov si, cx
+	add si, 0x08
+	call print
+
+	; TODO: Fix string comparison
+	push cx
+	mov si, cx
+	mov di, boot_dir_name
+	mov cx, 5
+	rep cmpsb
+	je .found_boot
+	pop cx
+
+	mov bx, cx
+	mov ax, word [bx + 4]
+	add cx, ax
+	jmp .file_loop
+	.found_boot:
+	mov si, boot_dir_msg
+	call print
+	jmp $
 
 	mov bx, 0x5000
 	mov [dest + 2], bx

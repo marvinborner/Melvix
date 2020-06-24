@@ -90,7 +90,7 @@ make_cross() {
 
 make_build() {
 	rm -rf ./disk/bin/ ./disk/boot/
-	mkdir -p build/ disk/bin/ disk/boot
+	mkdir -p build/ disk/bin/ disk/boot/
 
 	echo "Building..."
 	cd build/
