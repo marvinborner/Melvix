@@ -24,12 +24,13 @@
 %define EXT2_SIG_OFFSET 0x38 ; Signature offset in superblock
 %define EXT2_TABLE_OFFSET 0x08 ; Inode table offset after superblock
 %define EXT2_NEW_TABLE 0x1000 ; New inode table location in memory
-%define EXT2_INODE_SIZE 0x80 ; Single inode size
 %define EXT2_ROOT_INODE 0x02 ; Root directory inode
-%define EXT2_ROOT_DIR EXT2_NEW_TABLE + (EXT2_ROOT_INODE - 1) * EXT2_INODE_SIZE
+%define EXT2_INODE_SIZE 0x80 ; Single inode size
+%define EXT2_GET_ADDRESS(inode) (EXT2_NEW_TABLE + (inode - 1) * EXT2_INODE_SIZE)
 %define EXT2_TYPE_OFFSET 0x00 ; Inode offset of filetype and rights
 %define EXT2_COUNT_OFFSET 0x1c ; Inode offset of number of data blocks
 %define EXT2_POINTER_OFFSET 0x28 ; Inode offset of first data pointer
+%define EXT2_INODE_OFFSET 0x00 ; Dirent offset of inode number
 %define EXT2_FILENAME_OFFSET 0x08 ; Dirent offset of file name
 %define EXT2_ENTRY_LENGTH_OFFSET 0x04 ; Dirent offset of entry length
 %define EXT2_SIG 0xef53 ; Signature
@@ -44,6 +45,8 @@
 bits 16
 org LOCATION
 
+; This is the first stage. It prints some things, checks some things
+; and jumps to the second stage. Nothing special.
 global _start
 _start:
 	; Clear screen
@@ -113,9 +116,13 @@ stage_two_msg db "Stage2 loaded", NEWLINE, RETURN, NULL
 disk_success_msg db "Disk is valid", NEWLINE, RETURN, NULL
 inode_table_msg db "Found inode table", NEWLINE, RETURN, NULL
 boot_dir_msg db "Found boot directory", NEWLINE, RETURN, NULL
+drive db 0
+
+; Filenames
 boot_dir_name db "boot", NULL
 boot_dir_name_len equ $ - boot_dir_name
-drive db 0
+kernel_file_name db "kernel.bin", NULL
+kernel_file_name_len equ $ - kernel_file_name
 
 ; Data
 packet:
@@ -134,6 +141,12 @@ lba:
 times 510 - ($ - $$) db 0
 dw 0xAA55
 
+; This is the second stage. It tries to load '/boot/kernel.bin' into memory.
+; To do this, it first checks the integrity of the ext2 fs. Then it has to loop
+; through every directory in the root until the 'boot' directory is found.
+; The same procedure follows, searching for the kernel.bin file.
+; After this is finished, the stage can jump into the protected mode, enable the
+; A20 line and finally jump to the kernel! ez
 stage_two:
 	mov si, stage_two_msg
 	call print ; yay!
@@ -147,8 +160,7 @@ stage_two:
 
 	; Load inode table
 	mov ax, [superblock + EXT2_SB_SIZE + EXT2_TABLE_OFFSET] ; Inode table
-	mov cx, 2
-	mul cx ; ax = cx * ax
+	shl ax, 1 ; Multiply ax by 2
 	mov [lba], ax ; Sector
 	mov ax, 2
 	mov [count], ax ; Read 1024 bytes
@@ -159,51 +171,89 @@ stage_two:
 	call print
 
 	; Load root dir
-	mov bx, EXT2_ROOT_DIR ; First block
-	mov ax, [bx + EXT2_TYPE_OFFSET] ; Filetype
+	mov bx, EXT2_GET_ADDRESS(EXT2_ROOT_INODE) ; First block
+	mov ax, [bx + EXT2_TYPE_OFFSET] ; Get filetype
 	and ax, EXT2_DIR ; AND with directory
 	cmp ax, EXT2_DIR ; Check if it's a directory
 	jne disk_error ; Not a directory!
-	mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of sectors for inode
+	;mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of sectors for inode - TODO later!
 	mov ax, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
-	mov dx, 2
-	mul dx
+	shl ax, 1 ; Multiply ax by 2
 	mov [lba], ax
 	mov bx, 0x5000
 	mov [dest], bx
 	call disk_read
 
-	; TODO: Fix endless loop when not found
 	; Find boot directory
-	.file_loop:
+	; TODO: Fix endless loop when not found
+	.boot_dir_loop:
 	mov si, bx ; First comparison string
 	add si, EXT2_FILENAME_OFFSET ; Set pointer to filename
 	mov di, boot_dir_name ; Second comparison string
 	mov cx, boot_dir_name_len ; String length
 	rep cmpsb ; Compare strings
 	je .found_boot ; Found correct dirent!
-	add bx, [bx + EXT2_ENTRY_LENGTH_OFFSET] ; Add dirent struct size
-	jmp .file_loop ; Jump to next dirent!
+	add bx, EXT2_ENTRY_LENGTH_OFFSET ; Add dirent struct size
+	jmp .boot_dir_loop ; Jump to next dirent!
 
 	.found_boot:
 	mov si, boot_dir_msg
 	call print ; Show happy message!
+
+	; Find kernel!
+	; First, get the 'boot' directory block pointer
+	; Second, loop through the files until 'kernel.bin' is found
+	; (EXT2_NEW_TABLE + (inode - 1) * EXT2_INODE_SIZE) ; This only works with constant inodes
+	mov ax, [bx + EXT2_INODE_OFFSET] ; Get inode number
+	jne disk_error
+	dec ax ; Decrement inode: (inode - 1)
+	mov cx, EXT2_INODE_SIZE ; Prepare for multiplication
+	mul cx ; Multiply inode number
+	mov bx, ax ; Move for effective address calculations
+	mov bx, [bx + EXT2_NEW_TABLE] ; Yay - bx is now at the inodes start!
+	mov ax, [bx + EXT2_TYPE_OFFSET] ; Get filetype
+	and ax, EXT2_DIR ; AND with directory
+	cmp ax, EXT2_DIR ; Check if it's a directory
+	jne disk_error ; Well, 'boot' isn't a directory - what do you want?
+	; Read first block
+	mov ax, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
+	shl ax, 1 ; Multiply ax by 2
+	mov [lba], ax
+	mov bx, 0x5000
+	mov [dest], bx
+	call disk_read
+
+	; Find kernel
+	.kernel_file_loop:
+	mov si, bx ; First comparison string
+	add si, EXT2_FILENAME_OFFSET ; Set pointer to filename
+	mov di, kernel_file_name ; Second comparison string
+	mov cx, kernel_file_name_len ; String length
+	rep cmpsb ; Compare strings
+	je .found_kernel ; Found correct dirent!
+	add bx, EXT2_ENTRY_LENGTH_OFFSET ; Add dirent struct size
+	jmp .kernel_file_loop ; Jump to next dirent!
+
+	.found_kernel:
+	mov si, bx ; First comparison string
+	add si, EXT2_FILENAME_OFFSET ; Set pointer to filename
+	call print
+
 	jmp $
 
 	mov bx, 0x5000
 	mov [dest + 2], bx
 	mov bx, 0 ; Inode location = 0xF0000
 	mov [dest], bx
-	call stage_three_load
+	call kernel_load
 
 	jmp protected_mode_enter
 
-stage_three_load:
+kernel_load:
 	xor ax, ax ; Clear ax
 	mov dx, ax ; Clear dx
 	mov ax, [di] ; Set ax = block pointer
-	mov dx, 2 ; Mul 2 for sectors
-	mul dx ; ax = dx * ax
+	shl ax, 1 ; Multiply ax by 2
 
 	mov [lba], ax
 	mov [dest], bx
@@ -213,7 +263,7 @@ stage_three_load:
 	add bx, 1024 ; 1kb increase
 	add di, 0x4 ; Move to next block pointer
 	sub cx, 2 ; Read 2 blocks
-	jnz stage_three_load
+	jnz kernel_load
 	ret
 
 	nop
