@@ -27,9 +27,11 @@
 %define EXT2_INODE_SIZE 0x80 ; Single inode size
 %define EXT2_ROOT_INODE 0x02 ; Root directory inode
 %define EXT2_ROOT_DIR EXT2_NEW_TABLE + (EXT2_ROOT_INODE - 1) * EXT2_INODE_SIZE
-%define EXT2_TYPE_OFFSET 0x00 ; Offset of filetype and rights
-%define EXT2_COUNT_OFFSET 0x1c ; Offset of number of data blocks
-%define EXT2_POINTER_OFFSET 0x28 ; Offset of first data pointer
+%define EXT2_TYPE_OFFSET 0x00 ; Inode offset of filetype and rights
+%define EXT2_COUNT_OFFSET 0x1c ; Inode offset of number of data blocks
+%define EXT2_POINTER_OFFSET 0x28 ; Inode offset of first data pointer
+%define EXT2_FILENAME_OFFSET 0x08 ; Dirent offset of file name
+%define EXT2_ENTRY_LENGTH_OFFSET 0x04 ; Dirent offset of entry length
 %define EXT2_SIG 0xef53 ; Signature
 %define EXT2_DIR 0x4000 ; Directory indicator
 %define EXT2_REG 0x8000 ; Regular file indicator
@@ -180,13 +182,10 @@ stage_two:
 	; TODO: Clean up - remove debug things
 	mov cx, bx
 	.file_loop:
-	mov si, cx
-	add si, 0x08
-	call print
 
-	; TODO: Fix string comparison
 	push cx
 	mov si, cx
+	add si, EXT2_FILENAME_OFFSET
 	mov di, boot_dir_name
 	mov cx, 5
 	rep cmpsb
@@ -194,8 +193,7 @@ stage_two:
 	pop cx
 
 	mov bx, cx
-	mov ax, word [bx + 4]
-	add cx, ax
+	add cx, [bx + EXT2_ENTRY_LENGTH_OFFSET]
 	jmp .file_loop
 	.found_boot:
 	mov si, boot_dir_msg
