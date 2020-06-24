@@ -114,6 +114,7 @@ disk_success_msg db "Disk is valid", NEWLINE, RETURN, NULL
 inode_table_msg db "Found inode table", NEWLINE, RETURN, NULL
 boot_dir_msg db "Found boot directory", NEWLINE, RETURN, NULL
 boot_dir_name db "boot", NULL
+boot_dir_name_len equ $ - boot_dir_name
 drive db 0
 
 ; Data
@@ -158,20 +159,13 @@ stage_two:
 	call print
 
 	; Load root dir
-	xor bx, bx
-	mov ax, bx
 	mov bx, EXT2_ROOT_DIR ; First block
 	mov ax, [bx + EXT2_TYPE_OFFSET] ; Filetype
-	and ax, EXT2_DIR ; Check if directory
-	cmp ax, EXT2_DIR
-	jne disk_error
+	and ax, EXT2_DIR ; AND with directory
+	cmp ax, EXT2_DIR ; Check if it's a directory
+	jne disk_error ; Not a directory!
 	mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of sectors for inode
-	lea di, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
-
-	; Find kernel
-	xor ax, ax
-	mov dx, ax
-	mov ax, [di]
+	mov ax, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
 	mov dx, 2
 	mul dx
 	mov [lba], ax
@@ -179,25 +173,21 @@ stage_two:
 	mov [dest], bx
 	call disk_read
 
-	; TODO: Clean up - remove debug things
-	mov cx, bx
+	; TODO: Fix endless loop when not found
+	; Find boot directory
 	.file_loop:
+	mov si, bx ; First comparison string
+	add si, EXT2_FILENAME_OFFSET ; Set pointer to filename
+	mov di, boot_dir_name ; Second comparison string
+	mov cx, boot_dir_name_len ; String length
+	rep cmpsb ; Compare strings
+	je .found_boot ; Found correct dirent!
+	add bx, [bx + EXT2_ENTRY_LENGTH_OFFSET] ; Add dirent struct size
+	jmp .file_loop ; Jump to next dirent!
 
-	push cx
-	mov si, cx
-	add si, EXT2_FILENAME_OFFSET
-	mov di, boot_dir_name
-	mov cx, 5
-	rep cmpsb
-	je .found_boot
-	pop cx
-
-	mov bx, cx
-	add cx, [bx + EXT2_ENTRY_LENGTH_OFFSET]
-	jmp .file_loop
 	.found_boot:
 	mov si, boot_dir_msg
-	call print
+	call print ; Show happy message!
 	jmp $
 
 	mov bx, 0x5000
