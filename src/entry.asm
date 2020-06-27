@@ -31,8 +31,8 @@
 %define EXT2_COUNT_OFFSET 0x1c ; Inode offset of number of data blocks
 %define EXT2_POINTER_OFFSET 0x28 ; Inode offset of first data pointer
 %define EXT2_INODE_OFFSET 0x00 ; Dirent offset of inode number
-%define EXT2_FILENAME_OFFSET 0x08 ; Dirent offset of file name
 %define EXT2_ENTRY_LENGTH_OFFSET 0x04 ; Dirent offset of entry length
+%define EXT2_FILENAME_OFFSET 0x08 ; Dirent offset of file name
 %define EXT2_SIG 0xef53 ; Signature
 %define EXT2_DIR 0x4000 ; Directory indicator
 %define EXT2_REG 0x8000 ; Regular file indicator
@@ -187,8 +187,7 @@ stage_two:
 	; Find boot directory
 	; TODO: Fix endless loop when not found
 	.boot_dir_loop:
-	mov si, bx ; First comparison string
-	add si, EXT2_FILENAME_OFFSET ; Set pointer to filename
+	lea si, [bx + EXT2_FILENAME_OFFSET] ; First comparison string
 	mov di, boot_dir_name ; Second comparison string
 	mov cx, boot_dir_name_len ; String length
 	rep cmpsb ; Compare strings
@@ -225,8 +224,7 @@ stage_two:
 
 	; Find kernel
 	.kernel_file_loop:
-	mov si, bx ; First comparison string
-	add si, EXT2_FILENAME_OFFSET ; Set pointer to filename
+	lea si, [bx + EXT2_FILENAME_OFFSET] ; First comparison string
 	mov di, kernel_file_name ; Second comparison string
 	mov cx, kernel_file_name_len ; String length
 	rep cmpsb ; Compare strings
@@ -235,8 +233,7 @@ stage_two:
 	jmp .kernel_file_loop ; Jump to next dirent!
 
 	.found_kernel:
-	mov si, bx ; First comparison string
-	add si, EXT2_FILENAME_OFFSET ; Set pointer to filename
+	lea si, [bx + EXT2_FILENAME_OFFSET] ; First comparison string
 	call print
 
 	jmp $
