@@ -23,10 +23,10 @@
 %define EXT2_SB_SIZE 0x400 ; Superblock size
 %define EXT2_SIG_OFFSET 0x38 ; Signature offset in superblock
 %define EXT2_TABLE_OFFSET 0x08 ; Inode table offset after superblock
-%define EXT2_NEW_TABLE 0x1000 ; New inode table location in memory
+%define EXT2_INODE_TABLE_LOC 0x1000 ; New inode table location in memory
 %define EXT2_ROOT_INODE 0x02 ; Root directory inode
 %define EXT2_INODE_SIZE 0x80 ; Single inode size
-%define EXT2_GET_ADDRESS(inode) (EXT2_NEW_TABLE + (inode - 1) * EXT2_INODE_SIZE)
+%define EXT2_GET_ADDRESS(inode) (EXT2_INODE_TABLE_LOC + (inode - 1) * EXT2_INODE_SIZE)
 %define EXT2_TYPE_OFFSET 0x00 ; Inode offset of filetype and rights
 %define EXT2_COUNT_OFFSET 0x1c ; Inode offset of number of data blocks
 %define EXT2_POINTER_OFFSET 0x28 ; Inode offset of first data pointer
@@ -164,7 +164,7 @@ stage_two:
 	mov [lba], ax ; Sector
 	mov ax, 2
 	mov [count], ax ; Read 1024 bytes
-	mov bx, EXT2_NEW_TABLE ; Copy data to 0x1000
+	mov bx, EXT2_INODE_TABLE_LOC ; Copy data to 0x1000
 	mov [dest], bx
 	call disk_read
 	mov si, inode_table_msg
@@ -202,14 +202,14 @@ stage_two:
 	; Find kernel!
 	; First, get the 'boot' directory block pointer
 	; Second, loop through the files until 'kernel.bin' is found
-	; (EXT2_NEW_TABLE + (inode - 1) * EXT2_INODE_SIZE) ; This only works with constant inodes
+	; (EXT2_INODE_TABLE_LOC + (inode - 1) * EXT2_INODE_SIZE) ; This only works with constant inodes
 	mov ax, [bx + EXT2_INODE_OFFSET] ; Get inode number
 	jne disk_error
 	dec ax ; Decrement inode: (inode - 1)
 	mov cx, EXT2_INODE_SIZE ; Prepare for multiplication
 	mul cx ; Multiply inode number
 	mov bx, ax ; Move for effective address calculations
-	mov bx, [bx + EXT2_NEW_TABLE] ; Yay - bx is now at the inodes start!
+	mov bx, [bx + EXT2_INODE_TABLE_LOC] ; Yay - bx is now at the inodes start!
 	mov ax, [bx + EXT2_TYPE_OFFSET] ; Get filetype
 	and ax, EXT2_DIR ; AND with directory
 	cmp ax, EXT2_DIR ; Check if it's a directory
