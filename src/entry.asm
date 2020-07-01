@@ -79,6 +79,8 @@ _start:
 	jmp stage_two
 
 print:
+	push bx
+	push ax
 	mov ah, VIDEO_OUT
 	xor bh, bh
 	print_ch:
@@ -88,6 +90,8 @@ print:
 		int VIDEO_INT
 		jmp print_ch
 	print_end:
+	pop ax
+	pop bx
 	ret
 
 disk_read:
