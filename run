@@ -89,8 +89,8 @@ make_cross() {
 }
 
 make_build() {
-	rm -rf ./disk/bin/ ./disk/boot/
-	mkdir -p build/ disk/bin/ disk/boot/
+	rm -rf ./disk/bin/ ./disk/
+	mkdir -p build/ disk/bin/ disk/
 
 	echo "Building..."
 	cd build/
@@ -99,13 +99,13 @@ make_build() {
 	cd ..
 
 	# Copy files
-	nasm src/entry.asm -f bin -o disk/boot/boot.bin
-	cp build/melvix.bin disk/boot/
+	nasm src/entry.asm -f bin -o disk/boot.bin
+	cp build/melvix.bin disk/
 
 	# Create disk image
 	make_genext2fs
 	/usr/local/bin/genext2fs -B 1024 -d disk/ -U -N 1024 -b 65536 build/disk.img
-	dd if=disk/boot/boot.bin of=build/disk.img conv=notrunc
+	dd if=disk/boot.bin of=build/disk.img conv=notrunc
 
 	printf "Build finshed successfully!\n\n"
 }
@@ -158,6 +158,11 @@ elif [ "${mode}" = "test" ]; then
 	make_build
 	make_sync &
 	make_test
+elif [ "${mode}" = "debug" ]; then
+	make_cross
+	make_build
+	make_sync &
+	make_debug
 elif [ "${mode}" = "again" ]; then
 	make_test
 elif [ "${mode}" = "disasm" ]; then

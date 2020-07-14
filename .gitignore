@@ -5,5 +5,5 @@ compile_commands.json
 build/
 cmake/
 cross/
-disk/bin/
-disk/boot/
+disk/*.bin
+disk/bin

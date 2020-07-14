@@ -119,13 +119,11 @@ lba_error_msg db "LBA error!", NEWLINE, RETURN, NULL
 stage_two_msg db "Stage2 loaded", NEWLINE, RETURN, NULL
 disk_success_msg db "Disk is valid", NEWLINE, RETURN, NULL
 inode_table_msg db "Found inode table", NEWLINE, RETURN, NULL
-boot_dir_msg db "Found boot directory", NEWLINE, RETURN, NULL
+kernel_found_msg db "Found kernel file", NEWLINE, RETURN, NULL
 drive db 0
 
 ; Filenames
-boot_dir_name db "boot", NULL
-boot_dir_name_len equ $ - boot_dir_name
-kernel_file_name db "kernel.bin", NULL
+kernel_file_name db "melvix.bin", NULL
 kernel_file_name_len equ $ - kernel_file_name
 
 ; Data
@@ -145,10 +143,9 @@ lba:
 times 510 - ($ - $$) db 0
 dw 0xAA55
 
-; This is the second stage. It tries to load '/boot/kernel.bin' into memory.
+; This is the second stage. It tries to load '/melvix.bin' into memory.
 ; To do this, it first checks the integrity of the ext2 fs. Then it has to loop
-; through every directory in the root until the 'boot' directory is found.
-; The same procedure follows, searching for the kernel.bin file.
+; through every file in the root until the 'melvix.bin' file is found.
 ; After this is finished, the stage can jump into the protected mode, enable the
 ; A20 line and finally jump to the kernel! ez
 stage_two:
@@ -188,57 +185,20 @@ stage_two:
 	mov [dest], bx
 	call disk_read
 
-	; Find boot directory
-	; TODO: Fix endless loop when not found
-	.boot_dir_loop:
-	lea si, [bx + EXT2_FILENAME_OFFSET] ; First comparison string
-	mov di, boot_dir_name ; Second comparison string
-	mov cx, boot_dir_name_len ; String length
-	rep cmpsb ; Compare strings
-	je .found_boot ; Found correct dirent!
-	add bx, EXT2_ENTRY_LENGTH_OFFSET ; Add dirent struct size
-	jmp .boot_dir_loop ; Jump to next dirent!
-
-	.found_boot:
-	mov si, boot_dir_msg
-	call print ; Show happy message!
-
-	; Find kernel!
-	; First, get the 'boot' directory block pointer
-	; Second, loop through the files until 'kernel.bin' is found
-	; (EXT2_INODE_TABLE_LOC + (inode - 1) * EXT2_INODE_SIZE) ; This only works with constant inodes
-	mov ax, [bx + EXT2_INODE_OFFSET] ; Get inode number
-	jne disk_error
-	dec ax ; Decrement inode: (inode - 1)
-	mov cx, EXT2_INODE_SIZE ; Prepare for multiplication
-	mul cx ; Multiply inode number
-	mov bx, ax ; Move for effective address calculations
-	mov bx, [bx + EXT2_INODE_TABLE_LOC] ; Yay - bx is now at the inodes start!
-	mov ax, [bx + EXT2_TYPE_OFFSET] ; Get filetype
-	and ax, EXT2_DIR ; AND with directory
-	cmp ax, EXT2_DIR ; Check if it's a directory
-	jne disk_error ; Well, 'boot' isn't a directory - what do you want?
-	; Read first block
-	mov ax, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
-	shl ax, 1 ; Multiply ax by 2
-	mov [lba], ax
-	mov bx, 0x5000
-	mov [dest], bx
-	call disk_read
-
 	; Find kernel
-	.kernel_file_loop:
+	; TODO: Fix endless loop when not found
+	.kernel_find_loop:
 	lea si, [bx + EXT2_FILENAME_OFFSET] ; First comparison string
 	mov di, kernel_file_name ; Second comparison string
 	mov cx, kernel_file_name_len ; String length
 	rep cmpsb ; Compare strings
 	je .found_kernel ; Found correct dirent!
 	add bx, EXT2_ENTRY_LENGTH_OFFSET ; Add dirent struct size
-	jmp .kernel_file_loop ; Jump to next dirent!
+	jmp .kernel_find_loop ; Jump to next dirent!
 
 	.found_kernel:
-	lea si, [bx + EXT2_FILENAME_OFFSET] ; First comparison string
-	call print
+	mov si, kernel_found_msg
+	call print ; Show happy message!
 
 	jmp $
 
