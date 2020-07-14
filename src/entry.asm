@@ -120,6 +120,7 @@ stage_two_msg db "Stage2 loaded", NEWLINE, RETURN, NULL
 disk_success_msg db "Disk is valid", NEWLINE, RETURN, NULL
 inode_table_msg db "Found inode table", NEWLINE, RETURN, NULL
 kernel_found_msg db "Found kernel file", NEWLINE, RETURN, NULL
+protected_msg db "Jumping to protected mode", NEWLINE, RETURN, NULL
 drive db 0
 
 ; Filenames
@@ -200,7 +201,25 @@ stage_two:
 	mov si, kernel_found_msg
 	call print ; Show happy message!
 
+	; Load kernel
+	mov ax, [bx + EXT2_INODE_OFFSET] ; Get inode number
+	dec ax ; Decrement inode: (inode - 1)
+	mov cx, EXT2_INODE_SIZE ; Prepare for mul
+	mul cx ; Multiply inode number (* EXT2_INODE_SIZE)
+	mov bx, ax ; Move for effective address calculations
+	mov bx, [bx + EXT2_INODE_TABLE_LOC] ; bx is at the start of the inode
+	mov ax, [bx + EXT2_TYPE_OFFSET] ; Get filetype
+	and ax, EXT2_REG ; AND with regular file
+	cmp ax, EXT2_REG ; Check if it's a regular file
+	jne disk_error ; Not a regular file!
 	jmp $
+	; Read first block
+	mov ax, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
+	shl ax, 1 ; Multiply by 2
+	mov [lba], ax
+	mov bx, 0x5000
+	mov [dest], bx
+	call disk_read ; TODO: TEST!
 
 	mov bx, 0x5000
 	mov [dest + 2], bx
@@ -232,6 +251,8 @@ kernel_load:
 
 protected_mode_enter:
 	cli ; Turn off interrupts
+	mov si, protected_msg
+	call print
 
 	; TODO: Check A20 support?
 	; TODO: 0x92 method may not work on every device
