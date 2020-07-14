@@ -114,6 +114,12 @@ make_test() {
 	qemu_with_flags -hdb build/disk.img
 }
 
+make_debug() {
+	qemu_with_flags -display none -hdb build/disk.img -s -S &
+	gdb "$(pwd)"/build/melvix.bin -ex 'target remote localhost:1234'
+	killall qemu-system-i386
+}
+
 make_disasm() {
 	objdump -drwC -Mintel build/kernel.bin --visualize-jumps=color | less -R
 }
