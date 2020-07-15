@@ -32,7 +32,7 @@ file(GLOB_RECURSE apps_sources apps/*.c)
 
 # MELVIX
 add_executable(melvix ${sources})
-set_target_properties(melvix PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/melvix.bin")
+set_target_properties(melvix PROPERTIES OUTPUT_NAME "${CMAKE_CURRENT_SOURCE_DIR}/build/melvix.o")
 target_link_libraries(melvix PRIVATE "-Ttext 0x0050000")
 
 # APPS

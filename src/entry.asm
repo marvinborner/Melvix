@@ -212,7 +212,6 @@ stage_two:
 	and ax, EXT2_REG ; AND with regular file
 	cmp ax, EXT2_REG ; Check if it's a regular file
 	jne disk_error ; Not a regular file!
-	jmp $
 	; Read first block
 	mov ax, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
 	shl ax, 1 ; Multiply by 2
@@ -273,6 +272,7 @@ protected_mode_enter:
 
 	lgdt [gdt_desc] ; Load GDT
 
+	; Set protected mode via cr0
 	mov eax, cr0
 	or eax, 1 ; Set bit 0
 	mov cr0, eax
@@ -289,10 +289,12 @@ protected_mode:
 	mov fs, ax
 	mov gs, ax
 	mov ss, ax ; Stack segment
+
 	mov esp, 0x00900000 ; Move stack pointer
 
 	mov edx, 0x00050000
 	lea eax, [edx]
+	jmp $
 	call eax
 
 ; GDT
@@ -313,7 +315,7 @@ gdt_data:
 	dw 0
 	db 0
 	db 0x92
-	db 0xcF
+	db 0xCF
 	db 0
 gdt_end:
 gdt_desc:
@@ -322,4 +324,5 @@ gdt_desc:
 
 times 1024 - ($ - $$) db 0
 
+; Start at LBA 2
 superblock:
