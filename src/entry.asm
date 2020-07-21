@@ -50,6 +50,14 @@
 %define A20_ENABLED 0b10 ; Bit 1 defines whether A20 is enabled
 %define A20_EXCLUDE_BIT 0xfe ; Bit 0 may be write-only, causing a crash
 
+; GDT constants (bitmap)
+%define GDT_MAX_LIMIT 0xffff
+%define GDT_PRESENT 0b10000000 ; Is present
+%define GDT_DESCRIPTOR 0b00010000 ; Descriptor type, set for code/data
+%define GDT_EXECUTABLE 0b00001000 ; Can be executed
+%define GDT_READWRITE 0b00000010 ; Read/write access for code/data
+%define GDT_GRANULARITY (0xc0 | 0x0f) ; Use paged 32 granularity
+
 ; Kernel constants
 %define STACK_POINTER 0x00900000 ; The initial stack pointer in kernel mode
 %define KERNEL_POSITION 0x00050000 ; Loaded kernel position in protected mode (* 0x10)
@@ -328,18 +336,18 @@ gdt_null: ; Must be null
 	dd 0
 	dd 0
 gdt_code: ; Code section
-	dw 0xFFFF ; Limit
+	dw GDT_MAX_LIMIT ; Limit
 	dw 0 ; First base
 	db 0 ; Second base
-	db 0x9A ; Configuration
-	db 0xCF ; Granularity
+	db (GDT_PRESENT | GDT_DESCRIPTOR | GDT_EXECUTABLE | GDT_READWRITE) ; Configuration
+	db GDT_GRANULARITY ; Granularity
 	db 0 ; Third base
 gdt_data: ; Data section
-	dw 0xFFFF ; Limit
+	dw GDT_MAX_LIMIT ; Limit
 	dw 0 ; First base
 	db 0 ; Second base
-	db 0x92 ; Configuration
-	db 0xCF ; Granularity
+	db (GDT_PRESENT | GDT_DESCRIPTOR | GDT_READWRITE) ; Configuration
+	db GDT_GRANULARITY ; Granularity
 	db 0 ; Third base
 gdt_end:
 gdt_desc:
