@@ -3,23 +3,31 @@
 ; MIT License, Copyright (c) 2020 Marvin Borner
 
 ; Definitions
+
 %define LOCATION 0x7c00 ; Bootloader location
 
+; Interrupts
+%define VIDEO_INT 0x10 ; Video BIOS Interrupt
+%define DISK_INT 0x13 ; Disk BIOS Interrupt
+%define MISC_INT 0x15 ; Miscellaneous services BIOS Interrupt
+
+; Characters
 %define NEWLINE 0x0A ; Newline character (\n)
 %define RETURN 0x0D ; Return character (\r)
 %define NULL 0x00 ; NULL character (\0)
 
-%define VIDEO_INT 0x10 ; Video BIOS Interrupt
+; Video commands
 %define VIDEO_CLEAR 0x03 ; Clear screen command
 %define VIDEO_OUT 0x0e ; Teletype output command
 
-%define DISK_INT 0x13 ; Disk BIOS Interrupt
+; Disk commands
 %define DISK_EXT_CHECK 0x41 ; Disk extension check command
 %define DISK_EXT_CHECK_SIG1 0x55aa ; First extension check signature
 %define DISK_EXT_CHECK_SIG2 0xaa55 ; Second extension check signature
 %define DISK_ZERO 0x80 ; First disk - TODO: Disk detection
 %define DISK_READ 0x42 ; Disk extended read command
 
+; EXT2 constants
 %define EXT2_SB_SIZE 0x400 ; Superblock size
 %define EXT2_SIG_OFFSET 0x38 ; Signature offset in superblock
 %define EXT2_TABLE_OFFSET 0x08 ; Inode table offset after superblock
@@ -31,12 +39,21 @@
 %define EXT2_POINTER_OFFSET 0x28 ; Inode offset of first data pointer
 %define EXT2_SIG 0xef53 ; Signature
 
-%define STACK_POINTER 0x00900000 ; The initial stack pointer in kernel mode
-%define KERNEL_POSITION 0x00050000 ; Loaded kernel position in protected mode (* 0x10)
+; MMAP constants
+%define MMAP_START 0x400 ; Starts at 0x400, ends at 0x500
+%define MMAP_SIZE 0x18 ; Struct size
+%define MMAP_SIG 0x0534d4150 ; Signature ("SMAP")
+%define MMAP_BIOS_MAGIC 0xe820 ; BIOS int 15h code to get address map
 
+; A20 constants
 %define A20_GATE 0x92 ; Fast A20 gate
 %define A20_ENABLED 0b10 ; Bit 1 defines whether A20 is enabled
 %define A20_EXCLUDE_BIT 0xfe ; Bit 0 may be write-only, causing a crash
+
+; Kernel constants
+%define STACK_POINTER 0x00900000 ; The initial stack pointer in kernel mode
+%define KERNEL_POSITION 0x00050000 ; Loaded kernel position in protected mode (* 0x10)
+
 ; ENOUGH, let's go!
 
 bits 16
@@ -174,6 +191,14 @@ stage_two:
 	mov [dest], bx
 	call kernel_load
 
+	; Load mmap
+	xor eax, eax
+	mov es, eax
+	mov edi, MMAP_START
+	push edi
+	call memory_map
+	push edi
+
 	jmp protected_mode_enter
 
 kernel_load:
@@ -192,6 +217,49 @@ kernel_load:
 	sub cx, 0x2 ; Read 2 blocks
 	jnz kernel_load
 	ret
+
+; Tries to load a memory map using BIOS INT 15h and e820h
+memory_map:
+	xor ebx, ebx ; Must be 0 by spec
+	mov edx, MMAP_SIG ; "SMAP" in hex
+	mov eax, MMAP_BIOS_MAGIC ; Specify MMAP information
+	mov [es:di + 20], dword 1 ; Force a valid ACPI entry
+	mov ecx, MMAP_SIZE ; Request struct size
+	int MISC_INT ; BIOS interrupt
+	jc short .fail ; Carry means "unsupported function"
+	mov edx, MMAP_SIG ; Mov for verification
+	cmp eax, edx ; Verification: Must be "SMAP"
+	jne short .fail ; Result wasn't correct signature
+	test ebx, ebx ; Is size >1
+	je short .fail ; Nope, worthless :(
+	jmp short .loop
+.next:
+	mov eax, MMAP_BIOS_MAGIC ; Re-move because 0x15 clears or sth
+	mov [es:di + 20], dword 1 ; Force a valid ACPI entry
+	mov ecx, MMAP_SIZE ; Request struct size
+	int MISC_INT ; BIOS interrupt
+	jc short .done ; Carry means "end of list already reached"
+	mov edx, MMAP_SIG ; Repair register (safety first!)
+.loop:
+	jcxz .skip ; Skip 0-length entries
+	cmp cl, 20 ; Is the response correct ACPI spec (24 byte)?
+	jbe short .notext ; Nope? Jump!
+	test byte [es:di + 20], 1 ; Is the "ignore this data" bit clear?
+	je short .skip ; Yep? Skip!
+.notext:
+	mov ecx, [es:di + 8] ; Get lower 32 bits of region
+	or ecx, [es:di + 12] ; "Or" with upper 32 bits to test for zero
+	jz .skip ; It's zero, skip!
+	add di, MMAP_SIZE ; Else, next!
+.skip:
+	test ebx, ebx ; If ebx is 0, list is complete
+	jne short .next ; Else, next!
+.done:
+	clc ; Clear carry
+	ret ; Finished!
+.fail:
+	stc ; Set "unsupported function"
+	ret ; Finished!
 
 protected_mode_enter:
 	cli ; Turn off interrupts
@@ -226,6 +294,11 @@ protected_mode_enter:
 
 bits 32 ; Woah, so big!
 protected_mode:
+	pop ecx ; End of memory map
+	mov [mem_info + 4], ecx ; Ending boundary of struct
+	pop ecx ; Start of memory map
+	mov [mem_info], ecx ; Starting boundary of struct
+
 	mov ax, 10h ; Set data segement indentifier
 	mov ds, ax
 	mov es, ax
@@ -235,30 +308,39 @@ protected_mode:
 
 	mov esp, STACK_POINTER ; Move stack pointer
 
+	mov eax, mem_info ; Pass meminfo to kernel
+	push eax ; Push as first kernel parameter
+
 	mov edx, KERNEL_POSITION
 	lea eax, [edx]
 	call eax
 
+; Memory map
+align 16
+mem_info:
+	dd 0 ; Start address
+	dd 0 ; End address
+
 ; GDT
 align 32
-gdt:
-gdt_null:
+gdt: ; GDTs start
+gdt_null: ; Must be null
 	dd 0
 	dd 0
-gdt_code:
-	dw 0xFFFF
-	dw 0
-	db 0
-	db 0x9A
-	db 0xCF
-	db 0
-gdt_data:
-	dw 0xFFFF
-	dw 0
-	db 0
-	db 0x92
-	db 0xCF
-	db 0
+gdt_code: ; Code section
+	dw 0xFFFF ; Limit
+	dw 0 ; First base
+	db 0 ; Second base
+	db 0x9A ; Configuration
+	db 0xCF ; Granularity
+	db 0 ; Third base
+gdt_data: ; Data section
+	dw 0xFFFF ; Limit
+	dw 0 ; First base
+	db 0 ; Second base
+	db 0x92 ; Configuration
+	db 0xCF ; Granularity
+	db 0 ; Third base
 gdt_end:
 gdt_desc:
 	dw gdt_end - gdt - 1
