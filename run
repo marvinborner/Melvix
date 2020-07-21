@@ -17,33 +17,6 @@ qemu_with_flags() {
 	fi
 }
 
-make_genext2fs() {
-	if [ "$(genext2fs -V | awk '{print $2}')" = "1.4.2" ]; then
-		echo "genext2fs is already the newest version"
-	else
-		if [ "$no_ask" != "-y" ]; then
-			printf "Melvix requires the newest genext2fs version, would you like to install it? [y/n] "
-			read -r answer
-		fi
-		if [ "$answer" != "${answer#[Yy]}" ] || [ "$no_ask" = "-y" ]; then
-			echo "Building genext2fs..."
-			git clone --quiet https://github.com/bestouff/genext2fs.git >/dev/null
-			cd genext2fs >/dev/null
-			git checkout --quiet 000e369 >/dev/null
-			mv README.md README >/dev/null
-			touch ChangeLog >/dev/null
-			bash autogen.sh >/dev/null
-			./configure >/dev/null
-			sudo make install >/dev/null
-			cd .. >/dev/null
-			rm -rf genext2fs >/dev/null
-			echo "Success!"
-		else
-			echo "This probably won't compile..."
-		fi
-	fi
-}
-
 make_cross() {
 	if [ ! -d "./cross/" ]; then
 		# Create directory
@@ -89,7 +62,7 @@ make_cross() {
 }
 
 make_build() {
-	rm -rf disk/bin/ disk/
+	rm -rf disk/bin/ disk/ build/disk.img
 	mkdir -p build/ disk/bin/ disk/
 
 	echo "Building..."
@@ -106,9 +79,10 @@ make_build() {
 	cp build/melvix.bin disk/
 
 	# Create disk image
-	make_genext2fs
-	/usr/local/bin/genext2fs -B 1024 -d disk/ -U -N 1024 -b 65536 build/disk.img
+	dd if=/dev/zero of=build/disk.img bs=1k count=16k
+	sudo mke2fs build/disk.img
 	dd if=disk/boot.bin of=build/disk.img conv=notrunc
+	./ext2util/ext2util -x build/disk.img -wf disk/melvix.bin -i 5
 
 	printf "Build finshed successfully!\n\n"
 }
@@ -118,9 +92,7 @@ make_test() {
 }
 
 make_debug() {
-	qemu_with_flags -display none -hdb build/disk.img -s -S &
-	gdb "$(pwd)"/build/melvix.bin -ex 'target remote localhost:1234'
-	killall qemu-system-i386
+	qemu_with_flags -hdb build/disk.img -s -S
 }
 
 make_disasm() {

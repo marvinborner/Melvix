@@ -24,18 +24,15 @@
 %define EXT2_SIG_OFFSET 0x38 ; Signature offset in superblock
 %define EXT2_TABLE_OFFSET 0x08 ; Inode table offset after superblock
 %define EXT2_INODE_TABLE_LOC 0x1000 ; New inode table location in memory
-%define EXT2_ROOT_INODE 0x02 ; Root directory inode
+%define EXT2_KERNEL_INODE 0x05 ; Kernel inode
 %define EXT2_INODE_SIZE 0x80 ; Single inode size
 %define EXT2_GET_ADDRESS(inode) (EXT2_INODE_TABLE_LOC + (inode - 1) * EXT2_INODE_SIZE)
-%define EXT2_TYPE_OFFSET 0x00 ; Inode offset of filetype and rights
 %define EXT2_COUNT_OFFSET 0x1c ; Inode offset of number of data blocks
 %define EXT2_POINTER_OFFSET 0x28 ; Inode offset of first data pointer
-%define EXT2_INODE_OFFSET 0x00 ; Dirent offset of inode number
-%define EXT2_ENTRY_LENGTH_OFFSET 0x04 ; Dirent offset of entry length
-%define EXT2_FILENAME_OFFSET 0x08 ; Dirent offset of file name
 %define EXT2_SIG 0xef53 ; Signature
-%define EXT2_DIR 0x4000 ; Directory indicator
-%define EXT2_REG 0x8000 ; Regular file indicator
+
+%define STACK_POINTER 0x00900000 ; The initial stack pointer in kernel mode
+%define KERNEL_POSITION 0x00050000 ; Loaded kernel position in protected mode (* 0x10)
 
 %define A20_GATE 0x92 ; Fast A20 gate
 %define A20_ENABLED 0b10 ; Bit 1 defines whether A20 is enabled
@@ -119,13 +116,8 @@ lba_error_msg db "LBA error!", NEWLINE, RETURN, NULL
 stage_two_msg db "Stage2 loaded", NEWLINE, RETURN, NULL
 disk_success_msg db "Disk is valid", NEWLINE, RETURN, NULL
 inode_table_msg db "Found inode table", NEWLINE, RETURN, NULL
-kernel_found_msg db "Found kernel file", NEWLINE, RETURN, NULL
 protected_msg db "Jumping to protected mode", NEWLINE, RETURN, NULL
 drive db 0
-
-; Filenames
-kernel_file_name db "melvix.bin", NULL
-kernel_file_name_len equ $ - kernel_file_name
 
 ; Data
 packet:
@@ -144,9 +136,9 @@ lba:
 times 510 - ($ - $$) db 0
 dw 0xAA55
 
-; This is the second stage. It tries to load '/melvix.bin' into memory.
-; To do this, it first checks the integrity of the ext2 fs. Then it has to loop
-; through every file in the root until the 'melvix.bin' file is found.
+; This is the second stage. It tries to load the kernel (inode 5) into memory.
+; To do this, it first checks the integrity of the ext2 fs. Then it has to find
+; the address of the fifth inode and load its contents into memory.
 ; After this is finished, the stage can jump into the protected mode, enable the
 ; A20 line and finally jump to the kernel! ez
 stage_two:
@@ -172,55 +164,11 @@ stage_two:
 	mov si, inode_table_msg
 	call print
 
-	; Load root dir
-	mov bx, EXT2_GET_ADDRESS(EXT2_ROOT_INODE) ; First block
-	mov ax, [bx + EXT2_TYPE_OFFSET] ; Get filetype
-	and ax, EXT2_DIR ; AND with directory
-	cmp ax, EXT2_DIR ; Check if it's a directory
-	jne disk_error ; Not a directory!
-	;mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of sectors for inode - TODO later!
-	mov ax, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
-	shl ax, 1 ; Multiply ax by 2
-	mov [lba], ax
-	mov bx, 0x5000
-	mov [dest], bx
-	call disk_read
-
-	; Find kernel
-	; TODO: Fix endless loop when not found
-	.kernel_find_loop:
-	lea si, [bx + EXT2_FILENAME_OFFSET] ; First comparison string
-	mov di, kernel_file_name ; Second comparison string
-	mov cx, kernel_file_name_len ; String length
-	rep cmpsb ; Compare strings
-	je .found_kernel ; Found correct dirent!
-	add bx, EXT2_ENTRY_LENGTH_OFFSET ; Add dirent struct size
-	jmp .kernel_find_loop ; Jump to next dirent!
-
-	.found_kernel:
-	mov si, kernel_found_msg
-	call print ; Show happy message!
-
 	; Load kernel
-	mov ax, [bx + EXT2_INODE_OFFSET] ; Get inode number
-	dec ax ; Decrement inode: (inode - 1)
-	mov cx, EXT2_INODE_SIZE ; Prepare for mul
-	mul cx ; Multiply inode number (* EXT2_INODE_SIZE)
-	mov bx, ax ; Move for effective address calculations
-	mov bx, [bx + EXT2_INODE_TABLE_LOC] ; bx is at the start of the inode
-	mov ax, [bx + EXT2_TYPE_OFFSET] ; Get filetype
-	and ax, EXT2_REG ; AND with regular file
-	cmp ax, EXT2_REG ; Check if it's a regular file
-	jne disk_error ; Not a regular file!
-	; Read first block
-	mov ax, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
-	shl ax, 1 ; Multiply by 2
-	mov [lba], ax
-	mov bx, 0x5000
-	mov [dest], bx
-	call disk_read ; TODO: TEST!
-
-	mov bx, 0x5000
+	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
+	mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of sectors for inode
+	lea di, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
+	mov bx, 0x5000 ; Load to this address
 	mov [dest + 2], bx
 	mov bx, 0 ; Inode location = 0xF0000
 	mov [dest], bx
@@ -239,14 +187,11 @@ kernel_load:
 
 	call disk_read
 
-	add bx, 1024 ; 1kb increase
+	add bx, 0x400 ; 1kb increase
 	add di, 0x4 ; Move to next block pointer
-	sub cx, 2 ; Read 2 blocks
+	sub cx, 0x2 ; Read 2 blocks
 	jnz kernel_load
 	ret
-
-	nop
-	hlt
 
 protected_mode_enter:
 	cli ; Turn off interrupts
@@ -279,10 +224,8 @@ protected_mode_enter:
 
 	jmp 08h:protected_mode ; JUMP!
 
-bits 32 ; Woah!
+bits 32 ; Woah, so big!
 protected_mode:
-	xor eax, eax
-
 	mov ax, 10h ; Set data segement indentifier
 	mov ds, ax
 	mov es, ax
@@ -290,11 +233,10 @@ protected_mode:
 	mov gs, ax
 	mov ss, ax ; Stack segment
 
-	mov esp, 0x00900000 ; Move stack pointer
+	mov esp, STACK_POINTER ; Move stack pointer
 
-	mov edx, 0x00050000
+	mov edx, KERNEL_POSITION
 	lea eax, [edx]
-	jmp $
 	call eax
 
 ; GDT
