@@ -51,7 +51,7 @@
 %define A20_EXCLUDE_BIT 0xfe ; Bit 0 may be write-only, causing a crash
 
 ; GDT constants (bitmap)
-%define GDT_MAX_LIMIT 0xffff
+%define GDT_MAX_LIMIT 0xffff ; I just use the max limit lel
 %define GDT_PRESENT 0b10000000 ; Is present
 %define GDT_DESCRIPTOR 0b00010000 ; Descriptor type, set for code/data
 %define GDT_EXECUTABLE 0b00001000 ; Can be executed

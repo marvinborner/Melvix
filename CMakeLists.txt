@@ -20,8 +20,8 @@ set(CMAKE_ASM_LINKER_PREFERENCE ${CMAKE_LINKER})
 set(CMAKE_C_LINKER_PREFERENCE ${CMAKE_LINKER})
 
 # Compiler and linker flags
-set(CMAKE_C_FLAGS "-Wall -Wextra -nostdlib -nostdinc -ffreestanding -std=gnu99 -pedantic-errors -c -I${CMAKE_CURRENT_SOURCE_DIR}/src/lib/")
-set(CMAKE_EXE_LINKER_FLAGS "-ffreestanding -O2 -nostdlib -nostdinc")
+set(CMAKE_C_FLAGS "-Wall -Wextra -nostdlib -nostdinc -ffreestanding -std=c99 -pedantic-errors -c -I${CMAKE_CURRENT_SOURCE_DIR}/src/lib/")
+set(CMAKE_EXE_LINKER_FLAGS "-ffreestanding -O2 -nostdlib -nostdinc -emain")
 set(CMAKE_ASM_COMPILE_OBJECT "<CMAKE_ASM_COMPILER> <SOURCE> -o <OBJECT> -f bin -O0")
 set(CMAKE_C_LINK_EXECUTABLE "<CMAKE_LINKER> ${CMAKE_EXE_LINKER_FLAGS} <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")
 set(CMAKE_ASM_LINK_EXECUTABLE "<CMAKE_LINKER> ${CMAKE_EXE_LINKER_FLAGS} <OBJECTS> -o <TARGET> <LINK_LIBRARIES>")

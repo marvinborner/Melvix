@@ -1,4 +1,4 @@
-int main(int argc, char *argv[])
+int main()
 {
 	int a = 42 >> 6;
 	return a;

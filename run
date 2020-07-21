@@ -80,9 +80,9 @@ make_build() {
 
 	# Create disk image
 	dd if=/dev/zero of=build/disk.img bs=1k count=16k
-	sudo mke2fs build/disk.img
+	sudo mke2fs build/disk.img >/dev/null
 	dd if=disk/boot.bin of=build/disk.img conv=notrunc
-	./ext2util/ext2util -x build/disk.img -wf disk/melvix.bin -i 5
+	./ext2util/ext2util -x build/disk.img -wf disk/melvix.bin -i 5 >/dev/null
 
 	printf "Build finshed successfully!\n\n"
 }
@@ -100,7 +100,7 @@ make_disasm() {
 }
 
 make_sync() {
-	rm tags compile_commands.json
+	#rm tags compile_commands.json
 	ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
 	mkdir -p build
 	cd build
