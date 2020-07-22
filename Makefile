@@ -1,10 +1,16 @@
+# MIT License, Copyright (c) 2020 Marvin Borner
+
 COBJS = src/main.o \
-		src/drivers/vesa.o
+		src/drivers/vesa.o \
+		src/drivers/cpu.o \
+		src/drivers/serial.o \
+		src/lib/string.o
 CC = cross/opt/bin/i686-elf-gcc
 LD = cross/opt/bin/i686-elf-ld
 AS = nasm
 
-CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -std=c99 -pedantic-errors -Isrc/lib/ -Isrc/inc/ -c
+# TODO: Use lib as external library
+CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -std=c99 -pedantic-errors -Isrc/lib/inc/ -Isrc/inc/ -c
 
 all: compile clean
 

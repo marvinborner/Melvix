@@ -1,3 +1,5 @@
+// MIT License, Copyright (c) 2020 Marvin Borner
+
 #ifndef VBE_H
 #define VBE_H
 
@@ -39,11 +41,6 @@ struct vbe {
 	u32 off_screen_mem_off;
 	u16 off_screen_mem_size;
 	u8 reserved1[206];
-};
-
-struct vid_info {
-	u32 mode;
-	struct vbe *info;
 };
 
 struct vbe *vbe;

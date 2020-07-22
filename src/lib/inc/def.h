@@ -1,3 +1,5 @@
+// MIT License, Copyright (c) 2020 Marvin Borner
+
 #ifndef DEF_H
 #define DEF_H
 

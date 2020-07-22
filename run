@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+# MIT License, Copyright (c) 2020 Marvin Borner
 
 set -e
 
@@ -9,145 +10,145 @@ no_ask="${2}"
 network="rtl8139"
 
 qemu_with_flags() {
-	if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
-		# TODO: Find out why kvm install is incredibly slow
-		SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial mon:stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
-	else
-		SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
-	fi
+    if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
+        # TODO: Find out why kvm install is incredibly slow
+        SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial mon:stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+    else
+        SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+    fi
 }
 
 make_cross() {
-	if [ ! -d "./cross/" ]; then
-		# Create directory
-		mkdir -p cross
-		cd cross
-		DIR=$(pwd)
+    if [ ! -d "./cross/" ]; then
+        # Create directory
+        mkdir -p cross
+        cd cross
+        DIR=$(pwd)
 
-		# Get sources
-		mkdir "${DIR}/src" && cd "${DIR}/src"
-		echo "Downloading..."
-		curl -sSL "https://ftp.gnu.org/gnu/binutils/binutils-2.34.tar.xz" | tar xJ
-		curl -sSL "https://ftp.gnu.org/gnu/gcc/gcc-9.3.0/gcc-9.3.0.tar.xz" | tar xJ
+        # Get sources
+        mkdir "${DIR}/src" && cd "${DIR}/src"
+        echo "Downloading..."
+        curl -sSL "https://ftp.gnu.org/gnu/binutils/binutils-2.34.tar.xz" | tar xJ
+        curl -sSL "https://ftp.gnu.org/gnu/gcc/gcc-9.3.0/gcc-9.3.0.tar.xz" | tar xJ
 
-		# Prepare compiling
-		mkdir -p "${DIR}/opt/bin"
-		export PREFIX="${DIR}/opt"
-		export TARGET=i686-elf
-		export PATH="$PREFIX/bin:$PATH"
+        # Prepare compiling
+        mkdir -p "${DIR}/opt/bin"
+        export PREFIX="${DIR}/opt"
+        export TARGET=i686-elf
+        export PATH="$PREFIX/bin:$PATH"
 
-		# Compile binutils
-		mkdir "${DIR}/src/build-binutils" && cd "${DIR}/src/build-binutils"
-		../binutils-2.34/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
-		make
-		make install
+        # Compile binutils
+        mkdir "${DIR}/src/build-binutils" && cd "${DIR}/src/build-binutils"
+        ../binutils-2.34/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
+        make
+        make install
 
-		# Compile GCC
-		mkdir "${DIR}/src/build-gcc" && cd "${DIR}/src/build-gcc"
-		../gcc-9.3.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
-		make all-gcc
-		make all-target-libgcc
-		make install-gcc
-		make install-target-libgcc
+        # Compile GCC
+        mkdir "${DIR}/src/build-gcc" && cd "${DIR}/src/build-gcc"
+        ../gcc-9.3.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
+        make all-gcc
+        make all-target-libgcc
+        make install-gcc
+        make install-target-libgcc
 
-		cd "${DIR}/.."
-	else
-		cd cross
-		DIR=$(pwd)
-		export PREFIX="${DIR}/opt"
-		export TARGET=i686-elf
-		export PATH="$PREFIX/bin:$PATH"
-		cd ..
-	fi
+        cd "${DIR}/.."
+    else
+        cd cross
+        DIR=$(pwd)
+        export PREFIX="${DIR}/opt"
+        export TARGET=i686-elf
+        export PATH="$PREFIX/bin:$PATH"
+        cd ..
+    fi
 }
 
 make_build() {
-	mkdir -p build/
-	rm -rf build/*
+    mkdir -p build/
+    rm -rf build/*
 
-	echo "Building..."
-	make
+    echo "Building..."
+    make
 
-	# Create disk image
-	dd if=/dev/zero of=build/disk.img bs=1k count=16k
-	sudo mke2fs build/disk.img >/dev/null
-	dd if=build/boot.bin of=build/disk.img conv=notrunc
-	./ext2util/ext2util -x build/disk.img -wf build/kernel.bin -i 5 >/dev/null
+    # Create disk image
+    dd if=/dev/zero of=build/disk.img bs=1k count=16k
+    sudo mke2fs build/disk.img >/dev/null
+    dd if=build/boot.bin of=build/disk.img conv=notrunc
+    ./ext2util/ext2util -x build/disk.img -wf build/kernel.bin -i 5 >/dev/null
 
-	printf "Build finshed successfully!\n\n"
+    printf "Build finshed successfully!\n\n"
 }
 
 make_test() {
-	qemu_with_flags -hdb build/disk.img
+    qemu_with_flags -hdb build/disk.img
 }
 
 make_debug() {
-	qemu_with_flags -hdb build/disk.img -s -S
+    qemu_with_flags -hdb build/disk.img -s -S
 }
 
 make_disasm() {
-	objdump -drwC -Mintel build/melvix.bin --visualize-jumps=color | less -R
-	#hexdump -C build/melvix.bin | less -R
+    objdump -drwC -Mintel build/melvix.bin --visualize-jumps=color | less -R
+    #hexdump -C build/melvix.bin | less -R
 }
 
 make_sync() {
-	ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
+    ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
 
-	make --always-make --dry-run |
-		grep -wE 'gcc' |
-		grep -w '\-c' |
-		jq -nR '[inputs|{directory:"'"$(pwd)"'", command:., file: match(" [^ ]+$").string[1:]}]' \
-			>compile_commands.json
+    make --always-make --dry-run |
+        grep -wE 'gcc' |
+        grep -w '\-c' |
+        jq -nR '[inputs|{directory:"'"$(pwd)"'", command:., file: match(" [^ ]+$").string[1:]}]' \
+            >compile_commands.json
 }
 
 make_tidy() {
-	shfmt -w ./run
-	find ./src -type f -regex '.*\.\(c\|h\)' -exec clang-format -i {} \;
-	# This may or may not work
-	find ./src -type f -print0 | xargs -0 -l -i sh -c '[ -n "$(tail -c1 {})" ] && printf "\n" >> {}'
+    shfmt -w ./run
+    find ./src -type f -regex '.*\.\(c\|h\)' -exec clang-format -i {} \;
+    # This may or may not work
+    find ./src -type f -print0 | xargs -0 -l -i sh -c '[ -n "$(tail -c1 {})" ] && printf "\n" >> {}'
 }
 
 make_clean() {
-	rm -rf ./build/
+    rm -rf ./build/
 }
 
 if [ "${mode}" = "cross" ]; then
-	make_cross
+    make_cross
 elif [ "${mode}" = "build" ]; then
-	make_cross
-	make_clean
-	make_build
+    make_cross
+    make_clean
+    make_build
 elif [ "${mode}" = "clean" ]; then
-	make_clean
+    make_clean
 elif [ "${mode}" = "test" ]; then
-	make_cross
-	make_clean
-	make_build
-	make_sync &
-	make_test
+    make_cross
+    make_clean
+    make_build
+    make_sync &
+    make_test
 elif [ "${mode}" = "debug" ]; then
-	make_cross
-	make_build
-	make_sync &
-	make_debug
+    make_cross
+    make_build
+    make_sync &
+    make_debug
 elif [ "${mode}" = "again" ]; then
-	make_test
+    make_test
 elif [ "${mode}" = "disasm" ]; then
-	make_cross
-	make_build
-	make_disasm
+    make_cross
+    make_build
+    make_disasm
 elif [ "${mode}" = "sync" ]; then
-	make_sync
+    make_sync
 elif [ "${mode}" = "tidy" ]; then
-	make_tidy
+    make_tidy
 elif [ "${mode}" = "" ]; then # TODO: Prevent code duplication in build script via functions?
-	make_cross
-	make_clean
-	make_build
-	make_sync &
-	make_test
+    make_cross
+    make_clean
+    make_build
+    make_sync &
+    make_test
 else
-	echo "Please use the following syntax:"
-	echo "./run {cross | build | clean | test | disasm | sync | tidy} [-y]"
-	echo "The default option is 'test'"
+    echo "Please use the following syntax:"
+    echo "./run {cross | build | clean | test | disasm | sync | tidy} [-y]"
+    echo "The default option is 'test'"
 fi
