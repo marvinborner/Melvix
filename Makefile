@@ -4,13 +4,14 @@ COBJS = src/main.o \
 		src/drivers/vesa.o \
 		src/drivers/cpu.o \
 		src/drivers/serial.o \
+		src/drivers/interrupts.o \
 		src/lib/string.o
 CC = cross/opt/bin/i686-elf-gcc
 LD = cross/opt/bin/i686-elf-ld
 AS = nasm
 
 # TODO: Use lib as external library
-CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -std=c99 -pedantic-errors -Isrc/lib/inc/ -Isrc/inc/ -c
+CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -mgeneral-regs-only -mno-80387 -std=c99 -pedantic-errors -Isrc/lib/inc/ -Isrc/inc/ -c
 
 all: compile clean
 
