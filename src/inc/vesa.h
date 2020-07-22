@@ -45,6 +45,6 @@ struct vbe {
 
 struct vbe *vbe;
 
-void vesa_clear(const u32 color[3]);
+void vesa_fill(const u8 color[3]);
 
 #endif
