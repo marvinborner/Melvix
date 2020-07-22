@@ -7,9 +7,10 @@
 %define LOCATION 0x7c00 ; Bootloader location
 
 ; General configurations
-%define VIDEO_WIDTH 1024
-%define VIDEO_HEIGHT 768
-%define VIDEO_BPP 3
+; TODO: Find out why 2560x1600 doesn't work
+%define VIDEO_WIDTH 1920
+%define VIDEO_HEIGHT 1200
+%define VIDEO_BPP 4
 
 ; Interrupts
 %define VIDEO_INT 0x10 ; Video BIOS Interrupt
