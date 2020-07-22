@@ -5,6 +5,7 @@ COBJS = src/main.o \
 		src/drivers/cpu.o \
 		src/drivers/serial.o \
 		src/drivers/interrupts.o \
+		src/drivers/keyboard.o \
 		src/lib/string.o
 CC = cross/opt/bin/i686-elf-gcc
 LD = cross/opt/bin/i686-elf-ld

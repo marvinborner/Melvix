@@ -28,7 +28,7 @@ void idt_install()
 	idt_ptr.limit = (sizeof(struct idt_entry) * 256) - 1;
 	idt_ptr.base = &idt;
 
-	// Clear IDT by setting memory cells to 0
+	// Clear IDT by setting memory cells to 0 // TODO
 	//memset(&idt, 0, sizeof(struct idt_entry) * 256);
 
 	__asm__("lidt %0" : : "m"(idt_ptr));
@@ -70,6 +70,7 @@ void irq_remap()
 // Handle IRQ ISRs
 __attribute__((interrupt)) void irq_handler(struct regs *r)
 {
+	__asm__("cli");
 	void (*handler)(struct regs * r);
 
 	// Execute custom handler if exists
@@ -83,6 +84,7 @@ __attribute__((interrupt)) void irq_handler(struct regs *r)
 
 	// Send EOI to master PIC
 	outb(0x20, 0x20);
+	__asm__("sti");
 }
 
 // Map ISRs to the correct entries in the IDT
@@ -111,18 +113,20 @@ void isr_uninstall_handler(int isr)
 
 __attribute__((interrupt)) void isr_handler(struct regs *r)
 {
+	__asm__("cli");
 	void (*handler)(struct regs * r);
 
 	// Execute fault handler if exists
 	handler = isr_routines[r->int_no];
 	if (handler) {
 		handler(r);
-	} else {
-		serial_print("Got ISR!\n");
+	} else if (r->int_no <= 32) {
+		serial_print("Exception, halting!\n");
 		__asm__("cli");
 		while (1) {
 		};
 	}
+	__asm__("sti");
 }
 
 void isr_install()
