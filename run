@@ -94,9 +94,9 @@ make_sync() {
 	ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
 
 	make --always-make --dry-run |
-		grep -wE 'gcc|g++' |
+		grep -wE 'gcc' |
 		grep -w '\-c' |
-		jq -nR '[inputs|{directory:".", command:., file: match(" [^ ]+$").string[1:]}]' \
+		jq -nR '[inputs|{directory:"'"$(pwd)"'", command:., file: match(" [^ ]+$").string[1:]}]' \
 			>compile_commands.json
 }
 
