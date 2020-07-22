@@ -1,11 +1,14 @@
 #include <def.h>
+#include <vesa.h>
 
-// This must kinda be at the top
-int main(u32 *mem_info, u32 *vid_info)
+void main(u32 *mem_info, struct vid_info *vid_info)
 {
 	mem_info++; // TODO: Use the mmap!
-	vid_info++; // TODO: Use the VBE struct!
+	vbe = vid_info->info;
+
+	u32 terminal_background[3] = { 0x1d, 0x1f, 0x24 };
+	vesa_clear(terminal_background);
+
 	while (1) {
 	};
-	return 0;
 }
