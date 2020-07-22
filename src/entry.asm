@@ -6,6 +6,11 @@
 
 %define LOCATION 0x7c00 ; Bootloader location
 
+; General configurations
+%define VIDEO_WIDTH 1024
+%define VIDEO_HEIGHT 768
+%define VIDEO_BPP 3
+
 ; Interrupts
 %define VIDEO_INT 0x10 ; Video BIOS Interrupt
 %define DISK_INT 0x13 ; Disk BIOS Interrupt
@@ -16,7 +21,7 @@
 %define RETURN 0x0D ; Return character (\r)
 %define NULL 0x00 ; NULL character (\0)
 
-; Video commands
+; Video commands (VGA)
 %define VIDEO_CLEAR 0x03 ; Clear screen command
 %define VIDEO_OUT 0x0e ; Teletype output command
 
@@ -40,10 +45,27 @@
 %define EXT2_SIG 0xef53 ; Signature
 
 ; MMAP constants
-%define MMAP_START 0x400 ; Starts at 0x400, ends at 0x500
+%define MMAP_START 0x400 ; Struct starts at 0x400, ends at 0x500
 %define MMAP_SIZE 0x18 ; Struct size
 %define MMAP_SIG 0x0534d4150 ; Signature ("SMAP")
 %define MMAP_BIOS_MAGIC 0xe820 ; BIOS int 15h code to get address map
+
+; Video constants (VESA)
+%define VESA_START 0x2000 ; Struct starts at 0x2000
+%define VESA_END 0x3000 ; Struct ends at 0x3000
+%define VESA_GET_MODES 0x4f00 ; Get video modes (via 10h)
+%define VESA_GET_INFO 0x4f01 ; Get video mode info (via 10h)
+%define VESA_SET_MODE 0x4f02 ; Set video mode (via 10h)
+%define VESA_SUCCESS_SIG 0x004f ; Returns if VBE call succeeded
+%define VESA_MODE_OFFSET 0xe ; Offset to mode pointer
+%define VESA_MODE_SEGMENT 0x10 ; Mode pointer segment
+%define VESA_LIST_END 0xffff ; End of mode list
+%define VESA_PITCH_OFFSET 0x10 ; Pitch offset in mode info
+%define VESA_WIDTH_OFFSET 0x12 ; Width offset in mode info
+%define VESA_HEIGHT_OFFSET 0x14 ; Height offset in mode info
+%define VESA_BPP_OFFSET 0x19 ; Bytes Per Pixel (BPP) offset in mode info
+%define VESA_FRAMEBUFFER_OFFSET 0x2a ; Framebuffer offset in mode info
+%define VESA_LFB_FLAG 0x4000 ; Enable LFB flag
 
 ; A20 constants
 %define A20_GATE 0x92 ; Fast A20 gate
@@ -56,7 +78,8 @@
 %define GDT_DESCRIPTOR 0b00010000 ; Descriptor type, set for code/data
 %define GDT_EXECUTABLE 0b00001000 ; Can be executed
 %define GDT_READWRITE 0b00000010 ; Read/write access for code/data
-%define GDT_GRANULARITY (0xc0 | 0x0f) ; Use paged 32 granularity
+%define GDT_GRANULARITY (0xc0 | 0x0f) ; Use paged 32 bit granularity
+%define GDT_DATA_OFFSET 0x10 ; Offset to GDT data segment
 
 ; Kernel constants
 %define STACK_POINTER 0x00900000 ; The initial stack pointer in kernel mode
@@ -134,6 +157,88 @@ lba_error:
 	call print
 	jmp $
 
+; Now put some data and routines just before the end of the boot sector because
+; we've still got some space left :)
+
+; Video map routine
+video_map:
+	xor eax, eax
+	mov es, ax
+	mov bx, VESA_START ; Set load address
+	mov di, bx
+	mov ax, VESA_GET_MODES ; Get video modes
+	int VIDEO_INT ; Ask BIOS for data!
+
+	cmp ax, VESA_SUCCESS_SIG ; Check VBE support in response
+	jne .error ; Not supported :(
+
+	mov si, [bx + VESA_MODE_OFFSET] ; Mode pointer offset
+	mov ax, [bx + VESA_MODE_SEGMENT] ; Mode pointer segment
+	mov es, ax
+
+	mov di, VESA_END ; End of VBE struct
+.loop:
+	mov bx, [es:si] ; Load bx with video mode
+	cmp bx, VESA_LIST_END ; Is this the end?
+	jae .done ; Yes, there aren't any modes left
+
+	add si, 2
+	mov [.mode], bx
+
+	mov ax, VESA_GET_INFO ; Get mode information
+	mov cx, [.mode] ; Save in here
+	int VIDEO_INT ; BIOS interrupt!
+	cmp ax, VESA_SUCCESS_SIG ; Check if call succeeded
+	jne .error ; Nope, jump to error!
+
+	xor ax, ax
+	mov ax, [es:di + VESA_FRAMEBUFFER_OFFSET] ; Save framebuffer
+	mov [.framebuffer], ax ; Move fb address to struct
+
+	mov ax, [es:di + VESA_PITCH_OFFSET] ; Save pitch
+	mov bx, [es:di + VESA_WIDTH_OFFSET] ; Save width
+	mov cx, [es:di + VESA_HEIGHT_OFFSET] ; Save height
+	mov dx, [es:di + VESA_BPP_OFFSET] ; Save BPP
+
+	mov [.bpp], dx ; Move bpp to struct (bigger bpp is always desired)
+	add di, 0x100
+
+	cmp ax, [.pitch] ; Compare with desired pitch
+	jne .loop ; Not equal, continue search!
+	cmp bx, [.width] ; Compare with desired height
+	jne .loop ; Not equal, continue search!
+	cmp cx, [.height] ; Compare with desired height
+	jne .loop ; Not equal, continue search!
+
+	lea ax, [es:di - 0x100]
+	mov [vid_info.array], ax
+.set_mode:
+	mov si, video_success_msg
+	call print
+
+	xor ax, ax
+	mov ax, VESA_SET_MODE ; Set VBE mode
+	mov bx, [.mode] ; Set mode address
+	mov [vid_info], bx ; Move mode information to array
+	or bx, VESA_LFB_FLAG ; Enable LFB
+	int VIDEO_INT ; SET!
+	cmp ax, VESA_SUCCESS_SIG ; Check if set succeeded
+	jne .error ; Nope, jump to error!
+.done:
+	ret ; Finished loop and set!
+.error: ; Something failed - print message and loop!
+	mov si, video_error_msg
+	call print
+	jmp $
+
+; Video default data
+.mode dw 0
+.width dw VIDEO_WIDTH
+.height dw VIDEO_HEIGHT
+.pitch dw (VIDEO_WIDTH * VIDEO_BPP)
+.bpp dw VIDEO_BPP
+.framebuffer dd 0
+
 ; Variables
 hello_msg db "Welcome! Loading Melvix...", NEWLINE, RETURN, NULL
 disk_error_msg db "Disk error!", NEWLINE, RETURN, NULL
@@ -141,8 +246,15 @@ lba_error_msg db "LBA error!", NEWLINE, RETURN, NULL
 stage_two_msg db "Stage2 loaded", NEWLINE, RETURN, NULL
 disk_success_msg db "Disk is valid", NEWLINE, RETURN, NULL
 inode_table_msg db "Found inode table", NEWLINE, RETURN, NULL
+video_success_msg db "Found video mode", NEWLINE, RETURN, NULL
+video_error_msg db "Video error", NEWLINE, RETURN, NULL
 protected_msg db "Jumping to protected mode", NEWLINE, RETURN, NULL
 drive db 0
+
+; Video info struct
+vid_info:
+.mode dd 0 ; Mode info pointer
+.array dd 0 ; Mode array pointer
 
 ; Data
 packet:
@@ -199,6 +311,9 @@ stage_two:
 	mov [dest], bx
 	call kernel_load
 
+	; Set video mode
+	call video_map
+
 	; Load mmap
 	xor eax, eax
 	mov es, eax
@@ -240,7 +355,7 @@ memory_map:
 	jne short .fail ; Result wasn't correct signature
 	test ebx, ebx ; Is size >1
 	je short .fail ; Nope, worthless :(
-	jmp short .loop
+	jmp short .loop ; Loop!
 .next:
 	mov eax, MMAP_BIOS_MAGIC ; Re-move because 0x15 clears or sth
 	mov [es:di + 20], dword 1 ; Force a valid ACPI entry
@@ -307,7 +422,7 @@ protected_mode:
 	pop ecx ; Start of memory map
 	mov [mem_info], ecx ; Starting boundary of struct
 
-	mov ax, 10h ; Set data segement indentifier
+	mov ax, GDT_DATA_OFFSET ; Data segment offset of GDT
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -316,7 +431,10 @@ protected_mode:
 
 	mov esp, STACK_POINTER ; Move stack pointer
 
-	mov eax, mem_info ; Pass meminfo to kernel
+	mov eax, vid_info ; Pass VBE struct to kernel
+	push eax ; Push as second kernel parameter
+
+	mov eax, mem_info ; Pass mmap to kernel
 	push eax ; Push as first kernel parameter
 
 	mov edx, KERNEL_POSITION
@@ -335,14 +453,14 @@ gdt: ; GDTs start
 gdt_null: ; Must be null
 	dd 0
 	dd 0
-gdt_code: ; Code section
+gdt_code: ; Code segment
 	dw GDT_MAX_LIMIT ; Limit
 	dw 0 ; First base
 	db 0 ; Second base
 	db (GDT_PRESENT | GDT_DESCRIPTOR | GDT_EXECUTABLE | GDT_READWRITE) ; Configuration
 	db GDT_GRANULARITY ; Granularity
 	db 0 ; Third base
-gdt_data: ; Data section
+gdt_data: ; Data segment
 	dw GDT_MAX_LIMIT ; Limit
 	dw 0 ; First base
 	db 0 ; Second base
