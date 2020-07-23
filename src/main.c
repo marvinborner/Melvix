@@ -2,6 +2,7 @@
 
 #include <boot.h>
 #include <def.h>
+#include <fs.h>
 #include <interrupts.h>
 #include <keyboard.h>
 #include <print.h>
@@ -24,7 +25,9 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	vesa_fill(terminal_background);
 
 	serial_install();
-	printf("hello");
+	printf("hello\n");
+
+	ls_root();
 
 	while (1) {
 	};

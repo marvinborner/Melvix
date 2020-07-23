@@ -73,7 +73,9 @@ make_build() {
     dd if=/dev/zero of=build/disk.img bs=1k count=16k
     sudo mke2fs build/disk.img >/dev/null
     dd if=build/boot.bin of=build/disk.img conv=notrunc
-    ./ext2util/ext2util -x build/disk.img -wf build/kernel.bin -i 5 >/dev/null
+    cp build/kernel.bin . # For nicer disk img
+    ./ext2util/ext2util -x build/disk.img -wf kernel.bin -i 5 >/dev/null
+    rm kernel.bin
 
     printf "Build finshed successfully!\n\n"
 }

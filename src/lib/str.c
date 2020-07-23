@@ -40,6 +40,22 @@ int strcmp(const char *s1, const char *s2)
 	return d;
 }
 
+int strncmp(const char *s1, const char *s2, u32 n)
+{
+	const u8 *c1 = (const u8 *)s1;
+	const u8 *c2 = (const u8 *)s2;
+	u8 ch;
+	int d = 0;
+
+	while (n--) {
+		d = (int)(ch = *c1++) - (int)*c2++;
+		if (d || !ch)
+			break;
+	}
+
+	return d;
+}
+
 char *strchr(const char *s, int c)
 {
 	while (*s != (char)c) {

@@ -24,6 +24,14 @@ u32 inl(u16 port)
 	return value;
 }
 
+void insl(u16 port, void *addr, int n)
+{
+	__asm__("cld; rep insl"
+		: "=D"(addr), "=c"(n)
+		: "d"(port), "0"(addr), "1"(n)
+		: "memory", "cc");
+}
+
 void outb(u16 port, u8 data)
 {
 	__asm__("outb %0, %1" ::"a"(data), "Nd"(port));
