@@ -99,10 +99,6 @@ _start:
 	mov ax, VIDEO_CLEAR
 	int VIDEO_INT
 
-	; Welcome user!
-	mov si, hello_msg
-	call print
-
 	; Check LBA support
 	mov ah, DISK_EXT_CHECK
 	mov bx, DISK_EXT_CHECK_SIG1
@@ -214,9 +210,6 @@ video_map:
 	lea ax, [es:di - 0x100]
 	mov [vid_info.array], ax
 .set_mode:
-	mov si, video_success_msg
-	call print
-
 	xor ax, ax
 	mov ax, VESA_SET_MODE ; Set VBE mode
 	mov bx, [.mode] ; Set mode address
@@ -241,15 +234,9 @@ video_map:
 .framebuffer dd 0
 
 ; Variables
-hello_msg db "Welcome! Loading Melvix...", NEWLINE, RETURN, NULL
 disk_error_msg db "Disk error!", NEWLINE, RETURN, NULL
 lba_error_msg db "LBA error!", NEWLINE, RETURN, NULL
-stage_two_msg db "Stage2 loaded", NEWLINE, RETURN, NULL
-disk_success_msg db "Disk is valid", NEWLINE, RETURN, NULL
-inode_table_msg db "Found inode table", NEWLINE, RETURN, NULL
-video_success_msg db "Found video mode", NEWLINE, RETURN, NULL
-video_error_msg db "Video error", NEWLINE, RETURN, NULL
-protected_msg db "Jumping to protected mode", NEWLINE, RETURN, NULL
+video_error_msg db "Video error!", NEWLINE, RETURN, NULL
 drive db 0
 
 ; Video info struct
@@ -280,15 +267,10 @@ dw 0xAA55
 ; After this is finished, the stage can jump into the protected mode, enable the
 ; A20 line and finally jump to the kernel! ez
 stage_two:
-	mov si, stage_two_msg
-	call print ; yay!
-
 	; Verify signature
 	mov ax, [superblock + EXT2_SIG_OFFSET]
 	cmp ax, EXT2_SIG
 	jne disk_error
-	mov si, disk_success_msg
-	call print
 
 	; Load inode table
 	mov ax, [superblock + EXT2_SB_SIZE + EXT2_TABLE_OFFSET] ; Inode table
@@ -299,8 +281,6 @@ stage_two:
 	mov bx, EXT2_INODE_TABLE_LOC ; Copy data to 0x1000
 	mov [dest], bx
 	call disk_read
-	mov si, inode_table_msg
-	call print
 
 	; Load kernel
 	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
@@ -387,8 +367,6 @@ memory_map:
 
 protected_mode_enter:
 	cli ; Turn off interrupts
-	mov si, protected_msg
-	call print
 
 	; TODO: Check A20 support?
 	; TODO: 0x92 method may not work on every device
