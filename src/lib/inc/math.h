@@ -1,10 +1,10 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#ifndef STRING_H
-#define STRING_H
+#ifndef MATH_H
+#define MATH_H
 
 #include <def.h>
 
-u32 strlen(const char *str);
+int pow(int base, int exp);
 
 #endif

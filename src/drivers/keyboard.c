@@ -6,7 +6,7 @@
 
 u8 scancode;
 
-void keyboard_handler(struct regs *r)
+void keyboard_handler()
 {
 	scancode = inb(0x60);
 	serial_print("KEY\n");

@@ -7,7 +7,10 @@ COBJS = src/main.o \
 		src/drivers/interrupts.o \
 		src/drivers/interrupts_asm.o \
 		src/drivers/keyboard.o \
-		src/lib/string.o
+		src/lib/str.o \
+		src/lib/mem.o \
+		src/lib/math.o \
+		src/lib/conv.o
 CC = cross/opt/bin/i686-elf-gcc
 LD = cross/opt/bin/i686-elf-ld
 AS = nasm

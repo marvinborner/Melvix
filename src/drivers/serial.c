@@ -1,6 +1,6 @@
 #include <cpu.h>
 #include <def.h>
-#include <string.h>
+#include <str.h>
 
 void serial_install()
 {

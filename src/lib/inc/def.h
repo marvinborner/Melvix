@@ -24,14 +24,5 @@ typedef unsigned long long u64;
  */
 
 #define NULL ((void *)0)
-#define malloc(n) ((void *)((HEAP += n) - n)) // TODO: Implement real/better malloc/free
-#define free(x)
-
-/**
- * Heap
- */
-
-extern u32 HEAP;
-extern u32 HEAP_START;
 
 #endif

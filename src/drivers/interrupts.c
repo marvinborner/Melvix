@@ -71,7 +71,6 @@ void irq_remap()
 // Handle IRQ ISRs
 void irq_handler(struct regs *r)
 {
-	__asm__("cli");
 	void (*handler)(struct regs * r);
 
 	// Execute custom handler if exists
@@ -85,7 +84,6 @@ void irq_handler(struct regs *r)
 
 	// Send EOI to master PIC
 	outb(0x20, 0x20);
-	__asm__("sti");
 }
 
 // Map ISRs to the correct entries in the IDT
@@ -130,7 +128,6 @@ void isr_uninstall_handler(int isr)
 
 void isr_handler(struct regs *r)
 {
-	__asm__("cli");
 	void (*handler)(struct regs * r);
 
 	// Execute fault handler if exists
@@ -143,7 +140,6 @@ void isr_handler(struct regs *r)
 		while (1) {
 		};
 	}
-	__asm__("sti");
 }
 
 void isr_install()
@@ -183,8 +179,6 @@ void isr_install()
 	idt_set_gate(29, (u32)isr29, 0x08, 0x8E);
 	idt_set_gate(30, (u32)isr30, 0x08, 0x8E);
 	idt_set_gate(31, (u32)isr31, 0x08, 0x8E);
-
-	idt_set_gate(0x80, (u32)isr128, 0x08, 0x8E);
 }
 
 /**
