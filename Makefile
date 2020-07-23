@@ -10,7 +10,8 @@ COBJS = src/main.o \
 		src/lib/str.o \
 		src/lib/mem.o \
 		src/lib/math.o \
-		src/lib/conv.o
+		src/lib/conv.o \
+		src/lib/print.o
 CC = cross/opt/bin/i686-elf-gcc
 LD = cross/opt/bin/i686-elf-ld
 AS = nasm

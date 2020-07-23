@@ -10,4 +10,6 @@ char *htoa(u32 n);
 int htoi(char *str);
 char *itoa(int n);
 
+char *conv_base(int value, char *result, int base, int is_signed);
+
 #endif

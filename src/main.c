@@ -4,6 +4,7 @@
 #include <def.h>
 #include <interrupts.h>
 #include <keyboard.h>
+#include <print.h>
 #include <serial.h>
 #include <vesa.h>
 
@@ -23,7 +24,7 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	vesa_fill(terminal_background);
 
 	serial_install();
-	serial_print("hello\n");
+	printf("hello");
 
 	while (1) {
 	};
