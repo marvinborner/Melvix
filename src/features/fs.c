@@ -67,7 +67,8 @@ void *read_file(struct inode *in)
 
 	int indirect;
 
-	// Single indirect pointer
+	// Singly indirect pointer
+	// TODO: Support doubly and triply pointers
 	if (num_blocks > 12)
 		indirect = in->block[12];
 
@@ -79,7 +80,7 @@ void *read_file(struct inode *in)
 			data = buffer_read(blocknum);
 			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
 		} else {
-			blocknum = read_indirect(indirect, i - 13);
+			blocknum = read_indirect(indirect, i - 12);
 			data = buffer_read(blocknum);
 			memcpy((u32 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
 		}
