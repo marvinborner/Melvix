@@ -91,7 +91,9 @@ struct file {
 	u32 curr_block_pos;
 };
 
-// DEMO ;)
-void ls_root();
+int find_inode(const char *name, int dir_inode);
+struct inode *get_inode(int i);
+void *read_file(struct inode *in);
+void ls_root(); // DEMO ;)
 
 #endif

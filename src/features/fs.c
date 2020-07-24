@@ -56,20 +56,20 @@ void *read_file(struct inode *in)
 
 	int num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
 
-	// assert(num_blocks != 0);
+	//assert(num_blocks != 0);
 	if (!num_blocks)
 		return NULL;
 
 	u32 sz = BLOCK_SIZE * num_blocks;
 	void *buf = malloc(sz);
+	printf("Loading %dKiB\n", sz >> 10);
 	//assert(buf != NULL);
 
-	int indirect = 0;
+	int indirect;
 
 	// Single indirect pointer
-	if (num_blocks > 12) {
+	if (num_blocks > 12)
 		indirect = in->block[12];
-	}
 
 	int blocknum = 0;
 	char *data;
@@ -77,14 +77,15 @@ void *read_file(struct inode *in)
 		if (i < 12) {
 			blocknum = in->block[i];
 			data = buffer_read(blocknum);
-			memcpy((void *)((u32)buf + (i * BLOCK_SIZE)), data, BLOCK_SIZE);
-		}
-		if (i > 12) {
+			memcpy((u32 *)buf + i * BLOCK_SIZE, data, BLOCK_SIZE);
+		} else {
 			blocknum = read_indirect(indirect, i - 13);
 			data = buffer_read(blocknum);
-			memcpy((void *)((u32)buf + ((i - 1) * BLOCK_SIZE)), data, BLOCK_SIZE);
+			memcpy((u32 *)buf + (i - 1) * BLOCK_SIZE, data, BLOCK_SIZE);
 		}
 	}
+
+	// TODO: Fix space between 1024 and 4096
 	return buf;
 }
 
@@ -100,7 +101,7 @@ int find_inode(const char *name, int dir_inode)
 
 	for (u32 q = 0; q < i->blocks / 2; q++) {
 		char *data = buffer_read(i->block[q]);
-		memcpy((void *)((u32)buf + (q * BLOCK_SIZE)), data, BLOCK_SIZE);
+		memcpy((u32 *)((u32)buf + (q * BLOCK_SIZE)), data, BLOCK_SIZE);
 	}
 
 	struct dirent *d = (struct dirent *)buf;
@@ -129,14 +130,14 @@ void ls_root()
 
 	for (u32 q = 0; q < i->blocks / 2; q++) {
 		char *data = buffer_read(i->block[q]);
-		memcpy((void *)((u32)buf + (q * BLOCK_SIZE)), data, BLOCK_SIZE);
+		memcpy((u32 *)((u32)buf + (q * BLOCK_SIZE)), data, BLOCK_SIZE);
 	}
 
 	struct dirent *d = (struct dirent *)buf;
 
 	int sum = 0;
 	int calc = 0;
-	printf("Root directory:\n");
+	printf("\nRoot directory:\n");
 	do {
 		calc = (sizeof(struct dirent) + d->name_len + 4) & ~0x3;
 		sum += d->total_len;
@@ -147,4 +148,5 @@ void ls_root()
 		d = (struct dirent *)((u32)d + d->total_len);
 
 	} while (sum < 1024);
+	printf("\n");
 }

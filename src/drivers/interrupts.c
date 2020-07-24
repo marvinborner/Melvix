@@ -4,6 +4,7 @@
 #include <cpu.h>
 #include <def.h>
 #include <interrupts.h>
+#include <mem.h>
 #include <serial.h>
 
 /**
@@ -29,8 +30,8 @@ void idt_install()
 	idt_ptr.limit = (sizeof(struct idt_entry) * 256) - 1;
 	idt_ptr.base = &idt;
 
-	// Clear IDT by setting memory cells to 0 // TODO
-	//memset(&idt, 0, sizeof(struct idt_entry) * 256);
+	// Clear IDT by setting memory cells to 0
+	memset(&idt, 0, sizeof(struct idt_entry) * 256);
 
 	__asm__("lidt %0" : : "m"(idt_ptr));
 }

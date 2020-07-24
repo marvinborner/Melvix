@@ -62,6 +62,13 @@ make_cross() {
     fi
 }
 
+make_disk() {
+    rm -rf disk && mkdir -p disk/
+    cd disk/
+
+    wget "https://raw.githubusercontent.com/fcambus/spleen/master/spleen-12x24.bdf" -O font24.bdf
+}
+
 make_build() {
     mkdir -p build/
     rm -rf build/*
@@ -76,6 +83,15 @@ make_build() {
     cp build/kernel.bin . # For nicer disk img
     ./ext2util/ext2util -x build/disk.img -wf kernel.bin -i 5 >/dev/null
     rm kernel.bin
+
+    echo "Hello, world!" >disk/test.txt
+
+    mkdir -p mnt/
+    sudo mount build/disk.img mnt/
+    sudo cp disk/* mnt/
+    cat disk/* >/dev/null
+    sudo umount mnt/
+    rm -rf mnt/
 
     printf "Build finshed successfully!\n\n"
 }
@@ -143,6 +159,8 @@ elif [ "${mode}" = "sync" ]; then
     make_sync
 elif [ "${mode}" = "tidy" ]; then
     make_tidy
+elif [ "${mode}" = "disk" ]; then
+    make_disk
 elif [ "${mode}" = "" ]; then # TODO: Prevent code duplication in build script via functions?
     make_cross
     make_clean

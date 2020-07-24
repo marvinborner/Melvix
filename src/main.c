@@ -28,6 +28,7 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	printf("hello\n");
 
 	ls_root();
+	read_file(get_inode(find_inode("font24.bdf", 2)));
 
 	while (1) {
 	};

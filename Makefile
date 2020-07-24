@@ -19,7 +19,7 @@ LD = cross/opt/bin/i686-elf-ld
 AS = nasm
 
 # TODO: Use lib as external library
-CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -mgeneral-regs-only -std=c99 -pedantic-errors -Isrc/lib/inc/ -Isrc/inc/ -c
+CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -fno-pic -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Isrc/lib/inc/ -Isrc/inc/ -c
 
 ASFLAGS = -f elf32
 
