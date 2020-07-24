@@ -77,15 +77,14 @@ void *read_file(struct inode *in)
 		if (i < 12) {
 			blocknum = in->block[i];
 			data = buffer_read(blocknum);
-			memcpy((u32 *)buf + i * BLOCK_SIZE, data, BLOCK_SIZE);
+			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
 		} else {
 			blocknum = read_indirect(indirect, i - 13);
 			data = buffer_read(blocknum);
-			memcpy((u32 *)buf + (i - 1) * BLOCK_SIZE, data, BLOCK_SIZE);
+			memcpy((u32 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
 		}
 	}
 
-	// TODO: Fix space between 1024 and 4096
 	return buf;
 }
 
