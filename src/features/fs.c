@@ -48,7 +48,7 @@ u32 read_indirect(u32 indirect, u32 block_num)
 	return *(u32 *)((u32)data + block_num * 4);
 }
 
-void *read_file(struct inode *in)
+void *read_inode(struct inode *in)
 {
 	//assert(in);
 	if (!in)
@@ -78,15 +78,20 @@ void *read_file(struct inode *in)
 		if (i < 12) {
 			blocknum = in->block[i];
 			data = buffer_read(blocknum);
-			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
+			memcpy((u8 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
 		} else {
 			blocknum = read_indirect(indirect, i - 12);
 			data = buffer_read(blocknum);
-			memcpy((u32 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
+			memcpy((u8 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
 		}
 	}
 
 	return buf;
+}
+
+void *read_file(const char *name, int dir_inode)
+{
+	return read_inode(get_inode(find_inode(name, dir_inode)));
 }
 
 int find_inode(const char *name, int dir_inode)
@@ -101,7 +106,7 @@ int find_inode(const char *name, int dir_inode)
 
 	for (u32 q = 0; q < i->blocks / 2; q++) {
 		char *data = buffer_read(i->block[q]);
-		memcpy((u32 *)((u32)buf + (q * BLOCK_SIZE)), data, BLOCK_SIZE);
+		memcpy((u32 *)((u32)buf + q * BLOCK_SIZE), data, BLOCK_SIZE);
 	}
 
 	struct dirent *d = (struct dirent *)buf;
@@ -110,7 +115,6 @@ int find_inode(const char *name, int dir_inode)
 	do {
 		// Calculate the 4byte aligned size of each entry
 		sum += d->total_len;
-		//printf("%2d  %10s\t%2d %3d\n", (int)d->inode, d->name, d->name_len, d->rec_len);
 		if (strncmp((void *)d->name, name, d->name_len) == 0) {
 			free(buf);
 			return d->inode_num;
@@ -130,7 +134,7 @@ void ls_root()
 
 	for (u32 q = 0; q < i->blocks / 2; q++) {
 		char *data = buffer_read(i->block[q]);
-		memcpy((u32 *)((u32)buf + (q * BLOCK_SIZE)), data, BLOCK_SIZE);
+		memcpy((u32 *)((u32)buf + q * BLOCK_SIZE), data, BLOCK_SIZE);
 	}
 
 	struct dirent *d = (struct dirent *)buf;

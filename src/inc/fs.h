@@ -73,6 +73,7 @@ struct inode {
 	u32 fragment_addr;
 	u8 os_specific_val2[12];
 };
+
 #define INODE_SIZE (sizeof(struct inode))
 
 struct dirent {
@@ -93,7 +94,8 @@ struct file {
 
 int find_inode(const char *name, int dir_inode);
 struct inode *get_inode(int i);
-void *read_file(struct inode *in);
+void *read_inode(struct inode *in);
+void *read_file(const char *name, int dir_inode);
 void ls_root(); // DEMO ;)
 
 #endif

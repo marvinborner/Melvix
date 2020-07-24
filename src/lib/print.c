@@ -84,6 +84,7 @@ int vprintf(const char *format, va_list ap)
 	return len;
 }
 
+// TODO: Fix printf for *very* large strings (serial works)
 int printf(const char *format, ...)
 {
 	va_list ap;
