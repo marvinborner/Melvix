@@ -68,7 +68,7 @@ void *read_file(struct inode *in)
 
 	// Single indirect pointer
 	if (num_blocks > 12) {
-		indirect = in->block[13];
+		indirect = in->block[12];
 	}
 
 	int blocknum = 0;
