@@ -70,7 +70,7 @@ make_disk() {
 }
 
 make_build() {
-    mkdir -p build/
+    mkdir -p build/ disk/
     rm -rf build/*
 
     echo "Building..."
