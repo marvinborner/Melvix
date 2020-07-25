@@ -78,20 +78,48 @@ void *read_inode(struct inode *in)
 		if (i < 12) {
 			blocknum = in->block[i];
 			data = buffer_read(blocknum);
-			memcpy((u8 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
+			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
 		} else {
 			blocknum = read_indirect(indirect, i - 12);
 			data = buffer_read(blocknum);
-			memcpy((u8 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
+			memcpy((u32 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
 		}
 	}
 
 	return buf;
 }
 
-void *read_file(const char *name, int dir_inode)
+void *read_file(char *path)
 {
-	return read_inode(get_inode(find_inode(name, dir_inode)));
+	if (path[0] != '/')
+		return 0;
+
+	path++;
+	u32 current_inode = EXT2_ROOT;
+
+	while (1) {
+		int i;
+		for (i = 0; path[i] != '/' && path[i] != '\0'; i++)
+			;
+
+		if (path[i] == '\0')
+			break;
+
+		path[i] = '\0';
+		current_inode = find_inode(path, current_inode);
+		path[i] = '/';
+
+		if (current_inode == 0)
+			return 0;
+
+		path += i + 1;
+	}
+
+	u32 inode = find_inode(path, current_inode);
+	if (inode == 0)
+		return 0;
+
+	return read_inode(get_inode(inode));
 }
 
 int find_inode(const char *name, int dir_inode)

@@ -8,6 +8,7 @@
 
 #define EXT2_BOOT 0
 #define EXT2_SUPER 1
+#define EXT2_ROOT 2
 #define EXT2_MAGIC 0x0000EF53
 
 struct superblock {
@@ -95,7 +96,7 @@ struct file {
 int find_inode(const char *name, int dir_inode);
 struct inode *get_inode(int i);
 void *read_inode(struct inode *in);
-void *read_file(const char *name, int dir_inode);
+void *read_file(char *path);
 void ls_root(); // DEMO ;)
 
 #endif
