@@ -63,14 +63,23 @@ make_cross() {
 }
 
 make_disk() {
-    rm -rf disk && mkdir -p disk/
-    cd disk/
+    rm -rf disk && mkdir -p disk/font/
 
-    wget "https://raw.githubusercontent.com/fcambus/spleen/master/spleen-12x24.bdf" -O font24.bdf
+    cd disk/font/
+    VERSION="1.8.1"
+    wget -q "https://github.com/fcambus/spleen/releases/download/$VERSION/spleen-$VERSION.tar.gz"
+    tar xf "spleen-$VERSION.tar.gz"
+    mv spleen-"$VERSION"/*.psfu .
+    rm -rf "spleen-$VERSION"*
+    cd ../../
 }
 
 make_build() {
-    mkdir -p build/ disk/
+    if ! [ -d "disk/" ]; then
+        make_disk
+    fi
+
+    mkdir -p build/
     rm -rf build/*
 
     echo "Building..."
@@ -88,8 +97,8 @@ make_build() {
 
     mkdir -p mnt/
     sudo mount build/disk.img mnt/
-    sudo cp disk/* mnt/
-    cat disk/* >/dev/null
+    sudo cp -r disk/* mnt/
+    cat disk/**/* >/dev/null
     sudo umount mnt/
     rm -rf mnt/
 
