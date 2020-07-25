@@ -19,8 +19,8 @@
 
 struct psf1_header {
 	u8 magic[2];
-	u8 file_mode;
-	u8 font_height;
+	u8 mode;
+	u8 char_size;
 };
 
 /**
@@ -38,7 +38,7 @@ struct psf2_header {
 	u32 size;
 	u32 flags;
 	u32 glyph_count;
-	u32 bytes_per_glyph;
+	u32 char_size;
 	u32 height;
 	u32 width;
 };
