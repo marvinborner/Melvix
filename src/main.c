@@ -29,7 +29,8 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	ls_root();
 	/* psf_parse(read_file("/font/spleen-8x16.psfu")); */
-	psf_parse(read_file("/font/spleen-16x32.psfu"));
+	/* psf_parse(read_file("/font/spleen-16x32.psfu")); */
+	psf_parse(read_file("/font/spleen-12x24.psfu"));
 
 	while (1) {
 	};

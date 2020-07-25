@@ -26,7 +26,7 @@ int psf_verify(char *data)
 void psf_test(char *chars, int height, int width, int char_size)
 {
 	char ch = 'a';
-	int x = 50;
+	int x = 0;
 	int y = 400;
 	const u32 c[3] = { 0xff, 0x00, 0x00 };
 
@@ -36,10 +36,10 @@ void psf_test(char *chars, int height, int width, int char_size)
 	char *draw = (char *)&fb[pos];
 	u16 row = 0;
 
-	for (int cy = 0; cy <= height; cy++) {
-		row = chars[ch * char_size + cy * ((width + 7) / 8)];
+	for (int cy = 0; cy < height; cy++) {
+		row = chars[ch * char_size + cy * (char_size / height)];
 
-		for (int cx = 0; cx <= width + 1; cx++) {
+		for (int cx = 0; cx < width; cx++) {
 			if (row & (1 << (width - 1))) {
 				draw[vbe_bpl * cx] = (char)c[2];
 				draw[vbe_bpl * cx + 1] = (char)c[1];
