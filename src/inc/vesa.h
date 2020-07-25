@@ -44,7 +44,12 @@ struct vbe {
 };
 
 struct vbe *vbe;
+int vbe_bpl;
+int vbe_pitch;
+u8 *fb;
 
-void vesa_fill(const u8 color[3]);
+void vesa_fill(const u32 color[3]);
+void vesa_set_pixel(u16 x, u16 y, const u32 color[3]);
+void vesa_init(struct vbe *info);
 
 #endif

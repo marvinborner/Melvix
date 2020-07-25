@@ -9,6 +9,7 @@ COBJS = src/main.o \
 		src/drivers/keyboard.o \
 		src/drivers/ide.o \
 		src/features/fs.o \
+		src/features/psf.o \
 		src/lib/str.o \
 		src/lib/mem.o \
 		src/lib/math.o \
@@ -26,17 +27,17 @@ ASFLAGS = -f elf32
 all: compile clean
 
 %.o: %.c
-	$(CC) $(CFLAGS) $< -o $@
+	@$(CC) $(CFLAGS) $< -o $@
 
 %_asm.o: %.asm
-	$(AS) $(ASFLAGS) $< -o $@
+	@$(AS) $(ASFLAGS) $< -o $@
 
 kernel: $(COBJS)
 
 compile: kernel
-	mkdir -p build/
-	$(AS) -f bin src/entry.asm -o build/boot.bin
-	$(LD) -N -emain -Ttext 0x00050000 -o build/kernel.bin $(COBJS) --oformat binary
+	@mkdir -p build/
+	@$(AS) -f bin src/entry.asm -o build/boot.bin
+	@$(LD) -N -emain -Ttext 0x00050000 -o build/kernel.bin $(COBJS) --oformat binary
 
 clean:
-	find src/ -name "*.o" -type f -delete
+	@find src/ -name "*.o" -type f -delete

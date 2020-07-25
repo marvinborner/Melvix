@@ -6,6 +6,7 @@
 #include <interrupts.h>
 #include <keyboard.h>
 #include <print.h>
+#include <psf.h>
 #include <serial.h>
 #include <vesa.h>
 
@@ -19,16 +20,15 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	keyboard_install();
 
 	mem_info++; // TODO: Use the mmap (or remove)!
-	vbe = vid_info->info;
 
-	u8 terminal_background[3] = { 0x1d, 0x1f, 0x24 };
+	vesa_init(vid_info->info);
+	u32 terminal_background[3] = { 0x1d, 0x1f, 0x24 };
 	vesa_fill(terminal_background);
 
 	serial_install();
-	printf("hello\n");
 
 	ls_root();
-	printf("%s", read_file("test.txt", 2));
+	psf_parse(read_file("/font/spleen-8x16.psfu"));
 
 	while (1) {
 	};

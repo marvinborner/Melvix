@@ -76,6 +76,7 @@ make_disk() {
 
 make_build() {
     if ! [ -d "disk/" ]; then
+        echo "Creating disk..."
         make_disk
     fi
 
@@ -86,9 +87,9 @@ make_build() {
     make
 
     # Create disk image
-    dd if=/dev/zero of=build/disk.img bs=1k count=16k
-    sudo mke2fs build/disk.img >/dev/null
-    dd if=build/boot.bin of=build/disk.img conv=notrunc
+    dd if=/dev/zero of=build/disk.img bs=1k count=16k status=none
+    sudo mke2fs -q build/disk.img
+    dd if=build/boot.bin of=build/disk.img conv=notrunc status=none
     cp build/kernel.bin . # For nicer disk img
     ./ext2util/ext2util -x build/disk.img -wf kernel.bin -i 5 >/dev/null
     rm kernel.bin
@@ -130,13 +131,13 @@ make_sync() {
 
 make_tidy() {
     shfmt -w ./run
-    find ./src -type f -regex '.*\.\(c\|h\)' -exec clang-format -i {} \;
+    find src/ -type f -regex '.*\.\(c\|h\)' -exec clang-format -i {} \;
     # This may or may not work
-    find ./src -type f -print0 | xargs -0 -l -i sh -c '[ -n "$(tail -c1 {})" ] && printf "\n" >> {}'
+    find src/ -type f -print0 | xargs -0 -l -i sh -c '[ -n "$(tail -c1 {})" ] && printf "\n" >> {}'
 }
 
 make_clean() {
-    rm -rf ./build/
+    rm -rf build/
 }
 
 if [ "${mode}" = "cross" ]; then
