@@ -71,6 +71,11 @@ make_disk() {
     tar xf "spleen-$VERSION.tar.gz"
     mv spleen-"$VERSION"/*.psfu .
     rm -rf "spleen-$VERSION"*
+
+    cp /usr/share/kbd/consolefonts/ter-p32b.psf.gz . &&
+        cp /usr/share/kbd/consolefonts/ter-p32n.psf.gz . &&
+        gunzip ter-p32* || echo "Terminus font not found!"
+
     cd ../../
 }
 
@@ -93,8 +98,6 @@ make_build() {
     cp build/kernel.bin . # For nicer disk img
     ./ext2util/ext2util -x build/disk.img -wf kernel.bin -i 5 >/dev/null
     rm kernel.bin
-
-    echo "Hello, world!" >disk/test.txt
 
     mkdir -p mnt/
     sudo mount build/disk.img mnt/

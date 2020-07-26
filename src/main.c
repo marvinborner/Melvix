@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include "config.h"
 #include <boot.h>
 #include <def.h>
 #include <fs.h>
@@ -27,7 +28,7 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	serial_install();
 
 	ls_root();
-	gui_init("/font/spleen-16x32.psfu");
+	gui_init(FONT_PATH);
 
 	u32 c[] = { 0xff, 0xff, 0xff };
 	gui_write(0, 0, c, "Hello, world!");
