@@ -22,7 +22,7 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	mem_info++; // TODO: Use the mmap (or remove)!
 
 	vesa_init(vid_info->info);
-	u32 terminal_background[3] = { 0x1d, 0x1f, 0x24 };
+	u32 terminal_background[3] = { 0, 0, 0 };
 	vesa_fill(terminal_background);
 
 	serial_install();
@@ -30,8 +30,7 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	ls_root();
 	gui_init(FONT_PATH);
 
-	u32 c[] = { 0xff, 0xff, 0xff };
-	gui_write(0, 0, c, "Hello, world!");
+	gui_term_write("Welcome back, " USERNAME ".\n");
 
 	while (1) {
 	};

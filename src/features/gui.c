@@ -11,8 +11,6 @@ struct font *font;
 
 void gui_write_char(int x, int y, const u32 c[3], char ch)
 {
-	/* const u32 c[3] = { 0xff, 0x00, 0x00 }; */
-
 	int pos = x * vbe_bpl + y * vbe_pitch;
 	char *draw = (char *)&fb[pos];
 
@@ -35,6 +33,32 @@ void gui_write(int x, int y, const u32 c[3], char *text)
 {
 	for (u32 i = 0; i < strlen(text); i++) {
 		gui_write_char(x + i * font->width, y, c, text[i]);
+	}
+}
+
+// Abstraction
+int x, y = 1;
+const u32 c[3] = { 0xff, 0xff, 0xff };
+void gui_term_write_char(char ch)
+{
+	if (x + font->width > vbe_width) {
+		x = 0;
+		y += font->height;
+	}
+
+	if (ch >= ' ' && ch <= '~') {
+		gui_write_char(x, y, c, ch);
+		x += font->width;
+	} else if (ch == '\n') {
+		x = 0;
+		y += font->height;
+	}
+}
+
+void gui_term_write(char *text)
+{
+	for (u32 i = 0; i < strlen(text); i++) {
+		gui_term_write_char(text[i]);
 	}
 }
 

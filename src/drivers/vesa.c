@@ -32,6 +32,8 @@ void vesa_fill(const u32 color[3])
 void vesa_init(struct vbe *info)
 {
 	vbe = info;
+	vbe_height = vbe->height;
+	vbe_width = vbe->width;
 	vbe_bpl = vbe->bpp >> 3;
 	vbe_pitch = vbe->pitch;
 	fb = (u8 *)vbe->framebuffer;

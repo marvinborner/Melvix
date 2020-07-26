@@ -15,6 +15,8 @@ struct font {
 };
 
 void gui_write(int x, int y, const u32 c[3], char *text);
+void gui_term_write_char(char ch);
+void gui_term_write(char *text);
 void gui_init(char *font_path);
 
 #endif

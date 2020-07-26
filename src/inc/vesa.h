@@ -44,6 +44,8 @@ struct vbe {
 };
 
 struct vbe *vbe;
+int vbe_width;
+int vbe_height;
 int vbe_bpl;
 int vbe_pitch;
 u8 *fb;

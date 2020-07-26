@@ -6,16 +6,10 @@ set -e
 cd "$(dirname "$0")"
 
 mode="${1}"
-no_ask="${2}"
 network="rtl8139"
 
 qemu_with_flags() {
-    if [ "${mode}" = "image" ] || [ "${mode}" = "image_debug" ]; then
-        # TODO: Find out why kvm install is incredibly slow
-        SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -smp "$(nproc)" -serial mon:stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
-    else
-        SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
-    fi
+    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
 }
 
 make_cross() {
