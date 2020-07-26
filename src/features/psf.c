@@ -2,6 +2,8 @@
 // PSF parser
 
 #include <def.h>
+#include <gui.h>
+#include <mem.h>
 #include <print.h>
 #include <psf.h>
 #include <vesa.h>
@@ -22,35 +24,7 @@ int psf_verify(char *data)
 		return 0;
 }
 
-// Will be removed in the future
-void psf_test(char *chars, int height, int width, int char_size)
-{
-	char ch = 'a';
-	int x = 0;
-	int y = 0;
-	const u32 c[3] = { 0xff, 0x00, 0x00 };
-
-	printf("%d %d %d\n", height, width, char_size);
-
-	int pos = x * vbe_bpl + y * vbe_pitch;
-	char *draw = (char *)&fb[pos];
-
-	u32 stride = char_size / height;
-	for (int cy = 0; cy < height; cy++) {
-		for (int cx = 0; cx < width; cx++) {
-			u8 bits = chars[ch * char_size + cy * stride + cx / 8];
-			u8 bit = bits >> (7 - cx % 8) & 1;
-			if (bit) {
-				draw[vbe_bpl * cx] = (char)c[2];
-				draw[vbe_bpl * cx + 1] = (char)c[1];
-				draw[vbe_bpl * cx + 2] = (char)c[0];
-			}
-		}
-		draw += vbe_pitch;
-	}
-}
-
-char *psf_parse(char *data)
+struct font *psf_parse(char *data)
 {
 	int version = psf_verify(data);
 
@@ -73,7 +47,11 @@ char *psf_parse(char *data)
 		return 0;
 	}
 
-	psf_test(chars, height, width, char_size);
+	struct font *font = malloc(sizeof(*font));
+	font->chars = chars;
+	font->height = height;
+	font->width = width;
+	font->char_size = char_size;
 
-	return chars;
+	return font;
 }

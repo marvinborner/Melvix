@@ -10,6 +10,7 @@ COBJS = src/main.o \
 		src/drivers/ide.o \
 		src/features/fs.o \
 		src/features/psf.o \
+		src/features/gui.o \
 		src/lib/str.o \
 		src/lib/mem.o \
 		src/lib/math.o \

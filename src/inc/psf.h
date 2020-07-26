@@ -43,6 +43,6 @@ struct psf2_header {
 	u32 width;
 };
 
-char *psf_parse(char *data);
+struct font *psf_parse(char *data);
 
 #endif

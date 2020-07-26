@@ -3,12 +3,11 @@
 #include <boot.h>
 #include <def.h>
 #include <fs.h>
+#include <gui.h>
 #include <interrupts.h>
 #include <keyboard.h>
 #include <print.h>
-#include <psf.h>
 #include <serial.h>
-#include <vesa.h>
 
 u32 HEAP = 0x00200000;
 u32 HEAP_START;
@@ -28,9 +27,10 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	serial_install();
 
 	ls_root();
-	/* psf_parse(read_file("/font/spleen-8x16.psfu")); */
-	/* psf_parse(read_file("/font/spleen-16x32.psfu")); */
-	psf_parse(read_file("/font/spleen-12x24.psfu"));
+	gui_init("/font/spleen-16x32.psfu");
+
+	u32 c[] = { 0xff, 0xff, 0xff };
+	gui_write(0, 0, c, "Hello, world!");
 
 	while (1) {
 	};
