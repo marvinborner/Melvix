@@ -43,6 +43,8 @@
 %define EXT2_GET_ADDRESS(inode) (EXT2_INODE_TABLE_LOC + (inode - 1) * EXT2_INODE_SIZE)
 %define EXT2_COUNT_OFFSET 0x1c ; Inode offset of number of data blocks
 %define EXT2_POINTER_OFFSET 0x28 ; Inode offset of first data pointer
+%define EXT2_IND_POINTER_OFFSET 0x2c ; Inode offset of singly indirect data pointer
+%define EXT2_DIRECT_POINTER_COUNT 0x0c ; Direct pointer count
 %define EXT2_SIG 0xef53 ; Signature
 
 ; MMAP constants
@@ -284,7 +286,7 @@ stage_two:
 
 	; Load kernel
 	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
-	mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of sectors for inode
+	mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of blocks for inode
 	lea di, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
 	mov bx, 0x5000 ; Load to this address
 	mov [dest + 2], bx
@@ -308,14 +310,49 @@ stage_two:
 kernel_load:
 	xor ax, ax ; Clear ax
 	mov dx, ax ; Clear dx
+
+	cmp cx, EXT2_DIRECT_POINTER_COUNT ; Indirect pointer needed?
+	jge .indirect ; Singly indirect pointer
+
 	mov ax, [di] ; Set ax = block pointer
 	shl ax, 1 ; Multiply ax by 2
-
 	mov [lba], ax
 	mov [dest], bx
+	call disk_read
+	jmp .end
 
+.indirect:
+	push di
+	push bx
+	push cx
+
+	xor ebx, ebx
+
+	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
+	lea di, [bx + EXT2_IND_POINTER_OFFSET] ; Address of singly indirect pointer
+	mov bx, 0x3000 ; Arbitrary address
+
+	mov ax, [di] ; Set ax = block pointer
+	shl ax, 1 ; Multiply ax by 2
+	mov [lba], ax
+	mov [dest], bx
 	call disk_read
 
+	sub cx, EXT2_DIRECT_POINTER_COUNT
+	lea di, [ebx + 4 * ecx]
+	mov bx, 0x4000 ; Arbitrary address
+
+	mov ax, [di]
+	shl ax, 1
+	mov [lba], ax
+	mov [dest], bx
+	call disk_read
+
+	pop cx
+	pop bx
+	pop di
+
+.end:
 	add bx, 0x400 ; 1kb increase
 	add di, 0x4 ; Move to next block pointer
 	sub cx, 0x2 ; Read 2 blocks
