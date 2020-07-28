@@ -311,8 +311,9 @@ kernel_load:
 	xor ax, ax ; Clear ax
 	mov dx, ax ; Clear dx
 
-	cmp cx, EXT2_DIRECT_POINTER_COUNT ; Indirect pointer needed?
-	jge .indirect ; Singly indirect pointer
+	; TODO: Add singly pointer support (until ~12KiB)
+	;cmp cx, EXT2_DIRECT_POINTER_COUNT ; Indirect pointer needed?
+	;jge .indirect ; Singly indirect pointer
 
 	mov ax, [di] ; Set ax = block pointer
 	shl ax, 1 ; Multiply ax by 2
@@ -328,22 +329,23 @@ kernel_load:
 
 	xor ebx, ebx
 
+	; Read singly indirect pointer
 	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
 	lea di, [bx + EXT2_IND_POINTER_OFFSET] ; Address of singly indirect pointer
 	mov bx, 0x3000 ; Arbitrary address
-
 	mov ax, [di] ; Set ax = block pointer
 	shl ax, 1 ; Multiply ax by 2
 	mov [lba], ax
 	mov [dest], bx
 	call disk_read
 
+	; Read data
 	sub cx, EXT2_DIRECT_POINTER_COUNT
 	lea di, [ebx + 4 * ecx]
 	mov bx, 0x4000 ; Arbitrary address
-
 	mov ax, [di]
 	shl ax, 1
+	;sub bx, 0x400
 	mov [lba], ax
 	mov [dest], bx
 	call disk_read
