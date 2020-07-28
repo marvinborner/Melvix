@@ -9,7 +9,7 @@
 #include <keyboard.h>
 #include <print.h>
 #include <serial.h>
-/* #include <timer.h> */
+#include <timer.h>
 
 u32 HEAP = 0x00200000;
 u32 HEAP_START;
@@ -29,7 +29,7 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	// Install drivers
 	interrupts_install();
-	/* timer_install(); */
+	timer_install();
 	keyboard_install();
 
 	// Enable drivers

@@ -34,6 +34,6 @@ void timer_wait(u32 ticks)
 // Install timer handler into IRQ0
 void timer_install()
 {
-	/* timer_phase(1000); */
+	timer_phase(1000);
 	irq_install_handler(0, timer_handler);
 }

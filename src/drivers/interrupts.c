@@ -190,5 +190,4 @@ void interrupts_install()
 	idt_install();
 	isr_install();
 	irq_install();
-	__asm__("sti");
 }

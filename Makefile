@@ -8,6 +8,7 @@ COBJS = src/main.o \
 		src/drivers/interrupts_asm.o \
 		src/drivers/keyboard.o \
 		src/drivers/ide.o \
+		src/drivers/timer.o \
 		src/features/fs.o \
 		src/features/psf.o \
 		src/features/gui.o \
@@ -20,6 +21,7 @@ CC = cross/opt/bin/i686-elf-gcc
 LD = cross/opt/bin/i686-elf-ld
 AS = nasm
 
+# Flags to make the binary smaller TODO: Remove after indirect pointer support!
 CSFLAGS = -fno-stack-protector -fomit-frame-pointer -ffunction-sections -fdata-sections -Wl,--gc-sections -mpreferred-stack-boundary=2 -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-math-errno -fno-unroll-loops -fmerge-all-constants -fno-ident -ffast-math
 
 # TODO: Use lib as external library
