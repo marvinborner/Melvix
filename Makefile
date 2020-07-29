@@ -12,11 +12,13 @@ COBJS = src/main.o \
 		src/features/fs.o \
 		src/features/psf.o \
 		src/features/gui.o \
+		src/features/elf.o \
 		src/lib/str.o \
 		src/lib/mem.o \
 		src/lib/math.o \
 		src/lib/conv.o \
 		src/lib/print.o
+CTOBJS = src/test.o
 CC = cross/opt/bin/i686-elf-gcc
 LD = cross/opt/bin/i686-elf-ld
 AS = nasm
@@ -39,11 +41,14 @@ all: compile clean
 
 kernel: $(COBJS)
 
-compile: kernel
+apps: $(CTOBJS)
+
+compile: kernel apps
 	@mkdir -p build/
 	@$(AS) -f bin src/entry.asm -o build/boot.bin
 	@$(LD) -N -emain -Ttext 0x00050000 -o build/kernel.bin $(COBJS) --oformat binary
 	@$(CC) $(CFLAGS) -emain -o build/debug.o $(COBJS)
+	@cp $(CTOBJS) build/
 
 clean:
 	@find src/ -name "*.o" -type f -delete

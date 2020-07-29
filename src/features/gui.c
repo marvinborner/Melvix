@@ -37,7 +37,7 @@ void gui_write(int x, int y, const u32 c[3], char *text)
 }
 
 // Abstraction
-int x, y = 1;
+int x, y = 0;
 const u32 c[3] = { 0xff, 0xff, 0xff };
 void gui_term_write_char(char ch)
 {

@@ -3,6 +3,7 @@
 #include "config.h"
 #include <boot.h>
 #include <def.h>
+#include <elf.h>
 #include <fs.h>
 #include <gui.h>
 #include <interrupts.h>
@@ -41,6 +42,8 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	gui_init(FONT_PATH);
 
 	gui_term_write("Wake up, " USERNAME "...\n");
+	elf_load("/test.o");
+	printf("loaded");
 
 	while (1) {
 	};
