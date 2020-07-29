@@ -112,8 +112,8 @@ make_debug() {
 }
 
 make_disasm() {
-    objdump -drwC -Mintel build/melvix.bin --visualize-jumps=color | less -R
-    #hexdump -C build/melvix.bin | less -R
+    objdump -drwC -Mintel build/debug.o --visualize-jumps=color | less -R
+    #hexdump -C build/kernel.bin | less -R
 }
 
 make_sync() {

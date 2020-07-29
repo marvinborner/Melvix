@@ -22,17 +22,17 @@ LD = cross/opt/bin/i686-elf-ld
 AS = nasm
 
 # Flags to make the binary smaller TODO: Remove after indirect pointer support!
-CSFLAGS = -fno-stack-protector -fomit-frame-pointer -ffunction-sections -fdata-sections -Wl,--gc-sections -mpreferred-stack-boundary=2 -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-math-errno -fno-unroll-loops -fmerge-all-constants -fno-ident -ffast-math
+CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
 
 # TODO: Use lib as external library
-CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -fno-pic -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Isrc/lib/inc/ -Isrc/inc/ -c
+CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -fno-pic -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Isrc/lib/inc/ -Isrc/inc/
 
 ASFLAGS = -f elf32
 
 all: compile clean
 
 %.o: %.c
-	@$(CC) $(CFLAGS) $< -o $@
+	@$(CC) -c $(CFLAGS) $< -o $@
 
 %_asm.o: %.asm
 	@$(AS) $(ASFLAGS) $< -o $@
@@ -43,6 +43,7 @@ compile: kernel
 	@mkdir -p build/
 	@$(AS) -f bin src/entry.asm -o build/boot.bin
 	@$(LD) -N -emain -Ttext 0x00050000 -o build/kernel.bin $(COBJS) --oformat binary
+	@$(CC) $(CFLAGS) -emain -o build/debug.o $(COBJS)
 
 clean:
 	@find src/ -name "*.o" -type f -delete

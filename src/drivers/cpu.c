@@ -24,7 +24,8 @@ u32 inl(u16 port)
 	return value;
 }
 
-void insl(u16 port, void *addr, int n)
+// TODO: Fix optimization issues with insl
+void __attribute__((optimize("O0"))) insl(u16 port, void *addr, int n)
 {
 	__asm__("cld; rep insl"
 		: "=D"(addr), "=c"(n)

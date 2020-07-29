@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 // EXT2 based filesystem
 
+#include <assert.h>
 #include <def.h>
 #include <fs.h>
 #include <ide.h>
@@ -29,7 +30,9 @@ struct bgd *get_bgd()
 struct inode *get_inode(int i)
 {
 	struct superblock *s = get_superblock();
+	assert(s);
 	struct bgd *b = get_bgd();
+	assert(b);
 
 	int block_group = (i - 1) / s->inodes_per_group;
 	int index = (i - 1) % s->inodes_per_group;
@@ -50,27 +53,22 @@ u32 read_indirect(u32 indirect, u32 block_num)
 
 void *read_inode(struct inode *in)
 {
-	//assert(in);
+	assert(in);
 	if (!in)
 		return NULL;
 
 	int num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
 
-	//assert(num_blocks != 0);
+	assert(num_blocks != 0);
 	if (!num_blocks)
 		return NULL;
 
 	u32 sz = BLOCK_SIZE * num_blocks;
 	void *buf = malloc(sz);
 	printf("Loading %dKiB\n", sz >> 10);
-	//assert(buf != NULL);
+	assert(buf != NULL);
 
 	int indirect;
-
-	// Singly indirect pointer
-	// TODO: Support doubly and triply pointers
-	if (num_blocks > 12)
-		indirect = in->block[12];
 
 	int blocknum = 0;
 	char *data;
@@ -80,6 +78,8 @@ void *read_inode(struct inode *in)
 			data = buffer_read(blocknum);
 			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
 		} else {
+			// TODO: Support doubly and triply pointers
+			indirect = in->block[12];
 			blocknum = read_indirect(indirect, i - 12);
 			data = buffer_read(blocknum);
 			memcpy((u32 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
