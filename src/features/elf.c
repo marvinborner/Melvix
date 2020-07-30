@@ -3,16 +3,13 @@
 #include <elf.h>
 #include <fs.h>
 #include <mem.h>
+#include <str.h>
 
-int elf_verify(struct elf_header *header)
+int elf_verify(struct elf_header *h)
 {
-	if (header->ident[0] == ELF_MAG && header->ident[1] == 'E' && header->ident[2] == 'L' &&
-	    header->ident[3] == 'F' && header->ident[4] == ELF_32 &&
-	    header->ident[5] == ELF_LITTLE && header->ident[6] == ELF_CURRENT &&
-	    header->machine == ELF_386 && (header->type == ET_REL || header->type == ET_EXEC)) {
-		return 1;
-	}
-	return 0;
+	return (h->ident[0] == ELF_MAG && !strncmp((char *)&h->ident[1], "ELF", 3) &&
+		h->ident[4] == ELF_32 && h->ident[5] == ELF_LITTLE && h->ident[6] == ELF_CURRENT &&
+		h->machine == ELF_386 && (h->type == ET_REL || h->type == ET_EXEC));
 }
 
 void elf_load(char *path)
@@ -28,7 +25,10 @@ void elf_load(char *path)
 
 	u32 offset = (p->vaddr - p->paddr);
 	while (p < p_end) {
-		memcpy((void *)p->paddr, (void *)((u32)data + p->offset), p->filesz);
+		printf("\nheader: 0x%x\n", p->paddr);
+		printf("filesz: %d\n", p->filesz);
+		/* memcpy(p->paddr, (u32)data + p->offset, p->filesz); */
+		memcpy((u32 *)p->paddr, (u32 *)((u32)data + p->offset), p->filesz);
 		p++;
 	}
 

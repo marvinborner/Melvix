@@ -7,8 +7,8 @@
 int MELVIX_VERSION = 0;
 
 #define USERNAME "Neo"
-#define FONT_PATH "/font/ter-p32n.psf"
-//#define FONT_PATH "/font/spleen-16x32.psfu"
+//#define FONT_PATH "/font/ter-p32n.psf"
+#define FONT_PATH "/font/spleen-16x32.psfu"
 #define NETWORK "rtl8139"
 
 #endif

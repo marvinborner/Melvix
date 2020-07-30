@@ -42,7 +42,7 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	gui_init(FONT_PATH);
 
 	gui_term_write("Wake up, " USERNAME "...\n");
-	elf_load("/test.o");
+	elf_load("/test");
 	printf("loaded");
 
 	while (1) {

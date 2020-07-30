@@ -1,6 +1,6 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
-COBJS = src/main.o \
+COBJS_KERNEL = src/main.o \
 		src/drivers/vesa.o \
 		src/drivers/cpu.o \
 		src/drivers/serial.o \
@@ -18,10 +18,10 @@ COBJS = src/main.o \
 		src/lib/math.o \
 		src/lib/conv.o \
 		src/lib/print.o
-CTOBJS = src/test.o
-CC = cross/opt/bin/i686-elf-gcc
-LD = cross/opt/bin/i686-elf-ld
-AS = nasm
+COBJS_APPS = apps/test.o
+CC = ccache cross/opt/bin/i686-elf-gcc
+LD = ccache cross/opt/bin/i686-elf-ld
+AS = ccache nasm
 
 # Flags to make the binary smaller TODO: Remove after indirect pointer support!
 CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
@@ -29,7 +29,7 @@ CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
 # TODO: Use lib as external library
 CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -fno-pic -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Isrc/lib/inc/ -Isrc/inc/
 
-ASFLAGS = -f elf32
+ASFLAGS = -f elf32 -O3
 
 all: compile clean
 
@@ -39,16 +39,16 @@ all: compile clean
 %_asm.o: %.asm
 	@$(AS) $(ASFLAGS) $< -o $@
 
-kernel: $(COBJS)
+kernel: $(COBJS_KERNEL)
 
-apps: $(CTOBJS)
+apps: $(COBJS_APPS)
 
 compile: kernel apps
 	@mkdir -p build/
 	@$(AS) -f bin src/entry.asm -o build/boot.bin
-	@$(LD) -N -emain -Ttext 0x00050000 -o build/kernel.bin $(COBJS) --oformat binary
-	@$(CC) $(CFLAGS) -emain -o build/debug.o $(COBJS)
-	@cp $(CTOBJS) build/
+	@$(LD) -N -emain -Ttext 0x00050000 -o build/kernel.bin $(COBJS_KERNEL) --oformat binary
+	@$(CC) $(CFLAGS) -o build/debug.o $(COBJS_KERNEL)
+	@$(LD) -N -emain -Tapps/link.ld -o build/test apps/test.o
 
 clean:
-	@find src/ -name "*.o" -type f -delete
+	@find src/ apps/ -name "*.o" -type f -delete
