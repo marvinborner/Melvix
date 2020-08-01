@@ -43,6 +43,7 @@ void serial_print(const char *data)
 void main()
 {
 	serial_print("root loaded\n");
+	__asm__ volatile("int $0x80");
 	while (1) {
 	};
 }

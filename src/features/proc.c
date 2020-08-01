@@ -14,15 +14,15 @@ struct proc *last;
 
 void scheduler(struct regs *regs)
 {
-	printf(".");
+	printf("%d", current->pid);
 	memcpy(&current->regs, regs, sizeof(struct regs));
 
 	timer_handler();
 
-	if (!current->next)
-		current = root;
-	else
+	if (current->next)
 		current = current->next;
+	else
+		current = root;
 
 	while (current->state == PROC_ASLEEP)
 		if (!current->next)
@@ -31,6 +31,18 @@ void scheduler(struct regs *regs)
 			current = current->next;
 
 	memcpy(regs, &current->regs, sizeof(struct regs));
+}
+
+void proc_print()
+{
+	struct proc *proc = root;
+
+	while (proc) {
+		printf("Process %d [%s]\n", proc->pid,
+		       proc->state == PROC_RUNNING ? "running" : "sleeping");
+		proc = proc->next;
+	}
+	printf("\n");
 }
 
 void proc_attach(struct proc *proc)
@@ -47,7 +59,7 @@ void proc_attach(struct proc *proc)
 
 struct proc *proc_make()
 {
-	struct proc *proc = (struct proc *)malloc(sizeof(*proc));
+	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = pid++;
 	proc->state = PROC_RUNNING;
 	if (current)
@@ -61,4 +73,12 @@ void proc_init()
 	current = root = proc_make();
 	bin_load("/root", root);
 	irq_install_handler(0, scheduler);
+	proc_print();
+
+	// JUMP!
+	void (*entry)();
+	*(void **)(&entry) = (u32 *)root->regs.eip;
+	__asm__ volatile("movl %%eax, %%ebp" ::"a"(root->regs.ebp));
+	__asm__ volatile("movl %%eax, %%esp" ::"a"(root->regs.esp));
+	entry();
 }

@@ -10,6 +10,7 @@
 #include <load.h>
 #include <print.h>
 #include <serial.h>
+#include <syscall.h>
 #include <timer.h>
 
 u32 HEAP = 0x00200000;
@@ -42,6 +43,8 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	gui_init(FONT_PATH);
 
 	gui_term_write("Wake up, " USERNAME "...\n");
+
+	syscall_install();
 	proc_init();
 
 	while (1) {

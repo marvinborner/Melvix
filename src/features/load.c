@@ -13,5 +13,5 @@ void bin_load(char *path, struct proc *proc)
 
 	proc->regs.ebp = stack;
 	proc->regs.esp = stack;
-	proc->regs.eip = (u32)&data;
+	proc->regs.eip = (u32)data;
 }
