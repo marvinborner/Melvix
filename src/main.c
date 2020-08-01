@@ -15,7 +15,7 @@
 u32 HEAP = 0x00200000;
 u32 HEAP_START;
 
-void main(struct mem_info *mem_info, struct vid_info *vid_info)
+void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 {
 	HEAP_START = HEAP; // For malloc function
 

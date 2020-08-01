@@ -5,10 +5,7 @@ CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy
 
-# TODO: Fix crash without optimizations
-CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
-
-CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -I../src/lib/inc/ -fPIE -Os
+CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -ffunction-sections -fno-builtin -std=c99 -m32 -pedantic-errors -I../src/lib/inc/ -fPIE
 
 all: $(COBJS)
 

@@ -5,6 +5,7 @@
 #include <def.h>
 #include <interrupts.h>
 #include <mem.h>
+#include <print.h>
 #include <serial.h>
 
 /**
@@ -136,7 +137,7 @@ void isr_handler(struct regs *r)
 	if (handler) {
 		handler(r);
 	} else if (r->int_no <= 32) {
-		serial_print("Exception, halting!\n");
+		printf("#%d Exception, halting!\n", r->int_no);
 		__asm__("cli");
 		while (1) {
 		};
