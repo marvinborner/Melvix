@@ -3,7 +3,7 @@
 #ifndef LOAD_H
 #define LOAD_H
 
-#include <def.h>
+#define MAIN_OFFSET 0xfe
 
 void bin_load(char *path);
 
