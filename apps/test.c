@@ -81,8 +81,8 @@ void serial_print(const char *data)
 		serial_put(data[i]);
 }
 
-void main()
+void start()
 {
 	serial_install();
-	serial_print("WELCOME TO USERSPACE");
+	serial_print("Follow the white rabbit.");
 }

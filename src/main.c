@@ -3,11 +3,11 @@
 #include "config.h"
 #include <boot.h>
 #include <def.h>
-#include <elf.h>
 #include <fs.h>
 #include <gui.h>
 #include <interrupts.h>
 #include <keyboard.h>
+#include <load.h>
 #include <print.h>
 #include <serial.h>
 #include <timer.h>
@@ -42,8 +42,7 @@ void main(struct mem_info *mem_info, struct vid_info *vid_info)
 	gui_init(FONT_PATH);
 
 	gui_term_write("Wake up, " USERNAME "...\n");
-	elf_load("/test");
-	printf("loaded");
+	bin_load("/test");
 
 	while (1) {
 	};

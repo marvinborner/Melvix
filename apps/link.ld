@@ -1,24 +1,34 @@
-ENTRY(main)
+OUTPUT_FORMAT("elf32-i386")
+OUTPUT_ARCH(i386)
+ENTRY(start)
+
 SECTIONS
 {
-	.text 0x40000000:
-	{
-		code = .; _code = .; __code = .;
+	. = 0x00000000;
+
+	.text : {
 		*(.text)
 	}
 
-	.data ALIGN(0x400000):
-	{
-		data = .; _data = .; __data = .;
-		*(.data)
+	.rodata : {
 		*(.rodata)
 	}
 
-	.bss ALIGN(0x400000):
-	{
-		bss = .; _bss = .; __bss = .;
+	. = ALIGN(4096);
+
+	.data : {
+		*(.data)
+	}
+
+	. = ALIGN(4096);
+
+	.bss : {
 		*(.bss)
 	}
 
-	end = .; _end = .; __end = .;
+	. = ALIGN(4096);
+
+	_GLOBAL_OFFSET_TABLE_ = .;
+
+	. = ALIGN(4096);
 }

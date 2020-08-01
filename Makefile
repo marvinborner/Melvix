@@ -12,22 +12,22 @@ COBJS_KERNEL = src/main.o \
 		src/features/fs.o \
 		src/features/psf.o \
 		src/features/gui.o \
-		src/features/elf.o \
+		src/features/load.o \
 		src/lib/str.o \
 		src/lib/mem.o \
 		src/lib/math.o \
 		src/lib/conv.o \
 		src/lib/print.o
-COBJS_APPS = apps/test.o
-CC = ccache cross/opt/bin/i686-elf-gcc
-LD = ccache cross/opt/bin/i686-elf-ld
-AS = ccache nasm
+CC = cross/opt/bin/i686-elf-gcc
+LD = cross/opt/bin/i686-elf-ld
+OC = cross/opt/bin/i686-elf-objcopy
+AS = nasm
 
 # Flags to make the binary smaller TODO: Remove after indirect pointer support!
 CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
 
 # TODO: Use lib as external library
-CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -fno-pic -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Isrc/lib/inc/ -Isrc/inc/
+CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Isrc/lib/inc/ -Isrc/inc/
 
 ASFLAGS = -f elf32 -O3
 
@@ -41,14 +41,14 @@ all: compile clean
 
 kernel: $(COBJS_KERNEL)
 
-apps: $(COBJS_APPS)
-
-compile: kernel apps
+compile: kernel
 	@mkdir -p build/
 	@$(AS) -f bin src/entry.asm -o build/boot.bin
 	@$(LD) -N -emain -Ttext 0x00050000 -o build/kernel.bin $(COBJS_KERNEL) --oformat binary
 	@$(CC) $(CFLAGS) -o build/debug.o $(COBJS_KERNEL)
-	@$(LD) -N -emain -Tapps/link.ld -o build/test apps/test.o
+	@$(CC) $(CFLAGS) -fPIE -c apps/test.c -o build/test.o
+	@$(LD) -o build/test.elf -Tapps/link.ld build/test.o
+	@$(OC) -O binary build/test.elf build/test
 
 clean:
 	@find src/ apps/ -name "*.o" -type f -delete
