@@ -1,5 +1,8 @@
 tags
 compile_commands.json
+*.o
+*.elf
+*.bin
 
 .clangd/
 build/
