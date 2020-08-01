@@ -7,4 +7,4 @@ compile:
 	@$(MAKE) --no-print-directory -C apps/
 
 clean:
-	@find src/ apps/ \( -name "*.o" -or -name "*.elf" \) -type f -delete
+	@find src/ apps/ \( -name "*.o" -or -name "*.elf" -or -name "*.bin" \) -type f -delete
