@@ -13,6 +13,7 @@ COBJS = main.o \
 		features/psf.o \
 		features/gui.o \
 		features/load.o \
+		features/proc.o \
 		lib/str.o \
 		lib/mem.o \
 		lib/math.o \

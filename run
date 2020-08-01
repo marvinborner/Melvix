@@ -96,7 +96,7 @@ make_build() {
     mkdir -p mnt/
     sudo mount build/disk.img mnt/
     sudo cp -r disk/* mnt/
-    sudo cp build/test mnt/
+    sudo cp build/apps/* mnt/
     cat disk/**/* >/dev/null
     sudo umount mnt/
     rm -rf mnt/

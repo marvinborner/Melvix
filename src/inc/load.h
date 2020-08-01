@@ -3,6 +3,8 @@
 #ifndef LOAD_H
 #define LOAD_H
 
-void bin_load(char *path);
+#include <proc.h>
+
+void bin_load(char *path, struct proc *proc);
 
 #endif

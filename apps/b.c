@@ -42,5 +42,5 @@ void serial_print(const char *data)
 
 void main()
 {
-	serial_print("Follow the white rabbit.");
+	serial_print("b");
 }
