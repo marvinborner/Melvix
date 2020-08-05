@@ -97,8 +97,8 @@ void *read_file(char *path)
 	path++;
 	u32 current_inode = EXT2_ROOT;
 
+	int i;
 	while (1) {
-		int i;
 		for (i = 0; path[i] != '/' && path[i] != '\0'; i++)
 			;
 

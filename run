@@ -136,6 +136,7 @@ make_tidy() {
 
 make_clean() {
     rm -rf build/
+    make clean
 }
 
 if [ "${mode}" = "cross" ]; then

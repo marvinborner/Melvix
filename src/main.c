@@ -44,7 +44,7 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	gui_term_write("Wake up, " USERNAME "...\n");
 
-	syscall_install();
+	syscall_init();
 	proc_init();
 
 	while (1) {

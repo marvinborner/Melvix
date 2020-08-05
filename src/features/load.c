@@ -11,7 +11,7 @@ void bin_load(char *path, struct proc *proc)
 	char *data = read_file(path);
 	u32 stack = (u32)malloc(0x1000) + 0x1000;
 
-	proc->regs.ebp = stack;
-	proc->regs.esp = stack;
+	proc->regs.ebp = (u32)stack;
+	proc->regs.esp = (u32)stack;
 	proc->regs.eip = (u32)data;
 }

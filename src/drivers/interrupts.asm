@@ -37,13 +37,6 @@ irq_common_stub:
 	push fs
 	push gs
 
-	mov ax, 0x10
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	cld
-
 	push esp
 	call irq_handler
 	add esp, 4
@@ -119,13 +112,6 @@ isr_common_stub:
 	push es
 	push fs
 	push gs
-
-	mov ax, 0x10
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-	cld
 
 	push esp
 	call isr_handler

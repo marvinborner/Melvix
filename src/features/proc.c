@@ -70,8 +70,9 @@ struct proc *proc_make()
 
 void proc_init()
 {
+	__asm__ volatile("cli");
 	current = root = proc_make();
-	bin_load("/root", root);
+	bin_load("/init", root);
 	irq_install_handler(0, scheduler);
 	proc_print();
 
@@ -80,5 +81,6 @@ void proc_init()
 	*(void **)(&entry) = (u32 *)root->regs.eip;
 	__asm__ volatile("movl %%eax, %%ebp" ::"a"(root->regs.ebp));
 	__asm__ volatile("movl %%eax, %%esp" ::"a"(root->regs.esp));
+	__asm__ volatile("sti");
 	entry();
 }

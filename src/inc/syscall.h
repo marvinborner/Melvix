@@ -3,6 +3,6 @@
 #ifndef SYSCALL_H
 #define SYSCALL_H
 
-void syscall_install();
+void syscall_init();
 
 #endif

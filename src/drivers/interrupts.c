@@ -118,6 +118,42 @@ void irq_install()
 
 void (*isr_routines[256])(struct regs *) = { 0 };
 
+const char *isr_exceptions[32] = { "Division By Zero",
+				   "Debug",
+				   "Non Maskable Interrupt",
+				   "Breakpoint",
+				   "Into Detected Overflow",
+				   "Out of Bounds",
+				   "Invalid Opcode",
+				   "No Coprocessor",
+
+				   "Double Fault",
+				   "Coprocessor Segment Overrun",
+				   "Bad TSS",
+				   "Segment Not Present",
+				   "Stack Fault",
+				   "General Protection Fault",
+				   "Page Fault",
+				   "Unknown Interrupt",
+
+				   "Coprocessor Fault",
+				   "Alignment Check",
+				   "Machine Check",
+				   "Reserved",
+				   "Reserved",
+				   "Reserved",
+				   "Reserved",
+				   "Reserved",
+
+				   "Reserved",
+				   "Reserved",
+				   "Reserved",
+				   "Reserved",
+				   "Reserved",
+				   "Reserved",
+				   "Reserved",
+				   "Reserved" };
+
 void isr_install_handler(int isr, void (*handler)(struct regs *r))
 {
 	isr_routines[isr] = handler;
@@ -137,9 +173,9 @@ void isr_handler(struct regs *r)
 	if (handler) {
 		handler(r);
 	} else if (r->int_no <= 32) {
-		printf("\n#%d Exception, halting!\n", r->int_no);
-		printf("Error code: %d\n", r->err_code);
 		__asm__("cli");
+		printf("\n%s Exception, halting!\n", isr_exceptions[r->int_no]);
+		printf("Error code: %d\n", r->err_code);
 		while (1) {
 		};
 	}

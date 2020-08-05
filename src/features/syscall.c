@@ -13,7 +13,7 @@ void syscall_handler(struct regs *r)
 	bin_load("/a", a);
 }
 
-void syscall_install()
+void syscall_init()
 {
 	isr_install_handler(0x80, syscall_handler);
 }
