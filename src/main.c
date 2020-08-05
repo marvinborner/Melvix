@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include <boot.h>
+#include <cpu.h>
 #include <def.h>
 #include <fs.h>
 #include <gui.h>
@@ -35,7 +36,7 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	keyboard_install();
 
 	// Enable drivers
-	__asm__("sti");
+	sti();
 
 	mem_info++; // TODO: Use the mmap (or remove)!
 
@@ -47,6 +48,5 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	syscall_init();
 	proc_init();
 
-	while (1) {
-	};
+	idle();
 }

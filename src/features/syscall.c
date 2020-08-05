@@ -15,5 +15,6 @@ void syscall_handler(struct regs *r)
 
 void syscall_init()
 {
+	idt_set_gate(0x80, (u32)isr128, 0x08, 0x8E);
 	isr_install_handler(0x80, syscall_handler);
 }

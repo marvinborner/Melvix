@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <cpu.h>
 #include <interrupts.h>
 #include <load.h>
 #include <mem.h>
@@ -70,7 +71,7 @@ struct proc *proc_make()
 
 void proc_init()
 {
-	__asm__ volatile("cli");
+	cli();
 	current = root = proc_make();
 	bin_load("/init", root);
 	irq_install_handler(0, scheduler);
@@ -81,6 +82,6 @@ void proc_init()
 	*(void **)(&entry) = (u32 *)root->regs.eip;
 	__asm__ volatile("movl %%eax, %%ebp" ::"a"(root->regs.ebp));
 	__asm__ volatile("movl %%eax, %%esp" ::"a"(root->regs.esp));
-	__asm__ volatile("sti");
+	sti();
 	entry();
 }

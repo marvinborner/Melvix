@@ -173,7 +173,7 @@ void isr_handler(struct regs *r)
 	if (handler) {
 		handler(r);
 	} else if (r->int_no <= 32) {
-		__asm__("cli");
+		cli();
 		printf("\n%s Exception, halting!\n", isr_exceptions[r->int_no]);
 		printf("Error code: %d\n", r->err_code);
 		while (1) {
@@ -218,8 +218,6 @@ void isr_install()
 	idt_set_gate(29, (u32)isr29, 0x08, 0x8E);
 	idt_set_gate(30, (u32)isr30, 0x08, 0x8E);
 	idt_set_gate(31, (u32)isr31, 0x08, 0x8E);
-
-	idt_set_gate(0x80, (u32)isr128, 0x08, 0x8E);
 }
 
 /**
