@@ -11,6 +11,7 @@ void syscall_handler(struct regs *r)
 
 	struct proc *a = proc_make();
 	bin_load("/a", a);
+	proc_jump(a);
 }
 
 void syscall_init()

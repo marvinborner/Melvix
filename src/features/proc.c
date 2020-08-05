@@ -69,19 +69,24 @@ struct proc *proc_make()
 	return proc;
 }
 
+void proc_jump(struct proc *proc)
+{
+	void (*entry)();
+	*(void **)(&entry) = (u32 *)proc->regs.eip;
+	__asm__ volatile("movl %%eax, %%ebp" ::"a"(proc->regs.ebp));
+	__asm__ volatile("movl %%eax, %%esp" ::"a"(proc->regs.esp));
+	current = proc;
+	sti();
+	entry();
+}
+
 void proc_init()
 {
 	cli();
+	irq_install_handler(0, scheduler);
+
 	current = root = proc_make();
 	bin_load("/init", root);
-	irq_install_handler(0, scheduler);
 	proc_print();
-
-	// JUMP!
-	void (*entry)();
-	*(void **)(&entry) = (u32 *)root->regs.eip;
-	__asm__ volatile("movl %%eax, %%ebp" ::"a"(root->regs.ebp));
-	__asm__ volatile("movl %%eax, %%esp" ::"a"(root->regs.esp));
-	sti();
-	entry();
+	proc_jump(root);
 }

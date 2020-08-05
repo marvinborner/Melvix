@@ -42,5 +42,7 @@ void serial_print(const char *data)
 
 void main()
 {
-	serial_print("a");
+	while (1) {
+		serial_print("a");
+	}
 }
