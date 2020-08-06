@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <cpu.h>
 #include <interrupts.h>
 #include <load.h>
 #include <print.h>
@@ -11,7 +12,8 @@ void syscall_handler(struct regs *r)
 
 	struct proc *a = proc_make();
 	bin_load("/a", a);
-	proc_jump(a);
+	sti();
+	hlt();
 }
 
 void syscall_init()

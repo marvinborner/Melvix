@@ -17,7 +17,6 @@ struct proc {
 };
 
 void proc_init();
-void proc_jump(struct proc *proc);
 struct proc *proc_make();
 
 #endif
