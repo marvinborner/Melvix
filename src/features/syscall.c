@@ -5,15 +5,17 @@
 #include <load.h>
 #include <print.h>
 #include <proc.h>
+#include <str.h>
 
+int i = 0;
 void syscall_handler(struct regs *r)
 {
 	printf("[SYSCALL] %d\n", r->eax);
 
 	struct proc *a = proc_make();
-	bin_load("/a", a);
-	sti();
-	hlt();
+	bin_load(++i ? "/a" : "/b", a);
+	strcpy(a->name, "a");
+	proc_print();
 }
 
 void syscall_init()

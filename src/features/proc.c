@@ -6,6 +6,7 @@
 #include <mem.h>
 #include <print.h>
 #include <proc.h>
+#include <str.h>
 #include <timer.h>
 
 u32 pid = 0;
@@ -42,8 +43,8 @@ void proc_print()
 
 	printf("\n");
 	while (proc) {
-		printf("Process %d [%s]\n", proc->pid,
-		       proc->state == PROC_RUNNING ? "running" : "sleeping");
+		printf("Process %d [%s]: %s\n", proc->pid,
+		       proc->state == PROC_RUNNING ? "running" : "sleeping", proc->name);
 		proc = proc->next;
 	}
 	printf("\n");
@@ -68,6 +69,15 @@ struct proc *proc_make()
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = pid++;
 	proc->state = PROC_RUNNING;
+
+	// Configure registers (default data)
+	proc->regs.ds = GDT_DATA_OFFSET;
+	proc->regs.es = GDT_DATA_OFFSET;
+	proc->regs.fs = GDT_DATA_OFFSET;
+	proc->regs.gs = GDT_DATA_OFFSET;
+	proc->regs.cs = GDT_CODE_OFFSET;
+	proc->regs.eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
+
 	if (current)
 		proc_attach(proc);
 	last = proc;
@@ -81,6 +91,7 @@ void proc_init()
 
 	root = proc_make();
 	bin_load("/init", root);
+	strcpy(root->name, "root");
 	proc_print();
 	sti();
 	hlt();
