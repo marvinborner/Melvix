@@ -14,5 +14,6 @@ void bin_load(char *path, struct proc *proc)
 
 	proc->regs.ebp = (u32)stack;
 	proc->regs.esp = (u32)stack;
+	proc->regs.useresp = (u32)stack;
 	proc->regs.eip = (u32)data;
 }

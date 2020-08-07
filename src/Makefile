@@ -14,6 +14,7 @@ COBJS = main.o \
 		features/gui.o \
 		features/load.o \
 		features/proc.o \
+		features/proc_asm.o \
 		features/syscall.o \
 		lib/str.o \
 		lib/mem.o \

@@ -4,13 +4,16 @@
 
 ; Definitions
 
-%define LOCATION 0x7c00 ; Bootloader location
-
 ; General configurations
 ; TODO: Find out why 2560x1600 doesn't work
 %define VIDEO_WIDTH 1920
 %define VIDEO_HEIGHT 1200
 %define VIDEO_BPP 4
+
+; Boot constants
+%define LOCATION 0x7c00 ; Bootloader location
+%define SECTOR_END 0xaa55 ; Bootsector end signature
+%define SECTOR_SIZE 510 ; 512 bytes minus signature
 
 ; Interrupts
 %define VIDEO_INT 0x10 ; Video BIOS Interrupt
@@ -158,8 +161,6 @@ lba_error:
 
 ; Video map routine
 video_map:
-	xor eax, eax
-	mov es, ax
 	mov bx, VESA_START ; Set load address
 	mov di, bx
 	mov ax, VESA_GET_MODES ; Get video modes
@@ -187,7 +188,6 @@ video_map:
 	cmp ax, VESA_SUCCESS_SIG ; Check if call succeeded
 	jne .error ; Nope, jump to error!
 
-	xor ax, ax
 	mov ax, [es:di + VESA_FRAMEBUFFER_OFFSET] ; Save framebuffer
 	mov [.framebuffer], ax ; Move fb address to struct
 
@@ -209,7 +209,6 @@ video_map:
 	lea ax, [es:di - 0x100]
 	mov [vid_info.array], ax
 .set_mode:
-	xor ax, ax
 	mov ax, VESA_SET_MODE ; Set VBE mode
 	mov bx, [.mode] ; Set mode address
 	mov [vid_info], bx ; Move mode information to array
@@ -257,8 +256,8 @@ lba:
 	dd 0 ; More storage bytes
 
 ; End of boot sector
-times 510 - ($ - $$) db 0
-dw 0xAA55
+times SECTOR_SIZE - ($ - $$) db 0
+dw SECTOR_END
 
 ; This is the second stage. It tries to load the kernel (inode 5) into memory.
 ; To do this, it first checks the integrity of the ext2 fs. Then it has to find
@@ -297,9 +296,6 @@ stage_two:
 	jmp protected_mode_enter
 
 kernel_load:
-	xor ax, ax ; Clear ax
-	mov dx, ax ; Clear dx
-
 	; TODO: Add singly pointer support (until ~12KiB)
 	;cmp cx, EXT2_DIRECT_POINTER_COUNT ; Indirect pointer needed?
 	;jge .indirect ; Singly indirect pointer
@@ -315,8 +311,6 @@ kernel_load:
 ;	push di
 ;	push bx
 ;	push cx
-;
-;	xor ebx, ebx
 ;
 ;	; Read singly indirect pointer
 ;	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
@@ -363,13 +357,6 @@ protected_mode_enter:
 	out A20_GATE, al
 	.a20_enabled:
 
-	; Clear registers
-	xor ax, ax
-	mov ds, ax
-	mov es, ax
-	mov fs, ax
-	mov gs, ax
-
 	lgdt [gdt_desc] ; Load GDT
 
 	; Set protected mode via cr0
@@ -390,7 +377,7 @@ protected_mode:
 
 	mov esp, STACK_POINTER ; Move stack pointer
 
-	mov ax, gdt_tss - gdt ; Load TSS
+	mov ax, (gdt_tss - gdt) | 0b11 ; Load TSS in ring 3
 	ltr ax
 
 	mov eax, vid_info ; Pass VBE struct to kernel

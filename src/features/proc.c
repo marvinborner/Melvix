@@ -16,10 +16,8 @@ struct proc *last;
 
 void scheduler(struct regs *regs)
 {
-	if (current) {
-		printf("%d", current->pid);
+	if (current)
 		memcpy(&current->regs, regs, sizeof(struct regs));
-	}
 
 	timer_handler();
 
@@ -34,7 +32,19 @@ void scheduler(struct regs *regs)
 		else
 			current = current->next;
 
+	/* proc_print(); */
 	memcpy(regs, &current->regs, sizeof(struct regs));
+
+	if (regs->cs != GDT_USER_CODE_OFFSET) {
+		regs->gs = GDT_USER_DATA_OFFSET;
+		regs->fs = GDT_USER_DATA_OFFSET;
+		regs->es = GDT_USER_DATA_OFFSET;
+		regs->ds = GDT_USER_DATA_OFFSET;
+		regs->ss = GDT_USER_DATA_OFFSET;
+		regs->cs = GDT_USER_CODE_OFFSET;
+		regs->eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
+	}
+	printf("%d", current->pid);
 }
 
 void proc_print()
@@ -64,19 +74,10 @@ void proc_attach(struct proc *proc)
 
 struct proc *proc_make()
 {
-	/* if (current) */
-	/* 	current->state = PROC_ASLEEP; */
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = pid++;
 	proc->state = PROC_RUNNING;
-
-	// Configure registers (default data)
-	proc->regs.ds = GDT_DATA_OFFSET;
-	proc->regs.es = GDT_DATA_OFFSET;
-	proc->regs.fs = GDT_DATA_OFFSET;
-	proc->regs.gs = GDT_DATA_OFFSET;
-	proc->regs.cs = GDT_CODE_OFFSET;
-	proc->regs.eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
+	proc->next = NULL;
 
 	if (current)
 		proc_attach(proc);
@@ -84,6 +85,9 @@ struct proc *proc_make()
 	return proc;
 }
 
+extern void proc_jump_userspace();
+
+u32 _esp, _eip;
 void proc_init()
 {
 	cli();
@@ -93,6 +97,8 @@ void proc_init()
 	bin_load("/init", root);
 	strcpy(root->name, "root");
 	proc_print();
-	sti();
-	hlt();
+
+	_eip = root->regs.eip;
+	_esp = root->regs.esp;
+	proc_jump_userspace();
 }
