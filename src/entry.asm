@@ -47,12 +47,6 @@
 %define EXT2_DIRECT_POINTER_COUNT 0x0c ; Direct pointer count
 %define EXT2_SIG 0xef53 ; Signature
 
-; MMAP constants
-%define MMAP_START 0x400 ; Struct starts at 0x400, ends at 0x500
-%define MMAP_SIZE 0x18 ; Struct size
-%define MMAP_SIG 0x0534d4150 ; Signature ("SMAP")
-%define MMAP_BIOS_MAGIC 0xe820 ; BIOS int 15h code to get address map
-
 ; Video constants (VESA)
 %define VESA_START 0x2000 ; Struct starts at 0x2000
 %define VESA_END 0x3000 ; Struct ends at 0x3000
@@ -78,10 +72,13 @@
 ; GDT constants (bitmap)
 %define GDT_MAX_LIMIT 0xffff ; I just use the max limit lel
 %define GDT_PRESENT 0b10000000 ; Is present
+%define GDT_RING3 0b01100000 ; Privilege level 3
 %define GDT_DESCRIPTOR 0b00010000 ; Descriptor type, set for code/data
 %define GDT_EXECUTABLE 0b00001000 ; Can be executed
 %define GDT_READWRITE 0b00000010 ; Read/write access for code/data
-%define GDT_GRANULARITY (0xc0 | 0x0f) ; Use paged 32 bit granularity
+%define GDT_ACCESSED 0b00000001 ; Whether segment is accessed
+%define GDT_GRANULARITY (0x80 | 0x0f) ; Page granularity (4KiB)
+%define GDT_SIZE (0x40 | 0x0f) ; Use 32 bit selectors
 %define GDT_DATA_OFFSET 0x10 ; Offset to GDT data segment
 
 ; Kernel constants
@@ -297,14 +294,6 @@ stage_two:
 	; Set video mode
 	call video_map
 
-	; Load mmap
-	xor eax, eax
-	mov es, eax
-	mov edi, MMAP_START
-	push edi
-	call memory_map
-	push edi
-
 	jmp protected_mode_enter
 
 kernel_load:
@@ -322,37 +311,37 @@ kernel_load:
 	call disk_read
 	jmp .end
 
-.indirect:
-	push di
-	push bx
-	push cx
-
-	xor ebx, ebx
-
-	; Read singly indirect pointer
-	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
-	lea di, [bx + EXT2_IND_POINTER_OFFSET] ; Address of singly indirect pointer
-	mov bx, 0x3000 ; Arbitrary address
-	mov ax, [di] ; Set ax = block pointer
-	shl ax, 1 ; Multiply ax by 2
-	mov [lba], ax
-	mov [dest], bx
-	call disk_read
-
-	; Read data
-	sub cx, EXT2_DIRECT_POINTER_COUNT
-	lea di, [ebx + 4 * ecx]
-	mov bx, 0x4000 ; Arbitrary address
-	mov ax, [di]
-	shl ax, 1
-	;sub bx, 0x400
-	mov [lba], ax
-	mov [dest], bx
-	call disk_read
-
-	pop cx
-	pop bx
-	pop di
+;.indirect:
+;	push di
+;	push bx
+;	push cx
+;
+;	xor ebx, ebx
+;
+;	; Read singly indirect pointer
+;	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
+;	lea di, [bx + EXT2_IND_POINTER_OFFSET] ; Address of singly indirect pointer
+;	mov bx, 0x3000 ; Arbitrary address
+;	mov ax, [di] ; Set ax = block pointer
+;	shl ax, 1 ; Multiply ax by 2
+;	mov [lba], ax
+;	mov [dest], bx
+;	call disk_read
+;
+;	; Read data
+;	sub cx, EXT2_DIRECT_POINTER_COUNT
+;	lea di, [ebx + 4 * ecx]
+;	mov bx, 0x4000 ; Arbitrary address
+;	mov ax, [di]
+;	shl ax, 1
+;	;sub bx, 0x400
+;	mov [lba], ax
+;	mov [dest], bx
+;	call disk_read
+;
+;	pop cx
+;	pop bx
+;	pop di
 
 .end:
 	add bx, 0x400 ; 1kb increase
@@ -360,49 +349,6 @@ kernel_load:
 	sub cx, 0x2 ; Read 2 blocks
 	jnz kernel_load
 	ret
-
-; Tries to load a memory map using BIOS INT 15h and e820h
-memory_map:
-	xor ebx, ebx ; Must be 0 by spec
-	mov edx, MMAP_SIG ; "SMAP" in hex
-	mov eax, MMAP_BIOS_MAGIC ; Specify MMAP information
-	mov [es:di + 20], dword 1 ; Force a valid ACPI entry
-	mov ecx, MMAP_SIZE ; Request struct size
-	int MISC_INT ; BIOS interrupt
-	jc short .fail ; Carry means "unsupported function"
-	mov edx, MMAP_SIG ; Mov for verification
-	cmp eax, edx ; Verification: Must be "SMAP"
-	jne short .fail ; Result wasn't correct signature
-	test ebx, ebx ; Is size >1
-	je short .fail ; Nope, worthless :(
-	jmp short .loop ; Loop!
-.next:
-	mov eax, MMAP_BIOS_MAGIC ; Re-move because 0x15 clears or sth
-	mov [es:di + 20], dword 1 ; Force a valid ACPI entry
-	mov ecx, MMAP_SIZE ; Request struct size
-	int MISC_INT ; BIOS interrupt
-	jc short .done ; Carry means "end of list already reached"
-	mov edx, MMAP_SIG ; Repair register (safety first!)
-.loop:
-	jcxz .skip ; Skip 0-length entries
-	cmp cl, 20 ; Is the response correct ACPI spec (24 byte)?
-	jbe short .notext ; Nope? Jump!
-	test byte [es:di + 20], 1 ; Is the "ignore this data" bit clear?
-	je short .skip ; Yep? Skip!
-.notext:
-	mov ecx, [es:di + 8] ; Get lower 32 bits of region
-	or ecx, [es:di + 12] ; "Or" with upper 32 bits to test for zero
-	jz .skip ; It's zero, skip!
-	add di, MMAP_SIZE ; Else, next!
-.skip:
-	test ebx, ebx ; If ebx is 0, list is complete
-	jne short .next ; Else, next!
-.done:
-	clc ; Clear carry
-	ret ; Finished!
-.fail:
-	stc ; Set "unsupported function"
-	ret ; Finished!
 
 protected_mode_enter:
 	cli ; Turn off interrupts
@@ -425,6 +371,8 @@ protected_mode_enter:
 	mov gs, ax
 
 	lgdt [gdt_desc] ; Load GDT
+	mov ax, 0x28
+	ltr ax
 
 	; Set protected mode via cr0
 	mov eax, cr0
@@ -435,11 +383,6 @@ protected_mode_enter:
 
 bits 32 ; Woah, so big!
 protected_mode:
-	pop ecx ; End of memory map
-	mov [mem_info + 4], ecx ; Ending boundary of struct
-	pop ecx ; Start of memory map
-	mov [mem_info], ecx ; Starting boundary of struct
-
 	mov ax, GDT_DATA_OFFSET ; Data segment offset of GDT
 	mov ds, ax
 	mov es, ax
@@ -452,18 +395,40 @@ protected_mode:
 	mov eax, vid_info ; Pass VBE struct to kernel
 	push eax ; Push as second kernel parameter
 
-	mov eax, mem_info ; Pass mmap to kernel
-	push eax ; Push as first kernel parameter
-
 	mov edx, KERNEL_POSITION
 	lea eax, [edx]
 	call eax
 
-; Memory map
-align 16
-mem_info:
-	dd 0 ; Start address
-	dd 0 ; End address
+; TSS
+tss_entry:
+	dd 0 ; Previous TSS
+	dd STACK_POINTER ; esp0
+	dd GDT_DATA_OFFSET ; ss0
+	dd 0 ; esp1
+	dd 0 ; ss1
+	dd 0 ; esp2
+	dd 0 ; ss2
+	dd 0 ; cr3
+	dd 0 ; eip
+	dd 0 ; eflags
+	dd 0 ; eax
+	dd 0 ; ecx
+	dd 0 ; edx
+	dd 0 ; ebx
+	dd 0 ; esp
+	dd 0 ; ebp
+	dd 0 ; esi
+	dd 0 ; edi
+	dd 0x13 ; es
+	dd 0x0b ; cs
+	dd 0x13 ; ss
+	dd 0x13 ; ds
+	dd 0x13 ; fs
+	dd 0x13 ; gs
+	dd 0 ; ldt
+	dw 0 ; trap
+	dw 0 ; iomap base
+tss_entry_end:
 
 ; GDT
 align 32
@@ -476,14 +441,35 @@ gdt_code: ; Code segment
 	dw 0 ; First base
 	db 0 ; Second base
 	db (GDT_PRESENT | GDT_DESCRIPTOR | GDT_EXECUTABLE | GDT_READWRITE) ; Configuration
-	db GDT_GRANULARITY ; Granularity
+	db (GDT_GRANULARITY | GDT_SIZE) ; Flags
 	db 0 ; Third base
 gdt_data: ; Data segment
 	dw GDT_MAX_LIMIT ; Limit
 	dw 0 ; First base
 	db 0 ; Second base
 	db (GDT_PRESENT | GDT_DESCRIPTOR | GDT_READWRITE) ; Configuration
-	db GDT_GRANULARITY ; Granularity
+	db (GDT_GRANULARITY | GDT_SIZE) ; Flags
+	db 0 ; Third base
+gdt_user_code: ; User code segment
+	dw GDT_MAX_LIMIT ; Limit
+	dw 0 ; First base
+	db 0 ; Second base
+	db (GDT_PRESENT | GDT_RING3 | GDT_DESCRIPTOR | GDT_EXECUTABLE | GDT_READWRITE) ; Configuration
+	db (GDT_GRANULARITY | GDT_SIZE) ; Flags
+	db 0 ; Third base
+gdt_user_data: ; Data segment
+	dw GDT_MAX_LIMIT ; Limit
+	dw 0 ; First base
+	db 0 ; Second base
+	db (GDT_PRESENT | GDT_RING3 | GDT_DESCRIPTOR | GDT_READWRITE) ; Configuration
+	db (GDT_GRANULARITY | GDT_SIZE) ; Flags
+	db 0 ; Third base
+gdt_tss: ; TSS segment
+	dw tss_entry + (tss_entry_end - tss_entry) ; Limit
+	dw tss_entry ; First base
+	db 0 ; Second base
+	db (GDT_PRESENT | GDT_RING3 | GDT_EXECUTABLE | GDT_ACCESSED) ; Configuration
+	db GDT_SIZE ; Flags
 	db 0 ; Third base
 gdt_end:
 gdt_desc:
