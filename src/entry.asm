@@ -77,8 +77,8 @@
 %define GDT_EXECUTABLE 0b00001000 ; Can be executed
 %define GDT_READWRITE 0b00000010 ; Read/write access for code/data
 %define GDT_ACCESSED 0b00000001 ; Whether segment is accessed
-%define GDT_GRANULARITY (0x80 | 0x0f) ; Page granularity (4KiB)
-%define GDT_SIZE (0x40 | 0x0f) ; Use 32 bit selectors
+%define GDT_GRANULARITY (0x80 | 0x00) ; Page granularity (4KiB)
+%define GDT_SIZE (0x40 | 0x00) ; Use 32 bit selectors
 %define GDT_DATA_OFFSET 0x10 ; Offset to GDT data segment
 
 ; Kernel constants
@@ -371,15 +371,13 @@ protected_mode_enter:
 	mov gs, ax
 
 	lgdt [gdt_desc] ; Load GDT
-	mov ax, 0x28
-	ltr ax
 
 	; Set protected mode via cr0
 	mov eax, cr0
 	or eax, 1 ; Set bit 0
 	mov cr0, eax
 
-	jmp 08h:protected_mode ; JUMP!
+	jmp (gdt_code - gdt):protected_mode ; JUMP!
 
 bits 32 ; Woah, so big!
 protected_mode:
@@ -392,43 +390,15 @@ protected_mode:
 
 	mov esp, STACK_POINTER ; Move stack pointer
 
+	mov ax, gdt_tss - gdt ; Load TSS
+	ltr ax
+
 	mov eax, vid_info ; Pass VBE struct to kernel
 	push eax ; Push as second kernel parameter
 
 	mov edx, KERNEL_POSITION
 	lea eax, [edx]
 	call eax
-
-; TSS
-tss_entry:
-	dd 0 ; Previous TSS
-	dd STACK_POINTER ; esp0
-	dd GDT_DATA_OFFSET ; ss0
-	dd 0 ; esp1
-	dd 0 ; ss1
-	dd 0 ; esp2
-	dd 0 ; ss2
-	dd 0 ; cr3
-	dd 0 ; eip
-	dd 0 ; eflags
-	dd 0 ; eax
-	dd 0 ; ecx
-	dd 0 ; edx
-	dd 0 ; ebx
-	dd 0 ; esp
-	dd 0 ; ebp
-	dd 0 ; esi
-	dd 0 ; edi
-	dd 0x13 ; es
-	dd 0x0b ; cs
-	dd 0x13 ; ss
-	dd 0x13 ; ds
-	dd 0x13 ; fs
-	dd 0x13 ; gs
-	dd 0 ; ldt
-	dw 0 ; trap
-	dw 0 ; iomap base
-tss_entry_end:
 
 ; GDT
 align 32
@@ -475,6 +445,37 @@ gdt_end:
 gdt_desc:
 	dw gdt_end - gdt - 1
 	dd gdt
+
+; TSS
+tss_entry:
+	dd 0 ; Previous TSS
+	dd STACK_POINTER ; esp0
+	dd gdt_data - gdt ; ss0 (data offset)
+	dd 0 ; esp1
+	dd 0 ; ss1
+	dd 0 ; esp2
+	dd 0 ; ss2
+	dd 0 ; cr3
+	dd 0 ; eip
+	dd 0 ; eflags
+	dd 0 ; eax
+	dd 0 ; ecx
+	dd 0 ; edx
+	dd 0 ; ebx
+	dd 0 ; esp
+	dd 0 ; ebp
+	dd 0 ; esi
+	dd 0 ; edi
+	dd 0 ; es
+	dd 0 ; cs
+	dd 0 ; ss
+	dd 0 ; ds
+	dd 0 ; fs
+	dd 0 ; gs
+	dd 0 ; ldt
+	dw 0 ; trap
+	dw 0 ; iomap base
+tss_entry_end:
 
 times 1024 - ($ - $$) db 0
 

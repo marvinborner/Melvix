@@ -8,9 +8,3 @@ struct vid_info {
 	u32 mode;
 	struct vbe *info;
 };
-
-struct mem_info {
-	u64 base;
-	u64 len;
-	u64 type;
-};

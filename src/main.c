@@ -17,7 +17,7 @@
 u32 HEAP = 0x00200000;
 u32 HEAP_START;
 
-void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
+void kernel_main(struct vid_info *vid_info)
 {
 	HEAP_START = HEAP; // For malloc function
 
@@ -37,8 +37,6 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	// Enable drivers
 	sti();
-
-	mem_info++; // TODO: Use the mmap (or remove)!
 
 	ls_root();
 	gui_init(FONT_PATH);
