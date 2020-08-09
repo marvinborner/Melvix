@@ -17,6 +17,7 @@ void cli();
 void sti();
 void hlt();
 void idle();
+void loop();
 
 static inline void spinlock(int *ptr)
 {

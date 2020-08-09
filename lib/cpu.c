@@ -67,3 +67,9 @@ void idle()
 	while (1)
 		hlt();
 }
+
+void loop()
+{
+	cli();
+	idle();
+}

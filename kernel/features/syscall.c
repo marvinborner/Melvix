@@ -6,16 +6,33 @@
 #include <print.h>
 #include <proc.h>
 #include <str.h>
+#include <sys.h>
 
 int i = 0;
 void syscall_handler(struct regs *r)
 {
-	printf("[SYSCALL] %d\n", r->eax);
+	enum sys num = r->eax;
+	printf("[SYSCALL] %d\n", num);
 
-	struct proc *a = proc_make();
-	bin_load(++i ? "/a" : "/b", a);
-	strcpy(a->name, "a");
-	proc_print();
+	switch (num) {
+	case SYS_HALT: {
+		loop();
+		break;
+	}
+	case SYS_EXEC: {
+		char *path = (char *)r->ebx;
+		struct proc *proc = proc_make();
+		bin_load(path, proc);
+		strcpy(proc->name, path);
+		proc_print();
+		break;
+	}
+	default: {
+		printf("Unknown syscall!\n");
+		loop();
+		break;
+	}
+	}
 }
 
 void syscall_init()
