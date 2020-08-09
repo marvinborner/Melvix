@@ -3,6 +3,7 @@
 all: compile clean
 
 compile:
+	@$(MAKE) clean --no-print-directory -C lib/
 	@$(MAKE) libc --no-print-directory -C lib/
 	@echo "Compiled libc"
 	@$(MAKE) clean --no-print-directory -C lib/

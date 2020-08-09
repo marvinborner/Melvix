@@ -26,7 +26,7 @@ CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builti
 
 ASFLAGS = -f elf32 -O3
 
-all: compile
+all: compile bootloader
 
 %.o: %.c
 	@$(CC) -c $(CFLAGS) $< -o $@
@@ -34,8 +34,11 @@ all: compile
 %_asm.o: %.asm
 	@$(AS) $(ASFLAGS) $< -o $@
 
-compile: $(COBJS)
+bootloader:
 	@mkdir -p ../build/
 	@$(AS) -f bin entry.asm -o ../build/boot.bin
+
+compile: $(COBJS)
+	@mkdir -p ../build/
 	@$(LD) -N -ekernel_main -Ttext 0x00050000 -o ../build/kernel.bin -L../build/ $+ -lk --oformat binary
 	@$(CC) $(CFLAGS) -o ../build/debug.o -L../build/ $+ -lk

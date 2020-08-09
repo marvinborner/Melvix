@@ -82,7 +82,7 @@ make_build() {
     mkdir -p build/
     rm -rf build/*
 
-    echo "Building..."
+    printf "\nBuilding...\n"
     make
 
     # Create disk image
@@ -105,11 +105,11 @@ make_build() {
 }
 
 make_test() {
-    qemu_with_flags -hdb build/disk.img
+    qemu_with_flags -drive file=build/disk.img,format=raw,index=1,media=disk
 }
 
 make_debug() {
-    qemu_with_flags -hdb build/disk.img -s -S
+    qemu_with_flags -drive file=build/disk.img,format=raw,index=1,media=disk -s -S
 }
 
 make_disasm() {
