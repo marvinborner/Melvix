@@ -18,11 +18,18 @@ CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
 
 CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Iinc/
 
-all: compile
-
 %.o: %.c
 	@$(CC) -c $(CFLAGS) $< -o $@
 
-compile: $(COBJS)
+libc: CFLAGS += -Duserspace
+libc: $(COBJS)
 	@mkdir -p ../build/
-	@$(AR) qc ../build/libc.a $(COBJS)
+	@$(AR) qc ../build/libc.a $+
+
+libk: CFLAGS += -Dkernel
+libk: $(COBJS)
+	@mkdir -p ../build/
+	@$(AR) qc ../build/libk.a $+
+
+clean:
+	@find . -name "*.o" -type f -delete

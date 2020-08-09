@@ -3,8 +3,11 @@
 all: compile clean
 
 compile:
-	@$(MAKE) --no-print-directory -C lib/
+	@$(MAKE) libc --no-print-directory -C lib/
 	@echo "Compiled libc"
+	@$(MAKE) clean --no-print-directory -C lib/
+	@$(MAKE) libk --no-print-directory -C lib/
+	@echo "Compiled libk"
 	@$(MAKE) --no-print-directory -C kernel/
 	@echo "Compiled kernel"
 	@$(MAKE) --no-print-directory -C apps/

@@ -3,6 +3,7 @@
 #include <cpu.h>
 #include <interrupts.h>
 #include <load.h>
+#include <mem.h>
 #include <print.h>
 #include <proc.h>
 #include <str.h>
@@ -15,15 +16,22 @@ void syscall_handler(struct regs *r)
 	printf("[SYSCALL] %d\n", num);
 
 	switch (num) {
-	case SYS_HALT: {
+	case SYS_LOOP: {
 		loop();
+		break;
+	}
+	case SYS_MALLOC: {
+		r->eax = (u32)malloc(r->eax);
+		break;
+	}
+	case SYS_FREE: {
+		free(r->eax);
 		break;
 	}
 	case SYS_EXEC: {
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make();
 		bin_load(path, proc);
-		strcpy(proc->name, path);
 		proc_print();
 		break;
 	}

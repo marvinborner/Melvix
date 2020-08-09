@@ -95,7 +95,6 @@ void proc_init()
 
 	root = proc_make();
 	bin_load("/init", root);
-	strcpy(root->name, "root");
 	proc_print();
 
 	_eip = root->regs.eip;

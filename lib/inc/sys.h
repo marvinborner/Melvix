@@ -4,7 +4,7 @@
 #ifndef SYS_H
 #define SYS_H
 
-enum sys { SYS_HALT, SYS_EXEC };
+enum sys { SYS_LOOP, SYS_MALLOC, SYS_FREE, SYS_EXEC };
 
 int sys0(enum sys num);
 int sys1(enum sys num, int d1);

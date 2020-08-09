@@ -5,8 +5,17 @@
 
 #include <def.h>
 
-#define malloc(n) ((void *)((HEAP += n) - n)) // TODO: Implement real/better malloc/free
-#define free(x)
+// Huh
+#ifdef kernel
+#define malloc(n) (void *)((HEAP += n) - n) // TODO: Implement real/better malloc/free
+#define free(ptr)
+#elif defined(userspace)
+#include <sys.h>
+#define malloc(n) (void *)sys1(SYS_MALLOC, n)
+#define free(ptr) (void)(sys1(SYS_FREE, (int)ptr))
+#else
+#error "No lib target specified. Please use -Dkernel or -Duserspace"
+#endif
 
 // TODO: Use malloc as syscall
 u32 HEAP;

@@ -1,6 +1,8 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <def.h>
+#include <print.h>
+#include <sys.h>
 
 void *memcpy(void *dst, const void *src, u32 n)
 {

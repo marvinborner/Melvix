@@ -5,7 +5,7 @@ CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy
 
-CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -ffunction-sections -fno-builtin -std=c99 -m32 -pedantic-errors -I../lib/inc/ -fPIE
+CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -ffunction-sections -fno-builtin -std=c99 -m32 -pedantic-errors -I../lib/inc/ -fPIE -Duserspace
 
 all: $(COBJS)
 

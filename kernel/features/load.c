@@ -2,10 +2,9 @@
 
 #include <def.h>
 #include <fs.h>
-#include <load.h>
 #include <mem.h>
-#include <print.h>
 #include <proc.h>
+#include <str.h>
 
 void bin_load(char *path, struct proc *proc)
 {
@@ -16,4 +15,5 @@ void bin_load(char *path, struct proc *proc)
 	proc->regs.esp = (u32)stack;
 	proc->regs.useresp = (u32)stack;
 	proc->regs.eip = (u32)data;
+	strcpy(proc->name, path + 1);
 }

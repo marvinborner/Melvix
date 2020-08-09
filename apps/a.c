@@ -7,7 +7,7 @@
 void main()
 {
 	print("\nA loaded!\n");
-	sys0(SYS_HALT);
+	sys0(SYS_LOOP);
 	while (1) {
 		print("a");
 	}
