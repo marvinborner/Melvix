@@ -1,4 +1,5 @@
 # Melvix
+
 <p align="center">
     <i>„A lightweight unix-unlike operating system“</i>
     <br><br>
@@ -10,42 +11,46 @@
     </a>
 </p>
 
+## Disclaimer
+
+This project is somewhat of a coding playground for me. It doesn't have any useful functionality. Be aware that the installation on real hardware is not recommended and may break your computer.
+
 ## Build
-* Use any system running GNU/Linux
 
-* Install build dependencies (package names may vary depending on your operating system)
-  * Ubuntu/Debian _"instructions"_ can be found here: [GitHub Workflow](https://raw.githubusercontent.com/marvinborner/Melvix/master/.github/workflows/build.yml)
-  * binutils
-  * ccache
-  * gcc
-  * make
-  * bison
-  * flex
-  * gmp
-  * mpc
-  * mpfr
-  * texinfo
-  * curl
-  * nasm
-  * qemu
-  * grub
+-   Use any system running GNU/Linux
 
-* Build a cross compiler using `./run cross`
+-   Install build dependencies (package names may vary depending on your operating system)
 
-* Run `./run build` or `./run test`
+    -   Ubuntu/Debian _"instructions"_ can be found here: [GitHub Workflow](https://raw.githubusercontent.com/marvinborner/Melvix/master/.github/workflows/build.yml)
+    -   binutils
+    -   ccache
+    -   gcc
+    -   make
+    -   bison
+    -   flex
+    -   gmp
+    -   mpc
+    -   mpfr
+    -   texinfo
+    -   curl
+    -   nasm
+    -   qemu
 
-* Optional: Flash the built ISO to a CD drive using `sudo dd if=./iso/melvix.iso of=/dev/sdX bs=4M oflag=sync`
+-   Build a cross compiler using `./run cross`
+
+-   Run `./run build` or `./run test`
 
 ## Licenses
-Melvix is released under the MIT License and uses parts of the following 3rd party projects: 
 
-Knowledge: 
-* [OSDev wiki](https://wiki.osdev.org) - Very helpful!
-* [James Molloy's tutorials](http://jamesmolloy.co.uk/tutorial_html/)
-* [virtix - memory + tasking inspiration](https://github.com/16Bitt/virtix/) - [MIT License](https://github.com/16Bitt/virtix/blob/85a3c58f3d3b8932354e85a996a79c377139c201/LICENSE)
-* [studix - FS inspiration](https://github.com/orodley/studix) - [MIT License](https://github.com/orodley/studix/blob/d1b1d006010120551df58ff3faaf97484dfa9806/LICENSE)
+Melvix is released under the MIT License and uses parts of the following 3rd party projects:
 
-Resources: 
-* [Spleen font](https://github.com/fcambus/spleen) - [MIT License](https://github.com/fcambus/spleen/blob/5759e9abb130b89ba192edc5324b12ef07b7dad3/LICENSE)
-* [bdf2c converter](https://github.com/pixelmatix/bdf2c) - [AGPL 3.0 License](https://github.com/pixelmatix/bdf2c/blob/b07deb7a484751b3e3fb6c952f6bc54b1b2950fd/AGPL-3.0.txt)
-* [onedark.vim colorscheme](https://github.com/joshdick/onedark.vim/) - [MIT License](https://github.com/joshdick/onedark.vim/blob/fe035976117ba5c2481df3b2cad3bb0a8b045b9f/LICENSE)
+Knowledge:
+
+-   [OSDev wiki](https://wiki.osdev.org) - Very helpful!
+-   [James Molloy's tutorials](http://jamesmolloy.co.uk/tutorial_html/)
+-   [virtix - memory + tasking inspiration](https://github.com/16Bitt/virtix/) - [MIT License](https://github.com/16Bitt/virtix/blob/85a3c58f3d3b8932354e85a996a79c377139c201/LICENSE)
+-   [studix - FS inspiration](https://github.com/orodley/studix) - [MIT License](https://github.com/orodley/studix/blob/d1b1d006010120551df58ff3faaf97484dfa9806/LICENSE)
+
+Resources:
+
+-   [Spleen font](https://github.com/fcambus/spleen) - [MIT License](https://github.com/fcambus/spleen/blob/5759e9abb130b89ba192edc5324b12ef07b7dad3/LICENSE)
