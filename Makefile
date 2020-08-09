@@ -3,8 +3,12 @@
 all: compile clean
 
 compile:
-	@$(MAKE) --no-print-directory -C src/
+	@$(MAKE) --no-print-directory -C lib/
+	@echo "Compiled libc"
+	@$(MAKE) --no-print-directory -C kernel/
+	@echo "Compiled kernel"
 	@$(MAKE) --no-print-directory -C apps/
+	@echo "Compiled apps"
 
 clean:
-	@find src/ apps/ \( -name "*.o" -or -name "*.elf" -or -name "*.bin" \) -type f -delete
+	@find kernel/ apps/ lib/ \( -name "*.o" -or -name "*.a" -or -name "*.elf" -or -name "*.bin" \) -type f -delete

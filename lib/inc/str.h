@@ -1,7 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#ifndef STRING_H
-#define STRING_H
+#ifndef STR_H
+#define STR_H
 
 #include <def.h>
 

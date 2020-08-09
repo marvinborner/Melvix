@@ -1,14 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <def.h>
-
-u32 strlen(const char *s)
-{
-	const char *ss = s;
-	while (*ss)
-		ss++;
-	return ss - s;
-}
+#include <str.h>
 
 u8 inb(u16 port)
 {
