@@ -2,7 +2,7 @@
 #include <conv.h>
 #include <def.h>
 #include <mem.h>
-/* #include <serial.h> */
+#include <serial.h>
 #include <str.h>
 
 static void append(char *dest, char *src, int index)
@@ -80,7 +80,7 @@ int vprintf(const char *format, va_list ap)
 	char buf[1024];
 	memset(buf, 0, 1024);
 	int len = vsprintf(buf, format, ap);
-	/* serial_print(buf); // TODO: Remove temporary serial print */
+	serial_print(buf); // TODO: Remove temporary serial print
 	return len;
 }
 
@@ -93,4 +93,10 @@ int printf(const char *format, ...)
 	va_end(ap);
 
 	return len;
+}
+
+int print(const char *str)
+{
+	serial_print(str);
+	return strlen(str);
 }

@@ -9,5 +9,6 @@
 int printf(const char *format, ...);
 int vprintf(const char *format, va_list ap);
 int vsprintf(char *str, const char *format, va_list ap);
+int print(const char *str);
 
 #endif

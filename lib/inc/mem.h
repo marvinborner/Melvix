@@ -5,11 +5,12 @@
 
 #include <def.h>
 
-u32 HEAP;
-u32 HEAP_START;
-
 #define malloc(n) ((void *)((HEAP += n) - n)) // TODO: Implement real/better malloc/free
 #define free(x)
+
+// TODO: Use malloc as syscall
+u32 HEAP;
+u32 HEAP_START;
 
 void *memcpy(void *dst, const void *src, u32 n);
 void *memset(void *dst, int c, u32 n);

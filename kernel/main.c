@@ -9,16 +9,15 @@
 #include <interrupts.h>
 #include <keyboard.h>
 #include <load.h>
+#include <mem.h>
 #include <print.h>
 #include <serial.h>
 #include <syscall.h>
 #include <timer.h>
 
-u32 HEAP = 0x00200000;
-u32 HEAP_START;
-
 void kernel_main(struct vid_info *vid_info)
 {
+	HEAP = 0x00200000;
 	HEAP_START = HEAP; // For malloc function
 
 	// Initialize VESA video

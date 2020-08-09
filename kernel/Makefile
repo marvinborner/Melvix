@@ -2,8 +2,6 @@
 
 COBJS = main.o \
 	drivers/vesa.o \
-	drivers/cpu.o \
-	drivers/serial.o \
 	drivers/interrupts.o \
 	drivers/interrupts_asm.o \
 	drivers/keyboard.o \
