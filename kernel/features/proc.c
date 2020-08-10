@@ -94,7 +94,7 @@ void proc_init()
 	irq_install_handler(0, scheduler);
 
 	root = proc_make();
-	bin_load("/init", root);
+	elf_load("/init", root);
 	proc_print();
 
 	_eip = root->regs.eip;

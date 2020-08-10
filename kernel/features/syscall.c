@@ -9,7 +9,6 @@
 #include <str.h>
 #include <sys.h>
 
-int i = 0;
 void syscall_handler(struct regs *r)
 {
 	enum sys num = r->eax;
