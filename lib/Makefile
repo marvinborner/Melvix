@@ -8,7 +8,8 @@ COBJS = str.o \
 	print.o \
 	serial.o \
 	cpu.o \
-	sys.o
+	sys.o \
+	list.o
 CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-ar
