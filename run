@@ -117,14 +117,30 @@ make_disasm() {
     #hexdump -C build/kernel.bin | less -R
 }
 
+# TODO: This is VERY bad code and I should rewrite it I guess
 make_sync() {
     ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
 
     make --always-make --dry-run |
+        sed -n '/Compiled libc/,/Compiled libk/p' |
+        grep -wE 'gcc' |
+        grep -w '\-c' |
+        jq -nR '[inputs|{directory:"'"$(pwd)"'/lib/", command:., file: match(" [^ ]+$").string[1:]}]' \
+            >compile_commands.json
+    make --always-make --dry-run |
+        sed -n '/Compiled libk/,/Compiled kernel/p' |
         grep -wE 'gcc' |
         grep -w '\-c' |
         jq -nR '[inputs|{directory:"'"$(pwd)"'/kernel/", command:., file: match(" [^ ]+$").string[1:]}]' \
-            >compile_commands.json
+            >>compile_commands.json
+    make --always-make --dry-run |
+        sed -n '/Compiled kernel/,/Compiled apps/p' |
+        grep -wE 'gcc' |
+        grep -w '\-c' |
+        jq -nR '[inputs|{directory:"'"$(pwd)"'/apps/", command:., file: match(" [^ ]+$").string[1:]}]' \
+            >>compile_commands.json
+    tr <compile_commands.json '\n' '\r' | sed -e 's/\r]\r\[/,/g' | tr '\r' '\n' >tmp
+    mv tmp compile_commands.json
 }
 
 make_tidy() {
