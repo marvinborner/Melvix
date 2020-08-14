@@ -46,13 +46,6 @@ make_cross() {
         make install-target-libgcc
 
         cd "${DIR}/.."
-    else
-        cd cross
-        DIR=$(pwd)
-        export PREFIX="${DIR}/opt"
-        export TARGET=i686-elf
-        export PATH="$PREFIX/bin:$PATH"
-        cd ..
     fi
 }
 
@@ -97,7 +90,6 @@ make_build() {
     sudo mount build/disk.img mnt/
     sudo cp -r disk/* mnt/
     sudo cp build/apps/* mnt/
-    cat disk/**/* >/dev/null
     sudo umount mnt/
     rm -rf mnt/
 
@@ -119,7 +111,6 @@ make_disasm() {
 
 make_append_commands() {
     s=""
-    NL='\n'
     while read -r data; do
         s="${s}
 ${data}"
@@ -145,13 +136,6 @@ make_sync() {
     mv tmp compile_commands.json
 }
 
-make_tidy() {
-    shfmt -w ./run
-    find src/ -type f -regex '.*\.\(c\|h\)' -exec clang-format -i {} \;
-    # This may or may not work
-    find src/ -type f -print0 | xargs -0 -l -i sh -c '[ -n "$(tail -c1 {})" ] && printf "\n" >> {}'
-}
-
 make_clean() {
     rm -rf build/
     make clean
@@ -165,17 +149,6 @@ elif [ "${mode}" = "build" ]; then
     make_build
 elif [ "${mode}" = "clean" ]; then
     make_clean
-elif [ "${mode}" = "test" ]; then
-    make_cross
-    make_clean
-    make_build
-    make_sync &
-    make_test
-elif [ "${mode}" = "debug" ]; then
-    make_cross
-    make_build
-    make_sync &
-    make_debug
 elif [ "${mode}" = "again" ]; then
     make_test
 elif [ "${mode}" = "disasm" ]; then
@@ -184,18 +157,32 @@ elif [ "${mode}" = "disasm" ]; then
     make_disasm
 elif [ "${mode}" = "sync" ]; then
     make_sync
-elif [ "${mode}" = "tidy" ]; then
-    make_tidy
 elif [ "${mode}" = "disk" ]; then
     make_disk
-elif [ "${mode}" = "" ]; then # TODO: Prevent code duplication in build script via functions?
+elif [ "${mode}" = "debug" ]; then
+    make_cross
+    make_clean
+    make_build
+    make_sync &
+    make_debug
+elif [ "${mode}" = "test" ] || [ "${mode}" = "" ]; then
     make_cross
     make_clean
     make_build
     make_sync &
     make_test
 else
-    echo "Please use the following syntax:"
-    echo "./run {cross | build | clean | test | disasm | sync | tidy} [-y]"
+    echo "Usage: ./run {cross | clean | build | test | debug | again | disasm | sync | disk}"
+    printf "\nDescription of options:\n"
+    printf "cross\t\tBuilds the cross compiler\n"
+    printf "clean\t\tRemoves the compiled files\n"
+    printf "build\t\tBuilds the whole project (cross+clean)\n"
+    printf "test\t\tEmulates Melvix with QEMU (cross+clean+build)\n"
+    printf "debug\t\tEmulates Melvix with QEMU and debug options (cross+clean+build)\n"
+    printf "again\t\tOpens QEMU again using the previous build\n"
+    printf "disasm\t\tDisassembles the main kernel binary\n"
+    printf "sync\t\tSyncs the 'tags' and 'compile_commands.json' file\n"
+    printf "disk\t\tPrepares the userspace disk (e.g. fonts)\n"
+    printf "*\t\tAnything else prints this help\n\n"
     echo "The default option is 'test'"
 fi
