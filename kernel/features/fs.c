@@ -173,6 +173,7 @@ void ls_root()
 	do {
 		calc = (sizeof(struct dirent) + d->name_len + 4) & ~0x3;
 		sum += d->total_len;
+		d->name[d->name_len] = '\0';
 		printf("/%s\n", d->name);
 		if (d->total_len != calc && sum == 1024)
 			d->total_len = calc;
