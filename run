@@ -117,28 +117,30 @@ make_disasm() {
     #hexdump -C build/kernel.bin | less -R
 }
 
-# TODO: This is VERY bad code and I should rewrite it I guess
+make_append_commands() {
+    s=""
+    NL='\n'
+    while read -r data; do
+        s="${s}
+${data}"
+    done
+
+    echo "$s" |
+        sed -n "/Compiled $1/,/Compiled $2/p" |
+        grep -wE 'gcc' |
+        grep -w '\-c' |
+        jq -nR '[inputs|{directory:"'"$(pwd)/$3"'/", command:., file: match(" [^ ]+$").string[1:]}]' \
+            >>compile_commands.json
+}
+
 make_sync() {
     ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
 
-    make --always-make --dry-run |
-        sed -n '/Compiled libc/,/Compiled libk/p' |
-        grep -wE 'gcc' |
-        grep -w '\-c' |
-        jq -nR '[inputs|{directory:"'"$(pwd)"'/lib/", command:., file: match(" [^ ]+$").string[1:]}]' \
-            >compile_commands.json
-    make --always-make --dry-run |
-        sed -n '/Compiled libk/,/Compiled kernel/p' |
-        grep -wE 'gcc' |
-        grep -w '\-c' |
-        jq -nR '[inputs|{directory:"'"$(pwd)"'/kernel/", command:., file: match(" [^ ]+$").string[1:]}]' \
-            >>compile_commands.json
-    make --always-make --dry-run |
-        sed -n '/Compiled kernel/,/Compiled apps/p' |
-        grep -wE 'gcc' |
-        grep -w '\-c' |
-        jq -nR '[inputs|{directory:"'"$(pwd)"'/apps/", command:., file: match(" [^ ]+$").string[1:]}]' \
-            >>compile_commands.json
+    rm -f compile_commands.json
+    output=$(make --always-make --dry-run)
+    echo "$output" | make_append_commands libc libk lib
+    echo "$output" | make_append_commands libk kernel kernel
+    echo "$output" | make_append_commands kernel apps apps
     tr <compile_commands.json '\n' '\r' | sed -e 's/\r]\r\[/,/g' | tr '\r' '\n' >tmp
     mv tmp compile_commands.json
 }
