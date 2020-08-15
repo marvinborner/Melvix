@@ -15,6 +15,8 @@
 #define ET_REL 1 // Relocatable file
 #define ET_EXEC 2 // Executable file
 
+#define PT_LOAD 1
+
 struct elf_header {
 	u8 ident[16];
 	u16 type;

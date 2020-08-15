@@ -33,14 +33,22 @@ void elf_load(char *path, struct proc *proc)
 	char *data = read_file(path);
 	struct elf_header *h = (struct elf_header *)data;
 
-	assert(elf_verify(h));
+	if (!elf_verify(h))
+		return;
 
-	printf("%d", h->type);
-	switch (h->type) {
-	case ET_EXEC:
+	if (h->type != ET_REL)
 		return;
-	case ET_REL:
-		return;
+
+	struct elf_program_header *phdrs = (struct elf_program_header *)((u32 *)h + h->phoff);
+
+	printf("%d", h->phnum);
+	for (int i = 0; i < h->phnum; i++) {
+		struct elf_program_header *phdr = &phdrs[i];
+		printf("%d\n", phdr->type);
+		if (phdr->type != PT_LOAD)
+			continue;
+		memcpy((void *)phdr->vaddr, h + phdr->offset, phdr->filesz);
+		memset((void *)(phdr->vaddr + phdr->filesz), phdr->memsz - phdr->filesz, 0);
 	}
 
 	loop();
