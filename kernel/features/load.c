@@ -28,30 +28,30 @@ int elf_verify(struct elf_header *h)
 	       h->machine == ELF_386 && (h->type == ET_REL || h->type == ET_EXEC);
 }
 
+// TODO: Fix elf loading
 void elf_load(char *path, struct proc *proc)
 {
 	char *data = read_file(path);
 	struct elf_header *h = (struct elf_header *)data;
 
-	if (!elf_verify(h))
+	if (!elf_verify(h)) {
+		printf("File is not elf");
 		return;
+	}
 
 	if (h->type != ET_REL)
 		return;
 
 	struct elf_program_header *phdrs = (struct elf_program_header *)((u32 *)h + h->phoff);
 
-	printf("%d", h->phnum);
 	for (int i = 0; i < h->phnum; i++) {
 		struct elf_program_header *phdr = &phdrs[i];
-		printf("%d\n", phdr->type);
 		if (phdr->type != PT_LOAD)
 			continue;
 		memcpy((void *)phdr->vaddr, h + phdr->offset, phdr->filesz);
 		memset((void *)(phdr->vaddr + phdr->filesz), phdr->memsz - phdr->filesz, 0);
 	}
 
-	loop();
 	u32 stack = (u32)malloc(0x1000) + 0x1000;
 	proc->regs.ebp = (u32)stack;
 	proc->regs.esp = (u32)stack;

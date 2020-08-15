@@ -3,15 +3,22 @@
 COBJS = a.o b.o init.o
 CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
+OC = ../cross/opt/bin/i686-elf-objcopy
 
 # Flags to make the binary smaller TODO: Remove after indirect pointer support!
 CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
 
-CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-emain -I../lib/inc/ -Duserspace
+CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -ffunction-sections -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-emain -I../lib/inc/ -Wl,-emain -fPIE -Duserspace
 
 all: $(COBJS)
 
 %.o: %.c
 	@mkdir -p ../build/apps/
 	@$(CC) -c $(CFLAGS) $< -o $@
-	@$(CC) -r $(CFLAGS) -o ../build/apps/$(@:.o=) -L../build $< -lc
+	@$(LD) -o $(@:.o=.elf) -Tlink.ld -L../build/ $@ -lc
+	@$(OC) -O binary $(@:.o=.elf) ../build/apps/$(@:.o=)
+
+# %.o: %.c
+# 	@mkdir -p ../build/apps/
+# 	@$(CC) -c $(CFLAGS) $< -o $@
+# 	@$(CC) -r $(CFLAGS) -o ../build/apps/$(@:.o=) -L../build $< -lc

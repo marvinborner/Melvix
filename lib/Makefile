@@ -22,7 +22,7 @@ CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builti
 %.o: %.c
 	@$(CC) -c $(CFLAGS) $< -o $@
 
-libc: CFLAGS += -Duserspace
+libc: CFLAGS += -Duserspace -fPIE
 libc: $(COBJS)
 	@mkdir -p ../build/
 	@$(AR) qc ../build/libc.a $+
