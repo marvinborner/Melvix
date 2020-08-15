@@ -125,12 +125,13 @@ ${data}"
 }
 
 make_sync() {
-    ctags -R --exclude=.git --exclude=build --exclude=iso --exclude=cross .
+    ctags -R --exclude=.git --exclude=build --exclude=disk --exclude=cross --exclude=ext2util .
 
     rm -f compile_commands.json
     output=$(make --always-make --dry-run)
-    echo "$output" | make_append_commands libc libk lib
-    echo "$output" | make_append_commands libk kernel kernel
+    echo "$output" | make_append_commands libc libk libc
+    echo "$output" | make_append_commands libk libgui libgui
+    echo "$output" | make_append_commands libgui kernel kernel
     echo "$output" | make_append_commands kernel apps apps
     tr <compile_commands.json '\n' '\r' | sed -e 's/\r]\r\[/,/g' | tr '\r' '\n' >tmp
     mv tmp compile_commands.json

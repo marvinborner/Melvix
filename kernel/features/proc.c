@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <assert.h>
 #include <cpu.h>
 #include <interrupts.h>
 #include <load.h>
@@ -8,6 +9,7 @@
 #include <proc.h>
 #include <str.h>
 #include <timer.h>
+#include <vesa.h>
 
 u32 pid = 0;
 struct proc *root;
@@ -26,11 +28,14 @@ void scheduler(struct regs *regs)
 	else
 		current = root;
 
-	while (current->state == PROC_ASLEEP)
-		if (!current->next)
+	while (current->state == PROC_ASLEEP) {
+		if (!current->next) {
+			assert(root->state == PROC_RUNNING || pid > 1);
 			current = root;
-		else
+		} else {
 			current = current->next;
+		}
+	}
 
 	/* proc_print(); */
 	memcpy(regs, &current->regs, sizeof(struct regs));
@@ -104,5 +109,7 @@ void proc_init()
 
 	_eip = root->regs.eip;
 	_esp = root->regs.esp;
+	((u32 *)_esp)[1] = (u32)vbe; // First argument
+
 	proc_jump_userspace();
 }

@@ -5,12 +5,14 @@
 #include <mem.h>
 #include <print.h>
 #include <sys.h>
+#include <vesa.h>
 
-void main()
+void main(struct vbe *vbe)
 {
 	print("Init loaded.\n");
+	printf("VBE: %dx%d\n", vbe->width, vbe->height);
 
-	exec("/a");
-	exec("/b");
+	/* exec("/a"); */
+	/* exec("/b"); */
 	exit();
 }

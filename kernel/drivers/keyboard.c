@@ -1,3 +1,5 @@
+// MIT License, Copyright (c) 2020 Marvin Borner
+
 #include <cpu.h>
 #include <def.h>
 #include <gui.h>

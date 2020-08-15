@@ -22,7 +22,7 @@ AS = nasm
 # Flags to make the binary smaller TODO: Remove after indirect pointer support!
 CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
 
-CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../lib/inc/ -Iinc/ -Dkernel
+CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel
 
 ASFLAGS = -f elf32 -O3
 
