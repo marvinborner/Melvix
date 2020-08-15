@@ -27,7 +27,7 @@ void timer_wait(u32 ticks)
 
 	eticks = timer_ticks + ticks;
 	while (timer_ticks < eticks) {
-		__asm__("sti//hlt//cli");
+		__asm__ volatile("sti//hlt//cli");
 	}
 }
 

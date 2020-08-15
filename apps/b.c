@@ -5,8 +5,8 @@
 
 void main()
 {
-	print("\nB loaded\n");
+	print("\nB loaded.\n");
 	while (1) {
-		print("b");
+		print("B");
 	}
 }

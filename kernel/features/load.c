@@ -9,9 +9,12 @@
 #include <proc.h>
 #include <str.h>
 
-void bin_load(char *path, struct proc *proc)
+int bin_load(char *path, struct proc *proc)
 {
 	char *data = read_file(path);
+	if (!data)
+		return 0;
+
 	u32 stack = (u32)malloc(0x1000) + 0x1000;
 
 	proc->regs.ebp = (u32)stack;
@@ -19,6 +22,7 @@ void bin_load(char *path, struct proc *proc)
 	proc->regs.useresp = (u32)stack;
 	proc->regs.eip = (u32)data;
 	strcpy(proc->name, path + 1);
+	return 1;
 }
 
 int elf_verify(struct elf_header *h)

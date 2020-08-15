@@ -34,7 +34,7 @@ void idt_install()
 	// Clear IDT by setting memory cells to 0
 	memset(&idt, 0, sizeof(struct idt_entry) * 256);
 
-	__asm__("lidt %0" : : "m"(idt_ptr));
+	__asm__ volatile("lidt %0" : : "m"(idt_ptr));
 }
 
 /**

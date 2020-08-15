@@ -17,7 +17,6 @@
 #error "No lib target specified. Please use -Dkernel or -Duserspace"
 #endif
 
-// TODO: Use malloc as syscall
 u32 HEAP;
 u32 HEAP_START;
 

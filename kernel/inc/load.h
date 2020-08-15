@@ -58,7 +58,7 @@ struct elf_program_header {
 	u32 align;
 };
 
-void bin_load(char *path, struct proc *proc);
+int bin_load(char *path, struct proc *proc);
 void elf_load(char *path, struct proc *proc);
 
 #endif

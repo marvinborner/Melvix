@@ -72,6 +72,11 @@ void proc_attach(struct proc *proc)
 	}
 }
 
+void proc_exit()
+{
+	current->state = PROC_ASLEEP;
+}
+
 struct proc *proc_make()
 {
 	struct proc *proc = malloc(sizeof(*proc));

@@ -30,8 +30,11 @@ void syscall_handler(struct regs *r)
 	case SYS_EXEC: {
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make();
-		bin_load(path, proc);
-		proc_print();
+		r->eax = bin_load(path, proc);
+		break;
+	}
+	case SYS_EXIT: {
+		proc_exit();
 		break;
 	}
 	default: {

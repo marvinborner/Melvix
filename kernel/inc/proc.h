@@ -25,6 +25,7 @@ struct proc {
 
 void proc_init();
 void proc_print();
+void proc_exit();
 struct proc *proc_make();
 
 #endif
