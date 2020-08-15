@@ -13,11 +13,14 @@ void insl(u16 port, void *addr, int n);
 void outb(u16 port, u8 data);
 void outw(u16 port, u16 data);
 void outl(u16 port, u32 data);
+
+#ifdef kernel
 void cli();
 void sti();
 void hlt();
 void idle();
 void loop();
+#endif
 
 static inline void spinlock(int *ptr)
 {

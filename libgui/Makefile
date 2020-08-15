@@ -1,6 +1,8 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
-COBJS = vesa.o
+COBJS = vesa.o \
+	psf.o \
+	gui.o
 CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-ar
@@ -9,6 +11,8 @@ OC = ../cross/opt/bin/i686-elf-ar
 CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
 
 CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Iinc/ -I../libc/inc/ -Duserspace -fPIE
+
+all: libgui clean
 
 %.o: %.c
 	@$(CC) -c $(CFLAGS) $< -o $@

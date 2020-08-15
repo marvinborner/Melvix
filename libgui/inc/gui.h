@@ -5,6 +5,7 @@
 #define GUI_H
 
 #include <def.h>
+#include <vesa.h>
 
 // Generalized font struct
 struct font {
@@ -14,9 +15,9 @@ struct font {
 	int char_size;
 };
 
-void gui_write(int x, int y, const u32 c[3], char *text);
-void gui_term_write_char(char ch);
-void gui_term_write(char *text);
+void gui_write(struct vbe *vbe, int x, int y, const u32 c[3], char *text);
+void gui_term_write_char(struct vbe *vbe, char ch);
+void gui_term_write(struct vbe *vbe, char *text);
 void gui_init(char *font_path);
 
 #endif

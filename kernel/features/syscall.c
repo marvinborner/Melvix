@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <cpu.h>
+#include <fs.h>
 #include <interrupts.h>
 #include <load.h>
 #include <mem.h>
@@ -25,6 +26,14 @@ void syscall_handler(struct regs *r)
 	}
 	case SYS_FREE: {
 		free(r->eax);
+		break;
+	}
+	case SYS_READ: {
+		r->eax = (u32)read_file((char *)r->ebx);
+		break;
+	}
+	case SYS_WRITE: {
+		// TODO: Write ext2 support
 		break;
 	}
 	case SYS_EXEC: {
