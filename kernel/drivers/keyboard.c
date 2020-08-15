@@ -2,7 +2,6 @@
 
 #include <cpu.h>
 #include <def.h>
-#include <gui.h>
 #include <interrupts.h>
 
 char keymap[128];
@@ -16,7 +15,7 @@ void keyboard_handler()
 		return;
 
 	if ((scan_code & 0x80) == 0) { // PRESS
-		gui_term_write_char(keymap[scan_code]);
+		/* gui_term_write_char(keymap[scan_code]); */
 	}
 }
 

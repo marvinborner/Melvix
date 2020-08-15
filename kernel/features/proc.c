@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
+#include <boot.h>
 #include <cpu.h>
 #include <interrupts.h>
 #include <load.h>
@@ -9,7 +10,6 @@
 #include <proc.h>
 #include <str.h>
 #include <timer.h>
-#include <vesa.h>
 
 u32 pid = 0;
 struct proc *root;
@@ -109,7 +109,7 @@ void proc_init()
 
 	_eip = root->regs.eip;
 	_esp = root->regs.esp;
-	((u32 *)_esp)[1] = (u32)vbe; // First argument
+	((u32 *)_esp)[1] = (u32)boot_passed->vbe; // First argument
 
 	proc_jump_userspace();
 }

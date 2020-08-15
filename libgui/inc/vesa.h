@@ -37,21 +37,14 @@ struct vbe {
 	u8 reserved_position;
 	u8 direct_color_attributes;
 
-	u32 framebuffer;
+	u8 *fb;
 	u32 off_screen_mem_off;
 	u16 off_screen_mem_size;
 	u8 reserved1[206];
 };
 
-struct vbe *vbe;
-int vbe_width;
-int vbe_height;
-int vbe_bpl;
-int vbe_pitch;
-u8 *fb;
-
-void vesa_fill(const u32 color[3]);
-void vesa_set_pixel(u16 x, u16 y, const u32 color[3]);
-void vesa_init(struct vbe *info);
+void vesa_draw_rectangle(struct vbe *vbe, int x1, int y1, int x2, int y2, const u32 color[3]);
+void vesa_fill(struct vbe *vbe, const u32 color[3]);
+void vesa_set_pixel(struct vbe *vbe, u16 x, u16 y, const u32 color[3]);
 
 #endif

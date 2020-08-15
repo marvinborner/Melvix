@@ -1,15 +1,12 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
 COBJS = main.o \
-	drivers/vesa.o \
 	drivers/interrupts.o \
 	drivers/interrupts_asm.o \
 	drivers/keyboard.o \
 	drivers/ide.o \
 	drivers/timer.o \
 	features/fs.o \
-	features/psf.o \
-	features/gui.o \
 	features/load.o \
 	features/proc.o \
 	features/proc_asm.o \

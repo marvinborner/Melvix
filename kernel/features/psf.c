@@ -6,7 +6,6 @@
 #include <mem.h>
 #include <print.h>
 #include <psf.h>
-#include <vesa.h>
 
 // Verifies the PSF magics
 // Returns the PSF version or 0
