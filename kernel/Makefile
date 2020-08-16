@@ -10,7 +10,8 @@ COBJS = main.o \
 	features/load.o \
 	features/proc.o \
 	features/proc_asm.o \
-	features/syscall.o
+	features/syscall.o \
+	features/event.o
 CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy

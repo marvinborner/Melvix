@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <cpu.h>
+#include <event.h>
 #include <fs.h>
 #include <interrupts.h>
 #include <load.h>
@@ -48,6 +49,10 @@ void syscall_handler(struct regs *r)
 	}
 	case SYS_EXIT: {
 		proc_exit();
+		break;
+	}
+	case SYS_MAP: {
+		event_map(r->ebx, (u32(*)())r->ecx);
 		break;
 	}
 	default: {

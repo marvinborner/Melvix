@@ -2,11 +2,11 @@
 
 #include <cpu.h>
 #include <def.h>
+#include <event.h>
 #include <interrupts.h>
 
 char keymap[128];
 
-// TODO: Use keyboard as event and move logic to other file
 void keyboard_handler()
 {
 	u8 scan_code = inb(0x60);
@@ -15,7 +15,7 @@ void keyboard_handler()
 		return;
 
 	if ((scan_code & 0x80) == 0) { // PRESS
-		/* gui_term_write_char(keymap[scan_code]); */
+		event_trigger(EVENT_KEYBOARD, NULL);
 	}
 }
 

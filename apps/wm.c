@@ -7,6 +7,11 @@
 #include <sys.h>
 #include <vesa.h>
 
+void onkey()
+{
+	printf("KEY EVENT\n");
+}
+
 void main(char **argv)
 {
 	struct vbe *vbe = (struct vbe *)argv[0];
@@ -19,6 +24,9 @@ void main(char **argv)
 	vesa_fill(vbe, color);
 	gui_init("/font/spleen-16x32.psfu");
 	gui_write(vbe, 50, 50, text, "hallo");
+
+	printf("onkey: %x\n", onkey);
+	map(EVENT_KEYBOARD, onkey);
 
 	while (1) {
 	};

@@ -57,7 +57,6 @@ int sys5(enum sys num, int d1, int d2, int d3, int d4, int d5)
 	return a;
 }
 
-#include <print.h>
 int sysv(enum sys num, ...)
 {
 	va_list ap;
