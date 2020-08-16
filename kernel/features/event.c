@@ -8,7 +8,7 @@ u32 (*event_table[])() = { [EVENT_KEYBOARD] = NULL, [EVENT_MOUSE] = NULL };
 
 u32 event_map(enum event id, u32 (*function)())
 {
-	printf("%x to %x\n", id, function);
+	// TODO: Support multiple events of same type
 	if (id >= sizeof(event_table) / sizeof(*event_table))
 		return -1;
 

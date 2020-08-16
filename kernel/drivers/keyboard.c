@@ -4,18 +4,19 @@
 #include <def.h>
 #include <event.h>
 #include <interrupts.h>
+#include <print.h>
 
 char keymap[128];
 
 void keyboard_handler()
 {
-	u8 scan_code = inb(0x60);
+	u32 scancode = (u32)inb(0x60);
 
-	if (scan_code > 128)
-		return;
+	// TODO: Support multi-byte scancodes
+	/* printf("%x %x %x %x\n", scancode, inb(0x60), inb(0x60), inb(0x60)); */
 
-	if ((scan_code & 0x80) == 0) { // PRESS
-		event_trigger(EVENT_KEYBOARD, NULL);
+	if ((scancode & 0x80) == 0) { // PRESS
+		event_trigger(EVENT_KEYBOARD, (u32 *)scancode);
 	}
 }
 

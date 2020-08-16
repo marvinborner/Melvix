@@ -3,13 +3,17 @@
 #include <cpu.h>
 #include <def.h>
 #include <gui.h>
+#include <input.h>
 #include <print.h>
 #include <sys.h>
 #include <vesa.h>
 
-void onkey()
+void onkey(u32 scancode)
 {
-	printf("KEY EVENT\n");
+	printf("KEY EVENT %d\n", scancode);
+	if (KEY_ALPHANUMERIC(scancode)) {
+		printf("ALPHANUMERIC!\n");
+	}
 }
 
 void main(char **argv)
