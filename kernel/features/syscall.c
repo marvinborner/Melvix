@@ -39,6 +39,10 @@ void syscall_handler(struct regs *r)
 	case SYS_EXEC: {
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make();
+		((u32 *)proc->regs.esp)[0] = r->ecx;
+		((u32 *)proc->regs.esp)[1] = r->edx;
+		((u32 *)proc->regs.esp)[2] = r->esi;
+		((u32 *)proc->regs.esp)[3] = r->edi;
 		r->eax = bin_load(path, proc);
 		break;
 	}

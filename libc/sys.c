@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 // Syscall implementation
 
+#include <arg.h>
 #include <sys.h>
 
 /**
@@ -54,4 +55,18 @@ int sys5(enum sys num, int d1, int d2, int d3, int d4, int d5)
 			 : "0"(num), "b"((int)d1), "c"((int)d2), "d"((int)d3), "S"((int)d4),
 			   "D"((int)d5));
 	return a;
+}
+
+#include <print.h>
+int sysv(enum sys num, ...)
+{
+	va_list ap;
+	int args[5];
+
+	va_start(ap, num);
+	for (int i = 0; i < 5; i++)
+		args[i] = va_arg(ap, int);
+	va_end(ap);
+
+	return sys5(num, args[0], args[1], args[2], args[3], args[4]);
 }

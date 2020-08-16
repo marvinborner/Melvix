@@ -49,7 +49,7 @@ void scheduler(struct regs *regs)
 		regs->cs = GDT_USER_CODE_OFFSET;
 		regs->eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
 	}
-	printf("%d", current->pid);
+	/* printf("%d", current->pid); */
 }
 
 void proc_print()

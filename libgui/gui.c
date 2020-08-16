@@ -38,32 +38,6 @@ void gui_write(struct vbe *vbe, int x, int y, const u32 c[3], char *text)
 	}
 }
 
-// Abstraction
-int x, y = 0;
-const u32 c[3] = { 0xff, 0xff, 0xff };
-void gui_term_write_char(struct vbe *vbe, char ch)
-{
-	if (x + font->width > vbe->width) {
-		x = 0;
-		y += font->height;
-	}
-
-	if (ch >= ' ' && ch <= '~') {
-		gui_write_char(vbe, x, y, c, ch);
-		x += font->width;
-	} else if (ch == '\n') {
-		x = 0;
-		y += font->height;
-	}
-}
-
-void gui_term_write(struct vbe *vbe, char *text)
-{
-	for (u32 i = 0; i < strlen(text); i++) {
-		gui_term_write_char(vbe, text[i]);
-	}
-}
-
 void gui_init(char *font_path)
 {
 	font = psf_parse(read(font_path));
