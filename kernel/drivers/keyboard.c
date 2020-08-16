@@ -8,16 +8,31 @@
 
 char keymap[128];
 
+int state = 0;
+int merged = 0;
 void keyboard_handler()
 {
 	u32 scancode = (u32)inb(0x60);
 
-	// TODO: Support multi-byte scancodes
-	/* printf("%x %x %x %x\n", scancode, inb(0x60), inb(0x60), inb(0x60)); */
+	// TODO: Support more than two-byte scancodes
+	if (scancode == 0xe0) {
+		merged = 0xe0;
+		state = 1;
+		return;
+	} else {
+		merged = scancode << 8 | merged;
+	}
+
+	// TODO: "Merge" scancode to linux keycode?
+	printf("%x %x = %x\n", scancode, state ? 0xe0 : 0, merged);
 
 	if ((scancode & 0x80) == 0) { // PRESS
 		event_trigger(EVENT_KEYBOARD, (u32 *)scancode);
-	}
+	} else
+		print("\n");
+
+	state = 0;
+	merged = 0;
 }
 
 void keyboard_acknowledge()

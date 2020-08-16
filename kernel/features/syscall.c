@@ -14,6 +14,7 @@
 void syscall_handler(struct regs *r)
 {
 	enum sys num = r->eax;
+	r->eax = 0;
 	printf("[SYSCALL] %d\n", num);
 
 	switch (num) {
