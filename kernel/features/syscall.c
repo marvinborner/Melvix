@@ -53,7 +53,11 @@ void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_MAP: {
-		event_map(r->ebx, (u32(*)())r->ecx);
+		event_map(r->ebx, (u32 *)r->ecx);
+		break;
+	}
+	case SYS_UNMAP: {
+		event_unmap(r->ebx, (u32 *)r->ecx);
 		break;
 	}
 	default: {

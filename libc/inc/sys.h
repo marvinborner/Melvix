@@ -4,7 +4,17 @@
 #ifndef SYS_H
 #define SYS_H
 
-enum sys { SYS_LOOP, SYS_MALLOC, SYS_FREE, SYS_READ, SYS_WRITE, SYS_EXEC, SYS_EXIT, SYS_MAP };
+enum sys {
+	SYS_LOOP,
+	SYS_MALLOC,
+	SYS_FREE,
+	SYS_READ,
+	SYS_WRITE,
+	SYS_EXEC,
+	SYS_EXIT,
+	SYS_MAP,
+	SYS_UNMAP
+};
 enum event { EVENT_KEYBOARD, EVENT_MOUSE };
 
 #if defined(userspace)
@@ -32,6 +42,7 @@ int sysv(enum sys num, ...);
 		}                                                                                  \
 	}
 #define map(id, func) sys2(SYS_MAP, (int)id, (int)func)
+#define unmap(id, func) sys2(SYS_UNMAP, (int)id, (int)func)
 
 #endif
 #endif

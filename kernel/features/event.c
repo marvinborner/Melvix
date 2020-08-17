@@ -19,6 +19,20 @@ u32 event_map(enum event id, u32 *func)
 	return 0;
 }
 
+// TODO: Fix unmap
+void event_unmap(enum event id, u32 *func)
+{
+	struct list *list = ((struct list *)event_table[id]);
+	struct node *iterator = list->head;
+	while (iterator->data != (void *)func) {
+		iterator = iterator->next;
+		if (!iterator)
+			return;
+	}
+
+	list_remove(list, iterator);
+}
+
 u32 event_trigger(enum event id, u32 *data)
 {
 	assert(id < sizeof(event_table) / sizeof(*event_table));
