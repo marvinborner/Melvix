@@ -40,6 +40,13 @@ void scheduler(struct regs *regs)
 	/* proc_print(); */
 	memcpy(regs, &current->regs, sizeof(struct regs));
 
+	if (current->event) {
+		// TODO: Modify and backup EIP
+		printf("Event %d for %d\n", current->event, current->pid);
+		// TODO: Clear bit after resolve
+		current->event = 0;
+	}
+
 	if (regs->cs != GDT_USER_CODE_OFFSET) {
 		regs->gs = GDT_USER_DATA_OFFSET;
 		regs->fs = GDT_USER_DATA_OFFSET;
@@ -63,6 +70,11 @@ void proc_print()
 		proc = proc->next;
 	}
 	printf("\n");
+}
+
+struct proc *proc_current()
+{
+	return current;
 }
 
 void proc_attach(struct proc *proc)

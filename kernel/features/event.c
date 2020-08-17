@@ -2,7 +2,10 @@
 
 #include <assert.h>
 #include <def.h>
+#include <event.h>
 #include <list.h>
+#include <mem.h>
+#include <proc.h>
 #include <sys.h>
 
 struct list *event_table[] = { [EVENT_KEYBOARD] = NULL, [EVENT_MOUSE] = NULL };
@@ -15,7 +18,12 @@ u32 event_map(enum event id, u32 *func)
 
 	if (event_table[id] == NULL)
 		event_table[id] = (struct list *)list_new();
-	list_add((struct list *)event_table[id], (void *)func);
+
+	struct event_descriptor *desc = malloc(sizeof(*desc));
+	desc->func = func;
+	desc->proc = proc_current();
+
+	list_add((struct list *)event_table[id], (void *)desc);
 	return 0;
 }
 
@@ -23,8 +31,13 @@ u32 event_map(enum event id, u32 *func)
 void event_unmap(enum event id, u32 *func)
 {
 	struct list *list = ((struct list *)event_table[id]);
+
+	struct event_descriptor *desc = malloc(sizeof(*desc));
+	desc->func = func;
+	desc->proc = proc_current();
+
 	struct node *iterator = list->head;
-	while (iterator->data != (void *)func) {
+	while (memcmp(iterator->data, (void *)desc, sizeof(*desc)) == 0) {
 		iterator = iterator->next;
 		if (!iterator)
 			return;
@@ -45,7 +58,8 @@ u32 event_trigger(enum event id, u32 *data)
 	}
 
 	while (1) {
-		u32 *func = iterator->data;
+		struct event_descriptor *desc = iterator->data;
+		desc->proc->event = 1 << id;
 		iterator = iterator->next;
 		if (iterator == NULL)
 			break;

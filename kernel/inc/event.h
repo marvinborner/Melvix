@@ -4,7 +4,13 @@
 #define EVENT_H
 
 #include <def.h>
+#include <proc.h>
 #include <sys.h>
+
+struct event_descriptor {
+	u32 *func;
+	struct proc *proc;
+};
 
 u32 event_map(enum event id, u32 *func);
 void event_unmap(enum event id, u32 *func);

@@ -19,12 +19,13 @@ struct proc {
 	enum state state;
 	char name[32];
 	struct regs regs;
-	/* struct proc *parent; */
 	struct proc *next;
+	u32 event;
 };
 
 void proc_init();
 void proc_print();
+struct proc *proc_current();
 void proc_exit();
 struct proc *proc_make();
 
