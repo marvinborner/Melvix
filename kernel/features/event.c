@@ -2,17 +2,20 @@
 
 #include <assert.h>
 #include <def.h>
+#include <list.h>
 #include <sys.h>
 
-u32 (*event_table[])() = { [EVENT_KEYBOARD] = NULL, [EVENT_MOUSE] = NULL };
+struct list *event_table[] = { [EVENT_KEYBOARD] = NULL, [EVENT_MOUSE] = NULL };
 
-u32 event_map(enum event id, u32 (*function)())
+u32 event_map(enum event id, u32 *func)
 {
-	// TODO: Support multiple events of same type
+	// TODO: Check if function is already mapped
 	if (id >= sizeof(event_table) / sizeof(*event_table))
 		return -1;
 
-	event_table[id] = function;
+	if (event_table[id] == NULL)
+		event_table[id] = (struct list *)list_new();
+	list_add((struct list *)event_table[id], (void *)func);
 	return 0;
 }
 
@@ -20,13 +23,21 @@ u32 event_trigger(enum event id, u32 *data)
 {
 	assert(id < sizeof(event_table) / sizeof(*event_table));
 
-	u32 (*location)(u32 *) = event_table[id];
-	if (!location) {
+	struct node *iterator = ((struct list *)event_table[id])->head;
+
+	if (!iterator->data) {
 		printf("Event %d not mapped!\n", id);
-		return -1;
+		return 1;
+	}
+
+	while (1) {
+		u32 *func = iterator->data;
+		iterator = iterator->next;
+		if (iterator == NULL)
+			break;
 	}
 
 	// TODO: Execute event function in ring3 with process stack, ...
-	location(data);
+	/* location(data); */
 	return 0;
 }
