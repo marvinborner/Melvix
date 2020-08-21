@@ -13,6 +13,7 @@ struct list *event_table[] = { [EVENT_KEYBOARD] = NULL, [EVENT_MOUSE] = NULL };
 u32 event_map(enum event id, struct proc *proc, u32 *func)
 {
 	assert(id < sizeof(event_table) / sizeof(*event_table));
+	assert(func);
 
 	if (event_table[id] == NULL)
 		event_table[id] = (struct list *)list_new();
@@ -33,6 +34,7 @@ u32 event_map(enum event id, struct proc *proc, u32 *func)
 void event_unmap(enum event id, struct proc *proc, u32 *func)
 {
 	assert(id < sizeof(event_table) / sizeof(*event_table));
+	assert(func);
 
 	struct list *list = ((struct list *)event_table[id]);
 

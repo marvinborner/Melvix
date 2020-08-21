@@ -84,6 +84,7 @@ struct proc *proc_current()
 
 void proc_exit(struct proc *proc, int status)
 {
+	assert(proc);
 	printf("Process %d exited with status %d\n", proc->pid, status);
 	proc->state = status == 0 ? PROC_ASLEEP : PROC_ERROR;
 
@@ -94,6 +95,9 @@ void proc_exit(struct proc *proc, int status)
 			break;
 		}
 	} while ((iterator = iterator->next) != NULL);
+
+	sti();
+	hlt();
 }
 
 struct proc *proc_make()
