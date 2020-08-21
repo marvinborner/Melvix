@@ -116,7 +116,7 @@ void *read_file(char *path)
 	}
 
 	u32 inode = find_inode(path, current_inode);
-	if (inode == 0)
+	if ((signed)inode <= 0)
 		return 0;
 
 	return read_inode(get_inode(inode));

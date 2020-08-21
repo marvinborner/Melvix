@@ -48,6 +48,7 @@ void event_unmap(enum event id, u32 *func)
 
 u32 event_trigger(enum event id, u32 *data)
 {
+	(void)data;
 	assert(id < sizeof(event_table) / sizeof(*event_table));
 
 	struct node *iterator = ((struct list *)event_table[id])->head;

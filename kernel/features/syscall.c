@@ -47,13 +47,18 @@ void syscall_handler(struct regs *r)
 		printf("exec\n");
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make();
-
 		r->eax = bin_load(path, proc);
-		((u32 *)proc->regs.useresp)[0] = 42;
-		((char *)proc->regs.useresp)[1] = r->ecx;
-		((char *)proc->regs.useresp)[2] = r->edx;
-		((char *)proc->regs.useresp)[3] = r->esi;
-		((char *)proc->regs.useresp)[4] = r->edi;
+		int argc = 3; // TODO: Add argc evaluator
+		char **argv = malloc(sizeof(*argv) * (argc + 1));
+		argv[0] = (char *)r->ecx;
+		argv[1] = (char *)r->edx;
+		argv[2] = (char *)r->esi;
+		argv[3] = (char *)r->edi;
+		argv[4] = NULL;
+		((u32 *)proc->regs.useresp)[0] = argc;
+		((u32 *)proc->regs.useresp)[1] = (u32)argv;
+		if (r->eax)
+			proc->state = PROC_ERROR;
 		break;
 	}
 	case SYS_EXIT: {

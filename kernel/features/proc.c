@@ -30,7 +30,7 @@ void scheduler(struct regs *regs)
 
 	while (current->state == PROC_ASLEEP) {
 		if (!current->next) {
-			assert(root->state == PROC_RUNNING || pid > 1);
+			assert(root->state != PROC_ASLEEP || pid > 1);
 			current = root;
 		} else {
 			current = current->next;
@@ -121,15 +121,18 @@ void proc_init()
 	proc_print();
 
 	_eip = root->regs.eip;
-	_esp = root->regs.esp;
+	_esp = root->regs.useresp;
 
-	char *args[] = { "init", (char *)boot_passed->vbe, NULL };
+	int argc = 2;
+	char **argv = malloc(sizeof(*argv) * (argc + 1));
+	argv[0] = "init";
+	argv[1] = (char *)boot_passed->vbe;
+	argv[2] = NULL;
 
-	((u32 *)_esp)[0] = 2; // First argument (argc)
-	((u32 *)_esp)[1] = (u32)args; // Second argument (argv)
+	((u32 *)_esp)[0] = argc; // First argument (argc)
+	((u32 *)_esp)[1] = (u32)argv; // Second argument (argv)
 
 	proc_jump_userspace();
-	printf("Returned!\n");
 	while (1) {
 	};
 }

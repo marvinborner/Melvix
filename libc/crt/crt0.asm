@@ -9,7 +9,7 @@ global _start
 _start:
 	call main
 
-	push edi
+	push eax
 	push 6
 	call sys1
 	jmp $
