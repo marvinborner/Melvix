@@ -8,11 +8,14 @@
 #include <sys.h>
 #include <vesa.h>
 
-void main(struct vbe *vbe)
+int main(int argc, char **argv)
 {
-	print("Init loaded.\n");
-	int a = exec("/wm", vbe);
+	(void)argc;
 
-	if (a)
-		exit();
+	printf("ARGC: %d\n", argc);
+	printf("ARGV: %x\n", argv);
+	printf("%s loaded.\n", argv[0]);
+
+	exec("/wm", "wm", argv[1], NULL);
+	return 0;
 }

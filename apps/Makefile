@@ -9,7 +9,7 @@ OC = ../cross/opt/bin/i686-elf-objcopy
 # TODO: Fix optimization flags (relocation of functions)
 CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -O0
 
-CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -ffunction-sections -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-emain -I../libc/inc/ -I../libgui/inc/ -fPIE -Duserspace
+CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -I../libc/inc/ -I../libgui/inc/ -fPIE -Duserspace
 
 all: $(COBJS)
 

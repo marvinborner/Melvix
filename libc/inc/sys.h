@@ -35,9 +35,9 @@ int sysv(enum sys num, ...);
 #define read(path) (void *)sys1(SYS_READ, (int)path)
 #define write(path, buf) sys2(SYS_WRITE, (int)path, buf)
 #define exec(path, ...) sysv(SYS_EXEC, (int)path, ##__VA_ARGS__)
-#define exit()                                                                                     \
+#define exit(status)                                                                               \
 	{                                                                                          \
-		sys0(SYS_EXIT);                                                                    \
+		sys1(SYS_EXIT, (int)status);                                                       \
 		while (1) {                                                                        \
 		}                                                                                  \
 	}

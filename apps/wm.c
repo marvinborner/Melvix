@@ -16,11 +16,12 @@ void onkey(u32 scancode)
 	}
 }
 
-void main(char **argv)
+int main(int argc, char **argv)
 {
-	struct vbe *vbe = (struct vbe *)argv[0];
+	struct vbe *vbe = (struct vbe *)argv[1];
 
-	print("WM loaded.\n");
+	printf("%x\n", argc);
+	printf("%s loaded.\n", argv[0]);
 	printf("VBE: %dx%d\n", vbe->width, vbe->height);
 
 	const u32 color[3] = { 0, 0, 0 };
@@ -29,10 +30,10 @@ void main(char **argv)
 	gui_init("/font/spleen-16x32.psfu");
 	gui_write(vbe, 50, 50, text, "hallo");
 
-	printf("onkey: %x\n", onkey);
-	map(EVENT_KEYBOARD, onkey);
+	/* printf("onkey: %x\n", onkey); */
+	/* map(EVENT_KEYBOARD, onkey); */
 
 	while (1) {
 	};
-	exit();
+	return 0;
 }

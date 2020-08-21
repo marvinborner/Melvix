@@ -52,7 +52,7 @@ u32 event_trigger(enum event id, u32 *data)
 
 	struct node *iterator = ((struct list *)event_table[id])->head;
 
-	if (!iterator->data) {
+	if (memcmp(event_table[id], 0, sizeof(struct list)) == 0) {
 		printf("Event %d not mapped!\n", id);
 		return 1;
 	}
@@ -65,7 +65,5 @@ u32 event_trigger(enum event id, u32 *data)
 			break;
 	}
 
-	// TODO: Execute event function in ring3 with process stack, ...
-	/* location(data); */
 	return 0;
 }

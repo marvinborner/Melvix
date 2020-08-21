@@ -15,53 +15,64 @@ void syscall_handler(struct regs *r)
 {
 	enum sys num = r->eax;
 	r->eax = 0;
-	printf("[SYSCALL] %d\n", num);
+	printf("[SYSCALL] %d: ", num);
 
 	switch (num) {
 	case SYS_LOOP: {
+		printf("loop\n");
 		loop();
 		break;
 	}
 	case SYS_MALLOC: {
+		printf("malloc\n");
 		r->eax = (u32)malloc(r->eax);
 		break;
 	}
 	case SYS_FREE: {
+		printf("free\n");
 		free(r->eax);
 		break;
 	}
 	case SYS_READ: {
+		printf("read\n");
 		r->eax = (u32)read_file((char *)r->ebx);
 		break;
 	}
 	case SYS_WRITE: {
+		printf("write\n");
 		// TODO: Write ext2 support
 		break;
 	}
 	case SYS_EXEC: {
+		printf("exec\n");
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make();
-		((u32 *)proc->regs.esp)[0] = r->ecx;
-		((u32 *)proc->regs.esp)[1] = r->edx;
-		((u32 *)proc->regs.esp)[2] = r->esi;
-		((u32 *)proc->regs.esp)[3] = r->edi;
+
 		r->eax = bin_load(path, proc);
+		((u32 *)proc->regs.useresp)[0] = 42;
+		((char *)proc->regs.useresp)[1] = r->ecx;
+		((char *)proc->regs.useresp)[2] = r->edx;
+		((char *)proc->regs.useresp)[3] = r->esi;
+		((char *)proc->regs.useresp)[4] = r->edi;
 		break;
 	}
 	case SYS_EXIT: {
-		proc_exit();
+		printf("exit\n");
+		proc_exit(r->ebx);
 		break;
 	}
 	case SYS_MAP: {
+		printf("map\n");
 		event_map(r->ebx, (u32 *)r->ecx);
 		break;
 	}
 	case SYS_UNMAP: {
+		printf("unmap\n");
 		event_unmap(r->ebx, (u32 *)r->ecx);
 		break;
 	}
 	default: {
-		printf("Unknown syscall!\n");
+		printf("unknown\n");
 		loop();
 		break;
 	}

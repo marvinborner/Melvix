@@ -42,7 +42,7 @@ void scheduler(struct regs *regs)
 
 	if (current->event) {
 		// TODO: Modify and backup EIP
-		printf("Event %d for %d\n", current->event, current->pid);
+		printf("Event %d for pid %d\n", current->event, current->pid);
 		// TODO: Clear bit after resolve
 		current->event = 0;
 	}
@@ -89,8 +89,9 @@ void proc_attach(struct proc *proc)
 	}
 }
 
-void proc_exit()
+void proc_exit(int status)
 {
+	printf("Process %d exited with status %d\n", current->pid, status);
 	current->state = PROC_ASLEEP;
 }
 
@@ -121,7 +122,14 @@ void proc_init()
 
 	_eip = root->regs.eip;
 	_esp = root->regs.esp;
-	((u32 *)_esp)[1] = (u32)boot_passed->vbe; // First argument
+
+	char *args[] = { "init", (char *)boot_passed->vbe, NULL };
+
+	((u32 *)_esp)[0] = 2; // First argument (argc)
+	((u32 *)_esp)[1] = (u32)args; // Second argument (argv)
 
 	proc_jump_userspace();
+	printf("Returned!\n");
+	while (1) {
+	};
 }

@@ -47,6 +47,7 @@ void outl(u16 port, u32 data)
 	__asm__ volatile("outl %0, %1" ::"a"(data), "Nd"(port));
 }
 
+#ifdef kernel
 void cli()
 {
 	__asm__ volatile("cli");
@@ -73,3 +74,4 @@ void loop()
 	cli();
 	idle();
 }
+#endif
