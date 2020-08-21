@@ -33,6 +33,7 @@ int main(int argc, char **argv)
 
 	printf("onkey: %x\n", onkey);
 	map(EVENT_KEYBOARD, onkey);
+	map(EVENT_KEYBOARD, onkey);
 
 	while (1) {
 	};

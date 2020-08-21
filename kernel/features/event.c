@@ -10,40 +10,41 @@
 
 struct list *event_table[] = { [EVENT_KEYBOARD] = NULL, [EVENT_MOUSE] = NULL };
 
-u32 event_map(enum event id, u32 *func)
+u32 event_map(enum event id, struct proc *proc, u32 *func)
 {
-	// TODO: Check if function is already mapped
-	if (id >= sizeof(event_table) / sizeof(*event_table))
-		return -1;
+	assert(id < sizeof(event_table) / sizeof(*event_table));
 
 	if (event_table[id] == NULL)
 		event_table[id] = (struct list *)list_new();
 
+	struct node *iterator = event_table[id]->head;
+	do {
+		assert(((struct event_descriptor *)iterator->data)->func != func);
+	} while ((iterator = iterator->next) != NULL);
+
 	struct event_descriptor *desc = malloc(sizeof(*desc));
 	desc->func = func;
-	desc->proc = proc_current();
+	desc->proc = proc;
 
 	list_add((struct list *)event_table[id], (void *)desc);
 	return 0;
 }
 
-// TODO: Fix unmap
-void event_unmap(enum event id, u32 *func)
+void event_unmap(enum event id, struct proc *proc, u32 *func)
 {
+	assert(id < sizeof(event_table) / sizeof(*event_table));
+
 	struct list *list = ((struct list *)event_table[id]);
 
 	struct event_descriptor *desc = malloc(sizeof(*desc));
 	desc->func = func;
-	desc->proc = proc_current();
+	desc->proc = proc;
 
 	struct node *iterator = list->head;
-	while (memcmp(iterator->data, (void *)desc, sizeof(*desc)) == 0) {
-		iterator = iterator->next;
-		if (!iterator)
-			return;
-	}
-
-	list_remove(list, iterator);
+	do {
+		if (memcmp(iterator->data, desc, sizeof(*desc)) == 0)
+			list_remove(list, iterator);
+	} while ((iterator = iterator->next) != NULL);
 }
 
 u32 event_trigger(enum event id, u32 *data)

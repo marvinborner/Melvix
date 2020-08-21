@@ -68,12 +68,12 @@ void syscall_handler(struct regs *r)
 	}
 	case SYS_MAP: {
 		printf("map\n");
-		event_map(r->ebx, (u32 *)r->ecx);
+		event_map(r->ebx, proc_current(), (u32 *)r->ecx);
 		break;
 	}
 	case SYS_UNMAP: {
 		printf("unmap\n");
-		event_unmap(r->ebx, (u32 *)r->ecx);
+		event_unmap(r->ebx, proc_current(), (u32 *)r->ecx);
 		break;
 	}
 	default: {

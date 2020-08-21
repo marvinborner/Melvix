@@ -38,7 +38,6 @@ void scheduler(struct regs *regs)
 		}
 	}
 
-	/* proc_print(); */
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 
 	if (((struct proc *)current->data)->event) {
@@ -77,7 +76,10 @@ void proc_print()
 
 struct proc *proc_current()
 {
-	return (struct proc *)current->data;
+	if (current)
+		return (struct proc *)current->data;
+	else
+		return NULL;
 }
 
 void proc_exit(struct proc *proc, int status)
@@ -92,7 +94,6 @@ void proc_exit(struct proc *proc, int status)
 			break;
 		}
 	} while ((iterator = iterator->next) != NULL);
-	proc_print();
 }
 
 struct proc *proc_make()
@@ -121,7 +122,6 @@ void proc_init()
 
 	struct node *new = list_add(proc_list, proc_make());
 	bin_load("/init", new->data);
-	proc_print();
 
 	_eip = ((struct proc *)new->data)->regs.eip;
 	_esp = ((struct proc *)new->data)->regs.useresp;
