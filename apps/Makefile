@@ -6,7 +6,6 @@ LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy
 
 # Flags to make the binary smaller TODO: Remove after indirect pointer support!
-# TODO: Fix optimization flags (relocation of functions)
 CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
 
 CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -I../libc/inc/ -I../libgui/inc/ -fPIE -Duserspace

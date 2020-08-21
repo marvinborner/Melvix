@@ -58,12 +58,12 @@ void syscall_handler(struct regs *r)
 		((u32 *)proc->regs.useresp)[0] = argc;
 		((u32 *)proc->regs.useresp)[1] = (u32)argv;
 		if (r->eax)
-			proc->state = PROC_ERROR;
+			proc_exit(proc, r->eax);
 		break;
 	}
 	case SYS_EXIT: {
 		printf("exit\n");
-		proc_exit(r->ebx);
+		proc_exit(proc_current(), r->ebx);
 		break;
 	}
 	case SYS_MAP: {

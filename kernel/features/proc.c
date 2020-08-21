@@ -4,6 +4,7 @@
 #include <boot.h>
 #include <cpu.h>
 #include <interrupts.h>
+#include <list.h>
 #include <load.h>
 #include <mem.h>
 #include <print.h>
@@ -12,39 +13,40 @@
 #include <timer.h>
 
 u32 pid = 0;
-struct proc *root;
-struct proc *current;
-struct proc *last;
+struct list *proc_list;
+struct node *current;
 
 void scheduler(struct regs *regs)
 {
 	if (current)
-		memcpy(&current->regs, regs, sizeof(struct regs));
+		memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
 
 	timer_handler();
 
 	if (current && current->next)
 		current = current->next;
 	else
-		current = root;
+		current = proc_list->head;
 
-	while (current->state == PROC_ASLEEP) {
-		if (!current->next) {
-			assert(root->state != PROC_ASLEEP || pid > 1);
-			current = root;
+	while (!current || ((struct proc *)current->data)->state == PROC_ASLEEP) {
+		if (!current || !current->next || !current->next->data) {
+			assert(proc_list->head);
+			assert(((struct proc *)proc_list->head->data)->state != PROC_ASLEEP);
+			current = proc_list->head;
 		} else {
 			current = current->next;
 		}
 	}
 
 	/* proc_print(); */
-	memcpy(regs, &current->regs, sizeof(struct regs));
+	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 
-	if (current->event) {
+	if (((struct proc *)current->data)->event) {
+		struct proc *proc = (struct proc *)current->data;
 		// TODO: Modify and backup EIP
-		printf("Event %d for pid %d\n", current->event, current->pid);
+		printf("Event %d for pid %d\n", proc->event, proc->pid);
 		// TODO: Clear bit after resolve
-		current->event = 0;
+		proc->event = 0;
 	}
 
 	if (regs->cs != GDT_USER_CODE_OFFSET) {
@@ -56,43 +58,41 @@ void scheduler(struct regs *regs)
 		regs->cs = GDT_USER_CODE_OFFSET;
 		regs->eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
 	}
-	/* printf("%d", current->pid); */
+	/* printf("{%d}", ((struct proc *)current->data)->pid); */
 }
 
 void proc_print()
 {
-	struct proc *proc = root;
+	struct node *node = proc_list->head;
 
-	printf("\n");
-	while (proc) {
+	printf("\nPROCESSES\n");
+	struct proc *proc;
+	while (node && (proc = ((struct proc *)node->data))) {
 		printf("Process %d [%s]: %s\n", proc->pid,
 		       proc->state == PROC_RUNNING ? "running" : "sleeping", proc->name);
-		proc = proc->next;
+		node = node->next;
 	}
 	printf("\n");
 }
 
 struct proc *proc_current()
 {
-	return current;
+	return (struct proc *)current->data;
 }
 
-void proc_attach(struct proc *proc)
+void proc_exit(struct proc *proc, int status)
 {
-	if (!last->next) {
-		last->next = proc;
-	} else {
-		struct proc *save = last;
-		while (save->next)
-			save = save->next;
-		save->next = proc;
-	}
-}
+	printf("Process %d exited with status %d\n", proc->pid, status);
+	proc->state = status == 0 ? PROC_ASLEEP : PROC_ERROR;
 
-void proc_exit(int status)
-{
-	printf("Process %d exited with status %d\n", current->pid, status);
-	current->state = PROC_ASLEEP;
+	struct node *iterator = proc_list->head;
+	do {
+		if (iterator->data == proc) {
+			list_remove(proc_list, iterator);
+			break;
+		}
+	} while ((iterator = iterator->next) != NULL);
+	proc_print();
 }
 
 struct proc *proc_make()
@@ -100,11 +100,10 @@ struct proc *proc_make()
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = pid++;
 	proc->state = PROC_RUNNING;
-	proc->next = NULL;
 
 	if (current)
-		proc_attach(proc);
-	last = proc;
+		list_add(proc_list, proc);
+
 	return proc;
 }
 
@@ -113,15 +112,19 @@ extern void proc_jump_userspace();
 u32 _esp, _eip;
 void proc_init()
 {
+	if (proc_list)
+		return;
+
 	cli();
 	irq_install_handler(0, scheduler);
+	proc_list = list_new();
 
-	root = proc_make();
-	bin_load("/init", root);
+	struct node *new = list_add(proc_list, proc_make());
+	bin_load("/init", new->data);
 	proc_print();
 
-	_eip = root->regs.eip;
-	_esp = root->regs.useresp;
+	_eip = ((struct proc *)new->data)->regs.eip;
+	_esp = ((struct proc *)new->data)->regs.useresp;
 
 	int argc = 2;
 	char **argv = malloc(sizeof(*argv) * (argc + 1));

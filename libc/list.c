@@ -23,14 +23,14 @@ struct node *list_new_node()
 	return node;
 }
 
-void list_add_node(struct list *list, struct node *node)
+struct node *list_add_node(struct list *list, struct node *node)
 {
 	if (list == NULL)
-		return;
+		return NULL;
 
 	if (list->head == NULL) {
 		list->head = node;
-		return;
+		return list->head;
 	}
 
 	struct node *iterator = list->head;
@@ -42,13 +42,14 @@ void list_add_node(struct list *list, struct node *node)
 		}
 		iterator = iterator->next;
 	}
+	return node;
 }
 
-void list_add(struct list *list, void *data)
+struct node *list_add(struct list *list, void *data)
 {
 	struct node *node = list_new_node();
 	node->data = data;
-	list_add_node(list, node);
+	return list_add_node(list, node);
 }
 
 // Maybe list_remove_node?
