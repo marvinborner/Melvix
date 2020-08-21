@@ -1,5 +1,5 @@
 ; Melvin's awesome ext2 bootloader
-; I'm not really good in assembly, there are MANY ways to improve this!
+; I'm not really good at assembly, there are MANY ways to improve this!
 ; MIT License, Copyright (c) 2020 Marvin Borner
 
 ; Definitions
