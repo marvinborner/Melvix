@@ -19,6 +19,9 @@ u32 rand()
 
 char *randstr(u32 size)
 {
+	if (!size)
+		return NULL;
+
 	char *buf = malloc(size + 1);
 	const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 

@@ -16,7 +16,9 @@ void syscall_handler(struct regs *r)
 {
 	enum sys num = r->eax;
 	r->eax = 0;
-	printf("[SYSCALL] %d: ", num);
+
+	if (num != SYS_RECEIVE)
+		printf("[SYSCALL] %d: ", num);
 
 	switch (num) {
 	case SYS_LOOP: {
@@ -85,6 +87,17 @@ void syscall_handler(struct regs *r)
 	case SYS_RESOLVE: {
 		printf("resolve\n");
 		proc_resolve(proc_current());
+		break;
+	}
+	case SYS_SEND: {
+		printf("send\n");
+		proc_send(proc_current(), proc_from_pid(r->ebx), r->ecx, (void *)r->edx);
+		break;
+	}
+	case SYS_RECEIVE: {
+		/* printf("receive\n"); */
+		struct proc_message *msg = proc_receive(proc_current());
+		r->eax = (u32)(msg ? msg->msg : NULL);
 		break;
 	}
 	default: {

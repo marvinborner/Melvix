@@ -7,6 +7,7 @@
 #include <event.h>
 #include <interrupts.h>
 #include <list.h>
+#include <sys.h>
 
 #define PROC_QUANTUM 42 // Milliseconds
 
@@ -25,6 +26,7 @@ struct proc {
 	struct regs regs_backup;
 	enum proc_state state;
 	struct list *events;
+	struct list *messages;
 };
 
 struct proc_event {
@@ -32,10 +34,19 @@ struct proc_event {
 	void *data;
 };
 
+struct proc_message {
+	struct proc *src;
+	struct proc *dest;
+	struct message *msg;
+};
+
 void proc_init();
 void proc_print();
 struct proc *proc_current();
+void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data);
+struct proc_message *proc_receive(struct proc *proc);
 void proc_resolve(struct proc *proc);
+struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
 struct proc *proc_make();
 

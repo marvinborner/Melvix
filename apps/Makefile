@@ -1,6 +1,6 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
-COBJS = init.o wm.o
+COBJS = init.o wm.o test.o
 CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy

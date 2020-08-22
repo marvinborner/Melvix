@@ -10,5 +10,6 @@ int main(int argc, char **argv)
 	printf("[%s loaded]\n", argv[0]);
 
 	int wm = exec("/wm", "wm", argv[1], NULL);
-	return wm;
+	int test = exec("/test", "test", NULL);
+	return wm + test;
 }

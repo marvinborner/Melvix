@@ -99,12 +99,47 @@ struct proc *proc_current()
 		return NULL;
 }
 
+void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data)
+{
+	assert(src && dest);
+	struct proc_message *msg = malloc(sizeof(*msg));
+	msg->src = src;
+	msg->dest = dest;
+	msg->msg = malloc(sizeof(struct message));
+	msg->msg->src = src->pid;
+	msg->msg->type = type;
+	msg->msg->data = data;
+	list_add(dest->messages, msg);
+}
+
+struct proc_message *proc_receive(struct proc *proc)
+{
+	if (proc->messages && proc->messages->head) {
+		struct proc_message *msg = proc->messages->head->data;
+		list_remove(proc->messages, proc->messages->head);
+		return msg;
+	} else {
+		return NULL;
+	}
+}
+
 void proc_resolve(struct proc *proc)
 {
 	proc->state = PROC_RESOLVED;
 	quantum = 0;
 	sti();
 	hlt();
+}
+
+struct proc *proc_from_pid(u32 pid)
+{
+	struct node *iterator = proc_list->head;
+	do {
+		if (((struct proc *)iterator->data)->pid == pid) {
+			return iterator->data;
+		}
+	} while ((iterator = iterator->next) != NULL);
+	return NULL;
 }
 
 void proc_exit(struct proc *proc, int status)
@@ -130,6 +165,7 @@ struct proc *proc_make()
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = pid++;
 	proc->events = list_new();
+	proc->messages = list_new();
 	proc->state = PROC_DEFAULT;
 
 	if (current)
