@@ -11,5 +11,6 @@ int main(int argc, char **argv)
 
 	int wm = exec("/wm", "wm", argv[1], NULL);
 	int test = exec("/test", "test", NULL);
+
 	return wm + test;
 }

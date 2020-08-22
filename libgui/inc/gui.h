@@ -16,12 +16,21 @@ struct font {
 	int char_size;
 };
 
-void gui_write(struct vbe *vbe, int x, int y, const u32 c[3], char *text);
+struct window {
+	int x;
+	int y;
+	u16 width;
+	u16 height;
+	u8 *fb;
+};
+
 void gui_init(char *font_path);
 
 /**
  * Wrappers
  */
-#define gui_new_window() msg_send(1, MSG_NEW_WINDOW, NULL);
+
+#define gui_new_window()                                                                           \
+	(msg_send(1, MSG_NEW_WINDOW, NULL), (struct window *)msg_receive_loop()->data)
 
 #endif

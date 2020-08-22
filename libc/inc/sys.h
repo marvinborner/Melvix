@@ -12,6 +12,7 @@ enum sys {
 	SYS_WRITE, // Write to file
 	SYS_EXEC, // Execute path
 	SYS_EXIT, // Exit current process
+	SYS_YIELD, // Switch to next process
 	SYS_TIME, // Get kernel time
 	SYS_MAP, // Map event to function
 	SYS_UNMAP, // Unmap event
@@ -52,6 +53,7 @@ int sysv(enum sys num, ...);
 		while (1) {                                                                        \
 		}                                                                                  \
 	}
+#define yield() (int)sys0(SYS_YIELD)
 #define time() (int)sys0(SYS_TIME)
 
 #define event_map(id, func) sys2(SYS_MAP, (int)(id), (int)(func))

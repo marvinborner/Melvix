@@ -48,6 +48,7 @@ struct proc_message *proc_receive(struct proc *proc);
 void proc_resolve(struct proc *proc);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
+void proc_yield();
 struct proc *proc_make();
 
 #endif

@@ -17,7 +17,7 @@ void syscall_handler(struct regs *r)
 	enum sys num = r->eax;
 	r->eax = 0;
 
-	if (num != SYS_RECEIVE)
+	if (num != SYS_RECEIVE && num != SYS_YIELD)
 		printf("[SYSCALL] %d: ", num);
 
 	switch (num) {
@@ -67,6 +67,11 @@ void syscall_handler(struct regs *r)
 	case SYS_EXIT: {
 		printf("exit\n");
 		proc_exit(proc_current(), r->ebx);
+		break;
+	}
+	case SYS_YIELD: {
+		/* printf("yield\n"); */
+		proc_yield();
 		break;
 	}
 	case SYS_TIME: {

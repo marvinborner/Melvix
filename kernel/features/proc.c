@@ -17,8 +17,11 @@ u32 quantum = 0;
 struct list *proc_list;
 struct node *current;
 
+// TODO: Use less memcpy and only copy relevant registers
 void scheduler(struct regs *regs)
 {
+	timer_handler();
+
 	if (quantum == 0) {
 		quantum = PROC_QUANTUM;
 	} else {
@@ -33,8 +36,6 @@ void scheduler(struct regs *regs)
 
 	if (current)
 		memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
-
-	timer_handler();
 
 	if (current && current->next)
 		current = current->next;
@@ -71,9 +72,9 @@ void scheduler(struct regs *regs)
 
 		quantum = PROC_QUANTUM;
 		proc->state = PROC_IN_EVENT;
-		list_remove(proc->events, proc->events->head);
 		regs->useresp += 4;
 		((u32 *)regs->useresp)[1] = (u32)proc_event->data; // Huh
+		list_remove(proc->events, proc->events->head);
 	}
 
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
@@ -156,6 +157,12 @@ void proc_exit(struct proc *proc, int status)
 	quantum = 0; // TODO: Add quantum to each process struct?
 	sti();
 	hlt();
+}
+
+// TODO: More instant yield
+void proc_yield()
+{
+	quantum = 0;
 }
 
 struct proc *proc_make()
