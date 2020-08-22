@@ -12,6 +12,7 @@ enum sys {
 	SYS_WRITE,
 	SYS_EXEC,
 	SYS_EXIT,
+	SYS_TIME,
 	SYS_MAP,
 	SYS_UNMAP,
 	SYS_RESOLVE
@@ -42,6 +43,7 @@ int sysv(enum sys num, ...);
 		while (1) {                                                                        \
 		}                                                                                  \
 	}
+#define time() sys0(SYS_TIME)
 #define event_map(id, func) sys2(SYS_MAP, (int)id, (int)func)
 #define event_unmap(id, func) sys2(SYS_UNMAP, (int)id, (int)func)
 #define event_resolve() sys0(SYS_RESOLVE) // TODO: Find method making event_resolve obsolete

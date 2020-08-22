@@ -14,6 +14,11 @@ void timer_phase(int hz)
 	outb(0x40, divisor >> 8);
 }
 
+u32 timer_get()
+{
+	return timer_ticks;
+}
+
 // Executed 1000 times per second
 void timer_handler()
 {

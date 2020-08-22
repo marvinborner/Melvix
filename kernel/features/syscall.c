@@ -10,6 +10,7 @@
 #include <proc.h>
 #include <str.h>
 #include <sys.h>
+#include <timer.h>
 
 void syscall_handler(struct regs *r)
 {
@@ -64,6 +65,11 @@ void syscall_handler(struct regs *r)
 	case SYS_EXIT: {
 		printf("exit\n");
 		proc_exit(proc_current(), r->ebx);
+		break;
+	}
+	case SYS_TIME: {
+		printf("time\n");
+		r->eax = timer_get();
 		break;
 	}
 	case SYS_MAP: {

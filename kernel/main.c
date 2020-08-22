@@ -1,15 +1,11 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include "config.h"
 #include <boot.h>
 #include <cpu.h>
-#include <def.h>
 #include <fs.h>
-#include <interrupts.h>
 #include <keyboard.h>
 #include <load.h>
 #include <mem.h>
-#include <print.h>
 #include <serial.h>
 #include <syscall.h>
 #include <timer.h>

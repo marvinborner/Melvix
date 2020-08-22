@@ -4,6 +4,7 @@
 #include <gui.h>
 #include <input.h>
 #include <print.h>
+#include <random.h>
 #include <sys.h>
 #include <vesa.h>
 
@@ -18,6 +19,8 @@ void onkey(u32 scancode)
 
 int main(int argc, char **argv)
 {
+	srand(time());
+
 	printf("ARGC: %d\n", argc);
 	printf("[%s loaded]\n", argv[0]);
 
