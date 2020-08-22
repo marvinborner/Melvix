@@ -13,11 +13,19 @@
 #include <timer.h>
 
 u32 pid = 0;
+u32 quantum = 0;
 struct list *proc_list;
 struct node *current;
 
 void scheduler(struct regs *regs)
 {
+	if (quantum == 0) {
+		quantum = PROC_QUANTUM;
+	} else {
+		quantum--;
+		return;
+	}
+
 	if (current)
 		memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
 
@@ -28,10 +36,9 @@ void scheduler(struct regs *regs)
 	else
 		current = proc_list->head;
 
-	while (!current || ((struct proc *)current->data)->state == PROC_ASLEEP) {
+	while (!current) {
 		if (!current || !current->next || !current->next->data) {
 			assert(proc_list->head);
-			assert(((struct proc *)proc_list->head->data)->state != PROC_ASLEEP);
 			current = proc_list->head;
 		} else {
 			current = current->next;
@@ -67,8 +74,7 @@ void proc_print()
 	printf("\nPROCESSES\n");
 	struct proc *proc;
 	while (node && (proc = ((struct proc *)node->data))) {
-		printf("Process %d [%s]: %s\n", proc->pid,
-		       proc->state == PROC_RUNNING ? "running" : "sleeping", proc->name);
+		printf("Process %d: %s\n", proc->pid, proc->name);
 		node = node->next;
 	}
 	printf("\n");
@@ -86,7 +92,6 @@ void proc_exit(struct proc *proc, int status)
 {
 	assert(proc);
 	printf("Process %d exited with status %d\n", proc->pid, status);
-	proc->state = status == 0 ? PROC_ASLEEP : PROC_ERROR;
 
 	struct node *iterator = proc_list->head;
 	do {
@@ -104,7 +109,6 @@ struct proc *proc_make()
 {
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = pid++;
-	proc->state = PROC_RUNNING;
 
 	if (current)
 		list_add(proc_list, proc);

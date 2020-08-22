@@ -6,17 +6,16 @@
 #include <def.h>
 #include <interrupts.h>
 
+#define PROC_QUANTUM 42 // Milliseconds
+
 #define EFLAGS_ALWAYS 0x2 // Always one
 #define EFLAGS_INTERRUPTS 0x200 // Enable interrupts
 
 #define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
 #define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
 
-enum state { PROC_RUNNING, PROC_ASLEEP, PROC_ERROR };
-
 struct proc {
 	u32 pid;
-	enum state state;
 	char name[32];
 	struct regs regs;
 	u32 event;
