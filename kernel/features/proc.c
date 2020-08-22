@@ -47,14 +47,6 @@ void scheduler(struct regs *regs)
 
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 
-	if (((struct proc *)current->data)->event) {
-		struct proc *proc = (struct proc *)current->data;
-		// TODO: Modify and backup EIP
-		printf("Event %d for pid %d\n", proc->event, proc->pid);
-		// TODO: Clear bit after resolve
-		proc->event = 0;
-	}
-
 	if (regs->cs != GDT_USER_CODE_OFFSET) {
 		regs->gs = GDT_USER_DATA_OFFSET;
 		regs->fs = GDT_USER_DATA_OFFSET;
@@ -64,6 +56,18 @@ void scheduler(struct regs *regs)
 		regs->cs = GDT_USER_CODE_OFFSET;
 		regs->eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
 	}
+
+	struct proc *proc = (struct proc *)current->data;
+	if (!proc->events || !proc->events->head)
+		return;
+
+	struct node *iterator = proc->events->head;
+	do {
+		struct proc_event *proc_event = iterator->data;
+		printf("Event %d for pid %d\n", proc_event->desc->id, proc->pid);
+		list_remove(proc->events, iterator);
+	} while ((iterator = iterator->next) != NULL);
+
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
 }
 
@@ -101,6 +105,7 @@ void proc_exit(struct proc *proc, int status)
 		}
 	} while ((iterator = iterator->next) != NULL);
 
+	quantum = 0; // TODO: Add quantum to each process struct?
 	sti();
 	hlt();
 }
@@ -109,6 +114,7 @@ struct proc *proc_make()
 {
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = pid++;
+	proc->events = list_new();
 
 	if (current)
 		list_add(proc_list, proc);

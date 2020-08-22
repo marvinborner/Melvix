@@ -24,10 +24,11 @@ u32 event_map(enum event id, struct proc *proc, u32 *func)
 	} while ((iterator = iterator->next) != NULL);
 
 	struct event_descriptor *desc = malloc(sizeof(*desc));
+	desc->id = id;
 	desc->func = func;
 	desc->proc = proc;
 
-	list_add((struct list *)event_table[id], (void *)desc);
+	list_add(event_table[id], (void *)desc);
 	return 0;
 }
 
@@ -36,9 +37,10 @@ void event_unmap(enum event id, struct proc *proc, u32 *func)
 	assert(id < sizeof(event_table) / sizeof(*event_table));
 	assert(func);
 
-	struct list *list = ((struct list *)event_table[id]);
+	struct list *list = event_table[id];
 
 	struct event_descriptor *desc = malloc(sizeof(*desc));
+	desc->id = id;
 	desc->func = func;
 	desc->proc = proc;
 
@@ -49,21 +51,24 @@ void event_unmap(enum event id, struct proc *proc, u32 *func)
 	} while ((iterator = iterator->next) != NULL);
 }
 
-u32 event_trigger(enum event id, u32 *data)
+u32 event_trigger(enum event id, void *data)
 {
 	(void)data;
 	assert(id < sizeof(event_table) / sizeof(*event_table));
 
-	struct node *iterator = ((struct list *)event_table[id])->head;
+	struct node *iterator = event_table[id]->head;
 
-	if (memcmp(event_table[id], 0, sizeof(struct list)) == 0) {
+	if (memcmp(event_table[id], 0, sizeof(struct list)) == 0 || !event_table[id]->head) {
 		printf("Event %d not mapped!\n", id);
 		return 1;
 	}
 
 	while (1) {
+		struct proc_event *proc_event = malloc(sizeof(*proc_event));
 		struct event_descriptor *desc = iterator->data;
-		desc->proc->event = 1 << id;
+		proc_event->desc = desc;
+		proc_event->data = data;
+		list_add(desc->proc->events, proc_event);
 		iterator = iterator->next;
 		if (iterator == NULL)
 			break;

@@ -4,7 +4,9 @@
 #define PROC_H
 
 #include <def.h>
+#include <event.h>
 #include <interrupts.h>
+#include <list.h>
 
 #define PROC_QUANTUM 42 // Milliseconds
 
@@ -18,7 +20,12 @@ struct proc {
 	u32 pid;
 	char name[32];
 	struct regs regs;
-	u32 event;
+	struct list *events;
+};
+
+struct proc_event {
+	struct event_descriptor *desc;
+	void *data;
 };
 
 void proc_init();
