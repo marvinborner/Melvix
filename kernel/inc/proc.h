@@ -16,10 +16,14 @@
 #define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
 #define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
 
+enum proc_state { PROC_DEFAULT, PROC_IN_EVENT, PROC_RESOLVED };
+
 struct proc {
 	u32 pid;
 	char name[32];
 	struct regs regs;
+	struct regs regs_backup;
+	enum proc_state state;
 	struct list *events;
 };
 
@@ -31,6 +35,7 @@ struct proc_event {
 void proc_init();
 void proc_print();
 struct proc *proc_current();
+void proc_resolve(struct proc *proc);
 void proc_exit(struct proc *proc, int status);
 struct proc *proc_make();
 

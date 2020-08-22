@@ -76,6 +76,11 @@ void syscall_handler(struct regs *r)
 		event_unmap(r->ebx, proc_current(), (u32 *)r->ecx);
 		break;
 	}
+	case SYS_RESOLVE: {
+		printf("resolve\n");
+		proc_resolve(proc_current());
+		break;
+	}
 	default: {
 		printf("unknown\n");
 		loop();

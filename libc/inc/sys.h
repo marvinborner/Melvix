@@ -13,7 +13,8 @@ enum sys {
 	SYS_EXEC,
 	SYS_EXIT,
 	SYS_MAP,
-	SYS_UNMAP
+	SYS_UNMAP,
+	SYS_RESOLVE
 };
 enum event { EVENT_KEYBOARD, EVENT_MOUSE };
 
@@ -41,8 +42,9 @@ int sysv(enum sys num, ...);
 		while (1) {                                                                        \
 		}                                                                                  \
 	}
-#define map(id, func) sys2(SYS_MAP, (int)id, (int)func)
-#define unmap(id, func) sys2(SYS_UNMAP, (int)id, (int)func)
+#define event_map(id, func) sys2(SYS_MAP, (int)id, (int)func)
+#define event_unmap(id, func) sys2(SYS_UNMAP, (int)id, (int)func)
+#define event_resolve() sys0(SYS_RESOLVE) // TODO: Find method making event_resolve obsolete
 
 #endif
 #endif

@@ -24,12 +24,11 @@ void keyboard_handler()
 	}
 
 	// TODO: "Merge" scancode to linux keycode?
-	printf("%x %x = %x\n", scancode, state ? 0xe0 : 0, merged);
+	/* printf("%x %x = %x\n", scancode, state ? 0xe0 : 0, merged); */
 
 	if ((scancode & 0x80) == 0) { // PRESS
 		event_trigger(EVENT_KEYBOARD, (u32 *)scancode);
-	} else
-		print("\n");
+	}
 
 	state = 0;
 	merged = 0;

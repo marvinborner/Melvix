@@ -1,6 +1,5 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include <cpu.h>
 #include <def.h>
 #include <gui.h>
 #include <input.h>
@@ -10,10 +9,11 @@
 
 void onkey(u32 scancode)
 {
-	printf("KEY EVENT %d\n", scancode);
+	printf("WM KEY EVENT %d\n", scancode);
 	if (KEY_ALPHANUMERIC(scancode)) {
 		printf("ALPHANUMERIC!\n");
 	}
+	event_resolve();
 }
 
 int main(int argc, char **argv)
@@ -31,8 +31,7 @@ int main(int argc, char **argv)
 	gui_init("/font/spleen-16x32.psfu");
 	gui_write(vbe, 50, 50, text, "hallo");
 
-	printf("onkey: %x\n", onkey);
-	map(EVENT_KEYBOARD, onkey);
+	event_map(EVENT_KEYBOARD, onkey);
 
 	while (1) {
 	};

@@ -26,6 +26,11 @@ void scheduler(struct regs *regs)
 		return;
 	}
 
+	if (current && ((struct proc *)current->data)->state == PROC_RESOLVED) {
+		memcpy(regs, &((struct proc *)current->data)->regs_backup, sizeof(struct regs));
+		((struct proc *)current->data)->state = PROC_DEFAULT;
+	}
+
 	if (current)
 		memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
 
@@ -57,16 +62,18 @@ void scheduler(struct regs *regs)
 		regs->eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
 	}
 
-	struct proc *proc = (struct proc *)current->data;
-	if (!proc->events || !proc->events->head)
-		return;
-
-	struct node *iterator = proc->events->head;
-	do {
-		struct proc_event *proc_event = iterator->data;
+	struct proc *proc = current->data;
+	if (proc->state == PROC_DEFAULT && proc->events && proc->events->head) {
+		struct proc_event *proc_event = proc->events->head->data;
 		printf("Event %d for pid %d\n", proc_event->desc->id, proc->pid);
-		list_remove(proc->events, iterator);
-	} while ((iterator = iterator->next) != NULL);
+		memcpy(&proc->regs_backup, regs, sizeof(struct regs));
+		regs->eip = (u32)proc_event->desc->func;
+
+		quantum = PROC_QUANTUM;
+		proc->state = PROC_IN_EVENT;
+		list_remove(proc->events, proc->events->head);
+		((u32 *)regs->useresp)[1] = (u32)proc_event->data; // Huh
+	}
 
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
 }
@@ -77,7 +84,7 @@ void proc_print()
 
 	printf("\nPROCESSES\n");
 	struct proc *proc;
-	while (node && (proc = ((struct proc *)node->data))) {
+	while (node && (proc = node->data)) {
 		printf("Process %d: %s\n", proc->pid, proc->name);
 		node = node->next;
 	}
@@ -87,9 +94,17 @@ void proc_print()
 struct proc *proc_current()
 {
 	if (current)
-		return (struct proc *)current->data;
+		return current->data;
 	else
 		return NULL;
+}
+
+void proc_resolve(struct proc *proc)
+{
+	proc->state = PROC_RESOLVED;
+	quantum = 0;
+	sti();
+	hlt();
 }
 
 void proc_exit(struct proc *proc, int status)
@@ -115,6 +130,7 @@ struct proc *proc_make()
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = pid++;
 	proc->events = list_new();
+	proc->state = PROC_DEFAULT;
 
 	if (current)
 		list_add(proc_list, proc);
