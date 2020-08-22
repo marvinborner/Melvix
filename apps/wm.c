@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 	gui_init("/font/spleen-16x32.psfu");
 	gui_write(vbe, 50, 50, text, "hallo");
 
-	//event_map(EVENT_KEYBOARD, onkey); // TODO: Fix events
+	event_map(EVENT_KEYBOARD, onkey);
 
 	struct message *msg;
 	while (1) { // TODO: Remove continuous polling?

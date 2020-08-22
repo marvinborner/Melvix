@@ -72,6 +72,7 @@ void scheduler(struct regs *regs)
 		quantum = PROC_QUANTUM;
 		proc->state = PROC_IN_EVENT;
 		list_remove(proc->events, proc->events->head);
+		regs->useresp += 4;
 		((u32 *)regs->useresp)[1] = (u32)proc_event->data; // Huh
 	}
 
@@ -93,10 +94,7 @@ void proc_print()
 
 struct proc *proc_current()
 {
-	if (current)
-		return current->data;
-	else
-		return NULL;
+	return current ? current->data : NULL;
 }
 
 void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data)
