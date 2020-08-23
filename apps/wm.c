@@ -13,6 +13,7 @@
 struct vbe *vbe;
 struct window *direct; // Direct video memory window
 struct window *root; // Root window (wallpaper etc.)
+struct window *exchange; // Exchange buffer
 struct list *windows;
 
 void onkey(u32 scancode)
@@ -49,28 +50,30 @@ int main(int argc, char **argv)
 
 	windows = list_new();
 	root = new_window(0, 0, vbe->width, vbe->height);
+	exchange = new_window(0, 0, vbe->width, vbe->height);
 	direct = malloc(sizeof(*direct));
 	memcpy(direct, root, sizeof(*direct));
 	direct->fb = vbe->fb;
-
-	const u32 background[3] = { 0x10, 0x10, 0x10 };
-	gui_fill(root, background);
-	gui_load_wallpaper(root, "/wall.bmp");
 	list_add(windows, root);
+
+	const u32 background[3] = { 0x0, 0x0, 0x0 };
+	gui_fill(root, background);
+	// TODO: Fix wallpaper
+	/* gui_load_wallpaper(root, "/wall.bmp"); */
 
 	// TODO: Remove async events completely
 	/* event_map(EVENT_KEYBOARD, onkey); */
 
-	u32 last_time = 0;
 	struct message *msg;
 	while (1) {
-		u32 current_time = time();
-		if (current_time - last_time > 1000 / 60) { // 60Hz
-			struct window *win;
-			if (windows->head && (win = windows->head->data))
-				gui_win_on_win(win, direct, 0, 0);
+		if (windows->head && windows->head->data) {
+			struct node *iterator = windows->head;
+			do {
+				struct window *win = iterator->data;
+				gui_win_on_win(win, exchange, win->x, win->y);
+			} while ((iterator = iterator->next) != NULL);
+			gui_win_on_win(exchange, direct, 0, 0);
 		}
-		last_time = current_time;
 
 		if (!(msg = msg_receive())) {
 			yield();

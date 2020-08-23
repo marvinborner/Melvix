@@ -50,8 +50,8 @@ void gui_load_image(struct window *win, char *path, int x, int y)
 	u8 *srcfb = bmp->data;
 	u8 *destfb = win->fb;
 	int bpl = bmp->bpp >> 3;
-	for (u32 cy = 0; cy <= bmp->height; cy++) {
-		for (u32 cx = 0; cx <= bmp->width; cx++) {
+	for (u32 cy = 0; cy < bmp->height; cy++) {
+		for (u32 cx = 0; cx < bmp->width; cx++) {
 			destfb[bpl * cx + 0] = srcfb[bpl * cx + 0];
 			destfb[bpl * cx + 1] = srcfb[bpl * cx + 1];
 			destfb[bpl * cx + 2] = srcfb[bpl * cx + 2];
@@ -68,15 +68,11 @@ void gui_load_wallpaper(struct window *win, char *path)
 
 void gui_win_on_win(struct window *src, struct window *dest, int x, int y)
 {
-	// TODO: x, y image coords
-	(void)x;
-	(void)y;
-
 	u8 *srcfb = src->fb;
-	u8 *destfb = dest->fb;
+	u8 *destfb = &dest->fb[x * (dest->bpp >> 3) + y * dest->pitch];
 	int bpl = dest->bpp >> 3;
-	for (u32 cy = 0; cy <= src->height; cy++) {
-		for (u32 cx = 0; cx <= src->width; cx++) {
+	for (u32 cy = 0; cy < src->height; cy++) {
+		for (u32 cx = 0; cx < src->width; cx++) {
 			destfb[bpl * cx + 0] = srcfb[bpl * cx + 0];
 			destfb[bpl * cx + 1] = srcfb[bpl * cx + 1];
 			destfb[bpl * cx + 2] = srcfb[bpl * cx + 2];
@@ -92,8 +88,8 @@ void gui_draw_rectangle(struct window *win, int x1, int y1, int x2, int y2, cons
 
 	int pos1 = x1 * bpl + y1 * win->pitch;
 	u8 *draw = &win->fb[pos1];
-	for (int i = 0; i <= y2 - y1; i++) {
-		for (int j = 0; j <= x2 - x1; j++) {
+	for (int i = 0; i < y2 - y1; i++) {
+		for (int j = 0; j < x2 - x1; j++) {
 			draw[bpl * j + 0] = color[2];
 			draw[bpl * j + 1] = color[1];
 			draw[bpl * j + 2] = color[0];
