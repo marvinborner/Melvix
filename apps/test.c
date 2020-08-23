@@ -5,7 +5,6 @@
 int main()
 {
 	print("[test loaded]\n");
-	printf("TIME: %d\n", time());
 
 	/* struct window *win = gui_new_window(); */
 	msg_send(1, MSG_NEW_WINDOW, NULL);

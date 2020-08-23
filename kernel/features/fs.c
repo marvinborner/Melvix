@@ -70,7 +70,7 @@ void *read_inode(struct inode *in)
 
 	int indirect;
 
-	int blocknum = 0;
+	int blocknum;
 	char *data;
 	for (int i = 0; i < num_blocks; i++) {
 		if (i < 12) {
@@ -168,7 +168,7 @@ void ls_root()
 	struct dirent *d = (struct dirent *)buf;
 
 	int sum = 0;
-	int calc = 0;
+	int calc;
 	printf("\nRoot directory:\n");
 	do {
 		calc = (sizeof(struct dirent) + d->name_len + 4) & ~0x3;

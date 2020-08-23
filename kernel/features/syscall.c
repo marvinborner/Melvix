@@ -28,7 +28,7 @@ void syscall_handler(struct regs *r)
 	}
 	case SYS_MALLOC: {
 		printf("malloc\n");
-		r->eax = (u32)malloc(r->eax);
+		r->eax = (u32)malloc(r->ebx);
 		break;
 	}
 	case SYS_FREE: {

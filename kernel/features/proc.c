@@ -43,7 +43,7 @@ void scheduler(struct regs *regs)
 		current = proc_list->head;
 
 	while (!current) {
-		if (!current || !current->next || !current->next->data) {
+		if (!current->next || !current->next->data) {
 			assert(proc_list->head);
 			current = proc_list->head;
 		} else {

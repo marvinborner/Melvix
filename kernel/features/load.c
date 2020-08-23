@@ -52,7 +52,7 @@ void elf_load(char *path, struct proc *proc)
 		if (phdr->type != PT_LOAD)
 			continue;
 		memcpy((void *)phdr->vaddr, h + phdr->offset, phdr->filesz);
-		memset((void *)(phdr->vaddr + phdr->filesz), phdr->memsz - phdr->filesz, 0);
+		memset((void *)(phdr->vaddr + phdr->filesz), 0, phdr->memsz - phdr->filesz);
 	}
 
 	u32 stack = (u32)malloc(0x1000) + 0x1000;
