@@ -100,6 +100,7 @@ struct proc *proc_current()
 
 void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data)
 {
+	// TODO: Use unique key instead of pid for IPC messaging
 	assert(src && dest);
 	struct proc_message *msg = malloc(sizeof(*msg));
 	msg->src = src;

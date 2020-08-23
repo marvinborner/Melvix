@@ -11,12 +11,8 @@ int main()
 	struct message *msg = msg_receive_loop();
 	struct window *win = (struct window *)msg->data;
 
-	// TODO: Fix window transmitting
-	printf("\nReceived %d from %d\n", win->x, msg->src);
-	printf("Received %d from %d\n", win->y, msg->src);
-	printf("Received %d from %d\n", win->width, msg->src);
-	printf("Received %d from %d\n", win->height, msg->src);
-	printf("Received %d from %d\n", win->fb, msg->src);
+	const u32 color[3] = { 0xff, 0, 0 };
+	gui_fill(win, color);
 
 	while (1) {
 	};

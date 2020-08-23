@@ -84,6 +84,7 @@ void *read_inode(struct inode *in)
 			data = buffer_read(blocknum);
 			memcpy((u32 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
 		}
+		/* printf("Loaded %d of %d\n", i + 1, num_blocks); */
 	}
 
 	return buf;

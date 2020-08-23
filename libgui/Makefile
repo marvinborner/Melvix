@@ -2,6 +2,7 @@
 
 COBJS = vesa.o \
 	psf.o \
+	bmp.o \
 	gui.o
 CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld

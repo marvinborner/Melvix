@@ -21,9 +21,13 @@ struct window {
 	int y;
 	u16 width;
 	u16 height;
+	struct vbe *vbe;
 	u8 *fb;
 };
 
+void gui_draw_rectangle(struct window *win, int x1, int y1, int x2, int y2, const u32 color[3]);
+void gui_fill(struct window *win, const u32 color[3]);
+void gui_load_wallpaper(struct vbe *vbe, char *path);
 void gui_init(char *font_path);
 
 /**
