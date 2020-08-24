@@ -66,13 +66,13 @@ void gui_load_wallpaper(struct window *win, char *path)
 	gui_load_image(win, path, 0, 0);
 }
 
-void gui_win_on_win(struct window *src, struct window *dest, int x, int y)
+void gui_win_on_win(struct window *dest, struct window *src, int x, int y)
 {
 	u8 *srcfb = src->fb;
 	u8 *destfb = &dest->fb[x * (dest->bpp >> 3) + y * dest->pitch];
 	int bpl = dest->bpp >> 3;
-	for (u32 cy = 0; cy < src->height; cy++) {
-		for (u32 cx = 0; cx < src->width; cx++) {
+	for (u32 cy = 0; cy < src->height - 1; cy++) {
+		for (u32 cx = 0; cx < src->width - 1; cx++) {
 			destfb[bpl * cx + 0] = srcfb[bpl * cx + 0];
 			destfb[bpl * cx + 1] = srcfb[bpl * cx + 1];
 			destfb[bpl * cx + 2] = srcfb[bpl * cx + 2];
@@ -101,6 +101,27 @@ void gui_draw_rectangle(struct window *win, int x1, int y1, int x2, int y2, cons
 void gui_fill(struct window *win, const u32 color[3])
 {
 	gui_draw_rectangle(win, 0, 0, win->width - 1, win->height - 1, color);
+}
+
+void gui_border(struct window *win, const u32 color[3], u32 width)
+{
+	if (width <= 0)
+		return;
+
+	int bpl = win->bpp >> 3;
+	u8 *draw = win->fb;
+	for (u32 i = 0; i < win->height; i++) {
+		for (u32 j = 0; j < win->width; j++) {
+			if (j <= width - 1 || i <= width - 1 ||
+			    j - win->width + width + 1 <= width ||
+			    i - win->height + width + 1 <= width) {
+				draw[bpl * j + 0] = color[2];
+				draw[bpl * j + 1] = color[1];
+				draw[bpl * j + 2] = color[0];
+			}
+		}
+		draw += win->pitch;
+	}
 }
 
 void gui_init(char *font_path)

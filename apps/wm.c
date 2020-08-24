@@ -14,6 +14,7 @@ struct vbe *vbe;
 struct window *direct; // Direct video memory window
 struct window *root; // Root window (wallpaper etc.)
 struct window *exchange; // Exchange buffer
+struct window *focused; // The focused window
 struct list *windows;
 
 static struct window *new_window(int x, int y, u16 width, u16 height)
@@ -49,6 +50,8 @@ int main(int argc, char **argv)
 
 	const u32 background[3] = { 0x0, 0x0, 0x0 };
 	gui_fill(root, background);
+	const u32 border[3] = { 0xff, 0xff, 0xff };
+	gui_border(root, border, 2);
 	// TODO: Fix wallpaper
 	/* gui_load_wallpaper(root, "/wall.bmp"); */
 
@@ -56,15 +59,6 @@ int main(int argc, char **argv)
 
 	struct message *msg;
 	while (1) {
-		if (windows->head && windows->head->data) {
-			struct node *iterator = windows->head;
-			do {
-				struct window *win = iterator->data;
-				gui_win_on_win(win, exchange, win->x, win->y);
-			} while ((iterator = iterator->next) != NULL);
-			gui_win_on_win(exchange, direct, 0, 0);
-		}
-
 		if (!(msg = msg_receive())) {
 			yield();
 			continue;
@@ -73,12 +67,23 @@ int main(int argc, char **argv)
 		switch (msg->type) {
 		case MSG_NEW_WINDOW:
 			printf("New window for pid %d\n", msg->src);
-			struct window *win = new_window(0, 0, 200, 200);
+			struct window *win =
+				new_window(vbe->width / 2 - 100, vbe->height / 2 - 100, 200, 200);
 			msg_send(msg->src, MSG_NEW_WINDOW, win);
 			list_add(windows, win);
+			focused = win;
 			break;
 		case EVENT_KEYBOARD:
 			printf("Keypress %d!\n", msg->data);
+			focused->x += 50;
+			if (windows->head && windows->head->data) {
+				struct node *iterator = windows->head;
+				do {
+					struct window *win = iterator->data;
+					gui_win_on_win(exchange, win, win->x, win->y);
+				} while ((iterator = iterator->next) != NULL);
+				gui_win_on_win(direct, exchange, 0, 0);
+			}
 			break;
 		default:
 			printf("Unknown WM request %d from pid %d", msg->type, msg->src);

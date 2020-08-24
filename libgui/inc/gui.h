@@ -27,9 +27,10 @@ struct window {
 };
 
 void gui_load_wallpaper(struct window *win, char *path);
-void gui_win_on_win(struct window *src, struct window *dest, int x, int y);
+void gui_win_on_win(struct window *dest, struct window *src, int x, int y);
 void gui_draw_rectangle(struct window *win, int x1, int y1, int x2, int y2, const u32 color[3]);
 void gui_fill(struct window *win, const u32 color[3]);
+void gui_border(struct window *win, const u32 color[3], u32 width);
 void gui_init(char *font_path);
 
 /**
