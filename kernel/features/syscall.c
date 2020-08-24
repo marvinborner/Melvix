@@ -79,19 +79,14 @@ void syscall_handler(struct regs *r)
 		r->eax = timer_get();
 		break;
 	}
-	case SYS_MAP: {
-		printf("map\n");
-		event_map(r->ebx, proc_current(), (u32 *)r->ecx);
+	case SYS_REGISTER: {
+		printf("register\n");
+		event_register(r->ebx, proc_current());
 		break;
 	}
-	case SYS_UNMAP: {
-		printf("unmap\n");
-		event_unmap(r->ebx, proc_current(), (u32 *)r->ecx);
-		break;
-	}
-	case SYS_RESOLVE: {
-		printf("resolve\n");
-		proc_resolve(proc_current());
+	case SYS_UNREGISTER: {
+		printf("unregister\n");
+		event_unregister(r->ebx, proc_current());
 		break;
 	}
 	case SYS_SEND: {

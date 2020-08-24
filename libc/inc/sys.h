@@ -14,14 +14,12 @@ enum sys {
 	SYS_EXIT, // Exit current process
 	SYS_YIELD, // Switch to next process
 	SYS_TIME, // Get kernel time
-	SYS_MAP, // Map event to function
-	SYS_UNMAP, // Unmap event
-	SYS_RESOLVE, // Resolve event (needs to be executed at end of function)
+	SYS_REGISTER, // Register for event
+	SYS_UNREGISTER, // Unregister event
 	SYS_SEND, // Send message to process
 	SYS_RECEIVE // Receive message (non-blocking/sync)
 };
-enum event { EVENT_KEYBOARD, EVENT_MOUSE };
-enum message_type { MSG_NEW_WINDOW };
+enum message_type { MSG_NEW_WINDOW, EVENT_KEYBOARD, EVENT_MOUSE };
 
 struct message {
 	int src;
@@ -56,9 +54,8 @@ int sysv(enum sys num, ...);
 #define yield() (int)sys0(SYS_YIELD)
 #define time() (int)sys0(SYS_TIME)
 
-#define event_map(id, func) sys2(SYS_MAP, (int)(id), (int)(func))
-#define event_unmap(id, func) sys2(SYS_UNMAP, (int)(id), (int)(func))
-#define event_resolve() sys0(SYS_RESOLVE) // TODO: Find method making event_resolve obsolete
+#define event_register(id) sys1(SYS_REGISTER, (int)(id))
+#define event_unregister(id) sys1(SYS_UNREGISTER, (int)(id))
 
 #define msg_send(pid, type, msg) sys3(SYS_SEND, (int)(pid), (int)(type), (int)(msg))
 #define msg_receive() (struct message *)sys0(SYS_RECEIVE)

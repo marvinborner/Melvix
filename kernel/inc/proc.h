@@ -25,13 +25,7 @@ struct proc {
 	struct regs regs;
 	struct regs regs_backup;
 	enum proc_state state;
-	struct list *events;
 	struct list *messages;
-};
-
-struct proc_event {
-	struct event_descriptor *desc;
-	void *data;
 };
 
 struct proc_message {
@@ -40,12 +34,13 @@ struct proc_message {
 	struct message *msg;
 };
 
+struct proc *kernel_proc;
+
 void proc_init();
 void proc_print();
 struct proc *proc_current();
 void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data);
 struct proc_message *proc_receive(struct proc *proc);
-void proc_resolve(struct proc *proc);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
 void proc_yield();

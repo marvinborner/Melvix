@@ -8,13 +8,12 @@
 #include <sys.h>
 
 struct event_descriptor {
-	enum event id;
-	u32 *func;
+	enum message_type id;
 	struct proc *proc;
 };
 
-u32 event_map(enum event id, struct proc *proc, u32 *func);
-void event_unmap(enum event id, struct proc *proc, u32 *func);
-u32 event_trigger(enum event id, void *data);
+u32 event_register(enum message_type id, struct proc *proc);
+void event_unregister(enum message_type id, struct proc *proc);
+u32 event_trigger(enum message_type id, void *data);
 
 #endif

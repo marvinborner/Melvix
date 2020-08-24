@@ -37,6 +37,6 @@ void gui_init(char *font_path);
  */
 
 #define gui_new_window()                                                                           \
-	(msg_send(1, MSG_NEW_WINDOW, NULL), (struct window *)msg_receive_loop()->data)
+	(msg_send(2, MSG_NEW_WINDOW, NULL), (struct window *)msg_receive_loop()->data)
 
 #endif

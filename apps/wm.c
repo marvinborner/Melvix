@@ -16,15 +16,6 @@ struct window *root; // Root window (wallpaper etc.)
 struct window *exchange; // Exchange buffer
 struct list *windows;
 
-void onkey(u32 scancode)
-{
-	printf("WM KEY EVENT %d\n", scancode);
-	if (KEY_ALPHANUMERIC(scancode)) {
-		printf("ALPHANUMERIC!\n");
-	}
-	event_resolve();
-}
-
 static struct window *new_window(int x, int y, u16 width, u16 height)
 {
 	struct window *win = malloc(sizeof(*win));
@@ -61,8 +52,7 @@ int main(int argc, char **argv)
 	// TODO: Fix wallpaper
 	/* gui_load_wallpaper(root, "/wall.bmp"); */
 
-	// TODO: Remove async events completely
-	/* event_map(EVENT_KEYBOARD, onkey); */
+	event_register(EVENT_KEYBOARD);
 
 	struct message *msg;
 	while (1) {
@@ -86,6 +76,9 @@ int main(int argc, char **argv)
 			struct window *win = new_window(0, 0, 200, 200);
 			msg_send(msg->src, MSG_NEW_WINDOW, win);
 			list_add(windows, win);
+			break;
+		case EVENT_KEYBOARD:
+			printf("Keypress %d!\n", msg->data);
 			break;
 		default:
 			printf("Unknown WM request %d from pid %d", msg->type, msg->src);

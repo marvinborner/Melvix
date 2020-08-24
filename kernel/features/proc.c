@@ -14,6 +14,7 @@
 
 u32 pid = 0;
 u32 quantum = 0;
+struct proc *kernel_proc;
 struct list *proc_list;
 struct node *current;
 
@@ -63,20 +64,6 @@ void scheduler(struct regs *regs)
 		regs->eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
 	}
 
-	struct proc *proc = current->data;
-	if (proc->state == PROC_DEFAULT && proc->events && proc->events->head) {
-		struct proc_event *proc_event = proc->events->head->data;
-		printf("Event %d for pid %d\n", proc_event->desc->id, proc->pid);
-		memcpy(&proc->regs_backup, regs, sizeof(struct regs));
-		regs->eip = (u32)proc_event->desc->func;
-
-		quantum = PROC_QUANTUM;
-		proc->state = PROC_IN_EVENT;
-		regs->useresp += 4;
-		((u32 *)regs->useresp)[1] = (u32)proc_event->data; // Huh
-		list_remove(proc->events, proc->events->head);
-	}
-
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
 }
 
@@ -123,14 +110,6 @@ struct proc_message *proc_receive(struct proc *proc)
 	}
 }
 
-void proc_resolve(struct proc *proc)
-{
-	proc->state = PROC_RESOLVED;
-	quantum = 0;
-	sti();
-	hlt();
-}
-
 struct proc *proc_from_pid(u32 pid)
 {
 	struct node *iterator = proc_list->head;
@@ -170,7 +149,6 @@ struct proc *proc_make()
 {
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = pid++;
-	proc->events = list_new();
 	proc->messages = list_new();
 	proc->state = PROC_DEFAULT;
 
@@ -191,6 +169,8 @@ void proc_init()
 	cli();
 	irq_install_handler(0, scheduler);
 	proc_list = list_new();
+
+	kernel_proc = proc_make();
 
 	struct node *new = list_add(proc_list, proc_make());
 	bin_load("/init", new->data);
