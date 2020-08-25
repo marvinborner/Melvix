@@ -29,6 +29,8 @@ void keyboard_handler()
 	// TODO: "Merge" scancode to linux keycode?
 	/* printf("%x %x = %x\n", scancode, state ? 0xe0 : 0, merged); */
 
+	free(event);
+	event = malloc(sizeof(*event));
 	event->magic = KEYBOARD_MAGIC;
 	event->press = (scancode & 0x80) == 0;
 	event->scancode = event->press ? scancode : scancode & ~0x80;
@@ -54,7 +56,6 @@ void keyboard_rate()
 void keyboard_install()
 {
 	//keyboard_rate(); TODO: Fix keyboard rate?
-	event = malloc(sizeof(*event));
 	irq_install_handler(1, keyboard_handler);
 }
 

@@ -12,15 +12,16 @@
 #include <sys.h>
 #include <vesa.h>
 
-struct vbe *vbe;
-struct window *direct; // Direct video memory window
-struct window *root; // Root window (wallpaper etc.)
-struct window *exchange; // Exchange buffer
-struct window *focused; // The focused window
-struct list *windows; // List of all windows
+static struct vbe *vbe;
+static struct window *direct; // Direct video memory window
+static struct window *root; // Root window (wallpaper etc.)
+static struct window *exchange; // Exchange buffer
+static struct window *focused; // The focused window
+static struct window *cursor; // Cursor bitmap window
+static struct list *windows; // List of all windows
 
-int mouse_x = 0;
-int mouse_y = 0;
+static int mouse_x = 0;
+static int mouse_y = 0;
 
 static struct window *new_window(int x, int y, u16 width, u16 height)
 {
@@ -43,6 +44,7 @@ static void redraw_all()
 			struct window *win = iterator->data;
 			gui_win_on_win(exchange, win, win->x, win->y);
 		} while ((iterator = iterator->next) != NULL);
+		gui_win_on_win(exchange, cursor, cursor->x, cursor->y);
 		memcpy(direct->fb, exchange->fb, exchange->pitch * exchange->height);
 	}
 }
@@ -60,6 +62,7 @@ int main(int argc, char **argv)
 	windows = list_new();
 	root = new_window(0, 0, vbe->width, vbe->height);
 	exchange = new_window(0, 0, vbe->width, vbe->height);
+	cursor = new_window(0, 0, 16, 32);
 	direct = malloc(sizeof(*direct));
 	memcpy(direct, root, sizeof(*direct));
 	direct->fb = vbe->fb;
@@ -69,6 +72,7 @@ int main(int argc, char **argv)
 	gui_fill(root, background);
 	const u32 border[3] = { 0xab, 0xb2, 0xbf };
 	gui_border(root, border, 2);
+	gui_fill(cursor, border);
 	// TODO: Fix wallpaper
 	/* gui_load_wallpaper(root, "/wall.bmp"); */
 	redraw_all();
@@ -117,16 +121,16 @@ int main(int argc, char **argv)
 
 			if (mouse_x < 0)
 				mouse_x = 0;
-			else if (mouse_x > vbe->width - 1)
-				mouse_x = vbe->width - 1;
+			else if ((int)(mouse_x + cursor->width) > vbe->width - 1)
+				mouse_x = vbe->width - cursor->width - 1;
 
 			if (mouse_y < 0)
 				mouse_y = 0;
-			else if (mouse_y > vbe->height - 1)
-				mouse_y = vbe->height - 1;
+			else if ((int)(mouse_y + cursor->height) > vbe->height - 1)
+				mouse_y = vbe->height - cursor->height - 1;
 
-			focused->x = mouse_x;
-			focused->y = mouse_y;
+			cursor->x = mouse_x;
+			cursor->y = mouse_y;
 			redraw_all();
 			break;
 		}

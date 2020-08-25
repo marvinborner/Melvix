@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <boot.h>
 #include <cpu.h>
 #include <event.h>
 #include <interrupts.h>
@@ -29,6 +30,8 @@ void mouse_handler()
 	case 2:
 		mouse_byte[2] = inb(0x60);
 
+		free(event);
+		event = malloc(sizeof(*event));
 		event->magic = MOUSE_MAGIC;
 		event->diff_x = mouse_byte[1];
 		event->diff_y = mouse_byte[2];
@@ -76,8 +79,6 @@ char mouse_read()
 
 void mouse_install()
 {
-	event = malloc(sizeof(*event));
-
 	u8 status;
 
 	// Enable auxiliary mouse device
