@@ -22,7 +22,7 @@ enum sys {
 	SYS_SEND, // Send message to process
 	SYS_RECEIVE // Receive message (non-blocking/sync)
 };
-enum message_type { MSG_NEW_WINDOW, EVENT_KEYBOARD, EVENT_MOUSE };
+enum message_type { MSG_NEW_WINDOW, MSG_REDRAW, EVENT_KEYBOARD, EVENT_MOUSE };
 
 struct message {
 	int src;

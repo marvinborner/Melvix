@@ -12,12 +12,12 @@
 
 struct font *font;
 
-void gui_write_char(struct vbe *vbe, int x, int y, const u32 c[3], char ch)
+static void write_char(struct window *win, int x, int y, const u32 c[3], char ch)
 {
-	int bypp = vbe->bpp >> 3;
+	int bypp = win->bpp >> 3;
 
-	int pos = x * bypp + y * vbe->pitch;
-	char *draw = (char *)&vbe->fb[pos];
+	int pos = x * bypp + y * win->pitch;
+	char *draw = (char *)&win->fb[pos];
 
 	u32 stride = font->char_size / font->height;
 	for (int cy = 0; cy < font->height; cy++) {
@@ -30,15 +30,38 @@ void gui_write_char(struct vbe *vbe, int x, int y, const u32 c[3], char ch)
 				draw[bypp * cx + 2] = c[0];
 			}
 		}
-		draw += vbe->pitch;
+		draw += win->pitch;
 	}
 }
 
-void gui_write(struct vbe *vbe, int x, int y, const u32 c[3], char *text)
+static void draw_rectangle(struct window *win, int x1, int y1, int x2, int y2, const u32 c[3])
+{
+	int bypp = win->bpp >> 3;
+
+	int pos1 = x1 * bypp + y1 * win->pitch;
+	u8 *draw = &win->fb[pos1];
+	for (int i = 0; i < y2 - y1; i++) {
+		for (int j = 0; j < x2 - x1; j++) {
+			draw[bypp * j] = c[2];
+			draw[bypp * j + 1] = c[1];
+			draw[bypp * j + 2] = c[0];
+		}
+		draw += win->pitch;
+	}
+}
+
+void gui_write_char(struct window *win, int x, int y, const u32 c[3], char ch)
+{
+	write_char(win, x, y, c, ch);
+	gui_redraw();
+}
+
+void gui_write(struct window *win, int x, int y, const u32 c[3], char *text)
 {
 	for (u32 i = 0; i < strlen(text); i++) {
-		gui_write_char(vbe, x + i * font->width, y, c, text[i]);
+		write_char(win, x + i * font->width, y, c, text[i]);
 	}
+	gui_redraw();
 }
 
 void gui_load_image(struct window *win, char *path, int x, int y)
@@ -60,6 +83,7 @@ void gui_load_image(struct window *win, char *path, int x, int y)
 		srcfb += bmp->pitch;
 		destfb += win->pitch;
 	}
+	gui_redraw();
 }
 
 void gui_load_wallpaper(struct window *win, char *path)
@@ -70,18 +94,17 @@ void gui_load_wallpaper(struct window *win, char *path)
 // TODO: Optimize!
 void gui_win_on_win(struct window *dest, struct window *src, int x, int y)
 {
-	// Optimization?
-	/* if (src->width == dest->width && src->height == dest->height && src->x == 0 && */
-	/*     dest->y == 0) { */
-	/* 	memcpy(dest->fb, src->fb, dest->pitch * dest->height); */
-	/* 	return; */
-	/* } */
+	if (src->width == dest->width && src->height == dest->height && src->x == 0 &&
+	    dest->y == 0) {
+		memcpy(dest->fb, src->fb, dest->pitch * dest->height);
+		return;
+	}
 
 	int bypp = dest->bpp >> 3;
 	u8 *srcfb = src->fb;
 	u8 *destfb = &dest->fb[x * bypp + y * dest->pitch];
-	for (u32 cy = 0; cy < src->height - 1; cy++) {
-		for (u32 cx = 0; cx < src->width - 1; cx++) {
+	for (u32 cy = 0; cy < src->height; cy++) {
+		for (u32 cx = 0; cx < src->width; cx++) {
 			destfb[bypp * cx + 0] = srcfb[bypp * cx + 0];
 			destfb[bypp * cx + 1] = srcfb[bypp * cx + 1];
 			destfb[bypp * cx + 2] = srcfb[bypp * cx + 2];
@@ -91,28 +114,19 @@ void gui_win_on_win(struct window *dest, struct window *src, int x, int y)
 	}
 }
 
-void gui_draw_rectangle(struct window *win, int x1, int y1, int x2, int y2, const u32 color[3])
+void gui_draw_rectangle(struct window *win, int x1, int y1, int x2, int y2, const u32 c[3])
 {
-	int bypp = win->bpp >> 3;
-
-	int pos1 = x1 * bypp + y1 * win->pitch;
-	u8 *draw = &win->fb[pos1];
-	for (int i = 0; i < y2 - y1; i++) {
-		for (int j = 0; j < x2 - x1; j++) {
-			draw[bypp * j] = color[2];
-			draw[bypp * j + 1] = color[1];
-			draw[bypp * j + 2] = color[0];
-		}
-		draw += win->pitch;
-	}
+	draw_rectangle(win, x1, y1, x2, y2, c);
+	gui_redraw();
 }
 
-void gui_fill(struct window *win, const u32 color[3])
+void gui_fill(struct window *win, const u32 c[3])
 {
-	gui_draw_rectangle(win, 0, 0, win->width - 1, win->height - 1, color);
+	draw_rectangle(win, 0, 0, win->width, win->height, c);
+	gui_redraw();
 }
 
-void gui_border(struct window *win, const u32 color[3], u32 width)
+void gui_border(struct window *win, const u32 c[3], u32 width)
 {
 	if (width <= 0)
 		return;
@@ -123,17 +137,19 @@ void gui_border(struct window *win, const u32 color[3], u32 width)
 		for (u32 j = 0; j < win->width; j++) {
 			if (j <= width - 1 || i <= width - 1 ||
 			    j - win->width + width + 1 <= width ||
-			    i - win->height + width + 1 <= width) {
-				draw[bypp * j + 0] = color[2];
-				draw[bypp * j + 1] = color[1];
-				draw[bypp * j + 2] = color[0];
+			    i - win->height + width <= width) {
+				draw[bypp * j + 0] = c[2];
+				draw[bypp * j + 1] = c[1];
+				draw[bypp * j + 2] = c[0];
 			}
 		}
 		draw += win->pitch;
 	}
+	gui_redraw();
 }
 
 void gui_init(char *font_path)
 {
 	font = psf_parse(read(font_path));
+	assert(font);
 }

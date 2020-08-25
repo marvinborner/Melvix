@@ -65,12 +65,13 @@ int main(int argc, char **argv)
 	direct->fb = vbe->fb;
 	list_add(windows, root);
 
-	const u32 background[3] = { 0x0, 0x0, 0x0 };
+	const u32 background[3] = { 0x28, 0x2c, 0x34 };
 	gui_fill(root, background);
-	const u32 border[3] = { 0xff, 0xff, 0xff };
+	const u32 border[3] = { 0xab, 0xb2, 0xbf };
 	gui_border(root, border, 2);
 	// TODO: Fix wallpaper
 	/* gui_load_wallpaper(root, "/wall.bmp"); */
+	redraw_all();
 
 	event_register(EVENT_KEYBOARD);
 	event_register(EVENT_MOUSE);
@@ -86,23 +87,31 @@ int main(int argc, char **argv)
 		case MSG_NEW_WINDOW:
 			printf("New window for pid %d\n", msg->src);
 			struct window *win =
-				new_window(vbe->width / 2 - 100, vbe->height / 2 - 100, 200, 200);
+				new_window(vbe->width / 2 - 100, vbe->height / 2 - 100, 500, 300);
 			msg_send(msg->src, MSG_NEW_WINDOW, win);
 			list_add(windows, win);
 			focused = win;
+			redraw_all();
+			break;
+		case MSG_REDRAW:
+			redraw_all();
 			break;
 		case EVENT_KEYBOARD: {
 			struct event_keyboard *event = msg->data;
-			assert(event->magic == KEYBOARD_MAGIC);
+			if (event->magic != KEYBOARD_MAGIC)
+				break;
 			printf("Keypress %d %s!\n", event->scancode,
 			       event->press ? "pressed" : "released");
-			/* focused->x += 50; */
-			/* redraw_all(); */
+			if (event->press) {
+				focused->x += 50;
+				redraw_all();
+			}
 			break;
 		}
 		case EVENT_MOUSE: {
 			struct event_mouse *event = msg->data;
-			assert(event->magic == MOUSE_MAGIC);
+			if (event->magic != MOUSE_MAGIC)
+				break;
 			mouse_x += event->diff_x;
 			mouse_y -= event->diff_y;
 
@@ -119,7 +128,6 @@ int main(int argc, char **argv)
 			focused->x = mouse_x;
 			focused->y = mouse_y;
 			redraw_all();
-			printf("%d %d\n", mouse_x, mouse_y);
 			break;
 		}
 		default:

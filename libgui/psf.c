@@ -44,7 +44,7 @@ struct font *psf_parse(char *data)
 		char_size = ((struct psf2_header *)data)->char_size;
 	} else {
 		print("Unknown font!\n");
-		return 0;
+		return NULL;
 	}
 
 	struct font *font = malloc(sizeof(*font));

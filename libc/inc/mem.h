@@ -20,8 +20,8 @@
 u32 HEAP;
 u32 HEAP_START;
 
-void *memcpy(void *dst, const void *src, u32 n);
-void *memset(void *dst, int c, u32 n);
+void *memcpy(void *dest, const void *src, u32 n);
+void *memset(void *dest, int c, u32 n);
 int memcmp(const void *s1, const void *s2, u32 n);
 
 #endif
