@@ -4,6 +4,7 @@ COBJS = main.o \
 	drivers/interrupts.o \
 	drivers/interrupts_asm.o \
 	drivers/keyboard.o \
+	drivers/mouse.o \
 	drivers/ide.o \
 	drivers/timer.o \
 	features/fs.o \

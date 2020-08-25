@@ -6,6 +6,7 @@
 #include <keyboard.h>
 #include <load.h>
 #include <mem.h>
+#include <mouse.h>
 #include <serial.h>
 #include <syscall.h>
 #include <timer.h>
@@ -25,6 +26,7 @@ void kernel_main(struct vid_info *vid_info)
 	interrupts_install();
 	timer_install();
 	keyboard_install();
+	mouse_install();
 
 	// Enable drivers
 	sti();

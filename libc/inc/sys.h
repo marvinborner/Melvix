@@ -4,6 +4,9 @@
 #ifndef SYS_H
 #define SYS_H
 
+#define KEYBOARD_MAGIC 0x555555
+#define MOUSE_MAGIC 0xaaaaaa
+
 enum sys {
 	SYS_LOOP, // To infinity and beyond (debug)!
 	SYS_MALLOC, // Allocate memory
@@ -25,6 +28,21 @@ struct message {
 	int src;
 	enum message_type type;
 	void *data;
+};
+
+struct event_keyboard {
+	int magic;
+	int press;
+	int scancode;
+};
+
+struct event_mouse {
+	int magic;
+	int diff_x;
+	int diff_y;
+	int but1;
+	int but2;
+	int but3;
 };
 
 #if defined(userspace)

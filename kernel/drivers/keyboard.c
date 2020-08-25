@@ -4,9 +4,12 @@
 #include <def.h>
 #include <event.h>
 #include <interrupts.h>
+#include <mem.h>
 #include <print.h>
+#include <sys.h>
 
 char keymap[128];
+struct event_keyboard *event;
 
 int state = 0;
 int merged = 0;
@@ -26,9 +29,10 @@ void keyboard_handler()
 	// TODO: "Merge" scancode to linux keycode?
 	/* printf("%x %x = %x\n", scancode, state ? 0xe0 : 0, merged); */
 
-	if ((scancode & 0x80) == 0) { // PRESS
-		event_trigger(EVENT_KEYBOARD, (u32 *)scancode);
-	}
+	event->magic = KEYBOARD_MAGIC;
+	event->press = (scancode & 0x80) == 0;
+	event->scancode = event->press ? scancode : scancode & ~0x80;
+	event_trigger(EVENT_KEYBOARD, event);
 
 	state = 0;
 	merged = 0;
@@ -50,6 +54,7 @@ void keyboard_rate()
 void keyboard_install()
 {
 	//keyboard_rate(); TODO: Fix keyboard rate?
+	event = malloc(sizeof(*event));
 	irq_install_handler(1, keyboard_handler);
 }
 
