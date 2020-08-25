@@ -5,15 +5,15 @@
 
 void vesa_draw_rectangle(struct vbe *vbe, int x1, int y1, int x2, int y2, const u32 color[3])
 {
-	int bpl = vbe->bpp >> 3;
+	int bypp = vbe->bpp >> 3;
 
-	int pos1 = x1 * bpl + y1 * vbe->pitch;
+	int pos1 = x1 * bypp + y1 * vbe->pitch;
 	u8 *draw = &vbe->fb[pos1];
 	for (int i = 0; i <= y2 - y1; i++) {
 		for (int j = 0; j <= x2 - x1; j++) {
-			draw[bpl * j] = color[2];
-			draw[bpl * j + 1] = color[1];
-			draw[bpl * j + 2] = color[0];
+			draw[bypp * j] = color[2];
+			draw[bypp * j + 1] = color[1];
+			draw[bypp * j + 2] = color[0];
 		}
 		draw += vbe->pitch;
 	}

@@ -71,7 +71,7 @@ void syscall_handler(struct regs *r)
 	}
 	case SYS_YIELD: {
 		/* printf("yield\n"); */
-		proc_yield();
+		proc_yield(r);
 		break;
 	}
 	case SYS_TIME: {

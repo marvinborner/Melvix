@@ -82,11 +82,12 @@ int main(int argc, char **argv)
 					struct window *win = iterator->data;
 					gui_win_on_win(exchange, win, win->x, win->y);
 				} while ((iterator = iterator->next) != NULL);
-				gui_win_on_win(direct, exchange, 0, 0);
+				memcpy(direct->fb, exchange->fb,
+				       exchange->pitch * exchange->height);
 			}
 			break;
 		default:
-			printf("Unknown WM request %d from pid %d", msg->type, msg->src);
+			printf("Unknown WM request %d from pid %d\n", msg->type, msg->src);
 		}
 	};
 

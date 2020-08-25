@@ -43,7 +43,7 @@ void proc_send(struct proc *src, struct proc *dest, enum message_type type, void
 struct proc_message *proc_receive(struct proc *proc);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
-void proc_yield();
+void proc_yield(struct regs *r);
 struct proc *proc_make();
 
 #endif

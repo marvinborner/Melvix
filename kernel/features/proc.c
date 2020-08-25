@@ -114,9 +114,8 @@ struct proc *proc_from_pid(u32 pid)
 {
 	struct node *iterator = proc_list->head;
 	do {
-		if (((struct proc *)iterator->data)->pid == pid) {
+		if (((struct proc *)iterator->data)->pid == pid)
 			return iterator->data;
-		}
 	} while ((iterator = iterator->next) != NULL);
 	return NULL;
 }
@@ -139,10 +138,10 @@ void proc_exit(struct proc *proc, int status)
 	hlt();
 }
 
-// TODO: More instant yield
-void proc_yield()
+void proc_yield(struct regs *r)
 {
 	quantum = 0;
+	scheduler(r);
 }
 
 struct proc *proc_make()
