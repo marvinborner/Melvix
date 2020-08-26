@@ -43,8 +43,4 @@ struct vbe {
 	u8 reserved1[206];
 };
 
-void vesa_draw_rectangle(struct vbe *vbe, int x1, int y1, int x2, int y2, const u32 color[3]);
-void vesa_fill(struct vbe *vbe, const u32 color[3]);
-void vesa_set_pixel(struct vbe *vbe, u16 x, u16 y, const u32 color[3]);
-
 #endif

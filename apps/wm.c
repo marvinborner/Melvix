@@ -44,7 +44,6 @@ static void redraw_all()
 			struct window *win = iterator->data;
 			gui_win_on_win(exchange, win, win->x, win->y);
 		} while ((iterator = iterator->next) != NULL);
-		gui_win_on_win(exchange, cursor, cursor->x, cursor->y);
 		memcpy(direct->fb, exchange->fb, exchange->pitch * exchange->height);
 	}
 }
@@ -54,10 +53,6 @@ int main(int argc, char **argv)
 	(void)argc;
 	vbe = (struct vbe *)argv[1];
 	printf("VBE: %dx%d\n", vbe->width, vbe->height);
-
-	const u32 color[3] = { 0, 0, 0 };
-	vesa_fill(vbe, color);
-	gui_init("/font/spleen-16x32.psfu");
 
 	windows = list_new();
 	root = new_window(0, 0, vbe->width, vbe->height);
@@ -104,12 +99,12 @@ int main(int argc, char **argv)
 			struct event_keyboard *event = msg->data;
 			if (event->magic != KEYBOARD_MAGIC)
 				break;
-			printf("Keypress %d %s!\n", event->scancode,
-			       event->press ? "pressed" : "released");
-			if (event->press) {
-				focused->x += 50;
-				redraw_all();
-			}
+			/* printf("Keypress %d %s!\n", event->scancode, */
+			/*        event->press ? "pressed" : "released"); */
+			/* if (event->press) { */
+			/* 	focused->x += 50; */
+			/* 	redraw_all(); */
+			/* } */
 			break;
 		}
 		case EVENT_MOUSE: {
@@ -129,9 +124,18 @@ int main(int argc, char **argv)
 			else if ((int)(mouse_y + cursor->height) > vbe->height - 1)
 				mouse_y = vbe->height - cursor->height - 1;
 
+			gui_copy(direct, exchange, cursor->x, cursor->y, cursor->width,
+				 cursor->height);
 			cursor->x = mouse_x;
 			cursor->y = mouse_y;
-			redraw_all();
+			gui_win_on_win(direct, cursor, cursor->x, cursor->y);
+
+			if (event->but1 && mouse_x + (int)focused->width < vbe->width - 1 &&
+			    mouse_y + (int)focused->height < vbe->height - 1) {
+				focused->x = mouse_x;
+				focused->y = mouse_y;
+				redraw_all(); // TODO: Function to redraw one window
+			}
 			break;
 		}
 		default:

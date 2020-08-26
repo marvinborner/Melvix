@@ -1,7 +1,6 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
-COBJS = vesa.o \
-	psf.o \
+COBJS = psf.o \
 	bmp.o \
 	gui.o
 CC = ../cross/opt/bin/i686-elf-gcc
