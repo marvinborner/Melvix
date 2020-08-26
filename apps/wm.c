@@ -141,7 +141,6 @@ int main(int argc, char **argv)
 		default:
 			printf("Unknown WM request %d from pid %d\n", msg->type, msg->src);
 		}
-		yield();
 	};
 
 	return 0;

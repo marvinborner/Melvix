@@ -33,7 +33,7 @@ void syscall_handler(struct regs *r)
 	}
 	case SYS_FREE: {
 		printf("free\n");
-		free(r->ebx);
+		free((void *)r->ebx);
 		break;
 	}
 	case SYS_READ: {

@@ -13,8 +13,7 @@
 
 void kernel_main(struct vid_info *vid_info)
 {
-	HEAP = 0x00f00000;
-	HEAP_START = HEAP; // For malloc function
+	heap_init(0x00f00000);
 
 	boot_passed = vid_info;
 
