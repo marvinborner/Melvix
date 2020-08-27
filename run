@@ -14,6 +14,14 @@ qemu_with_flags() {
 
 make_cross() {
     if [ ! -d "./cross/" ]; then
+
+        echo -n "Do you want to compile a cross compiler (this can take up to 20 minutes)? [yn] "
+        read -r answer
+        if ! [ "$answer" != "${answer#[Yy]}" ]; then
+            echo "The compilation of melvix requires a cross compiler!"
+            exit 1
+        fi
+
         # Create directory
         mkdir -p cross
         cd cross
