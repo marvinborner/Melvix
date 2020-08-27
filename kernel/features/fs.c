@@ -48,7 +48,7 @@ struct inode *get_inode(int i)
 u32 read_indirect(u32 indirect, u32 block_num)
 {
 	char *data = buffer_read(indirect);
-	return *(u32 *)((u32)data + block_num * 4);
+	return *(u32 *)((u32)data + block_num * sizeof(u32));
 }
 
 void *read_inode(struct inode *in)
@@ -72,15 +72,22 @@ void *read_inode(struct inode *in)
 
 	int blocknum;
 	char *data;
+	// TODO: Support treply indirect pointers
+	// TODO: This can be heavily optimized by saving the indirect block lists
 	for (int i = 0; i < num_blocks; i++) {
 		if (i < 12) {
 			blocknum = in->block[i];
 			data = buffer_read(blocknum);
 			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
-		} else {
-			// TODO: Support doubly and triply pointers
+		} else if (i < BLOCK_COUNT + 12) {
 			indirect = in->block[12];
 			blocknum = read_indirect(indirect, i - 12);
+			data = buffer_read(blocknum);
+			memcpy((u32 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
+		} else {
+			indirect = in->block[13];
+			blocknum = read_indirect(indirect, (i - (BLOCK_COUNT + 12)) / BLOCK_COUNT);
+			blocknum = read_indirect(blocknum, (i - (BLOCK_COUNT + 12)) % BLOCK_COUNT);
 			data = buffer_read(blocknum);
 			memcpy((u32 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
 		}
