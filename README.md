@@ -13,18 +13,20 @@
 
 ## Disclaimer
 
-This project is somewhat of a coding playground for me. It doesn't have any useful functionality. Be aware that the installation on real hardware is not recommended and may break your computer.
+This project is somewhat of a coding playground for me. It doesn't have any useful functionality (yet?). Be aware that the installation on real hardware is not recommended and may break your computer.
 
 ## Features
 
 -   From scratch (no POSIX/UNIX compatibility at all)
 -   No external libraries
 -   Efficient Multitasking
+-   EXT2 filesystem
+-   Minimal GUI
 -   Fast boot time (< 1s)
--   Small size (~10KiB)
+-   Small size (~12KiB)
 -   Compiles with `-Wall -Wextra -pedantic-errors -std=c99 -Os`
 
-## Build
+## Build/Test
 
 -   Use any system running GNU/Linux
 
@@ -45,9 +47,11 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
     -   nasm
     -   qemu
 
--   Build a cross compiler using `./run cross`
+-   Load fonts and images into the disk image via `./run disk`
 
--   Run `./run build` or `./run test`
+-   Run `./run`
+
+-   If you need help: `./run to help`
 
 ## Licenses
 
