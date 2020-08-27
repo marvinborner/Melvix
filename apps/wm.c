@@ -12,6 +12,8 @@
 #include <sys.h>
 #include <vesa.h>
 
+#define MOUSE_SLUGGISHNESS 4 // => Every nth move gets skipped
+
 static struct vbe *vbe;
 static struct window *direct; // Direct video memory window
 static struct window *root; // Root window (wallpaper etc.)
@@ -74,10 +76,10 @@ int main(int argc, char **argv)
 	gui_load_wallpaper(root, "/res/wall.bmp");
 	redraw_all();
 
-	event_register(EVENT_KEYBOARD);
 	event_register(EVENT_MOUSE);
 
 	struct message *msg;
+	int sluggish_ctr = 0;
 	while (1) {
 		if (!(msg = msg_receive())) {
 			yield();
@@ -97,18 +99,6 @@ int main(int argc, char **argv)
 		case MSG_REDRAW:
 			redraw_all();
 			break;
-		case EVENT_KEYBOARD: {
-			struct event_keyboard *event = msg->data;
-			if (event->magic != KEYBOARD_MAGIC)
-				break;
-			/* printf("Keypress %d %s!\n", event->scancode, */
-			/*        event->press ? "pressed" : "released"); */
-			/* if (event->press) { */
-			/* 	focused->x += 50; */
-			/* 	redraw_all(); */
-			/* } */
-			break;
-		}
 		case EVENT_MOUSE: {
 			struct event_mouse *event = msg->data;
 			if (event->magic != MOUSE_MAGIC)
@@ -131,17 +121,19 @@ int main(int argc, char **argv)
 			cursor->x = mouse_x;
 			cursor->y = mouse_y;
 
-			if (event->but1 && mouse_x + (int)focused->width < vbe->width - 1 &&
-			    mouse_y + (int)focused->height < vbe->height - 1) {
+			if (event->but1 && mouse_y + (int)focused->height < vbe->height - 1 &&
+			    sluggish_ctr % MOUSE_SLUGGISHNESS == 0) {
+				sluggish_ctr = 0;
 				focused->x = mouse_x;
 				focused->y = mouse_y;
 				redraw_all(); // TODO: Function to redraw one window
 			}
 			gui_win_on_win(direct, cursor, cursor->x, cursor->y);
+			sluggish_ctr++;
 			break;
 		}
 		default:
-			printf("Unknown WM request %d from pid %d\n", msg->type, msg->src);
+			break;
 		}
 	};
 
