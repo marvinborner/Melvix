@@ -54,6 +54,8 @@ int main(int argc, char **argv)
 	vbe = (struct vbe *)argv[1];
 	printf("VBE: %dx%d\n", vbe->width, vbe->height);
 
+	gui_init("/font/spleen-16x32.psfu");
+
 	windows = list_new();
 	root = new_window(0, 0, vbe->width, vbe->height);
 	exchange = new_window(0, 0, vbe->width, vbe->height);
@@ -62,6 +64,9 @@ int main(int argc, char **argv)
 	memcpy(direct, root, sizeof(*direct));
 	direct->fb = vbe->fb;
 	list_add(windows, root);
+
+	gui_write(direct, 0, 0, FG_COLOR, "Welcome to Melvix!");
+	gui_write(direct, 0, 32, FG_COLOR, "Loading resources...");
 
 	gui_fill(root, BG_COLOR);
 	gui_border(root, FG_COLOR, 2);
