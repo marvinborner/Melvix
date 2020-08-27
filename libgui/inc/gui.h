@@ -15,6 +15,10 @@
 #define FG_COLOR 0xffabb2bf
 #define BG_COLOR 0xff282c34
 
+#define WF_NO_FOCUS (1 << 0)
+#define WF_NO_DRAG (1 << 1)
+#define WF_NO_RESIZE (1 << 2)
+
 // Generalized font struct
 struct font {
 	char *chars;
@@ -31,6 +35,7 @@ struct window {
 	u8 *fb;
 	u32 bpp;
 	u32 pitch;
+	int flags;
 };
 
 void gui_write_char(struct window *win, int x, int y, u32 c, char ch);
@@ -48,7 +53,7 @@ void gui_init(char *font_path);
  * Wrappers
  */
 
-#define gui_new_window()                                                                           \
-	(msg_send(2, MSG_NEW_WINDOW, NULL), (struct window *)msg_receive_loop()->data)
+#define gui_new_window(flags)                                                                      \
+	(msg_send(2, MSG_NEW_WINDOW, flags), (struct window *)msg_receive_loop()->data)
 #define gui_redraw() (msg_send(2, MSG_REDRAW, NULL)) // TODO: Partial redraw (optimization)
 #endif

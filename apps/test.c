@@ -11,7 +11,7 @@ int main()
 {
 	print("[test loaded]\n");
 
-	struct window *win = gui_new_window();
+	struct window *win = gui_new_window(0);
 
 	gui_fill(win, BG_COLOR);
 	gui_border(win, FG_COLOR, 2);

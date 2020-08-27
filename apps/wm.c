@@ -12,7 +12,7 @@
 #include <sys.h>
 #include <vesa.h>
 
-#define MOUSE_SLUGGISHNESS 4 // => Every nth move gets skipped
+#define MOUSE_SKIP 4 // => Every nth move gets skipped
 
 static struct vbe *vbe;
 static struct window *direct; // Direct video memory window
@@ -25,7 +25,7 @@ static struct list *windows; // List of all windows
 static int mouse_x = 0;
 static int mouse_y = 0;
 
-static struct window *new_window(int x, int y, u16 width, u16 height)
+static struct window *new_window(int x, int y, u16 width, u16 height, int flags)
 {
 	struct window *win = malloc(sizeof(*win));
 	win->x = x;
@@ -35,6 +35,7 @@ static struct window *new_window(int x, int y, u16 width, u16 height)
 	win->bpp = vbe->bpp;
 	win->pitch = win->width * (win->bpp >> 3);
 	win->fb = malloc(height * win->pitch);
+	win->flags = flags;
 	return win;
 }
 
@@ -59,9 +60,10 @@ int main(int argc, char **argv)
 	gui_init("/font/spleen-16x32.psfu");
 
 	windows = list_new();
-	root = new_window(0, 0, vbe->width, vbe->height);
-	exchange = new_window(0, 0, vbe->width, vbe->height);
-	cursor = new_window(0, 0, 32, 32);
+	root = new_window(0, 0, vbe->width, vbe->height, WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
+	exchange =
+		new_window(0, 0, vbe->width, vbe->height, WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
+	cursor = new_window(0, 0, 32, 32, WF_NO_FOCUS | WF_NO_RESIZE);
 	direct = malloc(sizeof(*direct));
 	memcpy(direct, root, sizeof(*direct));
 	direct->fb = vbe->fb;
@@ -79,7 +81,7 @@ int main(int argc, char **argv)
 	event_register(EVENT_MOUSE);
 
 	struct message *msg;
-	int sluggish_ctr = 0;
+	int mouse_skip = 0;
 	while (1) {
 		if (!(msg = msg_receive())) {
 			yield();
@@ -89,8 +91,8 @@ int main(int argc, char **argv)
 		switch (msg->type) {
 		case MSG_NEW_WINDOW:
 			printf("New window for pid %d\n", msg->src);
-			struct window *win =
-				new_window(vbe->width / 2 - 250, vbe->height / 2 - 150, 500, 300);
+			struct window *win = new_window(vbe->width / 2 - 250, vbe->height / 2 - 150,
+							500, 300, (int)msg->data);
 			msg_send(msg->src, MSG_NEW_WINDOW, win);
 			list_add(windows, win);
 			focused = win;
@@ -121,15 +123,16 @@ int main(int argc, char **argv)
 			cursor->x = mouse_x;
 			cursor->y = mouse_y;
 
-			if (event->but1 && mouse_y + (int)focused->height < vbe->height - 1 &&
-			    sluggish_ctr % MOUSE_SLUGGISHNESS == 0) {
-				sluggish_ctr = 0;
+			if (event->but1 && !(focused->flags & WF_NO_DRAG) &&
+			    mouse_y + (int)focused->height < vbe->height - 1 &&
+			    mouse_skip % MOUSE_SKIP == 0) {
+				mouse_skip = 0;
 				focused->x = mouse_x;
 				focused->y = mouse_y;
 				redraw_all(); // TODO: Function to redraw one window
 			}
 			gui_win_on_win(direct, cursor, cursor->x, cursor->y);
-			sluggish_ctr++;
+			mouse_skip++;
 			break;
 		}
 		default:
