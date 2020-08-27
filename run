@@ -6,6 +6,7 @@ set -e
 cd "$(dirname "$0")"
 
 mode="${1}"
+no_ask="${2}"
 network="rtl8139"
 
 qemu_with_flags() {
@@ -15,11 +16,13 @@ qemu_with_flags() {
 make_cross() {
     if [ ! -d "./cross/" ]; then
 
-        echo -n "Do you want to compile a cross compiler (this can take up to 20 minutes)? [yn] "
-        read -r answer
-        if ! [ "$answer" != "${answer#[Yy]}" ]; then
-            echo "The compilation of melvix requires a cross compiler!"
-            exit 1
+        if [ "$no_ask" != "-y" ]; then
+            echo -n "Do you want to compile a cross compiler (this can take up to 20 minutes)? [yn] "
+            read -r answer
+            if ! [ "$answer" != "${answer#[Yy]}" ]; then
+                echo "The compilation of melvix requires a cross compiler!"
+                exit 1
+            fi
         fi
 
         # Create directory
@@ -183,7 +186,7 @@ elif [ "${mode}" = "test" ] || [ "${mode}" = "" ]; then
     make_sync &
     make_test
 else
-    echo "Usage: ./run {cross | clean | build | test | debug | again | disasm | sync | disk}"
+    echo "Usage: ./run {cross | clean | build | test | debug | again | disasm | sync | disk} [-y]"
     printf "\nDescription of options:\n"
     printf "cross\t\tBuilds the cross compiler\n"
     printf "clean\t\tRemoves the compiled files\n"

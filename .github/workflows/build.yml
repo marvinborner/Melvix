@@ -20,8 +20,8 @@ jobs:
           key: toller-compiler
       - name: Build cross compiler
         if: steps.cache-cross.outputs.cache-hit != 'true'
-        run: sh run cross
+        run: sh run cross -y
       - name: Build
         run: sh run build -y
       - name: Test install
-        run: sh run image
+        run: sh run image -y

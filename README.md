@@ -32,7 +32,7 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 
 -   Install build dependencies (package names may vary depending on your operating system)
 
-    -   Ubuntu/Debian _"instructions"_ can be found here: [GitHub Workflow](https://raw.githubusercontent.com/marvinborner/Melvix/master/.github/workflows/build.yml)
+    -   Ubuntu/Debian _"instructions"_ can be found here: [GitHub Workflow](https://raw.githubusercontent.com/marvinborner/Melvix/main/.github/workflows/build.yml)
     -   binutils
     -   ccache
     -   gcc
