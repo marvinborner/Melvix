@@ -66,8 +66,7 @@ int main(int argc, char **argv)
 	gui_fill(root, BG_COLOR);
 	gui_border(root, FG_COLOR, 2);
 	gui_load_image(cursor, "/res/cursor.bmp", 0, 0);
-	// TODO: Fix wallpaper
-	/* gui_load_wallpaper(root, "/wall.bmp"); */
+	gui_load_wallpaper(root, "/res/wall.bmp");
 	redraw_all();
 
 	event_register(EVENT_KEYBOARD);
@@ -84,7 +83,7 @@ int main(int argc, char **argv)
 		case MSG_NEW_WINDOW:
 			printf("New window for pid %d\n", msg->src);
 			struct window *win =
-				new_window(vbe->width / 2 - 100, vbe->height / 2 - 100, 500, 300);
+				new_window(vbe->width / 2 - 250, vbe->height / 2 - 150, 500, 300);
 			msg_send(msg->src, MSG_NEW_WINDOW, win);
 			list_add(windows, win);
 			focused = win;

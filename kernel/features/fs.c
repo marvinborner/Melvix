@@ -72,7 +72,7 @@ void *read_inode(struct inode *in)
 
 	int blocknum;
 	char *data;
-	// TODO: Support treply indirect pointers
+	// TODO: Support triply indirect pointers
 	// TODO: This can be heavily optimized by saving the indirect block lists
 	for (int i = 0; i < num_blocks; i++) {
 		if (i < 12) {

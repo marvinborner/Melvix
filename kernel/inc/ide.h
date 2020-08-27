@@ -6,6 +6,7 @@
 #include <def.h>
 
 #define BLOCK_SIZE 1024
+#define BLOCK_COUNT 256 // BLOCK_SIZE / sizeof(u32)
 #define SECTOR_SIZE 512
 
 #define IDE_BUSY (1 << 7)
