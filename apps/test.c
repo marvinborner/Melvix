@@ -12,15 +12,12 @@ int main()
 
 	struct window *win = gui_new_window();
 
-	const u32 background[3] = { 0x28, 0x2c, 0x34 };
-	gui_fill(win, background);
-	const u32 border[3] = { 0xab, 0xb2, 0xbf };
-	gui_border(win, border, 2);
-	const u32 text[3] = { 0xab, 0xb2, 0xbf };
+	gui_fill(win, BG_COLOR);
+	gui_border(win, FG_COLOR, 2);
 
 	gui_init("/font/spleen-12x24.psfu");
 	char *hello = "Hello, world!";
-	gui_write(win, win->width / 2 - (strlen(hello) * 12) / 2, 5, text, hello);
+	gui_write(win, win->width / 2 - (strlen(hello) * 12) / 2, 5, FG_COLOR, hello);
 
 	while (1) {
 		yield();

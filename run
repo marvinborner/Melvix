@@ -52,6 +52,8 @@ make_cross() {
 make_disk() {
     rm -rf disk && mkdir -p disk/font/
 
+    cp -r res/ disk/
+
     cd disk/font/
     VERSION="1.8.1"
     wget -q "https://github.com/fcambus/spleen/releases/download/$VERSION/spleen-$VERSION.tar.gz"

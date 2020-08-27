@@ -57,17 +57,15 @@ int main(int argc, char **argv)
 	windows = list_new();
 	root = new_window(0, 0, vbe->width, vbe->height);
 	exchange = new_window(0, 0, vbe->width, vbe->height);
-	cursor = new_window(0, 0, 16, 32);
+	cursor = new_window(0, 0, 32, 32);
 	direct = malloc(sizeof(*direct));
 	memcpy(direct, root, sizeof(*direct));
 	direct->fb = vbe->fb;
 	list_add(windows, root);
 
-	const u32 background[3] = { 0x28, 0x2c, 0x34 };
-	gui_fill(root, background);
-	const u32 border[3] = { 0xab, 0xb2, 0xbf };
-	gui_border(root, border, 2);
-	gui_fill(cursor, border);
+	gui_fill(root, BG_COLOR);
+	gui_border(root, FG_COLOR, 2);
+	gui_load_image(cursor, "/res/cursor.bmp", 0, 0);
 	// TODO: Fix wallpaper
 	/* gui_load_wallpaper(root, "/wall.bmp"); */
 	redraw_all();
@@ -128,7 +126,6 @@ int main(int argc, char **argv)
 				 cursor->height);
 			cursor->x = mouse_x;
 			cursor->y = mouse_y;
-			gui_win_on_win(direct, cursor, cursor->x, cursor->y);
 
 			if (event->but1 && mouse_x + (int)focused->width < vbe->width - 1 &&
 			    mouse_y + (int)focused->height < vbe->height - 1) {
@@ -136,6 +133,7 @@ int main(int argc, char **argv)
 				focused->y = mouse_y;
 				redraw_all(); // TODO: Function to redraw one window
 			}
+			gui_win_on_win(direct, cursor, cursor->x, cursor->y);
 			break;
 		}
 		default:
