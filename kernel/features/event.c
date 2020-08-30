@@ -29,14 +29,14 @@ void event_unregister(enum message_type id, struct proc *proc)
 {
 	assert(id < sizeof(event_table) / sizeof(*event_table));
 
-	struct event_descriptor *desc = malloc(sizeof(*desc));
-	desc->id = id;
-	desc->proc = proc;
+	struct event_descriptor desc;
+	desc.id = id;
+	desc.proc = proc;
 
 	struct node *iterator = event_table[id]->head;
 	do {
 		struct event_descriptor *desc_comp = iterator->data;
-		if (desc_comp->id == desc->id && desc_comp->proc == desc->proc)
+		if (desc_comp->id == desc.id && desc_comp->proc == desc.proc)
 			list_remove(event_table[id], iterator);
 	} while ((iterator = iterator->next) != NULL);
 }

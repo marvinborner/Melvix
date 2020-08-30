@@ -10,7 +10,7 @@ no_ask="${2}"
 network="rtl8139"
 
 qemu_with_flags() {
-    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -serial stdio -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -rtc base=localtime -m 256M -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
 }
 
 make_cross() {
@@ -89,7 +89,11 @@ make_build() {
     rm -rf build/*
 
     printf "\nBuilding...\n"
-    make
+    if [ "$mode" = "test" ]; then
+        make test
+    else
+        make
+    fi
 
     # Create disk image
     dd if=/dev/zero of=build/disk.img bs=1k count=32k status=none
@@ -110,7 +114,13 @@ make_build() {
 }
 
 make_test() {
-    qemu_with_flags -drive file=build/disk.img,format=raw,index=1,media=disk
+    if [ "$mode" = "test" ]; then
+        qemu_with_flags -nographic -drive file=build/disk.img,format=raw,index=1,media=disk &
+        sleep 3
+        killall -9 qemu-system-i386
+    else
+        qemu_with_flags -drive -serial stdio file=build/disk.img,format=raw,index=1,media=disk
+    fi
 }
 
 make_debug() {
@@ -191,12 +201,12 @@ else
     printf "cross\t\tBuilds the cross compiler\n"
     printf "clean\t\tRemoves the compiled files\n"
     printf "build\t\tBuilds the whole project (cross+clean)\n"
-    printf "test\t\tEmulates Melvix with QEMU (cross+clean+build)\n"
+    printf "test\t\tRuns the Melvix unit tests with QEMU (cross+clean+build)\n"
     printf "debug\t\tEmulates Melvix with QEMU and debug options (cross+clean+build)\n"
     printf "again\t\tOpens QEMU again using the previous build\n"
     printf "disasm\t\tDisassembles the main kernel binary\n"
     printf "sync\t\tSyncs the 'tags' and 'compile_commands.json' file\n"
     printf "disk\t\tPrepares the userspace disk (e.g. fonts)\n"
+    printf "nothing\t\tWhen no option is set, Melvix gets built and emulated using QEMU (cross+clean+build)\n"
     printf "*\t\tAnything else prints this help\n\n"
-    echo "The default option is 'test'"
 fi

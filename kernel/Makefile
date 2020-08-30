@@ -26,6 +26,7 @@ CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builti
 ASFLAGS = -f elf32
 
 all: compile bootloader
+test: compile_test bootloader
 
 %.o: %.c
 	@$(CC) -c $(CFLAGS) $< -o $@
@@ -41,3 +42,11 @@ compile: $(COBJS)
 	@mkdir -p ../build/
 	@$(LD) -N -ekernel_main -Ttext 0x00050000 -o ../build/kernel.bin -L../build/ $+ -lk --oformat binary
 	@$(CC) $(CFLAGS) -o ../build/debug.o -L../build/ $+ -lk
+
+compile_test: CFLAGS += -Dtest -Wl,-etest_all
+compile_test: $(COBJS:main.o=test.o)
+	@mkdir -p ../build/
+	@$(LD) -N -etest_all -Ttext 0x00050000 -o ../build/kernel.bin -L../build/ $+ -lk --oformat binary
+	@$(CC) $(CFLAGS) -o ../build/debug.o -L../build/ $+ -lk
+
+.PHONY: test compile_test
