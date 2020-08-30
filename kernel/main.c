@@ -9,14 +9,14 @@
 #include <mouse.h>
 #include <serial.h>
 #include <syscall.h>
+#include <test.h>
 #include <timer.h>
 
 void kernel_main(struct vid_info *vid_info)
 {
 #ifdef test
-#include <test.h>
 	test_all(vid_info);
-#endif
+#else
 
 	heap_init(0x00f00000);
 
@@ -41,4 +41,5 @@ void kernel_main(struct vid_info *vid_info)
 	proc_init();
 
 	idle();
+#endif
 }

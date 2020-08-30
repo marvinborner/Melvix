@@ -12,8 +12,6 @@
 void heap_init(u32 start);
 void *malloc(u32 size);
 void free(void *ptr);
-/* #define malloc(n) (void *)((HEAP += n) - n) // TODO: Implement real/better malloc/free */
-/* #define free(ptr) */
 #elif defined(userspace)
 #include <sys.h>
 #define malloc(n) (void *)sys1(SYS_MALLOC, n)
