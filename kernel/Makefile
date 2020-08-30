@@ -1,6 +1,7 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
 COBJS = main.o \
+	test.o \
 	drivers/interrupts.o \
 	drivers/interrupts_asm.o \
 	drivers/keyboard.o \
@@ -43,10 +44,7 @@ compile: $(COBJS)
 	@$(LD) -N -ekernel_main -Ttext 0x00050000 -o ../build/kernel.bin -L../build/ $+ -lk --oformat binary
 	@$(CC) $(CFLAGS) -o ../build/debug.o -L../build/ $+ -lk
 
-compile_test: CFLAGS += -Dtest -Wl,-etest_all
-compile_test: $(COBJS:main.o=test.o)
-	@mkdir -p ../build/
-	@$(LD) -N -etest_all -Ttext 0x00050000 -o ../build/kernel.bin -L../build/ $+ -lk --oformat binary
-	@$(CC) $(CFLAGS) -o ../build/debug.o -L../build/ $+ -lk
+compile_test: CFLAGS += -Dtest
+compile_test: compile
 
 .PHONY: test compile_test

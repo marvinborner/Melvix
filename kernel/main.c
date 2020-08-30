@@ -13,6 +13,11 @@
 
 void kernel_main(struct vid_info *vid_info)
 {
+#ifdef test
+#include <test.h>
+	test_all(vid_info);
+#endif
+
 	heap_init(0x00f00000);
 
 	boot_passed = vid_info;
