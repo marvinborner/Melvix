@@ -1,6 +1,7 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
 all: compile clean
+test: compile_test clean
 
 compile:
 	@$(MAKE) clean --no-print-directory -C libc/
@@ -16,7 +17,7 @@ compile:
 	@$(MAKE) --no-print-directory -C apps/
 	@echo "Compiled apps"
 
-test:
+compile_test:
 	@$(MAKE) clean --no-print-directory -C libc/
 	@$(MAKE) libc --no-print-directory -C libc/
 	@echo "Compiled libc"

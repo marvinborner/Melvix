@@ -116,10 +116,10 @@ make_build() {
 make_test() {
     if [ "$mode" = "test" ]; then
         qemu_with_flags -nographic -drive file=build/disk.img,format=raw,index=1,media=disk &
-        sleep 3
+        sleep 2
         killall -9 qemu-system-i386
     else
-        qemu_with_flags -drive -serial stdio file=build/disk.img,format=raw,index=1,media=disk
+        qemu_with_flags -serial stdio -drive file=build/disk.img,format=raw,index=1,media=disk
     fi
 }
 
