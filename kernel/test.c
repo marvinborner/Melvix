@@ -35,22 +35,18 @@ void test_math()
 
 void test_conv()
 {
-	char buf0[3] = { 0 };
-	char buf1[3] = { 0 };
-	char buf2[1] = { 0 };
-	char buf3[7] = { 0 };
-	char buf4[5] = { 0 };
-	char buf5[2] = { 0 };
-	strcpy(buf0, "42");
-	strcpy(buf1, "42");
-	equals(atoi(buf0), 42);
+	char buf1[1] = { 0 };
+	char buf2[7] = { 0 };
+	char buf3[5] = { 0 };
+	char buf4[3] = { 0 };
+	equals(atoi("42"), 42);
 	equals_str(htoa(0x42), "42");
-	equals(htoi(buf1), 0x42);
+	equals(htoi("42"), 0x42);
 	equals_str(itoa(42), "42");
-	equals_str(conv_base(42, buf2, 0, 0), "");
-	equals_str(conv_base(42, buf3, 2, 0), "101010");
-	equals_str(conv_base(424242, buf4, 36, 0), "93ci");
-	equals_str(conv_base(0xffffffff, buf5, 10, 1), "-1");
+	equals_str(conv_base(42, buf1, 0, 0), "");
+	equals_str(conv_base(42, buf2, 2, 0), "101010");
+	equals_str(conv_base(424242, buf3, 36, 0), "93ci");
+	equals_str(conv_base(0xffffffff, buf4, 10, 1), "-1");
 }
 
 void test_mem()
@@ -73,6 +69,7 @@ void test_mem()
 	equals_str(memset(buf2, 'x', 5), "xxxxx");
 }
 
+// TODO: Move to other file (top!)
 void test_all(struct vid_info *vid_info)
 {
 	// Serial connection
