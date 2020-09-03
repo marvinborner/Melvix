@@ -12,8 +12,6 @@
 int bin_load(char *path, struct proc *proc)
 {
 	char *data = read_file(path);
-	if (!data)
-		return 1;
 
 	u32 stack = (u32)malloc(0x2000) + 0x1000;
 
@@ -21,7 +19,8 @@ int bin_load(char *path, struct proc *proc)
 	proc->regs.useresp = (u32)stack;
 	proc->regs.eip = (u32)data;
 	strcpy(proc->name, path + 1);
-	return 0;
+
+	return data ? 0 : 1;
 }
 
 int elf_verify(struct elf_header *h)

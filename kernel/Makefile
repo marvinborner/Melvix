@@ -1,6 +1,7 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
-COBJS = drivers/interrupts.o \
+COBJS = main.o \
+	drivers/interrupts.o \
 	drivers/interrupts_asm.o \
 	drivers/keyboard.o \
 	drivers/mouse.o \
@@ -25,7 +26,6 @@ CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builti
 ASFLAGS = -f elf32
 
 all: compile bootloader
-test: compile_test bootloader
 
 %.o: %.c
 	@$(CC) -c $(CFLAGS) $< -o $@
@@ -37,15 +37,7 @@ bootloader:
 	@mkdir -p ../build/
 	@$(AS) -f bin entry.asm -o ../build/boot.bin
 
-compile: main.o $(COBJS)
+compile: $(COBJS)
 	@mkdir -p ../build/
 	@$(LD) -N -ekernel_main -Ttext 0x00050000 -o ../build/kernel.bin -L../build/ $+ -lk --oformat binary
 	@$(CC) $(CFLAGS) -o ../build/debug.o -L../build/ $+ -lk
-
-compile_test: CFLAGS += -Dtest -Wl,-etest_all
-compile_test: test.o $(COBJS)
-	@mkdir -p ../build/
-	@$(LD) -N -etest_all -Ttext 0x00050000 -o ../build/kernel.bin -L../build/ $+ -lk --oformat binary
-	@$(CC) $(CFLAGS) -o ../build/debug.o -L../build/ $+ -lk
-
-.PHONY: test compile_test

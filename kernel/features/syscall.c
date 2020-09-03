@@ -18,7 +18,7 @@ void syscall_handler(struct regs *r)
 	r->eax = 0;
 
 	if (num != SYS_RECEIVE && num != SYS_YIELD && num != SYS_TIME)
-		printf("[SYSCALL] %d: ", num);
+		printf("[SYSCALL] %d from %s: ", num, proc_current()->name);
 
 	switch (num) {
 	case SYS_LOOP: {

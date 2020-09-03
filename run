@@ -89,11 +89,7 @@ make_build() {
     rm -rf build/*
 
     printf "\nBuilding...\n"
-    if [ "$mode" = "test" ]; then
-        make test
-    else
-        make
-    fi
+    make
 
     # Create disk image
     dd if=/dev/zero of=build/disk.img bs=1k count=32k status=none
@@ -102,6 +98,11 @@ make_build() {
     cp build/kernel.bin . # For nicer disk img
     ./ext2util/ext2util -x build/disk.img -wf kernel.bin -i 5 >/dev/null
     rm kernel.bin
+
+    # Set test app as init
+    if [ "$mode" = "test" ]; then
+        cp build/apps/test build/apps/init
+    fi
 
     mkdir -p mnt/
     sudo mount build/disk.img mnt/
@@ -115,9 +116,11 @@ make_build() {
 
 make_test() {
     if [ "$mode" = "test" ]; then
-        qemu_with_flags -nographic -drive file=build/disk.img,format=raw,index=1,media=disk &
+        qemu_with_flags -serial file:test.log -nographic -drive file=build/disk.img,format=raw,index=1,media=disk &
         sleep 2
         killall -9 qemu-system-i386
+        grep -E 'PASS|FAIL' test.log
+        exit $(grep -q "All tests passed" test.log)
     else
         qemu_with_flags -serial stdio -drive file=build/disk.img,format=raw,index=1,media=disk
     fi

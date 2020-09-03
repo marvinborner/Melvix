@@ -1,58 +1,101 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <conv.h>
-#include <def.h>
-#include <gui.h>
-#include <input.h>
+#include <cpu.h>
+#include <math.h>
+#include <mem.h>
 #include <print.h>
+#include <serial.h>
 #include <str.h>
+#include <sys.h>
+
+#define a_mag 0x55
+#define b_mag 0x42
+
+#define check(exp) pass_or_fail(__FILE__, __LINE__, __func__, #exp, "1", exp);
+#define equals(first, second)                                                                      \
+	pass_or_fail(__FILE__, __LINE__, __func__, #first, #second, (first) == (second));
+#define equals_str(first, second)                                                                  \
+	pass_or_fail(__FILE__, __LINE__, __func__, #first, #second, strcmp((first), (second)) == 0);
+
+static u32 failed;
+
+void pass_or_fail(const char *file_name, int line_num, const char *func, const char *first,
+		  const char *second, int success)
+{
+	failed += success ? 0 : 1;
+	printf("\x1B[%s\x1B[0m %s:%d: %s: %s == %s\n", success ? "32m[PASS]" : "31m[FAIL]",
+	       file_name, line_num, func, first, second);
+}
+
+void test_malloc()
+{
+	u32 *a = malloc(a_mag);
+	u32 *b = malloc(b_mag);
+	equals(a[-1], a_mag);
+	equals(a[a_mag], b_mag);
+	equals(b[-1], b_mag);
+}
+
+void test_math()
+{
+	equals(pow(2, 3), 8);
+	equals(pow(0, 3), 0);
+	equals(pow(0, 0), 1);
+}
+
+void test_conv()
+{
+	char buf1[1] = { 0 };
+	char buf2[7] = { 0 };
+	char buf3[5] = { 0 };
+	char buf4[3] = { 0 };
+	equals(atoi("42"), 42);
+	equals_str(htoa(0x42), "42");
+	equals(htoi("42"), 0x42);
+	equals_str(itoa(42), "42");
+	equals_str(conv_base(42, buf1, 0, 0), "");
+	equals_str(conv_base(42, buf2, 2, 0), "101010");
+	equals_str(conv_base(424242, buf3, 36, 0), "93ci");
+	equals_str(conv_base(0xffffffff, buf4, 10, 1), "-1");
+}
+
+void test_mem()
+{
+	char *str0 = "";
+	char *str1 = "";
+	char *str2 = "12345";
+	char *str3 = "12345";
+	char *str4 = "12354";
+	equals(memcmp(str4, str2, strlen(str2)), 1);
+	equals(memcmp(str2, str4, strlen(str2)), -1);
+	equals(memcmp(str2, str3, strlen(str2)), 0);
+	equals(memcmp(str0, str1, strlen(str0)), 0);
+	equals(memcmp(NULL, NULL, 0), 0);
+
+	char buf[6];
+	equals_str(memcpy(buf, "hallo", 6), "hallo");
+
+	char buf2[6];
+	equals_str(memset(buf2, 'x', 5), "xxxxx");
+}
 
 int main()
 {
-	print("[test loaded]\n");
+	// Serial connection
+	serial_install();
+	serial_print("\nConnected testing.\n");
 
-	struct window *win = gui_new_window(0);
+	test_malloc();
+	test_math();
+	test_conv();
+	test_mem();
 
-	gui_fill(win, BG_COLOR);
-	gui_border(win, FG_COLOR, 2);
+	if (failed)
+		printf("%d tests failed\n", failed);
+	else
+		print("All tests passed\n");
 
-	gui_init("/font/spleen-12x24.psfu");
-	char *hello = "Hello, world!";
-	gui_write(win, win->width / 2 - (strlen(hello) * 12) / 2, 5, FG_COLOR, hello);
-	event_register(EVENT_KEYBOARD);
-
-	struct message *msg;
-	int char_x = 0;
-	int char_y = 1;
-	while (1) {
-		if (!(msg = msg_receive())) {
-			yield();
-			continue;
-		}
-		switch (msg->type) {
-		case EVENT_KEYBOARD: {
-			struct event_keyboard *event = msg->data;
-
-			if (event->magic != KEYBOARD_MAGIC)
-				break;
-
-			if (!event->press)
-				break;
-
-			int key = event->scancode;
-			if (key == KEY_ENTER) {
-				char_x = 0;
-				char_y++;
-			} else if (KEY_ALPHABETIC(key)) {
-				gui_write_char(win, 12 * char_x++, 24 * char_y + 5, FG_COLOR, 'a');
-			}
-
-			break;
-		}
-		default:
-			break;
-		}
-		yield();
-	}
+	loop();
 	return 0;
 }
