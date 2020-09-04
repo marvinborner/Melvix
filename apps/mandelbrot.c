@@ -18,16 +18,11 @@ void draw_pixel(struct window *win, int x, int y, u32 c)
 	win->fb[pos + 3] = GET_ALPHA(c);
 }
 
-int main()
+void draw_mandelbrot(struct window *win, int resolution)
 {
-	print("[mandelbrot window loaded]\n");
-
-	struct window *win = gui_new_window(WF_DEFAULT);
-	gui_fill(win, BG_COLOR);
-
 	int height = win->height;
 	int width = win->width;
-	int max = 500;
+	int max = resolution;
 
 	for (int row = 0; row < height; row++) {
 		for (int col = 0; col < width; col++) {
@@ -49,9 +44,26 @@ int main()
 		}
 	}
 	gui_redraw();
+	yield();
+}
 
+int main()
+{
+	print("[mandelbrot window loaded]\n");
+
+	struct window *win = gui_new_window(WF_DEFAULT);
+	gui_fill(win, BG_COLOR);
+	event_register(EVENT_KEYBOARD);
+
+	int resolution = 0;
+	struct message *msg;
 	while (1) {
-		yield();
+		if (!(msg = msg_receive())) {
+			yield();
+			continue;
+		}
+		if (msg->type == EVENT_KEYBOARD && ((struct event_keyboard *)msg->data)->press)
+			draw_mandelbrot(win, ++resolution);
 	};
 
 	return 0;
