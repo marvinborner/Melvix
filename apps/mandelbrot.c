@@ -38,9 +38,10 @@ void draw_mandelbrot(struct window *win, int resolution)
 			}
 			srand(iteration);
 			if (iteration < max)
-				draw_pixel(win, col, row, rand() | 0xff000000);
+				draw_pixel(win, col, row,
+					   rand() << 16 | rand() << 8 | rand() | 0xff000000);
 			else
-				draw_pixel(win, col, row, BG_COLOR);
+				draw_pixel(win, col, row, 0xff000000);
 		}
 	}
 	gui_redraw();

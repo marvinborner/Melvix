@@ -91,8 +91,8 @@ int main(int argc, char **argv)
 		switch (msg->type) {
 		case MSG_NEW_WINDOW:
 			printf("New window for pid %d\n", msg->src);
-			struct window *win = new_window(vbe->width / 2 - 250, vbe->height / 2 - 150,
-							500, 300, (int)msg->data);
+			struct window *win = new_window(vbe->width / 2 - 500, vbe->height / 2 - 400,
+							1000, 800, (int)msg->data);
 			msg_send(msg->src, MSG_NEW_WINDOW, win);
 			list_add(windows, win);
 			focused = win;

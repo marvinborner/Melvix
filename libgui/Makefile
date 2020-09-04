@@ -7,10 +7,7 @@ CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
 AR = ../cross/opt/bin/i686-elf-ar
 
-# Flags to make the binary smaller TODO: Remove after indirect pointer support!
-CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
-
-CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Iinc/ -I../libc/inc/ -Duserspace -fPIE
+CFLAGS = -Wall -Wextra -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Iinc/ -I../libc/inc/ -fPIE -Duserspace -Ofast
 
 all: libgui clean
 
