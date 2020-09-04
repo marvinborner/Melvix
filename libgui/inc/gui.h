@@ -15,6 +15,7 @@
 #define FG_COLOR 0xffabb2bf
 #define BG_COLOR 0xff282c34
 
+#define WF_DEFAULT (0 << 0)
 #define WF_NO_FOCUS (1 << 0)
 #define WF_NO_DRAG (1 << 1)
 #define WF_NO_RESIZE (1 << 2)

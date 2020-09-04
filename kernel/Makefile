@@ -3,6 +3,7 @@
 COBJS = main.o \
 	drivers/interrupts.o \
 	drivers/interrupts_asm.o \
+	drivers/fpu.o \
 	drivers/keyboard.o \
 	drivers/mouse.o \
 	drivers/ide.o \

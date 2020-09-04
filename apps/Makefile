@@ -1,6 +1,6 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
-COBJS = init.o wm.o window.o test.o
+COBJS = init.o wm.o mandelbrot.o window.o test.o
 CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy
@@ -8,7 +8,7 @@ OC = ../cross/opt/bin/i686-elf-objcopy
 # Flags to make the binary smaller TODO: Remove after indirect pointer support!
 CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
 
-CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -I../libc/inc/ -I../libgui/inc/ -fPIE -Duserspace
+CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -fno-builtin -std=c99 -m32 -pedantic-errors -I../libc/inc/ -I../libgui/inc/ -fPIE -Duserspace
 
 all: $(COBJS)
 

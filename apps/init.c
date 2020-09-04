@@ -11,7 +11,8 @@ int main(int argc, char **argv)
 
 	// TODO: Fix GPF if file doesn't exist
 	int wm = exec("/wm", "wm", argv[1], NULL);
-	int test = exec("/window", "test", NULL);
+	/* int test = exec("/window", "test", NULL); */
+	int mandelbrot = exec("/mandelbrot", "mandelbrot", NULL);
 
-	return wm + test;
+	return wm + mandelbrot;
 }

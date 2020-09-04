@@ -2,6 +2,7 @@
 
 #include <boot.h>
 #include <cpu.h>
+#include <fpu.h>
 #include <fs.h>
 #include <keyboard.h>
 #include <load.h>
@@ -23,6 +24,7 @@ void kernel_main(struct vid_info *vid_info)
 
 	// Install drivers
 	interrupts_install();
+	fpu_install();
 	timer_install();
 	keyboard_install();
 	mouse_install();
