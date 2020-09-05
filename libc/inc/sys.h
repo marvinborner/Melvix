@@ -67,6 +67,7 @@ int sysv(enum sys num, ...);
 	{                                                                                          \
 		sys1(SYS_EXIT, (int)status);                                                       \
 		while (1) {                                                                        \
+			yield();                                                                   \
 		}                                                                                  \
 	}
 #define yield() (int)sys0(SYS_YIELD)

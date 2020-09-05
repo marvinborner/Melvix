@@ -70,7 +70,7 @@ void proc_print()
 
 struct proc *proc_current()
 {
-	return current ? current->data : NULL;
+	return current && current->data ? current->data : NULL;
 }
 
 void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data)
@@ -111,19 +111,24 @@ struct proc *proc_from_pid(u32 pid)
 void proc_exit(struct proc *proc, int status)
 {
 	assert(proc);
-	printf("Process %s exited with status %d\n", proc->name, status);
 
+	int res = 0;
 	struct node *iterator = proc_list->head;
 	do {
 		if (iterator->data == proc) {
+			res = 1;
 			list_remove(proc_list, iterator);
 			break;
 		}
 	} while ((iterator = iterator->next) != NULL);
 
+	if (memcmp(proc, current->data, sizeof(*proc)) == 0)
+		current = NULL;
+
+	if (res)
+		printf("Process %s exited with status %d\n", proc->name, status);
+
 	quantum = 0; // TODO: Add quantum to each process struct?
-	sti();
-	hlt();
 }
 
 void proc_yield(struct regs *r)

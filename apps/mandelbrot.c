@@ -48,6 +48,7 @@ void draw_mandelbrot(struct window *win, int resolution)
 		}
 	}
 	gui_redraw();
+	print("Rendered mandelbrot successfully\n");
 	yield();
 }
 
