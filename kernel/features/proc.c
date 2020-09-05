@@ -30,10 +30,7 @@ void scheduler(struct regs *regs)
 		return;
 	}
 
-	if (current && ((struct proc *)current->data)->state == PROC_RESOLVED) {
-		memcpy(regs, &((struct proc *)current->data)->regs_backup, sizeof(struct regs));
-		((struct proc *)current->data)->state = PROC_DEFAULT;
-	}
+	assert(proc_list->head);
 
 	if (current)
 		memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
@@ -42,15 +39,6 @@ void scheduler(struct regs *regs)
 		current = current->next;
 	else
 		current = proc_list->head;
-
-	while (!current) {
-		if (!current->next || !current->next->data) {
-			assert(proc_list->head);
-			current = proc_list->head;
-		} else {
-			current = current->next;
-		}
-	}
 
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 
@@ -123,7 +111,7 @@ struct proc *proc_from_pid(u32 pid)
 void proc_exit(struct proc *proc, int status)
 {
 	assert(proc);
-	printf("Process %d exited with status %d\n", proc->pid, status);
+	printf("Process %s exited with status %d\n", proc->name, status);
 
 	struct node *iterator = proc_list->head;
 	do {

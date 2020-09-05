@@ -42,6 +42,9 @@ void draw_mandelbrot(struct window *win, int resolution)
 					   rand() << 16 | rand() << 8 | rand() | 0xff000000);
 			else
 				draw_pixel(win, col, row, 0xff000000);
+
+			if (row % 50 == 0 && col == 0)
+				gui_redraw();
 		}
 	}
 	gui_redraw();
@@ -54,17 +57,11 @@ int main()
 
 	struct window *win = gui_new_window(WF_DEFAULT);
 	gui_fill(win, BG_COLOR);
-	event_register(EVENT_KEYBOARD);
 
-	int resolution = 0;
-	struct message *msg;
+	draw_mandelbrot(win, 50);
+
 	while (1) {
-		if (!(msg = msg_receive())) {
-			yield();
-			continue;
-		}
-		if (msg->type == EVENT_KEYBOARD && ((struct event_keyboard *)msg->data)->press)
-			draw_mandelbrot(win, ++resolution);
+		yield();
 	};
 
 	return 0;
