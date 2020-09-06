@@ -74,15 +74,18 @@ void acpi_install()
 	hpet = find_sdt(rsdt, HPET_MAGIC);
 }
 
-void hpet_install()
+void hpet_install(int period)
 {
 	if (hpet && hpet->legacy_replacement && hpet->comparator_count > 0) {
 		struct hpet_registers *r = (struct hpet_registers *)hpet->address.phys;
-		printf("HPET tick period: %dns\n", r->features.tick_period / 1000000);
-		printf("Periodic support: %d\n", r->timer.periodic_support);
-		r->config.enable = 1;
-		r->config.legacy_replacement = 1;
-		r->timer.enable = 1;
+		printf("HPET tick period: %dns\n", r->tick_period / 1000000);
+		if ((r->timer0 & hpet_periodic_support) == hpet_periodic_support) {
+			r->config |= hpet_enable;
+			r->config |= hpet_legacy_replacement;
+			r->timer0 |= hpet_periodic | hpet_set_accumulator | hpet_enable_timer;
+			r->timer_comparator0 = r->tick_period + period;
+			r->timer_comparator0 = period;
+		}
 	} else {
 		hpet = NULL;
 	}

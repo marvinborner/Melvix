@@ -68,48 +68,37 @@ struct hpet {
 	u8 page_protection;
 };
 
+enum hpet_features { hpet_counter_size = 1 << 3, hpet_legacy_replacement_support = 1 << 5 };
+enum hpet_config { hpet_enable = 1 << 0, hpet_legacy_replacement = 1 << 1 };
+enum hpet_timer {
+	hpet_type = 1 << 1,
+	hpet_enable_timer = 1 << 2,
+	hpet_periodic = 1 << 3,
+	hpet_periodic_support = 1 << 4,
+	hpet_size = 1 << 5, // 1 if 64 bit
+	hpet_set_accumulator = 1 << 6,
+	hpet_force_32 = 1 << 8, // For 64 bit
+	hpet_apic_routing = 1 << 13,
+	hpet_fsb = 1 << 14,
+	hpet_fsb_support = 1 << 15,
+	/* routing_capability = 1 << 63 */
+};
+
 struct hpet_registers {
-	struct {
-		u8 revision;
-		u8 comparator_count : 5;
-		u8 counter_size : 1;
-		u8 reserved : 1;
-		u8 legacy_replacement : 1;
-		u16 pci_vendor_id;
-		u32 tick_period;
-	} features;
+	u32 features; // enum hpet_features
+	u32 tick_period;
 	u64 reserved1;
-	struct {
-		u8 enable : 1;
-		u8 legacy_replacement : 1;
-		u64 reserved : 62;
-	} config;
+	u64 config; // enum hpet_config
 	u64 reserved2;
-	struct {
-		u32 status; // For timer #n
-		u32 reserved;
-	} int_status;
-	u8 reserved3[200]; // Why?!
+	u32 int_status; // For timer #n
+	u32 reserved3;
+	u8 reserved4[200]; // Why?!
 	u32 counter;
 	u32 counter_high; // 0 due to 64 bit
-	u64 reserved4;
-	struct {
-		u8 reserved1 : 1;
-		u8 type : 1;
-		u8 enable : 1;
-		u8 periodic : 1;
-		u8 periodic_support : 1;
-		u8 size : 1; // 1 if 64 bit
-		u8 set_accumulator : 1;
-		u8 reserved2 : 1;
-		u8 force_32 : 1; // For 64 bit
-		u8 apic_routing : 5;
-		u8 fsb : 1;
-		u8 fsb_support : 1;
-		u16 reserved3;
-		u32 routing_capability;
-	} timer;
-};
+	u64 reserved5;
+	u64 timer0; // enum hpet_timer
+	u64 timer_comparator0; // In femtoseconds
+} __attribute__((packed));
 
 struct rsdp {
 	struct sdp_header header;
@@ -121,6 +110,6 @@ struct fadt *fadt;
 struct hpet *hpet;
 
 void acpi_install();
-void hpet_install();
+void hpet_install(int period);
 
 #endif
