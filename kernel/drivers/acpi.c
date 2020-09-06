@@ -44,6 +44,19 @@ struct rsdp *find_rsdp()
 	return NULL;
 }
 
+void *find_sdt(struct rsdt *rsdt, const char *signature)
+{
+	int entries = (rsdt->header.length - sizeof(rsdt->header)) / 4;
+
+	for (int i = 0; i < entries; i++) {
+		struct sdt_header *header = (struct sdt_header *)rsdt->sdt_pointer[i];
+		if (memcmp(header->signature, signature, 4) == 0)
+			return header;
+	}
+
+	return NULL;
+}
+
 void acpi_install()
 {
 	struct rsdp *rsdp = find_rsdp();
@@ -51,4 +64,10 @@ void acpi_install()
 	struct rsdt *rsdt = rsdp->rsdt;
 	assert(rsdt && memcmp(rsdt->header.signature, RSDT_MAGIC, 4) == 0 &&
 	       check_sdt(&rsdt->header));
+
+	madt = find_sdt(rsdt, MADT_MAGIC);
+	fadt = find_sdt(rsdt, FADT_MAGIC);
+	hpet = find_sdt(rsdt, HPET_MAGIC);
+	assert(madt && check_sdt(&madt->header) && fadt && check_sdt(&fadt->header) && hpet &&
+	       check_sdt(&hpet->header));
 }
