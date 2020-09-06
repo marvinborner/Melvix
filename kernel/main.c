@@ -25,6 +25,7 @@ void kernel_main(struct vid_info *vid_info)
 
 	// Install drivers
 	acpi_install();
+	hpet_install();
 	interrupts_install();
 	fpu_install();
 	timer_install();

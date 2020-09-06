@@ -50,8 +50,12 @@ void *find_sdt(struct rsdt *rsdt, const char *signature)
 
 	for (int i = 0; i < entries; i++) {
 		struct sdt_header *header = (struct sdt_header *)rsdt->sdt_pointer[i];
-		if (memcmp(header->signature, signature, 4) == 0)
-			return header;
+		if (memcmp(header->signature, signature, 4) == 0) {
+			if (check_sdt(header))
+				return header;
+			else
+				break;
+		}
 	}
 
 	return NULL;
@@ -68,6 +72,18 @@ void acpi_install()
 	madt = find_sdt(rsdt, MADT_MAGIC);
 	fadt = find_sdt(rsdt, FADT_MAGIC);
 	hpet = find_sdt(rsdt, HPET_MAGIC);
-	assert(madt && check_sdt(&madt->header) && fadt && check_sdt(&fadt->header) && hpet &&
-	       check_sdt(&hpet->header));
+}
+
+void hpet_install()
+{
+	if (hpet && hpet->legacy_replacement && hpet->comparator_count > 0) {
+		struct hpet_registers *r = (struct hpet_registers *)hpet->address.phys;
+		printf("HPET tick period: %dns\n", r->features.tick_period / 1000000);
+		printf("Periodic support: %d\n", r->timer.periodic_support);
+		r->config.enable = 1;
+		r->config.legacy_replacement = 1;
+		r->timer.enable = 1;
+	} else {
+		hpet = NULL;
+	}
 }
