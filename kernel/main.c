@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <acpi.h>
 #include <boot.h>
 #include <cpu.h>
 #include <fpu.h>
@@ -23,6 +24,7 @@ void kernel_main(struct vid_info *vid_info)
 	serial_print("\nConnected.\n");
 
 	// Install drivers
+	acpi_install();
 	interrupts_install();
 	fpu_install();
 	timer_install();

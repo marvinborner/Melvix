@@ -1,6 +1,7 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
 COBJS = main.o \
+	drivers/acpi.o \
 	drivers/interrupts.o \
 	drivers/interrupts_asm.o \
 	drivers/fpu.o \
