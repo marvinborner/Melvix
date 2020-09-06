@@ -40,6 +40,15 @@ void scheduler(struct regs *regs)
 	else
 		current = proc_list->head;
 
+	while (((struct proc *)current->data)->state == PROC_WAITING) {
+		/* assert(proc_awake() > 0); */
+		if (current && current->next && current->next->data) {
+			current = current->next;
+		} else {
+			current = proc_list->head;
+		}
+	}
+
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 
 	if (regs->cs != GDT_USER_CODE_OFFSET) {
@@ -53,6 +62,16 @@ void scheduler(struct regs *regs)
 	}
 
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
+}
+
+void scheduler_enable()
+{
+	irq_install_handler(0, scheduler);
+}
+
+void scheduler_disable()
+{
+	irq_install_handler(0, timer_handler);
 }
 
 void proc_print()
@@ -73,6 +92,17 @@ struct proc *proc_current()
 	return current && current->data ? current->data : NULL;
 }
 
+int proc_awake()
+{
+	int ret = 0;
+	struct node *iterator = proc_list->head;
+	do {
+		if (((struct proc *)iterator->data)->state != PROC_WAITING)
+			ret++;
+	} while ((iterator = iterator->next) != NULL);
+	return ret;
+}
+
 void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data)
 {
 	// TODO: Use unique key instead of pid for IPC messaging
@@ -85,6 +115,8 @@ void proc_send(struct proc *src, struct proc *dest, enum message_type type, void
 	msg->msg->type = type;
 	msg->msg->data = data;
 	list_add(dest->messages, msg);
+	if (dest->state == PROC_WAITING)
+		dest->state = PROC_DEFAULT;
 }
 
 struct proc_message *proc_receive(struct proc *proc)
@@ -159,7 +191,7 @@ void proc_init()
 		return;
 
 	cli();
-	irq_install_handler(0, scheduler);
+	scheduler_enable();
 	proc_list = list_new();
 
 	kernel_proc = proc_make();

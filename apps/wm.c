@@ -12,7 +12,7 @@
 #include <sys.h>
 #include <vesa.h>
 
-#define MOUSE_SKIP 4 // => Every nth move gets skipped
+#define MOUSE_SKIP 5 // => Every move % n != 0 gets skipped
 
 static struct vbe *vbe;
 static struct window *direct; // Direct video memory window
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 	int mouse_skip = 0;
 	while (1) {
 		if (!(msg = msg_receive())) {
-			yield();
+			wait();
 			continue;
 		}
 
