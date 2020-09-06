@@ -25,4 +25,19 @@ typedef unsigned long long u64;
 
 #define NULL ((void *)0)
 
+#define U8_MAX 255
+#define S8_MAX 127
+#define S8_MIN -128
+#define U16_MAX 65535
+#define S16_MAX 32767
+#define S16_MIN -32768
+#define U32_MAX 4294967295
+#define S32_MAX 2147483647
+#define S32_MIN -2147483648
+
+#define MILLION 1000000
+#define BILLION 1000000000
+#define TRILLION 1000000000000
+#define QUADRILLION 1000000000000000
+
 #endif

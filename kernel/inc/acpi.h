@@ -11,6 +11,8 @@
 #define FADT_MAGIC "FACP"
 #define HPET_MAGIC "HPET"
 
+#define HPET_MAX_PERIOD 0x05F5E100
+
 struct address_structure {
 	u8 address_space_id;
 	u8 register_bit_width;
@@ -110,6 +112,6 @@ struct fadt *fadt;
 struct hpet *hpet;
 
 void acpi_install();
-void hpet_install(int period);
+void hpet_install(int frequency);
 
 #endif

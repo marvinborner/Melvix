@@ -78,11 +78,12 @@ void hpet_install(int period)
 {
 	if (hpet && hpet->legacy_replacement && hpet->comparator_count > 0) {
 		struct hpet_registers *r = (struct hpet_registers *)hpet->address.phys;
-		printf("HPET tick period: %dns\n", r->tick_period / 1000000);
+		printf("HPET tick period: %dns\n", HPET_MAX_PERIOD / r->tick_period);
 		if ((r->timer0 & hpet_periodic_support) == hpet_periodic_support) {
 			r->config |= hpet_enable;
 			r->config |= hpet_legacy_replacement;
 			r->timer0 |= hpet_periodic | hpet_set_accumulator | hpet_enable_timer;
+			assert(r->tick_period + period < HPET_MAX_PERIOD);
 			r->timer_comparator0 = r->tick_period + period;
 			r->timer_comparator0 = period;
 		}

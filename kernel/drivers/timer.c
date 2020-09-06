@@ -22,7 +22,10 @@ u32 timer_get()
 
 void timer_handler()
 {
-	timer_ticks++;
+	if (timer_ticks >= U32_MAX)
+		timer_ticks = 0;
+	else
+		timer_ticks++;
 }
 
 // "Delay" function with CPU sleep
