@@ -9,6 +9,7 @@
 #include <load.h>
 #include <mem.h>
 #include <mouse.h>
+#include <print.h>
 #include <serial.h>
 #include <syscall.h>
 #include <timer.h>
@@ -22,6 +23,8 @@ void kernel_main(struct vid_info *vid_info)
 	// Serial connection
 	serial_install();
 	serial_print("\nConnected.\n");
+
+	cpu_print();
 
 	// Install drivers
 	acpi_install();

@@ -36,9 +36,10 @@ struct rsdp *find_rsdp()
 	}
 
 	// Or first KB of EBDA?
-	for (int i = 0x100000; i < 0x101000; i++) {
-		if (memcmp((u32 *)i, RSDP_MAGIC, 8) == 0)
-			return (struct rsdp *)i;
+	u8 *ebda = (void *)(*((u16 *)0x40E) << 4);
+	for (int i = 0; i < 1024; i += 16) {
+		if (memcmp(ebda + i, RSDP_MAGIC, 8) == 0)
+			return (struct rsdp *)(ebda + i);
 	}
 
 	return NULL;
@@ -72,6 +73,8 @@ void acpi_install()
 	madt = find_sdt(rsdt, MADT_MAGIC);
 	fadt = find_sdt(rsdt, FADT_MAGIC);
 	hpet = find_sdt(rsdt, HPET_MAGIC);
+
+	madt_install();
 }
 
 void hpet_install(int period)
@@ -89,5 +92,45 @@ void hpet_install(int period)
 		}
 	} else {
 		hpet = NULL;
+	}
+}
+
+void madt_install()
+{
+	if (!madt)
+		return;
+
+	struct madt_entry_header *entry = &madt->entry;
+	while (entry && entry->length) {
+		switch (entry->type) {
+		case MADT_LOCAL_APIC_ENTRY: {
+			struct madt_local_apic_entry *table = (struct madt_local_apic_entry *)entry;
+			printf("CPU %b\n", table->flags);
+			break;
+		}
+		case MADT_IO_APIC_ENTRY: {
+			/* struct madt_io_apic_entry *table = (struct madt_io_apic_entry *)entry; */
+			break;
+		}
+		case MADT_INT_SRC_OVERRIDE_ENTRY: {
+			/* struct madt_int_src_override_entry *table = */
+			/* 	(struct madt_int_src_override_entry *)entry; */
+			break;
+		}
+		case MADT_NON_MASKABLE_INT_ENTRY: {
+			/* struct madt_non_maskable_int_entry *table = */
+			/* 	(struct madt_non_maskable_int_entry *)entry; */
+			break;
+		}
+		case MADT_LOCAL_APIC_OVERRIDE_ENTRY: {
+			/* struct madt_local_apic_override_entry *table = */
+			/* 	(struct madt_local_apic_override_entry *)entry; */
+			break;
+		}
+		default: {
+			break;
+		}
+		}
+		entry = (struct madt_entry_header *)((u32)entry + entry->length);
 	}
 }

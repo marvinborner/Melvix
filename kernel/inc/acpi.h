@@ -21,6 +21,10 @@ struct address_structure {
 	u32 phys; // Actually u64
 };
 
+/**
+ * General headers
+ */
+
 struct sdt_header {
 	char signature[4];
 	u32 length;
@@ -40,21 +44,85 @@ struct sdp_header {
 	u8 revision;
 };
 
+/**
+ * RSDT
+ */
+
 struct rsdt {
 	struct sdt_header header;
 	u32 sdt_pointer[];
+};
+
+/**
+ * MADT
+ */
+
+struct madt_entry_header {
+	u8 type;
+	u8 length;
 };
 
 struct madt {
 	struct sdt_header header;
 	u32 local_address;
 	u32 flags;
-};
+	struct madt_entry_header entry;
+} __attribute__((packed));
+
+#define MADT_LOCAL_APIC_ENTRY 0
+#define MADT_IO_APIC_ENTRY 1
+#define MADT_INT_SRC_OVERRIDE_ENTRY 2
+#define MADT_NON_MASKABLE_INT_ENTRY 4 // Where's 3?
+#define MADT_LOCAL_APIC_OVERRIDE_ENTRY 5
+
+struct madt_local_apic_entry {
+	struct madt_entry_header header;
+	u8 processor_id;
+	u8 id;
+	u32 flags;
+} __attribute__((packed));
+
+struct madt_io_apic_entry {
+	struct madt_entry_header header;
+	u8 id;
+	u8 reserved;
+	u32 address;
+	u32 global_system_interrupt_base;
+} __attribute__((packed));
+
+struct madt_int_src_override_entry {
+	struct madt_entry_header header;
+	u8 bus_source;
+	u8 irq_source;
+	u32 global_system_interrupt;
+	u16 flags;
+} __attribute__((packed));
+
+struct madt_non_maskable_int_entry {
+	struct madt_entry_header header;
+	u8 processor_id;
+	u16 flags;
+	u8 lint_number;
+} __attribute__((packed));
+
+struct madt_local_apic_override_entry {
+	struct madt_entry_header header;
+	u16 reserved;
+	u64 address;
+} __attribute__((packed));
+
+/**
+ * FADT
+ */
 
 struct fadt {
 	struct sdt_header header;
 	// TODO: FADT table (big!)
-};
+} __attribute__((packed));
+
+/**
+ * HPET
+ */
 
 struct hpet {
 	struct sdt_header header;
@@ -68,7 +136,7 @@ struct hpet {
 	u8 hpet_number;
 	u16 minimum_tick;
 	u8 page_protection;
-};
+} __attribute__((packed));
 
 enum hpet_features { hpet_counter_size = 1 << 3, hpet_legacy_replacement_support = 1 << 5 };
 enum hpet_config { hpet_enable = 1 << 0, hpet_legacy_replacement = 1 << 1 };
@@ -102,6 +170,10 @@ struct hpet_registers {
 	u64 timer_comparator0; // In femtoseconds
 } __attribute__((packed));
 
+/**
+ * RSDP
+ */
+
 struct rsdp {
 	struct sdp_header header;
 	struct rsdt *rsdt;
@@ -113,5 +185,6 @@ struct hpet *hpet;
 
 void acpi_install();
 void hpet_install(int frequency);
+void madt_install();
 
 #endif
