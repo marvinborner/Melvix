@@ -17,7 +17,7 @@
 #define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
 #define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
 
-enum proc_state { PROC_DEFAULT, PROC_WAITING };
+enum proc_state { PROC_DEFAULT };
 
 struct proc {
 	u32 pid;
@@ -41,7 +41,6 @@ void scheduler_disable();
 void proc_init();
 void proc_print();
 struct proc *proc_current();
-int proc_awake();
 void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data);
 struct proc_message *proc_receive(struct proc *proc);
 struct proc *proc_from_pid(u32 pid);

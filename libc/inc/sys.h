@@ -16,7 +16,6 @@ enum sys {
 	SYS_EXEC, // Execute path
 	SYS_EXIT, // Exit current process
 	SYS_YIELD, // Switch to next process
-	SYS_WAIT, // Sleep until new message arrives
 	SYS_TIME, // Get kernel time
 	SYS_REGISTER, // Register for event
 	SYS_UNREGISTER, // Unregister event
@@ -72,7 +71,6 @@ int sysv(enum sys num, ...);
 		}                                                                                  \
 	}
 #define yield() (int)sys0(SYS_YIELD)
-#define wait() (int)sys0(SYS_WAIT)
 #define time() (int)sys0(SYS_TIME)
 
 #define event_register(id) sys1(SYS_REGISTER, (int)(id))

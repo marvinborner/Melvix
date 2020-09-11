@@ -13,8 +13,5 @@ int main(int argc, char **argv)
 	/* int test = exec("/window", "test", NULL); */
 	int mandelbrot = exec("/mandelbrot", "mandelbrot", NULL);
 
-	while (1) {
-		yield();
-	};
 	return wm + mandelbrot;
 }

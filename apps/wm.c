@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 	int mouse_skip = 0;
 	while (1) {
 		if (!(msg = msg_receive())) {
-			wait();
+			yield();
 			continue;
 		}
 

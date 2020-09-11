@@ -32,22 +32,12 @@ void scheduler(struct regs *regs)
 
 	assert(proc_list->head);
 
-	if (current)
-		memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
+	memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
 
-	if (current && current->next)
+	if (current->next)
 		current = current->next;
 	else
 		current = proc_list->head;
-
-	while (((struct proc *)current->data)->state == PROC_WAITING) {
-		/* assert(proc_awake() > 0); */
-		if (current && current->next && current->next->data) {
-			current = current->next;
-		} else {
-			current = proc_list->head;
-		}
-	}
 
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 
@@ -92,17 +82,6 @@ struct proc *proc_current()
 	return current && current->data ? current->data : NULL;
 }
 
-int proc_awake()
-{
-	int ret = 0;
-	struct node *iterator = proc_list->head;
-	do {
-		if (((struct proc *)iterator->data)->state != PROC_WAITING)
-			ret++;
-	} while ((iterator = iterator->next) != NULL);
-	return ret;
-}
-
 void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data)
 {
 	// TODO: Use unique key instead of pid for IPC messaging
@@ -115,8 +94,6 @@ void proc_send(struct proc *src, struct proc *dest, enum message_type type, void
 	msg->msg->type = type;
 	msg->msg->data = data;
 	list_add(dest->messages, msg);
-	if (dest->state == PROC_WAITING)
-		dest->state = PROC_DEFAULT;
 }
 
 struct proc_message *proc_receive(struct proc *proc)
@@ -198,6 +175,7 @@ void proc_init()
 
 	struct node *new = list_add(proc_list, proc_make());
 	bin_load("/init", new->data);
+	current = new;
 
 	_eip = ((struct proc *)new->data)->regs.eip;
 	_esp = ((struct proc *)new->data)->regs.useresp;
