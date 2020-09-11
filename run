@@ -9,8 +9,9 @@ mode="${1}"
 no_ask="${2}"
 network="rtl8139"
 
+# TODO: Support q35 chipset ('-machine q35') - loops in ide_wait
 qemu_with_flags() {
-    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
 }
 
 make_cross() {
