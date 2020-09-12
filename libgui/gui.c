@@ -86,23 +86,7 @@ void gui_load_image(struct window *win, char *path, int x, int y)
 
 void gui_load_wallpaper(struct window *win, char *path)
 {
-	struct bmp *bmp = bmp_load(path);
-	assert(bmp && bmp->width <= win->width);
-	assert(bmp && bmp->height <= win->height);
-
-	// TODO: Support padding with odd widths
-	int bypp = bmp->bpp >> 3;
-	// TODO: Find out why bigger images need some kind of offset
-	int magic_offset = bmp->pitch + 1024;
-	u8 *srcfb = &bmp->data[bypp + bmp->height * bmp->pitch - magic_offset];
-	u8 *destfb = &win->fb[bypp];
-	for (u32 cy = 0; cy < bmp->height; cy++) {
-		memcpy(destfb, srcfb, bmp->pitch);
-		srcfb -= bmp->pitch;
-		destfb += win->pitch;
-	}
-	gui_redraw();
-	/* gui_load_image(win, path, 0, 0); */
+	gui_load_image(win, path, 0, 0);
 }
 
 void gui_copy(struct window *dest, struct window *src, int x, int y, u32 width, u32 height)
@@ -131,7 +115,7 @@ void gui_win_on_win(struct window *dest, struct window *src, int x, int y)
 	u8 *srcfb = src->fb;
 	u8 *destfb = &dest->fb[x * bypp + y * dest->pitch];
 	for (u32 cy = 0; cy < src->height && cy + y < dest->height; cy++) {
-		for (u32 cx = 0; cx < src->width; cx++) {
+		for (u32 cx = 0; cx < src->width && cx + x < dest->width; cx++) {
 			if (srcfb[bypp * cx + 3]) {
 				destfb[bypp * cx + 0] = srcfb[bypp * cx + 0];
 				destfb[bypp * cx + 1] = srcfb[bypp * cx + 1];

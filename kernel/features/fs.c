@@ -83,13 +83,13 @@ void *read_inode(struct inode *in)
 			indirect = in->block[12];
 			blocknum = read_indirect(indirect, i - 12);
 			data = buffer_read(blocknum);
-			memcpy((u32 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
+			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
 		} else {
 			indirect = in->block[13];
 			blocknum = read_indirect(indirect, (i - (BLOCK_COUNT + 12)) / BLOCK_COUNT);
 			blocknum = read_indirect(blocknum, (i - (BLOCK_COUNT + 12)) % BLOCK_COUNT);
 			data = buffer_read(blocknum);
-			memcpy((u32 *)((u32)buf + (i - 1) * BLOCK_SIZE), data, BLOCK_SIZE);
+			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
 		}
 		/* printf("Loaded %d of %d\n", i + 1, num_blocks); */
 	}
