@@ -130,7 +130,7 @@ void gui_win_on_win(struct window *dest, struct window *src, int x, int y)
 	int bypp = dest->bpp >> 3;
 	u8 *srcfb = src->fb;
 	u8 *destfb = &dest->fb[x * bypp + y * dest->pitch];
-	for (u32 cy = 0; cy < src->height; cy++) {
+	for (u32 cy = 0; cy < src->height && cy + y < dest->height; cy++) {
 		for (u32 cx = 0; cx < src->width; cx++) {
 			if (srcfb[bypp * cx + 3]) {
 				destfb[bypp * cx + 0] = srcfb[bypp * cx + 0];

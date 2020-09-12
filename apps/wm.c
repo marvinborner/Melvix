@@ -124,7 +124,6 @@ int main(int argc, char **argv)
 			cursor->y = mouse_y;
 
 			if (event->but1 && !(focused->flags & WF_NO_DRAG) &&
-			    mouse_y + (int)focused->height < vbe->height - 1 &&
 			    mouse_skip % MOUSE_SKIP == 0) {
 				mouse_skip = 0;
 				focused->x = mouse_x;
