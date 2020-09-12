@@ -96,9 +96,9 @@ make_build() {
     dd if=/dev/zero of=build/disk.img bs=1k count=32k status=none
     sudo mke2fs -q build/disk.img
     dd if=build/boot.bin of=build/disk.img conv=notrunc status=none
-    cp build/kernel.bin . # For nicer disk img
-    ./ext2util/ext2util -x build/disk.img -wf kernel.bin -i 5 >/dev/null
-    rm kernel.bin
+    cp build/load.bin . # For nicer disk img
+    ./ext2util/ext2util -x build/disk.img -wf load.bin -i 5 >/dev/null
+    rm load.bin
 
     # Set test app as init
     if [ "$mode" = "test" ]; then
@@ -109,6 +109,7 @@ make_build() {
     sudo mount build/disk.img mnt/
     sudo cp -r disk/* mnt/
     sudo cp build/apps/* mnt/
+    sudo cp build/kernel.bin mnt/
     sudo umount mnt/
     rm -rf mnt/
 
@@ -120,6 +121,7 @@ make_test() {
         qemu_with_flags -serial file:test.log -nographic -drive file=build/disk.img,format=raw,index=1,media=disk &
         sleep 2
         killall -9 qemu-system-i386
+        echo
         grep -E 'PASS|FAIL' test.log
         exit $(grep -q "All tests passed" test.log)
     else
@@ -159,6 +161,7 @@ make_sync() {
     echo "$output" | make_append_commands libc libk libc
     echo "$output" | make_append_commands libk libgui libgui
     echo "$output" | make_append_commands libgui kernel kernel
+    echo "$output" | make_append_commands kernel boot boot
     echo "$output" | make_append_commands kernel apps apps
     tr <compile_commands.json '\n' '\r' | sed -e 's/\r]\r\[/,/g' | tr '\r' '\n' >tmp
     mv tmp compile_commands.json

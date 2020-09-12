@@ -27,17 +27,13 @@ CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builti
 
 ASFLAGS = -f elf32
 
-all: compile bootloader
+all: compile
 
 %.o: %.c
 	@$(CC) -c $(CFLAGS) $< -o $@
 
 %_asm.o: %.asm
 	@$(AS) $(ASFLAGS) $< -o $@
-
-bootloader:
-	@mkdir -p ../build/
-	@$(AS) -f bin entry.asm -o ../build/boot.bin
 
 compile: $(COBJS)
 	@mkdir -p ../build/

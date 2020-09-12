@@ -13,8 +13,10 @@ compile:
 	@echo "Compiled libgui"
 	@$(MAKE) --no-print-directory -C kernel/
 	@echo "Compiled kernel"
+	@$(MAKE) --no-print-directory -C boot/
+	@echo "Compiled boot"
 	@$(MAKE) --no-print-directory -C apps/
 	@echo "Compiled apps"
 
 clean:
-	@find kernel/ apps/ libc/ \( -name "*.o" -or -name "*.a" -or -name "*.elf" -or -name "*.bin" \) -type f -delete
+	@find kernel/ apps/ libc/ boot/ \( -name "*.o" -or -name "*.a" -or -name "*.elf" -or -name "*.bin" \) -type f -delete

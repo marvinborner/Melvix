@@ -86,7 +86,7 @@
 
 ; Kernel constants
 %define STACK_POINTER 0x00900000 ; The initial stack pointer in kernel mode
-%define KERNEL_POSITION 0x00050000 ; Loaded kernel position in protected mode (* 0x10)
+%define KERNEL_POSITION 0x00040000 ; Loaded kernel position in protected mode (* 0x10)
 
 ; ENOUGH, let's go!
 
@@ -284,7 +284,7 @@ stage_two:
 	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
 	mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of blocks for inode
 	lea di, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
-	mov bx, 0x5000 ; Load to this address
+	mov bx, 0x4000 ; Load to this address
 	mov [dest + 2], bx
 	mov bx, 0 ; Inode location = 0xF0000
 	mov [dest], bx
@@ -296,46 +296,12 @@ stage_two:
 	jmp protected_mode_enter
 
 kernel_load:
-	; TODO: Add singly pointer support (until ~12KiB)
-	;cmp cx, EXT2_DIRECT_POINTER_COUNT ; Indirect pointer needed?
-	;jge .indirect ; Singly indirect pointer
-
 	mov ax, [di] ; Set ax = block pointer
 	shl ax, 1 ; Multiply ax by 2
 	mov [lba], ax
 	mov [dest], bx
 	call disk_read
 	jmp .end
-
-;.indirect:
-;	push di
-;	push bx
-;	push cx
-;
-;	; Read singly indirect pointer
-;	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
-;	lea di, [bx + EXT2_IND_POINTER_OFFSET] ; Address of singly indirect pointer
-;	mov bx, 0x3000 ; Arbitrary address
-;	mov ax, [di] ; Set ax = block pointer
-;	shl ax, 1 ; Multiply ax by 2
-;	mov [lba], ax
-;	mov [dest], bx
-;	call disk_read
-;
-;	; Read data
-;	sub cx, EXT2_DIRECT_POINTER_COUNT
-;	lea di, [ebx + 4 * ecx]
-;	mov bx, 0x4000 ; Arbitrary address
-;	mov ax, [di]
-;	shl ax, 1
-;	;sub bx, 0x400
-;	mov [lba], ax
-;	mov [dest], bx
-;	call disk_read
-;
-;	pop cx
-;	pop bx
-;	pop di
 
 .end:
 	add bx, 0x400 ; 1kb increase
