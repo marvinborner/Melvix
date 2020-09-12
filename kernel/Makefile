@@ -20,10 +20,7 @@ LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy
 AS = nasm
 
-# Flags to make the binary smaller TODO: Remove after indirect pointer support!
-CSFLAGS = -mpreferred-stack-boundary=2 -fno-asynchronous-unwind-tables -Os
-
-CFLAGS = $(CSFLAGS) -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -mno-red-zone -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel
+CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -fno-asynchronous-unwind-tables -mno-red-zone -mgeneral-regs-only -mpreferred-stack-boundary=2 -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel -Os
 
 ASFLAGS = -f elf32
 

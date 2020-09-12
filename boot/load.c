@@ -132,7 +132,8 @@ struct inode *get_inode(int i);
 int find_inode(const char *name, int dir_inode);
 void serial_install();
 void serial_print(const char *data);
-int main()
+
+int main(void *data)
 {
 	serial_install();
 	heap = 0xf000;
@@ -140,9 +141,12 @@ int main()
 	*(void **)(&entry) = read_inode(get_inode(find_inode("kernel.bin", 2)));
 	if (entry) {
 		serial_print("Loaded kernel!\n");
-		entry();
+		entry(data);
+		return 0;
+	} else {
+		serial_print("Couldn't find kernel!\n");
+		return 1;
 	}
-	return 0;
 }
 
 u8 inb(u16 port)
@@ -330,8 +334,6 @@ void *read_inode(struct inode *in)
 	if (!num_blocks)
 		return 0;
 
-	/* u32 sz = BLOCK_SIZE * num_blocks; */
-	/* void *buf = malloc(sz); */
 	void *buf = (void *)0x50000;
 	//assert(buf != 0);
 
