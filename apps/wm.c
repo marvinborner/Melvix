@@ -38,6 +38,21 @@ static struct window *new_window(struct window *win, int x, int y, u16 width, u1
 	return win;
 }
 
+static struct window *window_at(int x, int y)
+{
+	if (windows->head && windows->head->data) {
+		struct node *iterator = windows->head;
+		do {
+			struct window *win = iterator->data;
+			if (win != &root && x >= win->x && x <= win->x + (int)win->width &&
+			    y >= win->y && y <= win->y + (int)win->height) {
+				return win;
+			}
+		} while ((iterator = iterator->next) != NULL);
+	}
+	return NULL;
+}
+
 static void redraw_all()
 {
 	if (windows->head && windows->head->data) {
@@ -50,6 +65,7 @@ static void redraw_all()
 	}
 }
 
+// TODO: Clean this god-function
 int main(int argc, char **argv)
 {
 	(void)argc;
@@ -66,11 +82,12 @@ int main(int argc, char **argv)
 	direct.fb = vbe.fb;
 	list_add(windows, &root);
 
-	gui_write(&direct, 0, 0, FG_COLOR, "Welcome to Melvix!");
-	gui_write(&direct, 0, 32, FG_COLOR, "Loading resources...");
+	gui_fill(&direct, COLOR_BG);
+	gui_write(&direct, 0, 0, COLOR_FG, "Welcome to Melvix!");
+	gui_write(&direct, 0, 32, COLOR_FG, "Loading resources...");
 
-	gui_fill(&root, BG_COLOR);
-	gui_border(&root, FG_COLOR, 2);
+	gui_fill(&root, COLOR_BG);
+	gui_border(&root, COLOR_FG, 2);
 	gui_load_image(&cursor, "/res/cursor.bmp", 0, 0);
 	gui_load_wallpaper(&root, "/res/wall.bmp");
 	redraw_all();
@@ -79,6 +96,7 @@ int main(int argc, char **argv)
 
 	struct message *msg;
 	int mouse_skip = 0;
+	int but1_pressed = 0;
 	while (1) {
 		if (!(msg = msg_receive())) {
 			yield();
@@ -89,8 +107,11 @@ int main(int argc, char **argv)
 		case MSG_NEW_WINDOW:
 			printf("New window for pid %d\n", msg->src);
 			struct window *win = msg->data;
-			new_window(win, vbe.width / 2 - 500, vbe.height / 2 - 400, 1000, 800,
-				   win->flags);
+			int width = win->width ? win->width : 1000;
+			int height = win->height ? win->height : 800;
+			int x = win->x ? win->x : vbe.width / 2 - (width / 2);
+			int y = win->y ? win->y : vbe.height / 2 - (height / 2);
+			new_window(win, x, y, width, height, win->flags);
 			msg_send(msg->src, MSG_NEW_WINDOW, win);
 			list_add(windows, win);
 			focused = win;
@@ -120,13 +141,20 @@ int main(int argc, char **argv)
 				 cursor.height);
 			cursor.x = mouse_x;
 			cursor.y = mouse_y;
+			if (!but1_pressed)
+				focused = window_at(cursor.x, cursor.y);
 
-			if (event->but1 && !(focused->flags & WF_NO_DRAG) &&
-			    mouse_skip % MOUSE_SKIP == 0) {
-				mouse_skip = 0;
-				focused->x = mouse_x;
-				focused->y = mouse_y;
-				redraw_all(); // TODO: Function to redraw one window
+			if (event->but1) {
+				but1_pressed = 1;
+				if (focused && !(focused->flags & WF_NO_DRAG) &&
+				    mouse_skip % MOUSE_SKIP == 0) {
+					mouse_skip = 0;
+					focused->x = cursor.x;
+					focused->y = cursor.y;
+					redraw_all(); // TODO: Function to redraw one window
+				}
+			} else {
+				but1_pressed = 0;
 			}
 			gui_win_on_win(&direct, &cursor, cursor.x, cursor.y);
 			mouse_skip++;

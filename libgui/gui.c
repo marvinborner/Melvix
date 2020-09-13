@@ -74,7 +74,7 @@ void gui_load_image(struct window *win, char *path, int x, int y)
 
 	// TODO: Support padding with odd widths
 	int bypp = bmp->bpp >> 3;
-	u8 *srcfb = &bmp->data[bypp + bmp->height * bmp->pitch];
+	u8 *srcfb = &bmp->data[bypp + (bmp->height - 1) * bmp->pitch];
 	u8 *destfb = &win->fb[bypp];
 	for (u32 cy = 0; cy < bmp->height; cy++) {
 		memcpy(destfb, srcfb, bmp->pitch);

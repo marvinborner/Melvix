@@ -58,7 +58,7 @@ int main()
 
 	struct window win = { 0 };
 	gui_new_window(&win);
-	gui_fill(&win, BG_COLOR);
+	gui_fill(&win, COLOR_BG);
 
 	draw_mandelbrot(&win, 50);
 

@@ -12,8 +12,25 @@
 #define GET_RED(color) ((color >> 16) & 0x000000FF)
 #define GET_GREEN(color) ((color >> 8) & 0x000000FF)
 #define GET_BLUE(color) ((color >> 0) & 0X000000FF)
-#define FG_COLOR 0xffabb2bf
-#define BG_COLOR 0xff282c34
+
+#define COLOR_BLACK 0xff0f0f0f
+#define COLOR_RED 0xfff07f7f
+#define COLOR_GREEN 0xff7ff088
+#define COLOR_YELLOW 0xffeef07f
+#define COLOR_BLUE 0xff7facf0
+#define COLOR_MAGENTA 0xffd67ff0
+#define COLOR_CYAN 0xff7fe7f0
+#define COLOR_WHITE 0xffe9e9e9
+#define COLOR_BRIGHT_BLACK 0xff928374
+#define COLOR_BRIGHT_RED 0xffed9a9a
+#define COLOR_BRIGHT_GREEN 0xff9ef0a5
+#define COLOR_BRIGHT_YELLOW 0xffe7e897
+#define COLOR_BRIGHT_BLUE 0xff98b9eb
+#define COLOR_BRIGHT_MAGENTA 0xffd196e3
+#define COLOR_BRIGHT_CYAN 0xff94dae0
+#define COLOR_BRIGHT_WHITE 0xffe3e3e3
+#define COLOR_FG COLOR_WHITE
+#define COLOR_BG COLOR_BLACK
 
 #define WF_DEFAULT (0 << 0)
 #define WF_NO_FOCUS (1 << 0)
