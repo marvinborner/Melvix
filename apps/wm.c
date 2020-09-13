@@ -14,25 +14,24 @@
 
 #define MOUSE_SKIP 5 // => Every move % n != 0 gets skipped
 
-static struct vbe *vbe;
-static struct window *direct; // Direct video memory window
-static struct window *root; // Root window (wallpaper etc.)
-static struct window *exchange; // Exchange buffer
+static struct vbe vbe;
+static struct window direct; // Direct video memory window
+static struct window root; // Root window (wallpaper etc.)
+static struct window exchange; // Exchange buffer
+static struct window cursor; // Cursor bitmap window
 static struct window *focused; // The focused window
-static struct window *cursor; // Cursor bitmap window
 static struct list *windows; // List of all windows
 
 static int mouse_x = 0;
 static int mouse_y = 0;
 
-static struct window *new_window(int x, int y, u16 width, u16 height, int flags)
+static struct window *new_window(struct window *win, int x, int y, u16 width, u16 height, int flags)
 {
-	struct window *win = malloc(sizeof(*win));
 	win->x = x;
 	win->y = y;
 	win->width = width;
 	win->height = height;
-	win->bpp = vbe->bpp;
+	win->bpp = vbe.bpp;
 	win->pitch = win->width * (win->bpp >> 3);
 	win->fb = malloc(height * win->pitch);
 	win->flags = flags;
@@ -45,37 +44,35 @@ static void redraw_all()
 		struct node *iterator = windows->head;
 		do {
 			struct window *win = iterator->data;
-			gui_win_on_win(exchange, win, win->x, win->y);
+			gui_win_on_win(&exchange, win, win->x, win->y);
 		} while ((iterator = iterator->next) != NULL);
-		memcpy(direct->fb, exchange->fb, exchange->pitch * exchange->height);
+		memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
 	}
 }
 
 int main(int argc, char **argv)
 {
 	(void)argc;
-	vbe = (struct vbe *)argv[1];
-	printf("VBE: %dx%d\n", vbe->width, vbe->height);
+	vbe = *(struct vbe *)argv[1];
+	printf("VBE: %dx%d\n", vbe.width, vbe.height);
 
 	gui_init("/font/spleen-16x32.psfu");
 
 	windows = list_new();
-	root = new_window(0, 0, vbe->width, vbe->height, WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
-	exchange =
-		new_window(0, 0, vbe->width, vbe->height, WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
-	cursor = new_window(0, 0, 32, 32, WF_NO_FOCUS | WF_NO_RESIZE);
-	direct = malloc(sizeof(*direct));
-	memcpy(direct, root, sizeof(*direct));
-	direct->fb = vbe->fb;
-	list_add(windows, root);
+	new_window(&root, 0, 0, vbe.width, vbe.height, WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
+	new_window(&exchange, 0, 0, vbe.width, vbe.height, WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
+	new_window(&cursor, 0, 0, 32, 32, WF_NO_FOCUS | WF_NO_RESIZE);
+	memcpy(&direct, &root, sizeof(direct));
+	direct.fb = vbe.fb;
+	list_add(windows, &root);
 
-	gui_write(direct, 0, 0, FG_COLOR, "Welcome to Melvix!");
-	gui_write(direct, 0, 32, FG_COLOR, "Loading resources...");
+	gui_write(&direct, 0, 0, FG_COLOR, "Welcome to Melvix!");
+	gui_write(&direct, 0, 32, FG_COLOR, "Loading resources...");
 
-	gui_fill(root, BG_COLOR);
-	gui_border(root, FG_COLOR, 2);
-	gui_load_image(cursor, "/res/cursor.bmp", 0, 0);
-	gui_load_wallpaper(root, "/res/wall.bmp");
+	gui_fill(&root, BG_COLOR);
+	gui_border(&root, FG_COLOR, 2);
+	gui_load_image(&cursor, "/res/cursor.bmp", 0, 0);
+	gui_load_wallpaper(&root, "/res/wall.bmp");
 	redraw_all();
 
 	event_register(EVENT_MOUSE);
@@ -91,8 +88,9 @@ int main(int argc, char **argv)
 		switch (msg->type) {
 		case MSG_NEW_WINDOW:
 			printf("New window for pid %d\n", msg->src);
-			struct window *win = new_window(vbe->width / 2 - 500, vbe->height / 2 - 400,
-							1000, 800, (int)msg->data);
+			struct window *win = msg->data;
+			new_window(win, vbe.width / 2 - 500, vbe.height / 2 - 400, 1000, 800,
+				   win->flags);
 			msg_send(msg->src, MSG_NEW_WINDOW, win);
 			list_add(windows, win);
 			focused = win;
@@ -110,18 +108,18 @@ int main(int argc, char **argv)
 
 			if (mouse_x < 0)
 				mouse_x = 0;
-			else if ((int)(mouse_x + cursor->width) > vbe->width - 1)
-				mouse_x = vbe->width - cursor->width - 1;
+			else if ((int)(mouse_x + cursor.width) > vbe.width - 1)
+				mouse_x = vbe.width - cursor.width - 1;
 
 			if (mouse_y < 0)
 				mouse_y = 0;
-			else if ((int)(mouse_y + cursor->height) > vbe->height - 1)
-				mouse_y = vbe->height - cursor->height - 1;
+			else if ((int)(mouse_y + cursor.height) > vbe.height - 1)
+				mouse_y = vbe.height - cursor.height - 1;
 
-			gui_copy(direct, exchange, cursor->x, cursor->y, cursor->width,
-				 cursor->height);
-			cursor->x = mouse_x;
-			cursor->y = mouse_y;
+			gui_copy(&direct, &exchange, cursor.x, cursor.y, cursor.width,
+				 cursor.height);
+			cursor.x = mouse_x;
+			cursor.y = mouse_y;
 
 			if (event->but1 && !(focused->flags & WF_NO_DRAG) &&
 			    mouse_skip % MOUSE_SKIP == 0) {
@@ -130,7 +128,7 @@ int main(int argc, char **argv)
 				focused->y = mouse_y;
 				redraw_all(); // TODO: Function to redraw one window
 			}
-			gui_win_on_win(direct, cursor, cursor->x, cursor->y);
+			gui_win_on_win(&direct, &cursor, cursor.x, cursor.y);
 			mouse_skip++;
 			break;
 		}

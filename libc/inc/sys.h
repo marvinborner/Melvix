@@ -82,7 +82,7 @@ static inline struct message *msg_receive_loop()
 {
 	struct message *msg;
 	while (!(msg = msg_receive()))
-		;
+		yield();
 	return msg;
 }
 

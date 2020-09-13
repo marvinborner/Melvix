@@ -11,14 +11,15 @@ int main()
 {
 	print("[test window loaded]\n");
 
-	struct window *win = gui_new_window(WF_DEFAULT);
+	struct window win = { 0 };
+	gui_new_window(&win);
 
-	gui_fill(win, BG_COLOR);
-	gui_border(win, FG_COLOR, 2);
+	gui_fill(&win, BG_COLOR);
+	gui_border(&win, FG_COLOR, 2);
 
 	gui_init("/font/spleen-12x24.psfu");
 	char *hello = "Hello, world!";
-	gui_write(win, win->width / 2 - (strlen(hello) * 12) / 2, 5, FG_COLOR, hello);
+	gui_write(&win, win.width / 2 - (strlen(hello) * 12) / 2, 5, FG_COLOR, hello);
 	event_register(EVENT_KEYBOARD);
 
 	struct message *msg;
@@ -44,7 +45,7 @@ int main()
 				char_x = 0;
 				char_y++;
 			} else if (KEY_ALPHABETIC(key)) {
-				gui_write_char(win, 12 * char_x++, 24 * char_y + 5, FG_COLOR, 'a');
+				gui_write_char(&win, 12 * char_x++, 24 * char_y + 5, FG_COLOR, 'a');
 			}
 
 			break;

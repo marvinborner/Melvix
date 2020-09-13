@@ -56,10 +56,11 @@ int main()
 {
 	print("[mandelbrot window loaded]\n");
 
-	struct window *win = gui_new_window(WF_DEFAULT);
-	gui_fill(win, BG_COLOR);
+	struct window win = { 0 };
+	gui_new_window(&win);
+	gui_fill(&win, BG_COLOR);
 
-	draw_mandelbrot(win, 50);
+	draw_mandelbrot(&win, 50);
 
 	while (1) {
 		yield();
