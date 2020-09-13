@@ -111,6 +111,11 @@ void gui_win_on_win(struct window *dest, struct window *src, int x, int y)
 		return;
 	}
 
+	if (x < 0)
+		x = 0;
+	if (y < 0)
+		y = 0;
+
 	int bypp = dest->bpp >> 3;
 	u8 *srcfb = src->fb;
 	u8 *destfb = &dest->fb[x * bypp + y * dest->pitch];

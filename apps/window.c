@@ -58,7 +58,6 @@ int main()
 		default:
 			break;
 		}
-		yield();
 	}
 	return 0;
 }

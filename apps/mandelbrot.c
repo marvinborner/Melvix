@@ -57,6 +57,8 @@ int main()
 	print("[mandelbrot window loaded]\n");
 
 	struct window win = { 0 };
+	win.width = 500;
+	win.height = 300;
 	gui_new_window(&win);
 	gui_fill(&win, COLOR_BG);
 

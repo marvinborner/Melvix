@@ -65,6 +65,78 @@ static void redraw_all()
 	}
 }
 
+static int mouse_skip = 0;
+static int mouse_pressed[3] = { 0 };
+static void handle_mouse(struct event_mouse *event)
+{
+	if (event->magic != MOUSE_MAGIC)
+		return;
+
+	// Cursor movement
+	mouse_x += event->diff_x;
+	mouse_y -= event->diff_y;
+
+	if (mouse_x < 0)
+		mouse_x = 0;
+	else if ((int)(mouse_x + cursor.width) > vbe.width - 1)
+		mouse_x = vbe.width - cursor.width - 1;
+
+	if (mouse_y < 0)
+		mouse_y = 0;
+	else if ((int)(mouse_y + cursor.height) > vbe.height - 1)
+		mouse_y = vbe.height - cursor.height - 1;
+
+	// Restore cursor buffer backup
+	gui_copy(&direct, &exchange, cursor.x, cursor.y, cursor.width, cursor.height);
+
+	// Window focus
+	if (!mouse_pressed[0] && !mouse_pressed[1])
+		focused = window_at(mouse_x, mouse_y);
+
+	// Window position
+	if (event->but1 && !mouse_pressed[1]) {
+		mouse_pressed[0] = 1;
+		if (focused && !(focused->flags & WF_NO_DRAG)) {
+			if (focused->x + event->diff_x >= 0)
+				focused->x += event->diff_x;
+			if (focused->y - event->diff_y >= 0)
+				focused->y -= event->diff_y;
+			if (mouse_skip % MOUSE_SKIP == 0) {
+				mouse_skip = 0;
+				redraw_all(); // TODO: Function to redraw one window
+			}
+		}
+	} else if (mouse_pressed[0]) {
+		mouse_pressed[0] = 0;
+		redraw_all();
+	}
+
+	// Window size
+	if (event->but2 && !mouse_pressed[0]) {
+		if (!mouse_pressed[1]) {
+			mouse_x = focused->x + focused->width;
+			mouse_y = focused->y + focused->height;
+		} else if (focused && !(focused->flags & WF_NO_RESIZE) &&
+			   mouse_skip % MOUSE_SKIP == 0) {
+			mouse_skip = 0;
+			if (mouse_x - focused->x >= 0)
+				focused->width = mouse_x - focused->x;
+			if (mouse_y - focused->y >= 0)
+				focused->height = mouse_y - focused->y;
+			redraw_all(); // TODO: Function to redraw one window
+		}
+		mouse_pressed[1] = 1;
+	} else if (mouse_pressed[1]) {
+		mouse_pressed[1] = 0;
+		redraw_all();
+	}
+
+	cursor.x = mouse_x;
+	cursor.y = mouse_y;
+	gui_win_on_win(&direct, &cursor, cursor.x, cursor.y);
+	mouse_skip++;
+}
+
 // TODO: Clean this god-function
 int main(int argc, char **argv)
 {
@@ -95,8 +167,6 @@ int main(int argc, char **argv)
 	event_register(EVENT_MOUSE);
 
 	struct message *msg;
-	int mouse_skip = 0;
-	int but1_pressed = 0;
 	while (1) {
 		if (!(msg = msg_receive())) {
 			yield();
@@ -120,46 +190,9 @@ int main(int argc, char **argv)
 		case MSG_REDRAW:
 			redraw_all();
 			break;
-		case EVENT_MOUSE: {
-			struct event_mouse *event = msg->data;
-			if (event->magic != MOUSE_MAGIC)
-				break;
-			mouse_x += event->diff_x;
-			mouse_y -= event->diff_y;
-
-			if (mouse_x < 0)
-				mouse_x = 0;
-			else if ((int)(mouse_x + cursor.width) > vbe.width - 1)
-				mouse_x = vbe.width - cursor.width - 1;
-
-			if (mouse_y < 0)
-				mouse_y = 0;
-			else if ((int)(mouse_y + cursor.height) > vbe.height - 1)
-				mouse_y = vbe.height - cursor.height - 1;
-
-			gui_copy(&direct, &exchange, cursor.x, cursor.y, cursor.width,
-				 cursor.height);
-			cursor.x = mouse_x;
-			cursor.y = mouse_y;
-			if (!but1_pressed)
-				focused = window_at(cursor.x, cursor.y);
-
-			if (event->but1) {
-				but1_pressed = 1;
-				if (focused && !(focused->flags & WF_NO_DRAG) &&
-				    mouse_skip % MOUSE_SKIP == 0) {
-					mouse_skip = 0;
-					focused->x = cursor.x;
-					focused->y = cursor.y;
-					redraw_all(); // TODO: Function to redraw one window
-				}
-			} else {
-				but1_pressed = 0;
-			}
-			gui_win_on_win(&direct, &cursor, cursor.x, cursor.y);
-			mouse_skip++;
+		case EVENT_MOUSE:
+			handle_mouse(msg->data);
 			break;
-		}
 		default:
 			break;
 		}
