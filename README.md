@@ -23,8 +23,8 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 -   EXT2 filesystem
 -   Minimal GUI
 -   Fast boot time (< 1s)
--   Small size (~12KiB)
--   Compiles with `-Wall -Wextra -pedantic-errors -std=c99 -Os`
+-   Small size (< 100KiB)
+-   Compiles with `-Wall -Wextra -pedantic-errors -std=c99 -Ofast`
 
 ## Build/Test
 
