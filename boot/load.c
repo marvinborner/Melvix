@@ -142,11 +142,12 @@ int main(void *data)
 	if (entry) {
 		serial_print("Loaded kernel!\n");
 		entry(data);
-		return 0;
 	} else {
 		serial_print("Couldn't find kernel!\n");
-		return 1;
 	}
+	while (1) {
+	};
+	return 0;
 }
 
 u8 inb(u16 port)

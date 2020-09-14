@@ -9,6 +9,7 @@
 #include <load.h>
 #include <mem.h>
 #include <mouse.h>
+#include <pci.h>
 #include <print.h>
 #include <serial.h>
 #include <syscall.h>
@@ -28,6 +29,7 @@ void kernel_main(struct vid_info *vid_info)
 
 	// Install drivers
 	acpi_install();
+	pci_install();
 	interrupts_install();
 	fpu_install();
 	timer_install();
