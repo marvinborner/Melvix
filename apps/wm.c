@@ -97,10 +97,8 @@ static void handle_mouse(struct event_mouse *event)
 	if (event->but1 && !mouse_pressed[1]) {
 		mouse_pressed[0] = 1;
 		if (focused && !(focused->flags & WF_NO_DRAG)) {
-			if (focused->x + event->diff_x >= 0)
-				focused->x += event->diff_x;
-			if (focused->y - event->diff_y >= 0)
-				focused->y -= event->diff_y;
+			focused->x = mouse_x;
+			focused->y = mouse_y;
 			if (mouse_skip % MOUSE_SKIP == 0) {
 				mouse_skip = 0;
 				redraw_all(); // TODO: Function to redraw one window
@@ -113,15 +111,15 @@ static void handle_mouse(struct event_mouse *event)
 
 	// Window size
 	if (event->but2 && !mouse_pressed[0]) {
-		if (!mouse_pressed[1]) {
+		if (focused && !mouse_pressed[1]) {
 			mouse_x = focused->x + focused->width;
 			mouse_y = focused->y + focused->height;
 		} else if (focused && !(focused->flags & WF_NO_RESIZE) &&
 			   mouse_skip % MOUSE_SKIP == 0) {
 			mouse_skip = 0;
-			if (mouse_x - focused->x >= 0)
+			if (mouse_x - focused->x > 0)
 				focused->width = mouse_x - focused->x;
-			if (mouse_y - focused->y >= 0)
+			if (mouse_y - focused->y > 0)
 				focused->height = mouse_y - focused->y;
 			redraw_all(); // TODO: Function to redraw one window
 		}

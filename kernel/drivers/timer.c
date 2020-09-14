@@ -42,8 +42,8 @@ void timer_wait(u32 ticks)
 // Install timer handler into IRQ0
 void timer_install()
 {
-	hpet_install(10000); // TODO: Find optimal femtosecond period
-	if (!hpet)
-		timer_phase(1000);
+	/* hpet_install(10000); // TODO: Find optimal femtosecond period */
+	/* if (!hpet) */
+	timer_phase(1000);
 	irq_install_handler(0, timer_handler);
 }

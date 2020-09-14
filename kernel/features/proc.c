@@ -19,6 +19,7 @@ struct list *proc_list;
 struct node *current;
 
 // TODO: Use less memcpy and only copy relevant registers
+// TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
 void scheduler(struct regs *regs)
 {
 	timer_handler();
@@ -151,7 +152,7 @@ struct proc *proc_make()
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = pid++;
 	proc->messages = list_new();
-	proc->state = PROC_DEFAULT;
+	proc->state = PROC_RUNNING;
 
 	if (current)
 		list_add(proc_list, proc);

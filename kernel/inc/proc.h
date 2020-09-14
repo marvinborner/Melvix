@@ -9,7 +9,7 @@
 #include <list.h>
 #include <sys.h>
 
-#define PROC_QUANTUM 420 // Nanoseconds or something // TODO
+#define PROC_QUANTUM 100 // Milliseconds or something // TODO
 
 #define EFLAGS_ALWAYS 0x2 // Always one
 #define EFLAGS_INTERRUPTS 0x200 // Enable interrupts
@@ -17,7 +17,7 @@
 #define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
 #define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
 
-enum proc_state { PROC_DEFAULT };
+enum proc_state { PROC_RUNNING };
 
 struct proc {
 	u32 pid;
