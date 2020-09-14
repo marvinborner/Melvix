@@ -5,7 +5,7 @@ LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy
 AS = nasm
 
-CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -std=c99 -m32 -pedantic-errors
+CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -std=c99 -m32 -pedantic-errors -Ofast
 
 ASFLAGS = -f elf32
 
