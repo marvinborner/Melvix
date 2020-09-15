@@ -111,10 +111,11 @@ struct proc_message *proc_receive(struct proc *proc)
 struct proc *proc_from_pid(u32 pid)
 {
 	struct node *iterator = proc_list->head;
-	do {
+	while (iterator != NULL) {
 		if (((struct proc *)iterator->data)->pid == pid)
 			return iterator->data;
-	} while ((iterator = iterator->next) != NULL);
+		iterator = iterator->next;
+	}
 	return NULL;
 }
 
@@ -124,13 +125,14 @@ void proc_exit(struct proc *proc, int status)
 
 	int res = 0;
 	struct node *iterator = proc_list->head;
-	do {
+	while (iterator != NULL) {
 		if (iterator->data == proc) {
 			res = 1;
 			list_remove(proc_list, iterator);
 			break;
 		}
-	} while ((iterator = iterator->next) != NULL);
+		iterator = iterator->next;
+	}
 
 	if (memcmp(proc, current->data, sizeof(*proc)) == 0)
 		current = NULL;

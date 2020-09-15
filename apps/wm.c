@@ -12,7 +12,8 @@
 #include <sys.h>
 #include <vesa.h>
 
-#define MOUSE_SKIP 2 // => Every move % n != 0 gets skipped
+static int MOUSE_SKIP = 0; // => Every move % n != 0 gets skipped
+static int window_count;
 
 static struct vbe vbe;
 static struct window direct; // Direct video memory window
@@ -34,40 +35,47 @@ static struct window *new_window(struct window *win, int x, int y, u16 width, u1
 	win->bpp = vbe.bpp;
 	win->pitch = win->width * (win->bpp >> 3);
 	win->fb = malloc(height * win->pitch);
+	memset(win->fb, 0, height * win->pitch);
 	win->flags = flags;
+	window_count++;
+	if (window_count % 2 == 1)
+		MOUSE_SKIP++;
 	return win;
 }
 
 static struct window *window_at(int x, int y)
 {
-	if (windows->head && windows->head->data) {
-		struct node *iterator = windows->head;
-		do {
-			struct window *win = iterator->data;
-			if (win != &root && x >= win->x && x <= win->x + (int)win->width &&
-			    y >= win->y && y <= win->y + (int)win->height) {
-				return win;
-			}
-		} while ((iterator = iterator->next) != NULL);
+	if (!windows->head || !windows->head->data)
+		return NULL;
+
+	struct node *iterator = windows->head;
+	while (iterator != NULL) {
+		struct window *win = iterator->data;
+		if (win != &root && x >= win->x && x <= win->x + (int)win->width && y >= win->y &&
+		    y <= win->y + (int)win->height)
+			return win;
+		iterator = iterator->next;
 	}
 	return NULL;
 }
 
 static void redraw_all()
 {
-	if (windows->head && windows->head->data) {
-		struct node *iterator = windows->head;
-		do {
-			struct window *win = iterator->data;
-			if (win != focused)
-				gui_win_on_win(&exchange, win, win->x, win->y);
-		} while ((iterator = iterator->next) != NULL);
+	if (!windows->head || !windows->head->data)
+		return;
 
-		if (focused)
-			gui_win_on_win(&exchange, focused, focused->x, focused->y);
-
-		memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
+	struct node *iterator = windows->head;
+	while (iterator != NULL) {
+		struct window *win = iterator->data;
+		if (win != focused)
+			gui_win_on_win(&exchange, win, win->x, win->y);
+		iterator = iterator->next;
 	}
+
+	if (focused)
+		gui_win_on_win(&exchange, focused, focused->x, focused->y);
+
+	memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
 }
 
 static int mouse_skip = 0;

@@ -34,11 +34,12 @@ void event_unregister(enum message_type id, struct proc *proc)
 	desc.proc = proc;
 
 	struct node *iterator = event_table[id]->head;
-	do {
+	while (iterator != NULL) {
 		struct event_descriptor *desc_comp = iterator->data;
 		if (desc_comp->id == desc.id && desc_comp->proc == desc.proc)
 			list_remove(event_table[id], iterator);
-	} while ((iterator = iterator->next) != NULL);
+		iterator = iterator->next;
+	}
 }
 
 u32 event_trigger(enum message_type id, void *data)
@@ -51,9 +52,10 @@ u32 event_trigger(enum message_type id, void *data)
 	}
 
 	struct node *iterator = event_table[id]->head;
-	do {
+	while (iterator != NULL) {
 		proc_send(kernel_proc, ((struct event_descriptor *)iterator->data)->proc, id, data);
-	} while ((iterator = iterator->next) != NULL);
+		iterator = iterator->next;
+	}
 
 	return 0;
 }
