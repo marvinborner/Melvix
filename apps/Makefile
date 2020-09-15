@@ -5,14 +5,14 @@ CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy
 
-CFLAGS = -Wall -Wextra -nostdlib -nostdinc -fno-builtin -std=c99 -m32 -pedantic-errors -I../libc/inc/ -I../libgui/inc/ -fPIE -Duserspace -Os
+CFLAGS = -Wall -Wextra -nostdlib -nostdinc -fno-builtin -std=c99 -m32 -pedantic-errors -I../libc/inc/ -I../libgui/inc/ -I../libtxt/inc/ -fPIE -Duserspace -Os
 
 all: $(COBJS)
 
 %.o: %.c
 	@mkdir -p ../build/apps/
 	@$(CC) -c $(CFLAGS) $< -o $@
-	@$(LD) -o $(@:.o=.elf) -Tlink.ld -L../build/ $@ -lc -lgui
+	@$(LD) -o $(@:.o=.elf) -Tlink.ld -L../build/ $@ -lc -lgui -ltxt
 	@$(OC) -O binary $(@:.o=.elf) ../build/apps/$(@:.o=)
 # @cp $(@:.o=.elf) ../build/apps/$(@:.o=.dbg)
 

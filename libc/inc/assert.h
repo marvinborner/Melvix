@@ -21,7 +21,7 @@
 #define assert(exp)                                                                                \
 	if (!(exp)) {                                                                              \
 		printf("%s:%d: %s: Assertion '%s' failed\n", __FILE__, __LINE__, __func__, #exp);  \
-		sys1(SYS_EXIT, 1);                                                                 \
+		exit(1);                                                                           \
 	}
 #else
 #error "No lib target specified. Please use -Dkernel or -Duserspace"

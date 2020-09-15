@@ -5,6 +5,7 @@
 #include <def.h>
 #include <gui.h>
 #include <input.h>
+#include <keymap.h>
 #include <list.h>
 #include <mem.h>
 #include <print.h>
@@ -22,6 +23,8 @@ static struct window exchange; // Exchange buffer
 static struct window cursor; // Cursor bitmap window
 static struct window *focused; // The focused window
 static struct list *windows; // List of all windows
+
+static struct keymap *keymap;
 
 static int mouse_x = 0;
 static int mouse_y = 0;
@@ -48,15 +51,16 @@ static struct window *window_at(int x, int y)
 	if (!windows->head || !windows->head->data)
 		return NULL;
 
+	struct window *ret = NULL;
 	struct node *iterator = windows->head;
 	while (iterator != NULL) {
 		struct window *win = iterator->data;
 		if (win != &root && x >= win->x && x <= win->x + (int)win->width && y >= win->y &&
 		    y <= win->y + (int)win->height)
-			return win;
+			ret = win;
 		iterator = iterator->next;
 	}
-	return NULL;
+	return ret;
 }
 
 static void redraw_all()
@@ -155,6 +159,7 @@ int main(int argc, char **argv)
 	vbe = *(struct vbe *)argv[1];
 	printf("VBE: %dx%d\n", vbe.width, vbe.height);
 
+	keymap = keymap_parse("/res/keymaps/en.keymap");
 	gui_init("/font/spleen-16x32.psfu");
 
 	windows = list_new();

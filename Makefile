@@ -11,6 +11,8 @@ compile:
 	@echo "Compiled libk"
 	@$(MAKE) --no-print-directory -C libgui/
 	@echo "Compiled libgui"
+	@$(MAKE) --no-print-directory -C libtxt/
+	@echo "Compiled libtxt"
 	@$(MAKE) --no-print-directory -C kernel/
 	@echo "Compiled kernel"
 	@$(MAKE) --no-print-directory -C boot/
