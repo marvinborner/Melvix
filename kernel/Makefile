@@ -21,7 +21,8 @@ LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy
 AS = nasm
 
-CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -fno-asynchronous-unwind-tables -mno-red-zone -mgeneral-regs-only -mpreferred-stack-boundary=2 -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel -Ofast
+# TODO: Fix -Ofast (probably some dumb memory overflow bug)
+CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -fno-asynchronous-unwind-tables -mno-red-zone -mgeneral-regs-only -mpreferred-stack-boundary=2 -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel -O0
 
 ASFLAGS = -f elf32
 

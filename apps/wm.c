@@ -59,8 +59,13 @@ static void redraw_all()
 		struct node *iterator = windows->head;
 		do {
 			struct window *win = iterator->data;
-			gui_win_on_win(&exchange, win, win->x, win->y);
+			if (win != focused)
+				gui_win_on_win(&exchange, win, win->x, win->y);
 		} while ((iterator = iterator->next) != NULL);
+
+		if (focused)
+			gui_win_on_win(&exchange, focused, focused->x, focused->y);
+
 		memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
 	}
 }
