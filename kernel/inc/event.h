@@ -8,12 +8,12 @@
 #include <sys.h>
 
 struct event_descriptor {
-	enum message_type id;
+	u32 id;
 	struct proc *proc;
 };
 
-u32 event_register(enum message_type id, struct proc *proc);
-void event_unregister(enum message_type id, struct proc *proc);
-u32 event_trigger(enum message_type id, void *data);
+u32 event_register(u32 id, struct proc *proc);
+void event_unregister(u32 id, struct proc *proc);
+u32 event_trigger(u32 id, void *data);
 
 #endif

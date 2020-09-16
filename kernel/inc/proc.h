@@ -41,7 +41,7 @@ void scheduler_disable();
 void proc_init();
 void proc_print();
 struct proc *proc_current();
-void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data);
+void proc_send(struct proc *src, struct proc *dest, u32 type, void *data);
 struct proc_message *proc_receive(struct proc *proc);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);

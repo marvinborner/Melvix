@@ -83,10 +83,11 @@ struct proc *proc_current()
 	return current && current->data ? current->data : NULL;
 }
 
-void proc_send(struct proc *src, struct proc *dest, enum message_type type, void *data)
+void proc_send(struct proc *src, struct proc *dest, u32 type, void *data)
 {
 	// TODO: Use unique key instead of pid for IPC messaging
-	assert(src && dest);
+	if (!src || !dest)
+		return;
 	struct proc_message *msg = malloc(sizeof(*msg));
 	msg->src = src;
 	msg->dest = dest;

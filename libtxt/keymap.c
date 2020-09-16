@@ -23,6 +23,7 @@ void map(struct keymap *keymap, int line, char ch, int index)
 	}
 }
 
+// Very ugly code but it should work for now
 struct keymap *keymap_parse(const char *path)
 {
 	char *keymap_src = read(path);
@@ -32,30 +33,52 @@ struct keymap *keymap_parse(const char *path)
 	struct keymap *keymap = malloc(sizeof(*keymap));
 
 	int index = 0;
+	int ch_index = 0;
 	char ch;
-	int is_start = 0;
+	int escaped = 0;
 	int line = 0;
-	while ((ch = keymap_src[index]) != '\0') {
-		if (ch == '"') {
-			if (keymap_src[index + 1] == '"')
-				map(keymap, line, '\0', index);
-			is_start ^= 1;
+	int skip = 0;
+	while ((ch = keymap_src[index]) != '\0' || escaped) {
+		if (ch == ' ' && !skip) {
+			skip = 1;
 			index++;
 			continue;
-		} else if ((ch == ' ' || ch == ',') && !is_start) {
-			index += 2;
+		} else if (ch == '\n') {
+			ch_index = 0;
+			index++;
+			line++;
+			continue;
+		} else if (ch == '\\' && !escaped) {
+			escaped = 1;
+			index++;
 			continue;
 		}
-		printf("\"%c\"\n", ch);
+		skip = 0;
 
-		if (ch == '\\') {
-			map(keymap, line, ch, index + 1);
-		} else if (ch == '\n') {
-			line++;
+		ch_index++;
+		if (escaped) {
+			switch (ch) {
+			case 'b':
+				ch = '\b';
+				break;
+			case 't':
+				ch = '\t';
+				break;
+			case 'n':
+				ch = '\n';
+				break;
+			case '\\':
+				ch = '\\';
+				break;
+			default:
+				print("Unknown escape!\n");
+			}
+			escaped = 0;
 		}
+
+		map(keymap, line, ch, ch_index);
 		index++;
 	}
 
-	loop();
-	return NULL;
+	return keymap;
 }

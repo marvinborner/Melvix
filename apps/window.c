@@ -24,7 +24,6 @@ int main()
 	gui_init("/font/spleen-12x24.psfu");
 	char *hello = "Hello, world!";
 	gui_write(&win, win.width / 2 - (strlen(hello) * 12) / 2, 5, COLOR_GREEN, hello);
-	event_register(EVENT_KEYBOARD);
 
 	struct message *msg;
 	int char_x = 0;
@@ -34,25 +33,13 @@ int main()
 			yield();
 			continue;
 		}
+
 		switch (msg->type) {
-		case EVENT_KEYBOARD: {
-			struct event_keyboard *event = msg->data;
-
-			if (event->magic != KEYBOARD_MAGIC)
-				break;
-
+		case WM_KEYBOARD: {
+			struct msg_keyboard *event = msg->data;
 			if (!event->press)
 				break;
-
-			int key = event->scancode;
-			if (key == KEY_ENTER) {
-				char_x = 0;
-				char_y++;
-			} else if (KEY_ALPHABETIC(key)) {
-				gui_write_char(&win, 12 * char_x++, 24 * char_y + 5, COLOR_CYAN,
-					       'a');
-			}
-
+			gui_write_char(&win, 12 * char_x++, 24 * char_y + 5, COLOR_CYAN, event->ch);
 			break;
 		}
 		default:

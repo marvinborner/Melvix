@@ -100,6 +100,11 @@ void syscall_handler(struct regs *r)
 		r->eax = (u32)(msg ? msg->msg : NULL);
 		break;
 	}
+	case SYS_GETPID: {
+		printf("getpid\n");
+		r->eax = proc_current()->pid;
+		break;
+	}
 	default: {
 		printf("unknown\n");
 		loop();

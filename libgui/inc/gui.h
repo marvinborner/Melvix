@@ -37,6 +37,8 @@
 #define WF_NO_DRAG (1 << 1)
 #define WF_NO_RESIZE (1 << 2)
 
+enum message_type { WM_NEW_WINDOW = EVENT_MAX + 1, WM_REDRAW, WM_KEYBOARD };
+
 // Generalized font struct
 struct font {
 	char *chars;
@@ -46,6 +48,7 @@ struct font {
 };
 
 struct window {
+	u32 pid;
 	int x;
 	int y;
 	u32 width;
@@ -54,6 +57,12 @@ struct window {
 	u32 bpp;
 	u32 pitch;
 	int flags;
+};
+
+struct msg_keyboard {
+	char ch;
+	int press;
+	int scancode;
 };
 
 void gui_write_char(struct window *win, int x, int y, u32 c, char ch);
@@ -72,6 +81,6 @@ void gui_init(char *font_path);
  */
 
 #define gui_new_window(flags)                                                                      \
-	(msg_send(2, MSG_NEW_WINDOW, flags), (struct window *)msg_receive_loop()->data)
-#define gui_redraw() (msg_send(2, MSG_REDRAW, NULL)) // TODO: Partial redraw (optimization)
+	(msg_send(2, WM_NEW_WINDOW, flags), (struct window *)msg_receive_loop()->data)
+#define gui_redraw() (msg_send(2, WM_REDRAW, NULL)) // TODO: Partial redraw (optimization)
 #endif

@@ -29,8 +29,10 @@ static struct keymap *keymap;
 static int mouse_x = 0;
 static int mouse_y = 0;
 
-static struct window *new_window(struct window *win, int x, int y, u16 width, u16 height, int flags)
+static struct window *new_window(struct window *win, u32 pid, int x, int y, u16 width, u16 height,
+				 int flags)
 {
+	win->pid = pid;
 	win->x = x;
 	win->y = y;
 	win->width = width;
@@ -82,6 +84,7 @@ static void redraw_all()
 	memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
 }
 
+// TODO: Send relative mouse position event to focused window
 static int mouse_skip = 0;
 static int mouse_pressed[3] = { 0 };
 static void handle_mouse(struct event_mouse *event)
@@ -152,10 +155,22 @@ static void handle_mouse(struct event_mouse *event)
 	mouse_skip++;
 }
 
+static void handle_keyboard(struct event_keyboard *event)
+{
+	if (event->magic != KEYBOARD_MAGIC || !focused)
+		return;
+	struct msg_keyboard *msg = malloc(sizeof(*msg));
+	msg->ch = keymap->map[event->scancode];
+	msg->press = event->press;
+	msg->scancode = event->scancode;
+	msg_send(focused->pid, WM_KEYBOARD, msg);
+}
+
 // TODO: Clean this god-function
 int main(int argc, char **argv)
 {
 	(void)argc;
+	int pid = getpid();
 	vbe = *(struct vbe *)argv[1];
 	printf("VBE: %dx%d\n", vbe.width, vbe.height);
 
@@ -163,9 +178,11 @@ int main(int argc, char **argv)
 	gui_init("/font/spleen-16x32.psfu");
 
 	windows = list_new();
-	new_window(&root, 0, 0, vbe.width, vbe.height, WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
-	new_window(&exchange, 0, 0, vbe.width, vbe.height, WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
-	new_window(&cursor, 0, 0, 32, 32, WF_NO_FOCUS | WF_NO_RESIZE);
+	new_window(&root, pid, 0, 0, vbe.width, vbe.height,
+		   WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
+	new_window(&exchange, pid, 0, 0, vbe.width, vbe.height,
+		   WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
+	new_window(&cursor, pid, 0, 0, 32, 32, WF_NO_FOCUS | WF_NO_RESIZE);
 	memcpy(&direct, &root, sizeof(direct));
 	direct.fb = vbe.fb;
 	list_add(windows, &root);
@@ -181,6 +198,7 @@ int main(int argc, char **argv)
 	redraw_all();
 
 	event_register(EVENT_MOUSE);
+	event_register(EVENT_KEYBOARD);
 
 	struct message *msg;
 	while (1) {
@@ -190,24 +208,28 @@ int main(int argc, char **argv)
 		}
 
 		switch (msg->type) {
-		case MSG_NEW_WINDOW:
+		case WM_NEW_WINDOW:
 			printf("New window for pid %d\n", msg->src);
 			struct window *win = msg->data;
 			int width = win->width ? win->width : 1000;
 			int height = win->height ? win->height : 800;
 			int x = win->x ? win->x : vbe.width / 2 - (width / 2);
 			int y = win->y ? win->y : vbe.height / 2 - (height / 2);
-			new_window(win, x, y, width, height, win->flags);
-			msg_send(msg->src, MSG_NEW_WINDOW, win);
+			win->pid = msg->src;
+			new_window(win, msg->src, x, y, width, height, win->flags);
+			msg_send(msg->src, WM_NEW_WINDOW, win);
 			list_add(windows, win);
 			focused = win;
 			redraw_all();
 			break;
-		case MSG_REDRAW:
+		case WM_REDRAW:
 			redraw_all();
 			break;
 		case EVENT_MOUSE:
 			handle_mouse(msg->data);
+			break;
+		case EVENT_KEYBOARD:
+			handle_keyboard(msg->data);
 			break;
 		default:
 			break;

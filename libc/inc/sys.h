@@ -20,13 +20,15 @@ enum sys {
 	SYS_REGISTER, // Register for event
 	SYS_UNREGISTER, // Unregister event
 	SYS_SEND, // Send message to process
-	SYS_RECEIVE // Receive message (non-blocking/sync)
+	SYS_RECEIVE, // Receive message (non-blocking/sync)
+	SYS_GETPID // Get the process ID
 };
-enum message_type { MSG_NEW_WINDOW, MSG_REDRAW, EVENT_KEYBOARD, EVENT_MOUSE };
+
+enum event_type { EVENT_KEYBOARD, EVENT_MOUSE, EVENT_MAX };
 
 struct message {
 	int src;
-	enum message_type type;
+	int type;
 	void *data;
 };
 
@@ -78,6 +80,7 @@ int sysv(enum sys num, ...);
 
 #define msg_send(pid, type, msg) sys3(SYS_SEND, (int)(pid), (int)(type), (int)(msg))
 #define msg_receive() (struct message *)sys0(SYS_RECEIVE)
+#define getpid() (int)sys0(SYS_GETPID)
 static inline struct message *msg_receive_loop()
 {
 	struct message *msg;
