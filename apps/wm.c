@@ -155,12 +155,28 @@ static void handle_mouse(struct event_mouse *event)
 	mouse_skip++;
 }
 
+#define SHIFT_PRESSED 1 << 0
+#define ALT_PRESSED 1 << 1
+#define CTRL_PRESSED 1 << 2
+static u32 special_keys_pressed;
 static void handle_keyboard(struct event_keyboard *event)
 {
 	if (event->magic != KEYBOARD_MAGIC || !focused)
 		return;
+
 	struct msg_keyboard *msg = malloc(sizeof(*msg));
-	msg->ch = keymap->map[event->scancode];
+	if (event->scancode == KEY_LEFTSHIFT || event->scancode == KEY_RIGHTSHIFT)
+		special_keys_pressed ^= SHIFT_PRESSED;
+	else if (event->scancode == KEY_LEFTALT || event->scancode == KEY_RIGHTALT)
+		special_keys_pressed ^= ALT_PRESSED;
+	else if (event->scancode == KEY_LEFTCTRL || event->scancode == KEY_RIGHTCTRL)
+		special_keys_pressed ^= CTRL_PRESSED;
+
+	if (special_keys_pressed & SHIFT_PRESSED)
+		msg->ch = keymap->shift_map[event->scancode];
+	else
+		msg->ch = keymap->map[event->scancode];
+
 	msg->press = event->press;
 	msg->scancode = event->scancode;
 	msg_send(focused->pid, WM_KEYBOARD, msg);
