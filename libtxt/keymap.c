@@ -29,7 +29,6 @@ struct keymap *keymap_parse(const char *path)
 	char *keymap_src = read(path);
 	if (!keymap_src)
 		return NULL;
-	printf("%c\n", keymap_src[0]);
 	struct keymap *keymap = malloc(sizeof(*keymap));
 
 	int index = 0;

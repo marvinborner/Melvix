@@ -18,7 +18,7 @@ int ide_wait(int check)
 	return 0;
 }
 
-void *ide_read(void *b, u32 block)
+void __attribute__((optimize("O0"))) * ide_read(void *b, u32 block)
 {
 	int sector_per_block = BLOCK_SIZE / SECTOR_SIZE; // 2
 	int sector = block * sector_per_block;

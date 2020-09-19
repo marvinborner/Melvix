@@ -16,7 +16,7 @@ LD = ../cross/opt/bin/i686-elf-ld
 AR = ../cross/opt/bin/i686-elf-ar
 AS = nasm
 
-CFLAGS = -Wall -Wextra -nostdlib -nostdinc -fno-builtin -fno-asynchronous-unwind-tables -mno-red-zone -mgeneral-regs-only -mpreferred-stack-boundary=2 -std=c99 -m32 -pedantic-errors -Iinc/ -Ofast
+CFLAGS = -Wall -Wextra -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Iinc/ -Ofast
 
 ASFLAGS = -f elf32
 
