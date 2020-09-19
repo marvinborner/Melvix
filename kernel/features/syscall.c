@@ -17,37 +17,30 @@ void syscall_handler(struct regs *r)
 	enum sys num = r->eax;
 	r->eax = 0;
 
-	if (num != SYS_RECEIVE && num != SYS_YIELD && num != SYS_TIME)
-		printf("[SYSCALL] %d from %s: ", num, proc_current()->name);
+	/* printf("[SYSCALL] %d from %s\n", num, proc_current()->name); */
 
 	switch (num) {
 	case SYS_LOOP: {
-		printf("loop\n");
 		loop();
 		break;
 	}
 	case SYS_MALLOC: {
-		printf("malloc\n");
 		r->eax = (u32)malloc(r->ebx);
 		break;
 	}
 	case SYS_FREE: {
-		printf("free\n");
 		free((void *)r->ebx);
 		break;
 	}
 	case SYS_READ: {
-		printf("read\n");
 		r->eax = (u32)read_file((char *)r->ebx);
 		break;
 	}
 	case SYS_WRITE: {
-		printf("write\n");
 		// TODO: Write ext2 support
 		break;
 	}
 	case SYS_EXEC: {
-		printf("exec\n");
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make();
 		r->eax = bin_load(path, proc);
@@ -65,49 +58,40 @@ void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_EXIT: {
-		printf("exit\n");
 		proc_exit(proc_current(), r->ebx);
 		break;
 	}
 	case SYS_YIELD: {
-		/* printf("yield\n"); */
 		proc_yield(r);
 		break;
 	}
 	case SYS_TIME: {
-		/* printf("time\n"); */
 		r->eax = timer_get();
 		break;
 	}
 	case SYS_REGISTER: {
-		printf("register\n");
 		event_register(r->ebx, proc_current());
 		break;
 	}
 	case SYS_UNREGISTER: {
-		printf("unregister\n");
 		event_unregister(r->ebx, proc_current());
 		break;
 	}
 	case SYS_SEND: {
-		printf("send\n");
 		proc_send(proc_current(), proc_from_pid(r->ebx), r->ecx, (void *)r->edx);
 		break;
 	}
 	case SYS_RECEIVE: {
-		/* printf("receive\n"); */
 		struct proc_message *msg = proc_receive(proc_current());
 		r->eax = (u32)(msg ? msg->msg : NULL);
 		break;
 	}
 	case SYS_GETPID: {
-		printf("getpid\n");
 		r->eax = proc_current()->pid;
 		break;
 	}
 	default: {
-		printf("unknown\n");
-		loop();
+		print("Unknown syscall!\n");
 		break;
 	}
 	}
