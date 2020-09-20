@@ -76,6 +76,9 @@ void gui_fill(struct window *win, u32 c);
 void gui_border(struct window *win, u32 c, u32 width);
 void gui_init(char *font_path);
 
+int gui_font_height();
+int gui_font_width();
+
 /**
  * Wrappers
  */

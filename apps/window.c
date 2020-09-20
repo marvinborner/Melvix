@@ -21,9 +21,12 @@ int main()
 	gui_fill(&win, COLOR_BG);
 	/* gui_border(&win, COLOR_FG, 2); */
 
-	gui_init("/font/spleen-12x24.psfu");
+	gui_init("/font/ter-p18n.psf");
+	int font_height = gui_font_height();
+	int font_width = gui_font_width();
+
 	char *hello = "Hello, world!";
-	gui_write(&win, win.width / 2 - (strlen(hello) * 12) / 2, 5, COLOR_GREEN, hello);
+	gui_write(&win, win.width / 2 - (strlen(hello) * font_width) / 2, 5, COLOR_GREEN, hello);
 
 	struct message *msg;
 	int char_x = 0;
@@ -50,15 +53,17 @@ int main()
 			} else if (ch == '\b') {
 				if (char_x > 0) {
 					char_x--;
-					gui_draw_rectangle(&win, 12 * char_x, 24 * char_y + 5,
-							   12 * (char_x + 1) - 1,
-							   24 * (char_y + 1) + 4, COLOR_BG);
+					gui_draw_rectangle(&win, font_width * char_x,
+							   font_height * char_y + 5,
+							   font_width * (char_x + 1) - 1,
+							   font_height * (char_y + 1) + 4,
+							   COLOR_BG);
 				}
 			} else if (ch == ' ' && event->scancode == KEY_SPACE) {
 				char_x++;
 			} else if (ch != ' ' && ch != '\0') {
-				gui_write_char(&win, 12 * char_x++, 24 * char_y + 5, COLOR_CYAN,
-					       ch);
+				gui_write_char(&win, font_width * char_x++,
+					       font_height * char_y + 5, COLOR_CYAN, ch);
 			}
 			break;
 		}

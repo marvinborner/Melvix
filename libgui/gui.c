@@ -167,6 +167,16 @@ void gui_border(struct window *win, u32 c, u32 width)
 	gui_redraw();
 }
 
+int gui_font_height()
+{
+	return font->height;
+}
+
+int gui_font_width()
+{
+	return font->width;
+}
+
 void gui_init(char *font_path)
 {
 	font = psf_parse(read(font_path));
