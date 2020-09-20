@@ -9,6 +9,7 @@
 #include <load.h>
 #include <mem.h>
 #include <mouse.h>
+#include <net.h>
 #include <pci.h>
 #include <print.h>
 #include <serial.h>
@@ -35,6 +36,7 @@ void kernel_main(struct vid_info *vid_info)
 	timer_install();
 	keyboard_install();
 	mouse_install();
+	net_install();
 
 	// Enable drivers
 	sti();

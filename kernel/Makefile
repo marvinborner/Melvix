@@ -9,6 +9,7 @@ COBJS = main.o \
 	drivers/mouse.o \
 	drivers/pci.o \
 	drivers/ide.o \
+	drivers/net.o \
 	drivers/timer.o \
 	features/fs.o \
 	features/load.o \
