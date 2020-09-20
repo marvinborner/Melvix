@@ -9,6 +9,9 @@
     <a href="https://app.codacy.com/manual/marvin-borner/Melvix/dashboard" target="_blank">
         <img src="https://img.shields.io/codacy/grade/4ae29e218d7c439eaa549ea828ffcaac?style=for-the-badge" />
     </a>
+    <a href="https://www.buymeacoffee.com/marvinborner" target="_blank">
+        <img src="https://img.shields.io/static/v1?label=Support&message=buymeacoffee&color=brightgreen&style=for-the-badge" />
+    </a>
 </p>
 
 ## Disclaimer
