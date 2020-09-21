@@ -28,10 +28,9 @@ u32 inl(u16 port)
 
 void insl(u16 port, void *addr, int n)
 {
-	__asm__ volatile("cld; rep insl"
-			 : "=D"(addr), "=c"(n)
-			 : "d"(port), "0"(addr), "1"(n)
-			 : "memory", "cc");
+	__asm__ volatile("rep insl" ::"c"(n), // Count
+			 "d"(port), // Port #
+			 "D"(addr)); // Buffer
 }
 
 void outb(u16 port, u8 data)

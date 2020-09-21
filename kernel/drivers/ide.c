@@ -5,51 +5,42 @@
 #include <ide.h>
 #include <print.h>
 
-int ide_wait(int check)
+int ide_stat()
 {
-	char r;
-
-	// Wait while drive is busy. Once just ready is set, exit the loop
-	while (((r = (char)inb(IDE_IO | IDE_CMD)) & (IDE_BUSY | IDE_READY)) != IDE_READY)
-		;
-
-	// Check for errors
-	if (check && (r & (IDE_DRIVE_FAULT | IDE_ERROR)) != 0)
-		return 0xF;
-	return 0;
+	inb(IDE_IO + IDE_CMD);
+	inb(IDE_IO + IDE_CMD);
+	inb(IDE_IO + IDE_CMD);
+	inb(IDE_IO + IDE_CMD);
+	return inb(IDE_IO + IDE_CMD);
 }
 
-// TODO: Fix strange print workaround
+void ide_wait()
+{
+	u8 stat;
+	do
+		stat = ide_stat();
+	while ((stat & IDE_BUSY) != 0);
+}
+
+// TODO: Fix strange ide_read bugs
 void *ide_read(void *b, u32 block)
 {
-	int sector_per_block = BLOCK_SIZE / SECTOR_SIZE; // 2
-	int sector = block * sector_per_block;
+	int sector_count = BLOCK_SIZE / SECTOR_SIZE; // 2
+	int sector = block * sector_count;
 
-	print("");
-	ide_wait(0);
-	print("");
-	outb(IDE_IO | IDE_SECTOR_COUNT, sector_per_block); // Number of sectors
-	print("");
-	outb(IDE_IO | IDE_LOW, LBA_LOW(sector));
-	print("");
-	outb(IDE_IO | IDE_MID, LBA_MID(sector));
-	print("");
-	outb(IDE_IO | IDE_HIGH, LBA_HIGH(sector));
-	print("");
+	outb(IDE_IO + IDE_SECTOR_COUNT, sector_count); // Number of sectors
+
+	outb(IDE_IO + IDE_LOW, LBA_LOW(sector));
+	outb(IDE_IO + IDE_MID, LBA_MID(sector));
+	outb(IDE_IO + IDE_HIGH, LBA_HIGH(sector));
 
 	// Slave/Master << 4 and last 4 bits
-	print("");
-	outb(IDE_IO | IDE_HEAD, 0xE0 | (1 << 4) | LBA_LAST(sector));
-	print("");
-	outb(IDE_IO | IDE_CMD, IDE_CMD_READ);
-	print("");
-	ide_wait(0);
-	print("");
+	outb(IDE_IO + IDE_SELECT, 0xE0 | (1 << 4) | LBA_LAST(sector));
 
-	// Read-only
-	print("");
+	outb(IDE_IO + IDE_CMD, IDE_CMD_READ);
+
+	ide_wait();
 	insl(IDE_IO, b, BLOCK_SIZE / 4);
-	print("");
 
 	return b;
 }
