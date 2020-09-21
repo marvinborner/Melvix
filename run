@@ -11,7 +11,7 @@ network="rtl8139"
 
 # TODO: Support q35 chipset ('-machine q35') - loops in ide_wait
 qemu_with_flags() {
-    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -net nic,model=${network},macaddr=42:42:42:42:42:42 -net user "$@"
+    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -net nic,model=${network},macaddr=42:42:42:42:42:42 -net bridge,br=br0 "$@"
 }
 
 make_cross() {
@@ -117,6 +117,7 @@ make_build() {
 }
 
 make_test() {
+    brctl show br0 >/dev/null || sudo brctl addbr br0
     if [ "$mode" = "test" ]; then
         qemu_with_flags -serial file:test.log -nographic -drive file=build/disk.img,format=raw,index=1,media=disk &
         sleep 2

@@ -1,4 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
+// Uses parts of the ToAruOS Project, released under the terms of the NCSA
+// Copyright (C) 2011-2018 K. Lange
 
 #include <cpu.h>
 #include <def.h>
