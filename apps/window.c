@@ -26,7 +26,7 @@ int main()
 	int font_width = gui_font_width();
 
 	char *hello = "Hello, world!";
-	gui_write(&win, win.width / 2 - (strlen(hello) * font_width) / 2, 5, COLOR_GREEN, hello);
+	gui_write(&win, win.width / 2 - (strlen(hello) * font_width) / 2, 0, COLOR_GREEN, hello);
 
 	struct message *msg;
 	int char_x = 0;
@@ -54,16 +54,15 @@ int main()
 				if (char_x > 0) {
 					char_x--;
 					gui_draw_rectangle(&win, font_width * char_x,
-							   font_height * char_y + 5,
-							   font_width * (char_x + 1) - 1,
-							   font_height * (char_y + 1) + 4,
-							   COLOR_BG);
+							   font_height * char_y,
+							   font_width * (char_x + 1),
+							   font_height * (char_y + 1), COLOR_BG);
 				}
 			} else if (ch == ' ' && event->scancode == KEY_SPACE) {
 				char_x++;
 			} else if (ch != ' ' && ch != '\0') {
-				gui_write_char(&win, font_width * char_x++,
-					       font_height * char_y + 5, COLOR_CYAN, ch);
+				gui_write_char(&win, font_width * char_x++, font_height * char_y,
+					       COLOR_CYAN, ch);
 			}
 			break;
 		}
