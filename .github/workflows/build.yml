@@ -11,7 +11,7 @@ jobs:
         with:
           submodules: true
       - name: Install
-        run: sudo apt-get update && sudo apt-get install -y build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo libcloog-isl-dev libisl-0.18-dev ccache curl nasm grub-common qemu qemu-kvm mtools bridge-utils
+        run: sudo apt-get update && sudo apt-get install -y build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo libcloog-isl-dev libisl-0.18-dev ccache curl nasm grub-common qemu qemu-kvm mtools ctags bridge-utils
       - name: Get cross compiler
         id: cache-cross
         uses: actions/cache@v1
@@ -21,6 +21,10 @@ jobs:
       - name: Build cross compiler
         if: steps.cache-cross.outputs.cache-hit != 'true'
         run: sh run cross -y
+      - name: Configure
+        run: |
+          sudo mkdir /etc/qemu/
+          echo "allow br0" | sudo tee /etc/qemu/bridge.conf
       - name: Build
         run: sh run build -y
       - name: Test everything
