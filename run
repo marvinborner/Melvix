@@ -120,7 +120,10 @@ make_build() {
 }
 
 make_test() {
-    brctl show br0 >/dev/null || sudo brctl addbr br0
+    if [ "$mode" = "net" ]; then
+        brctl show br0 >/dev/null || sudo brctl addbr br0
+    fi
+
     if [ "$mode" = "test" ]; then
         qemu_with_flags -serial file:test.log -nographic -drive file=build/disk.img,format=raw,index=1,media=disk &
         sleep 2
