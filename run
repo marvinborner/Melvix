@@ -7,16 +7,19 @@ cd "$(dirname "$0")"
 
 mode="${1}"
 no_ask="${2}"
-network="rtl8139"
 
 # TODO: Support q35 chipset ('-machine q35') - loops in ide_wait
 qemu_with_flags() {
-    SDL_VIDEO_X11_DGAMOUSE=0 qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -net nic,model=${network},macaddr=42:42:42:42:42:42 -net bridge,br=br0 "$@"
+    if [ -z "$network" ]; then network="rtl8139"; fi
+    if [ "$network" != "false" ] && [ "$mode" = "net" ]; then
+        qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -net nic,model=${network},macaddr=42:42:42:42:42:42 -net bridge,br=br0 "$@"
+    else
+        qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 "$@"
+    fi
 }
 
 make_cross() {
     if [ ! -d "./cross/" ]; then
-
         if [ "$no_ask" != "-y" ]; then
             echo -n "Do you want to compile a cross compiler (this can take up to 20 minutes)? [yn] "
             read -r answer
@@ -198,7 +201,7 @@ elif [ "${mode}" = "debug" ]; then
     make_build
     make_sync &
     make_debug
-elif [ "${mode}" = "test" ] || [ "${mode}" = "" ]; then
+elif [ "${mode}" = "test" ] || [ "${mode}" = "net" ] || [ "${mode}" = "" ]; then
     make_cross
     make_clean
     make_build
@@ -216,6 +219,7 @@ else
     printf "disasm\t\tDisassembles the main kernel binary\n"
     printf "sync\t\tSyncs the 'tags' and 'compile_commands.json' file\n"
     printf "disk\t\tPrepares the userspace disk (e.g. fonts)\n"
+    printf "net\t\tBuilds and runs Melvix in network mode using QEMU (cross+clean+build)\n"
     printf "nothing\t\tWhen no option is set, Melvix gets built and emulated using QEMU (cross+clean+build)\n"
     printf "*\t\tAnything else prints this help\n\n"
 fi
