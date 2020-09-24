@@ -9,80 +9,11 @@
 #include <net.h>
 #include <pci.h>
 #include <print.h>
+#include <rtl8139.h>
 
 static u8 mac[6];
 static u8 *rx_buffer;
-u32 current_packet_ptr;
-
-u16 flip_short(u16 short_int)
-{
-	u32 first_byte = *((u8 *)(&short_int));
-	u32 second_byte = *((u8 *)(&short_int) + 1);
-	return (first_byte << 8) | (second_byte);
-}
-
-u32 flip_long(u32 long_int)
-{
-	u32 first_byte = *((u8 *)(&long_int));
-	u32 second_byte = *((u8 *)(&long_int) + 1);
-	u32 third_byte = *((u8 *)(&long_int) + 2);
-	u32 fourth_byte = *((u8 *)(&long_int) + 3);
-	return (first_byte << 24) | (second_byte << 16) | (third_byte << 8) | (fourth_byte);
-}
-
-u8 flip_byte(u8 byte, int num_bits)
-{
-	u8 t = byte << (8 - num_bits);
-	return t | (byte >> num_bits);
-}
-
-u8 htonb(u8 byte, int num_bits)
-{
-	return flip_byte(byte, num_bits);
-}
-
-u8 ntohb(u8 byte, int num_bits)
-{
-	return flip_byte(byte, 8 - num_bits);
-}
-
-u16 htons(u16 hostshort)
-{
-	return flip_short(hostshort);
-}
-
-u32 htonl(u32 hostlong)
-{
-	return flip_long(hostlong);
-}
-
-u16 ntohs(u16 netshort)
-{
-	return flip_short(netshort);
-}
-
-u32 ntohl(u32 netlong)
-{
-	return flip_long(netlong);
-}
-
-void ethernet_handle_packet(struct ethernet_packet *packet, int len)
-{
-	/* void *data = packet + sizeof(*packet); */
-	printf("", len);
-	if (ntohs(packet->type) == ETHERNET_TYPE_ARP)
-		print("ARP PACKET\n");
-	else if (ntohs(packet->type) == ETHERNET_TYPE_IP4)
-		print("IP4 PACKET\n");
-	else if (ntohs(packet->type) == ETHERNET_TYPE_IP6)
-		print("IP6 PACKET\n");
-	else
-		printf("UNKNOWN PACKET %x\n", ntohs(packet->type));
-}
-
-/**
- * RTL8139 specific things
- */
+static u32 current_packet_ptr;
 
 static int rtl_irq = 0;
 static u32 rtl_device_pci = 0;
@@ -105,6 +36,17 @@ void rtl_receive_packet()
 
 	outw(rtl_iobase + RTL_PORT_RXPTR, current_packet_ptr - 0x10);
 }
+
+/* static u8 tsad_array[4] = { 0x20, 0x24, 0x28, 0x2C }; */
+/* static u8 tsd_array[4] = { 0x10, 0x14, 0x18, 0x1C }; */
+/* static u8 tx_current = 0; */
+/* void rtl_send_packet(void *data, u32 len) */
+/* { */
+/* 	outl(rtl_iobase + tsad_array[tx_current], (u32)data); */
+/* 	outl(rtl_iobase + tsd_array[tx_current++], len); */
+/* 	if (tx_current > 3) */
+/* 		tx_current = 0; */
+/* } */
 
 void rtl8139_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
 {
@@ -178,7 +120,7 @@ void rtl8139_init()
 	outb(rtl_iobase + RTL_PORT_CMD, 0x08 | 0x04);
 }
 
-void net_install()
+void rtl8139_install()
 {
 	pci_scan(&rtl8139_find, -1, &rtl_device_pci);
 

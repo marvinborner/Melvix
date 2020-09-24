@@ -9,13 +9,14 @@ COBJS = main.o \
 	drivers/mouse.o \
 	drivers/pci.o \
 	drivers/ide.o \
-	drivers/net.o \
 	drivers/timer.o \
+	drivers/rtl8139.o \
 	features/fs.o \
 	features/load.o \
 	features/proc.o \
 	features/proc_asm.o \
 	features/syscall.o \
+	features/net.o \
 	features/event.o
 CC = ../cross/opt/bin/i686-elf-gcc
 LD = ../cross/opt/bin/i686-elf-ld
