@@ -10,6 +10,10 @@
 #include <pci.h>
 #include <print.h>
 
+static u8 mac[6];
+static u8 *rx_buffer;
+u32 current_packet_ptr;
+
 u16 flip_short(u16 short_int)
 {
 	u32 first_byte = *((u8 *)(&short_int));
@@ -62,24 +66,45 @@ u32 ntohl(u32 netlong)
 	return flip_long(netlong);
 }
 
-void ethernet_handle_packet(struct ethernet_packet *packet)
+void ethernet_handle_packet(struct ethernet_packet *packet, int len)
 {
 	/* void *data = packet + sizeof(*packet); */
+	printf("", len);
 	if (ntohs(packet->type) == ETHERNET_TYPE_ARP)
 		print("ARP PACKET\n");
-	else if (ntohs(packet->type) == ETHERNET_TYPE_IP)
-		print("IP PACKET\n");
+	else if (ntohs(packet->type) == ETHERNET_TYPE_IP4)
+		print("IP4 PACKET\n");
+	else if (ntohs(packet->type) == ETHERNET_TYPE_IP6)
+		print("IP6 PACKET\n");
 	else
-		printf("UNKNOWN PACKET %d\n", ntohs(packet->type));
+		printf("UNKNOWN PACKET %x\n", ntohs(packet->type));
 }
 
+/**
+ * RTL8139 specific things
+ */
+
 static int rtl_irq = 0;
-static u8 mac[6];
-static u8 *last_packet = NULL;
-static u8 *rtl_rx_buffer;
 static u32 rtl_device_pci = 0;
 static u32 rtl_iobase = 0;
-static u32 cur_rx = 0;
+
+void rtl_receive_packet()
+{
+	u16 *t = (u16 *)(rx_buffer + current_packet_ptr);
+	u16 length = *(t + 1);
+	t += 2;
+
+	void *packet = malloc(length);
+	memcpy(packet, t, length);
+	ethernet_handle_packet(packet, length);
+
+	current_packet_ptr = (current_packet_ptr + length + 4 + 3) & (~3);
+
+	if (current_packet_ptr > RX_BUF_SIZE)
+		current_packet_ptr -= RX_BUF_SIZE;
+
+	outw(rtl_iobase + RTL_PORT_RXPTR, current_packet_ptr - 0x10);
+}
 
 void rtl8139_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
 {
@@ -94,42 +119,14 @@ void rtl8139_irq_handler()
 	u16 status = inw(rtl_iobase + RTL_PORT_ISR);
 	if (!status)
 		return;
-	outw(rtl_iobase + RTL_PORT_ISR, status);
 
-	if (status & 0x01 || status & 0x02) {
-		while ((inb(rtl_iobase + RTL_PORT_CMD) & 0x01) == 0) {
-			print("RECEIVE\n");
-
-			int offset = cur_rx % 0x2000;
-
-			u32 *buf_start = (u32 *)((u32)rtl_rx_buffer + offset);
-			u32 rx_status = buf_start[0];
-			u32 rx_size = rx_status >> 16;
-
-			if (rx_status & (0x0020 | 0x0010 | 0x0004 | 0x0002)) {
-				print("RX Error\n");
-			} else {
-				u8 *buf_8 = (u8 *)&(buf_start[1]);
-
-				last_packet = malloc(rx_size);
-
-				u32 packet_end = (u32)buf_8 + rx_size;
-				if (packet_end > (u32)rtl_rx_buffer + 0x2000) {
-					u32 s = ((u32)rtl_rx_buffer + 0x2000) - (u32)buf_8;
-					memcpy(last_packet, buf_8, s);
-					memcpy((void *)((u32)last_packet + s), rtl_rx_buffer,
-					       rx_size - s);
-				} else {
-					memcpy(last_packet, buf_8, rx_size);
-				}
-
-				ethernet_handle_packet((struct ethernet_packet *)last_packet);
-			}
-
-			cur_rx = (cur_rx + rx_size + 4 + 3) & ~3;
-			outw(rtl_iobase + RTL_PORT_RXPTR, cur_rx - 16);
-		}
+	if (status & RTL_TOK) {
+		printf("Sent packet\n");
+	} else if (status & RTL_ROK) {
+		rtl_receive_packet();
 	}
+
+	outw(rtl_iobase + RTL_PORT_ISR, 0x5);
 }
 
 void rtl8139_init()
@@ -151,7 +148,7 @@ void rtl8139_init()
 	rtl_iobase = 0;
 
 	if (rtl_bar0 & 0x00000001)
-		rtl_iobase = rtl_bar0 & 0xFFFFFFFC;
+		rtl_iobase = rtl_bar0 & (~0x3);
 
 	// Get mac address
 	for (int i = 0; i < 6; ++i)
@@ -167,36 +164,18 @@ void rtl8139_init()
 		;
 
 	// Set receive buffer
-	rtl_rx_buffer = (u8 *)malloc(0x3000);
-	memset(rtl_rx_buffer, 0, 0x3000);
-	outl(rtl_iobase + RTL_PORT_RBSTART, (u32)rtl_rx_buffer);
+	rx_buffer = (u8 *)malloc(RX_BUF_SIZE);
+	memset(rx_buffer, 0, RX_BUF_SIZE);
+	outl(rtl_iobase + RTL_PORT_RBSTART, (u32)rx_buffer);
 
-	// Enable IRQs
-	outw(rtl_iobase + RTL_PORT_IMR, 0x8000 | /* PCI error */
-						0x4000 | /* PCS timeout */
-						0x40 | /* Rx FIFO over */
-						0x20 | /* Rx underrun */
-						0x10 | /* Rx overflow */
-						0x08 | /* Tx error */
-						0x04 | /* Tx okay */
-						0x02 | /* Rx error */
-						0x01 /* Rx okay */
-	);
+	// Set TOK and ROK
+	outw(rtl_iobase + RTL_PORT_IMR, 0x0005);
 
-	// Configure transmit
-	outl(rtl_iobase + RTL_PORT_TCR, 0);
-
-	// Configure receive
-	outl(rtl_iobase + RTL_PORT_RCR, (0) | /* 8K receive */
-						0x08 | /* broadcast */
-						0x01 /* all physical */
-	);
+	// AB+AM+APM+AAP except WRAP
+	outl(rtl_iobase + RTL_PORT_RCR, 0xf | (1 << 7));
 
 	// Enable receive and transmit
 	outb(rtl_iobase + RTL_PORT_CMD, 0x08 | 0x04);
-
-	// Reset rx statistics
-	outl(rtl_iobase + RTL_PORT_RXMISS, 0);
 }
 
 void net_install()

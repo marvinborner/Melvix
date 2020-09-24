@@ -5,8 +5,13 @@
 
 #include <def.h>
 
+#define RX_BUF_SIZE 0x3000
+
 #define RTL8139_VENDOR_ID 0x10ec
 #define RTL8139_DEVICE_ID 0x8139
+
+#define RTL_ROK (1 << 0)
+#define RTL_TOK (1 << 2)
 
 #define RTL_PORT_MAC 0x00
 #define RTL_PORT_MAR 0x08
@@ -23,7 +28,8 @@
 #define RTL_PORT_RXMISS 0x4C
 #define RTL_PORT_CONFIG 0x52
 
-#define ETHERNET_TYPE_IP 0x0800
+#define ETHERNET_TYPE_IP4 0x0800
+#define ETHERNET_TYPE_IP6 0x86dd
 #define ETHERNET_TYPE_ARP 0x0806
 
 struct ethernet_packet {
