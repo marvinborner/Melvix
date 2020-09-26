@@ -130,7 +130,7 @@ make_test() {
         killall -9 qemu-system-i386
         echo
         grep -E 'PASS|FAIL' test.log
-        exit $(grep -q "All tests passed" test.log)
+        if grep -q "All tests passed" test.log; then exit 0; else exit 1; fi
     else
         qemu_with_flags -serial stdio -drive file=build/disk.img,format=raw,index=1,media=disk
     fi

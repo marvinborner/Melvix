@@ -15,11 +15,15 @@ static u8 mac[6];
 static u8 *rx_buffer;
 static u32 current_packet_ptr;
 
-static int rtl_irq = 0;
 static u32 rtl_device_pci = 0;
 static u32 rtl_iobase = 0;
 
-void rtl_receive_packet()
+u8 *rtl8139_get_mac()
+{
+	return mac;
+}
+
+void rtl8139_receive_packet()
 {
 	u16 *t = (u16 *)(rx_buffer + current_packet_ptr);
 	u16 length = *(t + 1);
@@ -37,16 +41,16 @@ void rtl_receive_packet()
 	outw(rtl_iobase + RTL_PORT_RXPTR, current_packet_ptr - 0x10);
 }
 
-/* static u8 tsad_array[4] = { 0x20, 0x24, 0x28, 0x2C }; */
-/* static u8 tsd_array[4] = { 0x10, 0x14, 0x18, 0x1C }; */
-/* static u8 tx_current = 0; */
-/* void rtl_send_packet(void *data, u32 len) */
-/* { */
-/* 	outl(rtl_iobase + tsad_array[tx_current], (u32)data); */
-/* 	outl(rtl_iobase + tsd_array[tx_current++], len); */
-/* 	if (tx_current > 3) */
-/* 		tx_current = 0; */
-/* } */
+static u8 tsad_array[4] = { 0x20, 0x24, 0x28, 0x2C };
+static u8 tsd_array[4] = { 0x10, 0x14, 0x18, 0x1C };
+static u8 tx_current = 0;
+void rtl8139_send_packet(void *data, u32 len)
+{
+	outl(rtl_iobase + tsad_array[tx_current], (u32)data);
+	outl(rtl_iobase + tsd_array[tx_current++], len);
+	if (tx_current > 3)
+		tx_current = 0;
+}
 
 void rtl8139_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
 {
@@ -59,13 +63,11 @@ void rtl8139_irq_handler()
 {
 	print("RTL INT!\n");
 	u16 status = inw(rtl_iobase + RTL_PORT_ISR);
-	if (!status)
-		return;
 
 	if (status & RTL_TOK) {
-		printf("Sent packet\n");
+		print("Sent packet\n");
 	} else if (status & RTL_ROK) {
-		rtl_receive_packet();
+		rtl8139_receive_packet();
 	}
 
 	outw(rtl_iobase + RTL_PORT_ISR, 0x5);
@@ -81,9 +83,6 @@ void rtl8139_init()
 		command_reg |= (1 << 2);
 		pci_write_field(rtl_device_pci, PCI_COMMAND, command_reg);
 	}
-
-	rtl_irq = pci_get_interrupt(rtl_device_pci);
-	irq_install_handler(rtl_irq, rtl8139_irq_handler);
 
 	u32 rtl_bar0 = pci_read_field(rtl_device_pci, PCI_BAR0, 4);
 	/* u32 rtl_bar1 = pci_read_field(rtl_device_pci, PCI_BAR1, 4); */
@@ -106,8 +105,8 @@ void rtl8139_init()
 		;
 
 	// Set receive buffer
-	rx_buffer = (u8 *)malloc(RX_BUF_SIZE);
-	memset(rx_buffer, 0, RX_BUF_SIZE);
+	rx_buffer = (u8 *)malloc(RX_BUF_SIZE + 1516);
+	memset(rx_buffer, 0, RX_BUF_SIZE + 1516);
 	outl(rtl_iobase + RTL_PORT_RBSTART, (u32)rx_buffer);
 
 	// Set TOK and ROK
@@ -118,6 +117,10 @@ void rtl8139_init()
 
 	// Enable receive and transmit
 	outb(rtl_iobase + RTL_PORT_CMD, 0x08 | 0x04);
+
+	// Install interrupt handler
+	u32 rtl_irq = pci_get_interrupt(rtl_device_pci);
+	irq_install_handler(rtl_irq, rtl8139_irq_handler);
 }
 
 void rtl8139_install()

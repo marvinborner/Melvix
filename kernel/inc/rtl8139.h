@@ -5,7 +5,7 @@
 
 #include <def.h>
 
-#define RX_BUF_SIZE 0x3000
+#define RX_BUF_SIZE 0x2000
 
 #define RTL8139_VENDOR_ID 0x10ec
 #define RTL8139_DEVICE_ID 0x8139
@@ -29,5 +29,7 @@
 #define RTL_PORT_CONFIG 0x52
 
 void rtl8139_install();
+void rtl8139_send_packet(void *data, u32 len);
+u8 *rtl8139_get_mac();
 
 #endif

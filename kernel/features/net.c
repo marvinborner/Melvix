@@ -1,26 +1,84 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <def.h>
+#include <mem.h>
 #include <net.h>
 #include <pci.h>
 #include <print.h>
 #include <rtl8139.h>
 
-u8 ntohb(u8 byte, int num_bits);
-u16 ntohs(u16 netshort);
-u32 ntohl(u32 netlong);
+int ethernet_send_packet(u8 *dst_mac_addr, u8 *data, int len, int prot)
+{
+	struct ethernet_packet *packet = malloc(sizeof(*packet) + len);
+	void *packet_data = (u32 *)packet + sizeof(*packet);
+	memcpy(packet->src_mac_addr, rtl8139_get_mac(), 6);
+	memcpy(packet->dst_mac_addr, dst_mac_addr, 6);
+	memcpy(packet_data, data, len);
+	packet->type = htons(prot);
+	rtl8139_send_packet(packet, sizeof(*packet) + len);
+	free(packet);
+	return len;
+}
+
+u16 ip_calculate_checksum(struct ip_packet *packet)
+{
+	int array_size = sizeof(*packet) / 2;
+	u16 *array = (u16 *)packet;
+	u32 sum = 0;
+	for (int i = 0; i < array_size; i++) {
+		u32 first_byte = *((u8 *)(&array[i]));
+		u32 second_byte = *((u8 *)(&array[i]) + 1);
+		sum += (first_byte << 8) | (second_byte);
+	}
+	u32 carry = sum >> 16;
+	sum = sum & 0x0000ffff;
+	sum = sum + carry;
+	u16 ret = ~sum;
+	return ret;
+}
+
+void ip_send_packet(u32 dst, void *data, int len, int prot)
+{
+	struct ip_packet *packet = malloc(sizeof(*packet) + len);
+	memset(packet, 0, sizeof(*packet));
+	packet->version = 4;
+	packet->ihl = 5; // 5 * 4 = 20B
+	packet->length = sizeof(*packet) + len;
+	packet->id = 0; // TODO: IP fragmentation
+	packet->ttl = 64;
+	packet->protocol = prot;
+	packet->src = 0;
+	packet->dst = dst;
+	void *packet_data = (u32 *)packet + packet->ihl * 4;
+	memcpy(packet_data, data, len);
+	packet->length = htons(sizeof(*packet) + len);
+	packet->checksum = htons(ip_calculate_checksum(packet));
+	// TODO: arp destination lookup
+	ethernet_send_packet((u8 *)0x424242424242, (u8 *)packet, htons(packet->length),
+			     ETHERNET_TYPE_IP4);
+}
 
 void ip_handle_packet(struct ip_packet *packet, int len)
 {
-	/* printf("V%d\n", packet->version_ihl); */
-	u32 test = (u32)packet->src_ip[0];
-	u8 *ip = (u8 *)ntohl(test);
-	printf("IP %d.%d.%d.%d\n", ip[0], ip[1], ip[2], ip[3]);
+	switch (packet->protocol) {
+	case IP_PROT_ICMP:
+		print("ICMP Packet!\n");
+		ip_send_packet(packet->src, packet->data, len, IP_PROT_ICMP);
+		break;
+	case IP_PROT_TCP:
+		print("TCP Packet!\n");
+		break;
+	case IP_PROT_UDP:
+		print("UDP Packet!\n");
+		break;
+	default:
+		printf("Unknown IP protocol %d\n", packet->protocol);
+	}
 }
 
 void ethernet_handle_packet(struct ethernet_packet *packet, int len)
 {
-	void *data = packet + sizeof(*packet);
+	void *data = packet->data;
 	int data_len = len - sizeof(*packet);
 	if (ntohs(packet->type) == ETHERNET_TYPE_ARP) {
 		print("ARP PACKET\n");
@@ -29,7 +87,7 @@ void ethernet_handle_packet(struct ethernet_packet *packet, int len)
 		ip_handle_packet(data, data_len);
 	} else if (ntohs(packet->type) == ETHERNET_TYPE_IP6) {
 		print("IP6 PACKET\n");
-		ip_handle_packet(data, data_len);
+		/* ip_handle_packet(data, data_len); */
 	} else {
 		printf("UNKNOWN PACKET %x\n", ntohs(packet->type));
 	}
@@ -38,60 +96,4 @@ void ethernet_handle_packet(struct ethernet_packet *packet, int len)
 void net_install()
 {
 	rtl8139_install();
-}
-
-/**
- * Utilities
- */
-
-u16 flip_short(u16 short_int)
-{
-	u32 first_byte = *((u8 *)(&short_int));
-	u32 second_byte = *((u8 *)(&short_int) + 1);
-	return (first_byte << 8) | (second_byte);
-}
-
-u32 flip_long(u32 long_int)
-{
-	u32 first_byte = *((u8 *)(&long_int));
-	u32 second_byte = *((u8 *)(&long_int) + 1);
-	u32 third_byte = *((u8 *)(&long_int) + 2);
-	u32 fourth_byte = *((u8 *)(&long_int) + 3);
-	return (first_byte << 24) | (second_byte << 16) | (third_byte << 8) | (fourth_byte);
-}
-
-u8 flip_byte(u8 byte, int num_bits)
-{
-	u8 t = byte << (8 - num_bits);
-	return t | (byte >> num_bits);
-}
-
-u8 htonb(u8 byte, int num_bits)
-{
-	return flip_byte(byte, num_bits);
-}
-
-u8 ntohb(u8 byte, int num_bits)
-{
-	return flip_byte(byte, 8 - num_bits);
-}
-
-u16 htons(u16 hostshort)
-{
-	return flip_short(hostshort);
-}
-
-u32 htonl(u32 hostlong)
-{
-	return flip_long(hostlong);
-}
-
-u16 ntohs(u16 netshort)
-{
-	return flip_short(netshort);
-}
-
-u32 ntohl(u32 netlong)
-{
-	return flip_long(netlong);
 }
