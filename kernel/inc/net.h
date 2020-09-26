@@ -21,15 +21,14 @@
 #define IP_PROT_UDP 0x11
 
 struct ethernet_packet {
-	u8 dst_mac_addr[6];
-	u8 src_mac_addr[6];
+	u8 dst[6];
+	u8 src[6];
 	u16 type;
 	u8 data[];
 } __attribute__((packed));
 
 struct ip_packet {
-	u8 version : 4;
-	u8 ihl : 4;
+	u8 version_ihl;
 	u8 dscp_ecn;
 	u16 length;
 	u16 id;
@@ -40,6 +39,12 @@ struct ip_packet {
 	u32 src;
 	u32 dst;
 	u8 data[];
+} __attribute__((packed));
+
+struct icmp_packet {
+	u8 type;
+	u8 version;
+	u16 checksum;
 } __attribute__((packed));
 
 void ethernet_handle_packet(struct ethernet_packet *packet, int len);

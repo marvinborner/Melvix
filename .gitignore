@@ -3,6 +3,8 @@ compile_commands.json
 *.o
 *.elf
 *.bin
+*.log
+*.pcap
 
 .clangd/
 build/

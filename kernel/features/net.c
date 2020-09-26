@@ -7,55 +7,74 @@
 #include <print.h>
 #include <rtl8139.h>
 
-int ethernet_send_packet(u8 *dst_mac_addr, u8 *data, int len, int prot)
+/**
+ * Checksums
+ */
+
+u16 ip_calculate_checksum(struct ip_packet *packet)
+{
+	u32 sum = 0;
+	u16 *s = (u16 *)packet;
+
+	for (int i = 0; i < 10; ++i)
+		sum += ntohs(s[i]);
+
+	if (sum > 0xFFFF)
+		sum = (sum >> 16) + (sum & 0xFFFF);
+
+	return sum;
+}
+
+/**
+ * Requests
+ */
+
+int ethernet_send_packet(u8 *dst, u8 *data, int len, int prot)
 {
 	struct ethernet_packet *packet = malloc(sizeof(*packet) + len);
-	void *packet_data = (u32 *)packet + sizeof(*packet);
-	memcpy(packet->src_mac_addr, rtl8139_get_mac(), 6);
-	memcpy(packet->dst_mac_addr, dst_mac_addr, 6);
-	memcpy(packet_data, data, len);
+	memcpy(packet->src, rtl8139_get_mac(), 6);
+	memcpy(packet->dst, dst, 6);
+	memcpy(packet->data, data, len);
 	packet->type = htons(prot);
 	rtl8139_send_packet(packet, sizeof(*packet) + len);
 	free(packet);
 	return len;
 }
 
-u16 ip_calculate_checksum(struct ip_packet *packet)
-{
-	int array_size = sizeof(*packet) / 2;
-	u16 *array = (u16 *)packet;
-	u32 sum = 0;
-	for (int i = 0; i < array_size; i++) {
-		u32 first_byte = *((u8 *)(&array[i]));
-		u32 second_byte = *((u8 *)(&array[i]) + 1);
-		sum += (first_byte << 8) | (second_byte);
-	}
-	u32 carry = sum >> 16;
-	sum = sum & 0x0000ffff;
-	sum = sum + carry;
-	u16 ret = ~sum;
-	return ret;
-}
-
 void ip_send_packet(u32 dst, void *data, int len, int prot)
 {
 	struct ip_packet *packet = malloc(sizeof(*packet) + len);
 	memset(packet, 0, sizeof(*packet));
-	packet->version = 4;
-	packet->ihl = 5; // 5 * 4 = 20B
+	packet->version_ihl = ((0x4 << 4) | (0x5 << 0));
 	packet->length = sizeof(*packet) + len;
 	packet->id = 0; // TODO: IP fragmentation
 	packet->ttl = 64;
 	packet->protocol = prot;
-	packet->src = 0;
+	packet->src = htonl(0x0a00022a);
 	packet->dst = dst;
-	void *packet_data = (u32 *)packet + packet->ihl * 4;
-	memcpy(packet_data, data, len);
+	/* void *packet_data = (u32 *)packet + 0x5 * 4; */
+	memcpy(packet->data, data, len);
 	packet->length = htons(sizeof(*packet) + len);
 	packet->checksum = htons(ip_calculate_checksum(packet));
 	// TODO: arp destination lookup
 	ethernet_send_packet((u8 *)0x424242424242, (u8 *)packet, htons(packet->length),
 			     ETHERNET_TYPE_IP4);
+	free(packet);
+}
+
+/**
+ * Responses
+ */
+
+void icmp_handle_packet(u32 dst, int len)
+{
+	struct icmp_packet *packet = malloc(sizeof(*packet) + len);
+	memset(packet, 0, sizeof(*packet));
+	packet->type = 0; // Ping reponse
+	packet->version = 0;
+	packet->checksum = 0;
+	ip_send_packet(dst, packet, sizeof(*packet) + len, IP_PROT_ICMP);
+	free(packet);
 }
 
 void ip_handle_packet(struct ip_packet *packet, int len)
@@ -63,7 +82,7 @@ void ip_handle_packet(struct ip_packet *packet, int len)
 	switch (packet->protocol) {
 	case IP_PROT_ICMP:
 		print("ICMP Packet!\n");
-		ip_send_packet(packet->src, packet->data, len, IP_PROT_ICMP);
+		icmp_handle_packet(packet->src, len);
 		break;
 	case IP_PROT_TCP:
 		print("TCP Packet!\n");
@@ -92,6 +111,10 @@ void ethernet_handle_packet(struct ethernet_packet *packet, int len)
 		printf("UNKNOWN PACKET %x\n", ntohs(packet->type));
 	}
 }
+
+/**
+ * Install
+ */
 
 void net_install()
 {
