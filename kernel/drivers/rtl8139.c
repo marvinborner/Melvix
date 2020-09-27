@@ -20,11 +20,17 @@ static u32 rtl_iobase = 0;
 
 u8 *rtl8139_get_mac()
 {
+	if (!rtl_device_pci)
+		return NULL;
+
 	return mac;
 }
 
 void rtl8139_receive_packet()
 {
+	if (!rtl_device_pci)
+		return;
+
 	u16 *t = (u16 *)(rx_buffer + current_packet_ptr);
 	u16 length = *(t + 1);
 	t += 2;
@@ -46,7 +52,10 @@ static u8 tsd_array[4] = { 0x10, 0x14, 0x18, 0x1C };
 static u8 tx_current = 0;
 void rtl8139_send_packet(void *data, u32 len)
 {
-	printf("Sending packet %d\n\n", len);
+	if (!rtl_device_pci)
+		return;
+
+	/* printf("Sending packet %d\n\n", len); */
 	outl(rtl_iobase + tsad_array[tx_current], (u32)data);
 	outl(rtl_iobase + tsd_array[tx_current++], len);
 	if (tx_current > 3)
@@ -62,7 +71,10 @@ void rtl8139_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
 
 void rtl8139_irq_handler()
 {
-	print("RTL INT!\n");
+	if (!rtl_device_pci)
+		return;
+
+	/* print("\nRTL INT!\n"); */
 	u16 status = inw(rtl_iobase + RTL_PORT_ISR);
 
 	if (status & RTL_TOK) {

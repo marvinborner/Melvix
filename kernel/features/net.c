@@ -8,7 +8,8 @@
 #include <rtl8139.h>
 #include <str.h>
 
-static int is_ip_allocated, ip_addr;
+static u32 is_ip_allocated = 0;
+static u32 ip_addr = 0x0e0014ac;
 
 /**
  * Helper functions
@@ -61,16 +62,16 @@ void ethernet_send_packet(u8 *dst, u8 *data, int len, int prot)
 }
 
 static u8 broadcast_mac[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-void arp_send_packet(u8 *dst_mac, u32 dst_protocol_addr)
+void arp_send_packet(u8 *dst_mac, u32 dst_protocol_addr, u8 opcode)
 {
 	print("ARP send packet\n");
 	struct arp_packet *packet = malloc(sizeof(*packet));
 
 	memcpy(packet->src_mac, rtl8139_get_mac(), 6);
-	packet->src_protocol_addr = 0x0e02000a;
+	packet->src_protocol_addr = ip_addr;
 	memcpy(packet->dst_mac, dst_mac, 6);
 	packet->dst_protocol_addr = dst_protocol_addr;
-	packet->opcode = htons(ARP_REQUEST);
+	packet->opcode = htons(opcode);
 	packet->hardware_addr_len = 6;
 	packet->protocol_addr_len = 4;
 	packet->hardware_type = htons(HARDWARE_TYPE_ETHERNET);
@@ -80,6 +81,7 @@ void arp_send_packet(u8 *dst_mac, u32 dst_protocol_addr)
 	free(packet);
 }
 
+#include <timer.h>
 int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr);
 void ip_send_packet(u32 dst, void *data, int len, int prot)
 {
@@ -91,7 +93,7 @@ void ip_send_packet(u32 dst, void *data, int len, int prot)
 	packet->id = 0; // TODO: IP fragmentation
 	packet->ttl = 64;
 	packet->protocol = prot;
-	packet->src = is_ip_allocated ? ip_addr : 0x0e02000a;
+	packet->src = ip_addr;
 	packet->dst = dst;
 	memcpy(packet->data, data, len);
 	packet->length = htons(sizeof(*packet) + len);
@@ -101,14 +103,16 @@ void ip_send_packet(u32 dst, void *data, int len, int prot)
 
 	int arp_sent = 3;
 	u8 zero_hardware_addr[] = { 0, 0, 0, 0, 0, 0 };
+	// TODO: Fix arp lookup (INT overflow)
 	while (!arp_lookup(dst_mac, dst)) {
-		if (arp_sent != 0) {
+		if (arp_sent) {
 			arp_sent--;
-			arp_send_packet(zero_hardware_addr, dst);
+			arp_send_packet(zero_hardware_addr, dst, ARP_REQUEST);
+			timer_wait(100);
 		}
 	}
-	/* printf("%x:%x:%x:%x:%x:%x\n", dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3], dst_mac[4], */
-	/* dst_mac[5]); */
+	printf("%x:%x:%x:%x:%x:%x\n", dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3], dst_mac[4],
+	       dst_mac[5]);
 	ethernet_send_packet(dst_mac, (u8 *)packet, htons(packet->length), ETHERNET_TYPE_IP4);
 
 	free(packet);
@@ -164,9 +168,9 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 		if (*type == 2) {
 			dhcp_request(packet->your_ip);
 		} else if (*type == 5) {
-			print("ACK!\n");
 			ip_addr = packet->your_ip;
 			is_ip_allocated = 1;
+			printf("ACK! %x\n", ip_addr);
 		}
 		free(type);
 	}
@@ -174,6 +178,7 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 
 void udp_handle_packet(struct udp_packet *packet)
 {
+	printf("UDP Port: %d\n", ntohs(packet->dst_port));
 	void *data_ptr = (u32 *)packet + sizeof(*packet);
 
 	if (ntohs(packet->dst_port) == 68)
@@ -196,7 +201,7 @@ void ip_handle_packet(struct ip_packet *packet, int len)
 		udp_handle_packet((struct udp_packet *)packet->data);
 		break;
 	default:
-		printf("Unknown IP protocol %d\n", packet->protocol);
+		break;
 	}
 }
 
@@ -211,20 +216,8 @@ void arp_handle_packet(struct arp_packet *packet, int len)
 	u32 dst_protocol_addr = packet->src_protocol_addr;
 	if (ntohs(packet->opcode) == ARP_REQUEST) {
 		print("Got ARP request\n");
-		u32 my_ip = 0x0e02000a;
-		if (packet->dst_protocol_addr == my_ip) {
-			memcpy(packet->src_mac, rtl8139_get_mac(), 6);
-			packet->src_protocol_addr = my_ip;
-			memcpy(packet->dst_mac, dst_mac, 6);
-			packet->dst_protocol_addr = dst_protocol_addr;
-			packet->opcode = htons(ARP_REPLY);
-			packet->hardware_addr_len = 6;
-			packet->protocol_addr_len = 4;
-			packet->hardware_type = htons(HARDWARE_TYPE_ETHERNET);
-			packet->protocol = htons(ETHERNET_TYPE_IP4);
-			ethernet_send_packet(dst_mac, (u8 *)packet, sizeof(*packet),
-					     ETHERNET_TYPE_ARP);
-		}
+		if (packet->dst_protocol_addr == ip_addr)
+			arp_send_packet(dst_mac, dst_protocol_addr, ARP_REPLY);
 	} else if (ntohs(packet->opcode) == ARP_REPLY) {
 		print("Got ARP reply");
 	} else {
@@ -254,7 +247,7 @@ void ethernet_handle_packet(struct ethernet_packet *packet, int len)
 		print("IP6 PACKET\n");
 		/* ip_handle_packet(data, data_len); */
 	} else {
-		printf("UNKNOWN PACKET %x\n", ntohs(packet->type));
+		/* printf("Unknown packet %x\n", ntohs(packet->type)); */
 	}
 }
 
@@ -292,7 +285,6 @@ void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type, u32 request_ip)
 	// Requested IP address
 	*(options++) = 50;
 	*(options++) = 0x04;
-	*((u32 *)(options)) = htonl(0x0a00020e);
 	*((u32 *)(options)) = request_ip;
 	options += 4;
 
@@ -320,11 +312,10 @@ void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type, u32 request_ip)
 void dhcp_discover()
 {
 	print("DHCP discover\n");
-	u32 request_ip = 0;
 	u32 dst_ip = 0xffffffff;
 	struct dhcp_packet *packet = malloc(sizeof(*packet));
 	memset(packet, 0, sizeof(*packet));
-	dhcp_make_packet(packet, 1, request_ip);
+	dhcp_make_packet(packet, 1, 0);
 	udp_send_packet(dst_ip, 68, 67, packet, sizeof(*packet));
 	free(packet);
 }

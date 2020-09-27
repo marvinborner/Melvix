@@ -121,7 +121,13 @@ make_build() {
 
 make_test() {
     if [ "$mode" = "net" ]; then
-        brctl show br0 >/dev/null || sudo brctl addbr br0
+        brctl show br0 &>/dev/null || (
+            sudo brctl addbr br0
+            sudo brctl addif br0 enp8s0
+            sudo ip addr add 172.20.0.1/16 dev br0
+            sudo ip link set br0 up
+            sudo iptables -I FORWARD -m physdev --physdev-is-bridged -j ACCEPT
+        )
     fi
 
     if [ "$mode" = "test" ]; then
