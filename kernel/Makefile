@@ -23,7 +23,8 @@ LD = ../cross/opt/bin/i686-elf-ld
 OC = ../cross/opt/bin/i686-elf-objcopy
 AS = nasm
 
-CFLAGS = -Wall -Wextra -Wno-address-of-packed-member -nostdlib -nostdinc -ffreestanding -fno-builtin -mno-red-zone -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel -Ofast
+# TODO: Fix -Ofast crash
+CFLAGS = -Wall -Wextra -Wno-address-of-packed-member -nostdlib -nostdinc -ffreestanding -fno-builtin -mno-red-zone -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel -O0
 
 ASFLAGS = -f elf32
 

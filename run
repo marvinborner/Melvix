@@ -12,7 +12,7 @@ no_ask="${2}"
 qemu_with_flags() {
     if [ -z "$network" ]; then network="rtl8139"; fi
     if [ "$network" != "false" ] && [ "$mode" = "net" ]; then
-        qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -netdev tap,helper=/usr/lib/qemu/qemu-bridge-helper,id=melvix_net -device $network,netdev=melvix_net,id=melvix_nic -object filter-dump,id=melvix_nic,netdev=melvix_net,file=dump.pcap "$@"
+        qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -netdev tap,helper=/usr/lib/qemu/qemu-bridge-helper,id=melvix_net -device $network,netdev=melvix_net,id=melvix_nic,mac=42:42:42:42:42:42 -object filter-dump,id=melvix_nic,netdev=melvix_net,file=dump.pcap "$@"
     else
         qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 "$@"
     fi

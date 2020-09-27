@@ -28,7 +28,7 @@
 #define RTL_PORT_RXMISS 0x4C
 #define RTL_PORT_CONFIG 0x52
 
-void rtl8139_install();
+int rtl8139_install();
 void rtl8139_send_packet(void *data, u32 len);
 u8 *rtl8139_get_mac();
 

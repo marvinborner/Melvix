@@ -25,7 +25,6 @@ u8 *rtl8139_get_mac()
 
 void rtl8139_receive_packet()
 {
-	printf("%x\n", current_packet_ptr);
 	u16 *t = (u16 *)(rx_buffer + current_packet_ptr);
 	u16 length = *(t + 1);
 	t += 2;
@@ -47,7 +46,7 @@ static u8 tsd_array[4] = { 0x10, 0x14, 0x18, 0x1C };
 static u8 tx_current = 0;
 void rtl8139_send_packet(void *data, u32 len)
 {
-	printf("Sending packet %d\n", len);
+	printf("Sending packet %d\n\n", len);
 	outl(rtl_iobase + tsad_array[tx_current], (u32)data);
 	outl(rtl_iobase + tsd_array[tx_current++], len);
 	if (tx_current > 3)
@@ -125,7 +124,7 @@ void rtl8139_init()
 	irq_install_handler(rtl_irq, rtl8139_irq_handler);
 }
 
-void rtl8139_install()
+int rtl8139_install()
 {
 	pci_scan(&rtl8139_find, -1, &rtl_device_pci);
 
@@ -133,4 +132,5 @@ void rtl8139_install()
 		print("Found rtl8139 card\n");
 		rtl8139_init();
 	}
+	return rtl_device_pci;
 }
