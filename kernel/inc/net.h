@@ -94,6 +94,8 @@ struct icmp_packet {
 	u8 type;
 	u8 version;
 	u16 checksum;
+	u16 identifier;
+	u16 sequence;
 } __attribute__((packed));
 
 // Other structs

@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <cpu.h>
 #include <def.h>
 #include <mem.h>
 #include <net.h>
@@ -20,13 +21,27 @@ u16 ip_calculate_checksum(struct ip_packet *packet)
 	u32 sum = 0;
 	u16 *s = (u16 *)packet;
 
-	for (int i = 0; i < 10; ++i)
+	for (int i = 0; i < 10; i++)
 		sum += ntohs(s[i]);
 
 	if (sum > 0xFFFF)
 		sum = (sum >> 16) + (sum & 0xFFFF);
 
 	return sum;
+}
+
+u16 icmp_calculate_checksum(struct icmp_packet *packet)
+{
+	u32 sum = 0;
+	u16 *s = (u16 *)packet;
+
+	for (int i = 0; i < 5; i++)
+		sum += s[i];
+
+	if (sum > 0xFFFF)
+		sum = (sum >> 16) + (sum & 0xFFFF);
+
+	return ~sum;
 }
 
 void *dhcp_get_options(struct dhcp_packet *packet, u8 type)
@@ -81,7 +96,6 @@ void arp_send_packet(u8 *dst_mac, u32 dst_protocol_addr, u8 opcode)
 	free(packet);
 }
 
-#include <timer.h>
 int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr);
 void ip_send_packet(u32 dst, void *data, int len, int prot)
 {
@@ -103,14 +117,16 @@ void ip_send_packet(u32 dst, void *data, int len, int prot)
 
 	int arp_sent = 3;
 	u8 zero_hardware_addr[] = { 0, 0, 0, 0, 0, 0 };
-	// TODO: Fix arp lookup (INT overflow)
+	sti();
 	while (!arp_lookup(dst_mac, dst)) {
 		if (arp_sent) {
 			arp_sent--;
 			arp_send_packet(zero_hardware_addr, dst, ARP_REQUEST);
-			timer_wait(100);
+		} else {
+			break;
 		}
 	}
+	cli();
 	printf("%x:%x:%x:%x:%x:%x\n", dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3], dst_mac[4],
 	       dst_mac[5]);
 	ethernet_send_packet(dst_mac, (u8 *)packet, htons(packet->length), ETHERNET_TYPE_IP4);
@@ -149,14 +165,17 @@ void dhcp_request(u32 request_ip)
  * Responses
  */
 
-void icmp_handle_packet(u32 dst, int len)
+void icmp_handle_packet(struct icmp_packet *request_packet, u32 dst)
 {
-	struct icmp_packet *packet = malloc(sizeof(*packet) + len);
+	struct icmp_packet *packet = malloc(sizeof(*packet));
 	memset(packet, 0, sizeof(*packet));
 	packet->type = 0; // Ping reponse
 	packet->version = 0;
 	packet->checksum = 0;
-	ip_send_packet(dst, packet, sizeof(*packet) + len, IP_PROT_ICMP);
+	packet->identifier = request_packet->identifier;
+	packet->sequence = request_packet->sequence;
+	packet->checksum = icmp_calculate_checksum(packet);
+	ip_send_packet(dst, packet, sizeof(*packet), IP_PROT_ICMP);
 	free(packet);
 }
 
@@ -188,10 +207,11 @@ void udp_handle_packet(struct udp_packet *packet)
 
 void ip_handle_packet(struct ip_packet *packet, int len)
 {
+	(void)len;
 	switch (packet->protocol) {
 	case IP_PROT_ICMP:
 		print("ICMP Packet!\n");
-		icmp_handle_packet(packet->src, len);
+		icmp_handle_packet((struct icmp_packet *)packet->data, packet->src);
 		break;
 	case IP_PROT_TCP:
 		print("TCP Packet!\n");
@@ -216,10 +236,12 @@ void arp_handle_packet(struct arp_packet *packet, int len)
 	u32 dst_protocol_addr = packet->src_protocol_addr;
 	if (ntohs(packet->opcode) == ARP_REQUEST) {
 		print("Got ARP request\n");
-		if (packet->dst_protocol_addr == ip_addr)
+		if (packet->dst_protocol_addr == ip_addr) {
+			print("Returning ARP request\n");
 			arp_send_packet(dst_mac, dst_protocol_addr, ARP_REPLY);
+		}
 	} else if (ntohs(packet->opcode) == ARP_REPLY) {
-		print("Got ARP reply");
+		print("Got ARP reply\n");
 	} else {
 		printf("Got unknown ARP, opcode = %d\n", packet->opcode);
 	}
