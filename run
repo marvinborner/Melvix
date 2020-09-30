@@ -12,7 +12,7 @@ no_ask="${2}"
 qemu_with_flags() {
     if [ -z "$network" ]; then network="rtl8139"; fi
     if [ "$network" != "false" ] && [ "$mode" = "net" ]; then
-        qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -netdev tap,helper=/usr/lib/qemu/qemu-bridge-helper,id=melvix_net -device $network,netdev=melvix_net,id=melvix_nic,mac=42:42:42:42:42:42 -object filter-dump,id=melvix_nic,netdev=melvix_net,file=dump.pcap "$@"
+        qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -netdev tap,id=net0,ifname=tap0,script=no,downscript=no -device $network,netdev=net0,id=nic0 -object filter-dump,id=nic0,netdev=net0,file=dump.pcap "$@"
     else
         qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 "$@"
     fi
@@ -124,9 +124,9 @@ make_test() {
         brctl show br0 &>/dev/null || (
             sudo brctl addbr br0
             sudo brctl addif br0 enp8s0
-            sudo ip addr add 172.20.0.1/16 dev br0
+            sudo ip tuntap add tap0 mode tap
             sudo ip link set br0 up
-            sudo iptables -I FORWARD -m physdev --physdev-is-bridged -j ACCEPT
+            sudo ip link set tap0 up
         )
     fi
 
