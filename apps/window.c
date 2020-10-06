@@ -45,6 +45,11 @@ int main()
 			if (!event->press)
 				break;
 
+			if (char_x * font_width >= (int)win.width) {
+				char_y++;
+				char_x = 0;
+			}
+
 			if (ch == '\n') {
 				char_x = 0;
 				char_y++;
