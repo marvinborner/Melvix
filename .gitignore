@@ -8,6 +8,7 @@ compile_commands.json
 *.core
 
 .clangd/
+ext2util
 build/
 cmake/
 cross/

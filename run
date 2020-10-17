@@ -8,9 +8,11 @@ cd "$(dirname "$0")"
 MAKE=make
 NPROC=nproc
 SUDO=sudo
+TAGS=ctags
 if [ "$(uname -s)" = "OpenBSD" ]; then
         NPROC="sysctl -n hw.ncpuonline"
         SUDO="doas"
+        TAGS="ectags"
         export MAKE=gmake
         export CC="egcc"
         export CXX="eg++"
@@ -62,7 +64,7 @@ make_cross() {
 
         if [ "$(uname -s)" = "OpenBSD" ]; then
                 export with_gmp=/usr/local
-                perl -pi -e 's/-no-pie/-nopie/g' "${DIR}/src/gcc-9.2.0/gcc/configure"
+                sed -i 's/-no-pie/-nopie/g' "${DIR}/src/gcc-9.2.0/gcc/configure"
         fi
 
         # Compile binutils
@@ -120,14 +122,30 @@ make_build() {
     # Create disk image
     dd if=/dev/zero of=build/disk.img bs=1k count=32k status=none
     if [ "$(uname -s)" = "OpenBSD" ]; then
-        $SUDO newfs_ext2fs -F build/disk.img
+        VND=$($SUDO vnconfig build/disk.img)
+        (echo "e 0"; echo 83; echo n; echo 0; echo "*"; echo "quit") | $SUDO fdisk -e $VND >/dev/null
+        $SUDO mkfs.ext2 -F /dev/${VND}i >/dev/null
+
+        if [ "$(cd ext2util/ && git diff --name-only | wc -l | xargs)" -ne "5" ]; then
+            cd ext2util
+            git stash
+            find ./ -type f -exec sed -i -e 's/sync/fs_sync/g' {} \;
+            sed -i 's/gcc/egcc/g' Makefile
+            gmake
+            cd ..
+        fi
+
+        $SUDO dd if=build/boot.bin of=/dev/${VND}i conv=notrunc status=none
+        cp build/load.bin . # For nicer disk img
+        $SUDO ./ext2util/ext2util -x /dev/${VND}i -wf load.bin -i 5 >/dev/null
+        rm load.bin
     else
         $SUDO mke2fs -q build/disk.img
+        dd if=build/boot.bin of=build/disk.img conv=notrunc status=none
+        cp build/load.bin . # For nicer disk img
+        ./ext2util/ext2util -x build/disk.img -wf load.bin -i 5 >/dev/null
+        rm load.bin
     fi
-    dd if=build/boot.bin of=build/disk.img conv=notrunc status=none
-    cp build/load.bin . # For nicer disk img
-    ./ext2util/ext2util -x build/disk.img -wf load.bin -i 5 >/dev/null
-    rm load.bin
 
     # Set test app as init
     if [ "$mode" = "test" ]; then
@@ -135,12 +153,20 @@ make_build() {
     fi
 
     mkdir -p mnt/
-    $SUDO mount build/disk.img mnt/
+    if [ "$(uname -s)" = "OpenBSD" ]; then
+        $SUDO mount -t ext2fs /dev/${VND}i mnt/
+    else
+        $SUDO mount build/disk.img mnt/
+    fi
     $SUDO cp -r disk/* mnt/
     $SUDO cp build/apps/* mnt/
     $SUDO cp build/kernel.bin mnt/
     $SUDO umount mnt/
     rm -rf mnt/
+
+    if [ "$(uname -s)" = "OpenBSD" ]; then
+        $SUDO vnconfig -u $VND
+    fi
 
     printf "Build finshed successfully!\n\n"
 }
@@ -193,7 +219,7 @@ ${data}"
 }
 
 make_sync() {
-    ctags -R --exclude=.git --exclude=build --exclude=disk --exclude=cross --exclude=ext2util --exclude=boot .
+    $TAGS -R --exclude=.git --exclude=build --exclude=disk --exclude=cross --exclude=ext2util --exclude=boot .
 
     rm -f compile_commands.json
     output=$(make --always-make --dry-run)
