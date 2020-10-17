@@ -31,11 +31,12 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 
 ## Build/Test
 
--   Use any system running GNU/Linux
+-   Use any system running GNU/Linux or OpenBSD
 
 -   Install build dependencies (package names may vary depending on your operating system)
 
     -   Ubuntu/Debian _"instructions"_ can be found here: [GitHub Workflow](https://raw.githubusercontent.com/marvinborner/Melvix/main/.github/workflows/build.yml)
+    -   OpenBSD: `pkg_add ccache gcc g++ gmake bison gmp libmpc mpfr texinfo curl nasm qemu e2fsprogs`
     -   binutils
     -   ccache
     -   gcc
