@@ -5,6 +5,7 @@ compile_commands.json
 *.bin
 *.log
 *.pcap
+*.core
 
 .clangd/
 build/

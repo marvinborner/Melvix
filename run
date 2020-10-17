@@ -5,6 +5,18 @@ set -e
 
 cd "$(dirname "$0")"
 
+MAKE=make
+NPROC=nproc
+SUDO=sudo
+if [ "$(uname -s)" = "OpenBSD" ]; then
+        NPROC="sysctl -n hw.ncpuonline"
+        SUDO="doas"
+        export MAKE=gmake
+        export CC="egcc"
+        export CXX="eg++"
+        export LDFLAGS=-Wl,-z,notext
+fi
+
 mode="${1}"
 no_ask="${2}"
 
@@ -37,8 +49,10 @@ make_cross() {
         # Get sources
         mkdir "${DIR}/src" && cd "${DIR}/src"
         echo "Downloading..."
-        curl -sSL "https://ftp.gnu.org/gnu/binutils/binutils-2.34.tar.xz" | tar xJ
-        curl -sSL "https://ftp.gnu.org/gnu/gcc/gcc-9.3.0/gcc-9.3.0.tar.xz" | tar xJ
+        curl "https://ftp.gnu.org/gnu/binutils/binutils-2.33.1.tar.gz" >binutils.tar.gz
+        tar xzf binutils.tar.gz
+        curl "https://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.gz" >gcc.tar.gz
+        tar xzf gcc.tar.gz
 
         # Prepare compiling
         mkdir -p "${DIR}/opt/bin"
@@ -46,19 +60,27 @@ make_cross() {
         export TARGET=i686-elf
         export PATH="$PREFIX/bin:$PATH"
 
+        if [ "$(uname -s)" = "OpenBSD" ]; then
+                export with_gmp=/usr/local
+                perl -pi -e 's/-no-pie/-nopie/g' "${DIR}/src/gcc-9.2.0/gcc/configure"
+        fi
+
         # Compile binutils
         mkdir "${DIR}/src/build-binutils" && cd "${DIR}/src/build-binutils"
-        ../binutils-2.34/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
-        make
-        make install
+        ../binutils-2.33.1/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
+        $MAKE -j $($NPROC)
+        $MAKE install
 
         # Compile GCC
         mkdir "${DIR}/src/build-gcc" && cd "${DIR}/src/build-gcc"
-        ../gcc-9.3.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c,c++ --without-headers
-        make all-gcc
-        make all-target-libgcc
-        make install-gcc
-        make install-target-libgcc
+        ../gcc-9.2.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c --without-headers
+        $MAKE -j $($NPROC) all-gcc all-target-libgcc
+        $MAKE install-gcc install-target-libgcc
+
+        # Fix things
+        if [ "$(uname -s)" = "OpenBSD" ]; then
+                cd "${DIR}/opt/libexec/gcc/i686-elf/9.2.0/" && ln -sf liblto_plugin.so.0.0 liblto_plugin.so
+        fi
 
         cd "${DIR}/.."
     fi
@@ -72,7 +94,7 @@ make_disk() {
     cd disk/font/
     VERSION="1.8.1"
     wget -q "https://github.com/fcambus/spleen/releases/download/$VERSION/spleen-$VERSION.tar.gz"
-    tar xf "spleen-$VERSION.tar.gz"
+    tar xzf "spleen-$VERSION.tar.gz"
     mv spleen-"$VERSION"/*.psfu .
     rm -rf "spleen-$VERSION"*
 
@@ -93,11 +115,15 @@ make_build() {
     rm -rf build/*
 
     printf "\nBuilding...\n"
-    make
+    $MAKE
 
     # Create disk image
     dd if=/dev/zero of=build/disk.img bs=1k count=32k status=none
-    sudo mke2fs -q build/disk.img
+    if [ "$(uname -s)" = "OpenBSD" ]; then
+        $SUDO newfs_ext2fs -F build/disk.img
+    else
+        $SUDO mke2fs -q build/disk.img
+    fi
     dd if=build/boot.bin of=build/disk.img conv=notrunc status=none
     cp build/load.bin . # For nicer disk img
     ./ext2util/ext2util -x build/disk.img -wf load.bin -i 5 >/dev/null
@@ -109,11 +135,11 @@ make_build() {
     fi
 
     mkdir -p mnt/
-    sudo mount build/disk.img mnt/
-    sudo cp -r disk/* mnt/
-    sudo cp build/apps/* mnt/
-    sudo cp build/kernel.bin mnt/
-    sudo umount mnt/
+    $SUDO mount build/disk.img mnt/
+    $SUDO cp -r disk/* mnt/
+    $SUDO cp build/apps/* mnt/
+    $SUDO cp build/kernel.bin mnt/
+    $SUDO umount mnt/
     rm -rf mnt/
 
     printf "Build finshed successfully!\n\n"
