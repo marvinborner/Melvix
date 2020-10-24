@@ -179,7 +179,8 @@ make_test() {
     fi
 
     if [ "$mode" = "test" ]; then
-        qemu_with_flags -serial file:test.log -nographic -drive file=build/disk.img,format=raw,index=1,media=disk &
+        qemu_with_flags -serial file:test.log -nographic -drive file=build/disk.img,format=raw,index=1,media=disk
+        echo
         grep -E 'PASS|FAIL' test.log
         if grep -q "All tests passed" test.log; then exit 0; else exit 1; fi
     else
