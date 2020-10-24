@@ -127,7 +127,7 @@ make_build() {
             git stash
             find ./ -type f -exec sed -i -e 's/sync/fs_sync/g' {} \;
             sed -i 's/gcc/egcc/g' Makefile
-            gmake
+            $MAKE
             cd ..
         fi
 
@@ -218,7 +218,7 @@ make_sync() {
     $TAGS -R --exclude=.git --exclude=build --exclude=disk --exclude=cross --exclude=ext2util --exclude=boot .
 
     rm -f compile_commands.json
-    output=$(make --always-make --dry-run)
+    output=$($MAKE --always-make --dry-run)
     echo "$output" | make_append_commands libc libk libc
     echo "$output" | make_append_commands libk libgui libgui
     echo "$output" | make_append_commands libgui libtxt libtxt
