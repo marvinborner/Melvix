@@ -2,6 +2,7 @@
 
 #include <conv.h>
 #include <def.h>
+#include <gfx.h>
 #include <gui.h>
 #include <input.h>
 #include <print.h>
@@ -9,24 +10,16 @@
 
 int main()
 {
-	print("[test window loaded]\n");
+	print("[test context loaded]\n");
 
-	struct window win = { 0 };
-	win.height = 400;
-	win.width = 600;
-	win.x = 50;
-	win.y = 50;
-	gui_new_window(&win);
+	struct window *win = gui_init("test", 0, 0);
+	struct context *ctx = win->ctx;
 
-	gui_fill(&win, COLOR_BG);
-	/* gui_border(&win, COLOR_FG, 2); */
-
-	gui_init("/font/spleen-12x24.psfu");
-	int font_height = gui_font_height();
-	int font_width = gui_font_width();
+	int font_height = gfx_font_height();
+	int font_width = gfx_font_width();
 
 	char *hello = "Hello, world!";
-	gui_write(&win, win.width / 2 - (strlen(hello) * font_width) / 2, 0, COLOR_GREEN, hello);
+	gfx_write(ctx, ctx->width / 2 - (strlen(hello) * font_width) / 2, 0, COLOR_GREEN, hello);
 
 	struct message *msg;
 	int char_x = 0;
@@ -45,7 +38,7 @@ int main()
 			if (!event->press)
 				break;
 
-			if (char_x * font_width >= (int)win.width) {
+			if (char_x * font_width >= (int)ctx->width) {
 				char_y++;
 				char_x = 0;
 			}
@@ -58,7 +51,7 @@ int main()
 			} else if (ch == '\b') {
 				if (char_x > 0) {
 					char_x--;
-					gui_draw_rectangle(&win, font_width * char_x,
+					gfx_draw_rectangle(ctx, font_width * char_x,
 							   font_height * char_y,
 							   font_width * (char_x + 1),
 							   font_height * (char_y + 1), COLOR_BG);
@@ -66,7 +59,7 @@ int main()
 			} else if (ch == ' ' && event->scancode == KEY_SPACE) {
 				char_x++;
 			} else if (ch != ' ' && ch != '\0') {
-				gui_write_char(&win, font_width * char_x++, font_height * char_y,
+				gfx_write_char(ctx, font_width * char_x++, font_height * char_y,
 					       COLOR_CYAN, ch);
 			}
 			break;

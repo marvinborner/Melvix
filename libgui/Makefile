@@ -2,6 +2,7 @@
 
 COBJS = psf.o \
 	bmp.o \
+	gfx.o \
 	gui.o
 CC = ccache ../cross/opt/bin/i686-elf-gcc
 LD = ccache ../cross/opt/bin/i686-elf-ld

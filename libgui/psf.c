@@ -2,7 +2,7 @@
 // PSF parser
 
 #include <def.h>
-#include <gui.h>
+#include <gfx.h>
 #include <mem.h>
 #include <print.h>
 #include <psf.h>

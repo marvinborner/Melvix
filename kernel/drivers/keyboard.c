@@ -67,7 +67,7 @@ char keymap[128] = {
 	0, // Alt key
 	' ', // Space bar
 	15, // Caps lock
-	0,    0,    0,	 0,   0,   0,	0,   0,	  0,   0, // F keys
+	0,    0,    0,   0,   0,   0,   0,   0,   0,   0, // F keys
 	0, // Num lock
 	0, // Scroll lock
 	0, // Home key

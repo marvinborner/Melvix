@@ -193,7 +193,7 @@ make_debug() {
 }
 
 make_disasm() {
-    objdump -drwC -Mintel build/debug.o --visualize-jumps=color | less -R
+    objdump -drwC -Mintel build/debug.o | less -R
     #hexdump -C build/kernel.bin | less -R
 }
 

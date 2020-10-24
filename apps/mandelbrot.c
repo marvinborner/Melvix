@@ -2,26 +2,26 @@
 
 #include <conv.h>
 #include <def.h>
-#include <gui.h>
+#include <gfx.h>
 #include <input.h>
 #include <print.h>
 #include <random.h>
 #include <str.h>
 #include <sys.h>
 
-void draw_pixel(struct window *win, int x, int y, u32 c)
+void draw_pixel(struct context *ctx, int x, int y, u32 c)
 {
-	int pos = x * (win->bpp >> 3) + y * win->pitch;
-	win->fb[pos + 0] = GET_BLUE(c);
-	win->fb[pos + 1] = GET_GREEN(c);
-	win->fb[pos + 2] = GET_RED(c);
-	win->fb[pos + 3] = GET_ALPHA(c);
+	int pos = x * (ctx->bpp >> 3) + y * ctx->pitch;
+	ctx->fb[pos + 0] = GET_BLUE(c);
+	ctx->fb[pos + 1] = GET_GREEN(c);
+	ctx->fb[pos + 2] = GET_RED(c);
+	ctx->fb[pos + 3] = GET_ALPHA(c);
 }
 
-void draw_mandelbrot(struct window *win, int resolution)
+void draw_mandelbrot(struct context *ctx, int resolution)
 {
-	int height = win->height;
-	int width = win->width;
+	int height = ctx->height;
+	int width = ctx->width;
 	int max = resolution;
 
 	for (int row = 0; row < height; row++) {
@@ -38,31 +38,31 @@ void draw_mandelbrot(struct window *win, int resolution)
 			}
 			srand(iteration);
 			if (iteration < max)
-				draw_pixel(win, col, row,
+				draw_pixel(ctx, col, row,
 					   rand() << 16 | rand() << 8 | rand() | 0xff000000);
 			else
-				draw_pixel(win, col, row, 0xff000000);
+				draw_pixel(ctx, col, row, 0xff000000);
 
 			if (row % 50 == 0 && col == 0)
-				gui_redraw();
+				gfx_redraw();
 		}
 	}
-	gui_redraw();
+	gfx_redraw();
 	print("Rendered mandelbrot successfully\n");
 	yield();
 }
 
 int main()
 {
-	print("[mandelbrot window loaded]\n");
+	print("[mandelbrot context loaded]\n");
 
-	struct window win = { 0 };
-	win.width = 500;
-	win.height = 300;
-	gui_new_window(&win);
-	gui_fill(&win, COLOR_BG);
+	struct context ctx = { 0 };
+	ctx.width = 500;
+	ctx.height = 300;
+	gfx_new_ctx(&ctx);
+	gfx_fill(&ctx, COLOR_BG);
 
-	draw_mandelbrot(&win, 50);
+	draw_mandelbrot(&ctx, 50);
 
 	while (1) {
 		yield();
