@@ -21,7 +21,7 @@ int main()
 	gui_fill(&win, COLOR_BG);
 	/* gui_border(&win, COLOR_FG, 2); */
 
-	gui_init("/font/ter-p18n.psf");
+	gui_init("/font/spleen-12x24.psfu");
 	int font_height = gui_font_height();
 	int font_width = gui_font_width();
 

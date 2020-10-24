@@ -100,10 +100,6 @@ make_disk() {
     mv spleen-"$VERSION"/*.psfu .
     rm -rf "spleen-$VERSION"*
 
-    ls /usr/share/kbd/consolefonts/ter-p* >/dev/null &&
-        cp /usr/share/kbd/consolefonts/ter-p* . &&
-        gunzip ter-p* || echo "Terminus font not found!"
-
     cd ../../
 }
 
