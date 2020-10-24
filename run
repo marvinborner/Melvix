@@ -180,9 +180,6 @@ make_test() {
 
     if [ "$mode" = "test" ]; then
         qemu_with_flags -serial file:test.log -nographic -drive file=build/disk.img,format=raw,index=1,media=disk &
-        sleep 1
-        pkill qemu-system-i386 || true
-        echo
         grep -E 'PASS|FAIL' test.log
         if grep -q "All tests passed" test.log; then exit 0; else exit 1; fi
     else

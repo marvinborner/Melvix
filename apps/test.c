@@ -97,6 +97,11 @@ int main()
 	else
 		print("All tests passed\n");
 
+	// Try emulator shutdown
+	outw(0xB004, 0x2000);
+	outw(0x604, 0x2000);
+	outw(0x4004, 0x3400);
+
 	loop();
 	return 0;
 }
