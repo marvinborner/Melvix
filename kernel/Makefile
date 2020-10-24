@@ -23,9 +23,9 @@ LD = ccache ../cross/opt/bin/i686-elf-ld
 OC = ccache ../cross/opt/bin/i686-elf-objcopy
 AS = ccache nasm
 
-# TODO: Fix -Ofast crash
-CFLAGS = -Wall -Wextra -Wno-address-of-packed-member -nostdlib -nostdinc -ffreestanding -fno-builtin -mno-red-zone -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel -O0
-
+# TODO: Remove fixflags?
+FIXFLAGS = -fno-tree-bit-ccp -fno-tree-builtin-call-dce -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-fre -fno-tree-pta -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter
+CFLAGS = -Wall -Wextra -Wno-address-of-packed-member -nostdlib -nostdinc -ffreestanding -fno-builtin -mno-red-zone -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel $(FIXFLAGS) -Ofast
 ASFLAGS = -f elf32
 
 all: compile
