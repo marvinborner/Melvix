@@ -1,18 +1,18 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
 COBJS = keymap.o
-CC = ../cross/opt/bin/i686-elf-gcc
-LD = ../cross/opt/bin/i686-elf-ld
-AR = ../cross/opt/bin/i686-elf-ar
+CC = ccache ../cross/opt/bin/i686-elf-gcc
+LD = ccache ../cross/opt/bin/i686-elf-ld
+AR = ccache ../cross/opt/bin/i686-elf-ar
 
 CFLAGS = -Wall -Wextra -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Iinc/ -I../libc/inc/ -fPIE -Duserspace -Ofast
 
-all: libgui clean
+all: libtxt
 
 %.o: %.c
 	@$(CC) -c $(CFLAGS) $< -o $@
 
-libgui: $(COBJS)
+libtxt: $(COBJS)
 	@mkdir -p ../build/
 	@$(AR) rcs ../build/libtxt.a $+
 

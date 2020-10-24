@@ -11,10 +11,10 @@ COBJS = str.o \
 	sys.o \
 	list.o \
 	random.o
-CC = ../cross/opt/bin/i686-elf-gcc
-LD = ../cross/opt/bin/i686-elf-ld
-AR = ../cross/opt/bin/i686-elf-ar
-AS = nasm
+CC = ccache ../cross/opt/bin/i686-elf-gcc
+LD = ccache ../cross/opt/bin/i686-elf-ld
+AR = ccache ../cross/opt/bin/i686-elf-ar
+AS = ccache nasm
 
 CFLAGS = -Wall -Wextra -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Iinc/ -Ofast
 
