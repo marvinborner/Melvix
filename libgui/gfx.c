@@ -11,9 +11,52 @@
 #include <sys.h>
 #include <vesa.h>
 
-struct font *font;
+// TODO: Move to some global config file
+#define FONT_COUNT 6
+#define FONT_8_PATH "/font/spleen-5x8.psfu"
+#define FONT_12_PATH "/font/spleen-6x12.psfu"
+#define FONT_16_PATH "/font/spleen-8x16.psfu"
+#define FONT_24_PATH "/font/spleen-12x24.psfu"
+#define FONT_32_PATH "/font/spleen-16x32.psfu"
+#define FONT_64_PATH "/font/spleen-32x64.psfu"
 
-static void write_char(struct context *ctx, int x, int y, u32 c, char ch)
+struct font *fonts[FONT_COUNT];
+
+static void load_font(enum font_type font_type)
+{
+	if (fonts[font_type])
+		return;
+
+	char *path = NULL;
+
+	switch (font_type) {
+	case FONT_8:
+		path = FONT_8_PATH;
+		break;
+	case FONT_12:
+		path = FONT_12_PATH;
+		break;
+	case FONT_16:
+		path = FONT_16_PATH;
+		break;
+	case FONT_24:
+		path = FONT_24_PATH;
+		break;
+	case FONT_32:
+		path = FONT_32_PATH;
+		break;
+	case FONT_64:
+		path = FONT_64_PATH;
+		break;
+	default:
+		break;
+	}
+
+	fonts[font_type] = psf_parse(read(path));
+	assert(fonts[font_type]);
+}
+
+static void write_char(struct context *ctx, int x, int y, struct font *font, u32 c, char ch)
 {
 	int bypp = ctx->bpp >> 3;
 
@@ -51,16 +94,26 @@ static void draw_rectangle(struct context *ctx, int x1, int y1, int x2, int y2, 
 	}
 }
 
-void gfx_write_char(struct context *ctx, int x, int y, u32 c, char ch)
+// On-demand font loading
+struct font *gfx_resolve_font(enum font_type font_type)
 {
-	write_char(ctx, x, y, c, ch);
+	if (!fonts[font_type])
+		load_font(font_type);
+	return fonts[font_type];
+}
+
+void gfx_write_char(struct context *ctx, int x, int y, enum font_type font_type, u32 c, char ch)
+{
+	struct font *font = gfx_resolve_font(font_type);
+	write_char(ctx, x, y, font, c, ch);
 	gfx_redraw();
 }
 
-void gfx_write(struct context *ctx, int x, int y, u32 c, char *text)
+void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 c, char *text)
 {
+	struct font *font = gfx_resolve_font(font_type);
 	for (u32 i = 0; i < strlen(text); i++) {
-		write_char(ctx, x + i * font->width, y, c, text[i]);
+		write_char(ctx, x + i * font->width, y, font, c, text[i]);
 	}
 	gfx_redraw();
 }
@@ -167,18 +220,14 @@ void gfx_border(struct context *ctx, u32 c, u32 width)
 	gfx_redraw();
 }
 
-int gfx_font_height()
+int gfx_font_height(enum font_type font_type)
 {
+	struct font *font = gfx_resolve_font(font_type);
 	return font->height;
 }
 
-int gfx_font_width()
+int gfx_font_width(enum font_type font_type)
 {
+	struct font *font = gfx_resolve_font(font_type);
 	return font->width;
-}
-
-void gfx_init(char *font_path)
-{
-	font = psf_parse(read(font_path));
-	assert(font);
 }

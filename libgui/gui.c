@@ -7,6 +7,7 @@
 #include <list.h>
 #include <mem.h>
 #include <print.h>
+#include <str.h>
 #include <sys.h>
 
 #define MAX_WINDOWS 10
@@ -72,11 +73,21 @@ static struct element *element_at(struct element *container, int x, int y)
 	return ret;
 }
 
-struct element_button *gui_add_button(struct element *container, int x, int y, u32 width,
-				      u32 height, const char *text, u32 color)
+void gui_sync_button(struct element *elem)
+{
+	struct element_button *button = elem->data;
+	gfx_fill(elem->ctx, button->color_bg);
+	gfx_write(elem->ctx, 0, 0, button->font_type, button->color_fg, button->text);
+}
+
+struct element_button *gui_add_button(struct element *container, int x, int y,
+				      enum font_type font_type, char *text, u32 color_bg,
+				      u32 color_fg)
 {
 	if (!container || !container->childs)
 		return NULL;
+
+	gfx_resolve_font(font_type);
 
 	struct element *button = malloc(sizeof(*button));
 	button->type = GUI_TYPE_BUTTON;
@@ -84,16 +95,18 @@ struct element_button *gui_add_button(struct element *container, int x, int y, u
 	button->ctx = malloc(sizeof(*button->ctx));
 	button->ctx->x = x;
 	button->ctx->y = y;
-	button->ctx->width = width;
-	button->ctx->height = height;
+	button->ctx->width = strlen(text) * gfx_font_width(font_type);
+	button->ctx->height = gfx_font_height(font_type);
 	button->ctx->flags = WF_RELATIVE;
 	button->childs = list_new();
 	button->data = malloc(sizeof(struct element_button));
 	((struct element_button *)button->data)->text = text;
-	((struct element_button *)button->data)->color = color;
+	((struct element_button *)button->data)->color_fg = color_fg;
+	((struct element_button *)button->data)->color_bg = color_bg;
+	((struct element_button *)button->data)->font_type = font_type;
 	gfx_new_ctx(button->ctx);
-	gfx_fill(button->ctx, color);
 	list_add(container->childs, button);
+	gui_sync_button(button);
 	merge_elements(container);
 
 	return button->data;
@@ -138,7 +151,6 @@ struct element *gui_init(const char *title, u32 width, u32 height)
 		return NULL;
 
 	gfx_fill(win->ctx, COLOR_BG);
-	gfx_init("/font/spleen-12x24.psfu");
 
 	struct element *container = malloc(sizeof(*container));
 	container->type = GUI_TYPE_CONTAINER;

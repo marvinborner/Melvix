@@ -4,6 +4,7 @@
 #include <cpu.h>
 #include <def.h>
 #include <gfx.h>
+#include <gui.h>
 #include <input.h>
 #include <keymap.h>
 #include <list.h>
@@ -203,7 +204,6 @@ int main(int argc, char **argv)
 	printf("VBE: %dx%d\n", vbe.width, vbe.height);
 
 	keymap = keymap_parse("/res/keymaps/en.keymap");
-	gfx_init("/font/spleen-16x32.psfu");
 
 	contexts = list_new();
 	new_context(&root, pid, 0, 0, vbe.width, vbe.height,
@@ -215,9 +215,9 @@ int main(int argc, char **argv)
 	direct.fb = vbe.fb;
 	list_add(contexts, &root);
 
-	gfx_fill(&direct, COLOR_BG);
-	gfx_write(&direct, 0, 0, COLOR_FG, "Welcome to Melvix!");
-	gfx_write(&direct, 0, 32, COLOR_FG, "Loading resources...");
+	//gfx_fill(&direct, COLOR_BG);
+	//gfx_write(&direct, 0, 0, FONT_32, COLOR_FG, "Welcome to Melvix!");
+	//gfx_write(&direct, 0, 32, FONT_32, COLOR_FG, "Loading resources...");
 
 	gfx_fill(&root, COLOR_FG);
 	//gfx_border(&root, COLOR_FG, 2);

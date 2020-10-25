@@ -11,18 +11,21 @@
 #define MAX_CHILDS 100
 
 // TODO: Improve event types (maybe as struct header)
-enum window_event_type { GUI_KEYBOARD = 10, GUI_MOUSE, GUI_MAX };
+enum window_event_type { GUI_KEYBOARD = GFX_MAX + 1, GUI_MOUSE, GUI_MAX };
 enum element_type { GUI_TYPE_CONTAINER, GUI_TYPE_BUTTON, GUI_TYPE_TEXTBOX };
 
 struct element_button {
-	const char *text;
-	u32 color;
+	char *text;
+	u32 color_fg;
+	u32 color_bg;
+	enum font_type font_type;
 	void (*on_click)();
 };
 
 struct element_textbox {
 	const char *text;
 	u32 color;
+	enum font_type font_type;
 };
 
 struct element {
@@ -56,7 +59,8 @@ struct gui_event_mouse {
 
 struct element *gui_init(const char *title, u32 width, u32 height);
 void gui_event_loop(struct element *container);
-struct element_button *gui_add_button(struct element *container, int x, int y, u32 width,
-				      u32 height, const char *text, u32 color);
+struct element_button *gui_add_button(struct element *container, int x, int y,
+				      enum font_type font_type, char *text, u32 color_bg,
+				      u32 color_fg);
 
 #endif
