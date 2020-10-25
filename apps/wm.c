@@ -84,7 +84,34 @@ static void redraw_all()
 	memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
 }
 
-// TODO: Send relative mouse position event to focused context
+#define SHIFT_PRESSED 1 << 0
+#define ALT_PRESSED 1 << 1
+#define CTRL_PRESSED 1 << 2
+static u32 special_keys_pressed;
+static void handle_keyboard(struct event_keyboard *event)
+{
+	if (event->magic != KEYBOARD_MAGIC || !focused)
+		return;
+
+	if (event->scancode == KEY_LEFTSHIFT || event->scancode == KEY_RIGHTSHIFT)
+		special_keys_pressed ^= SHIFT_PRESSED;
+	else if (event->scancode == KEY_LEFTALT || event->scancode == KEY_RIGHTALT)
+		special_keys_pressed ^= ALT_PRESSED;
+	else if (event->scancode == KEY_LEFTCTRL || event->scancode == KEY_RIGHTCTRL)
+		special_keys_pressed ^= CTRL_PRESSED;
+
+	struct gui_event_keyboard *msg = malloc(sizeof(*msg));
+
+	if (special_keys_pressed & SHIFT_PRESSED)
+		msg->ch = keymap->shift_map[event->scancode];
+	else
+		msg->ch = keymap->map[event->scancode];
+
+	msg->press = event->press;
+	msg->scancode = event->scancode;
+	msg_send(focused->pid, GUI_KEYBOARD, msg);
+}
+
 static int mouse_skip = 0;
 static int mouse_pressed[3] = { 0 };
 static void handle_mouse(struct event_mouse *event)
@@ -109,12 +136,14 @@ static void handle_mouse(struct event_mouse *event)
 	// Restore cursor buffer backup
 	gfx_copy(&direct, &exchange, cursor.x, cursor.y, cursor.width, cursor.height);
 
+	int mod_pressed = special_keys_pressed & ALT_PRESSED;
+
 	// Context focus
 	if (!mouse_pressed[0] && !mouse_pressed[1])
 		focused = context_at(mouse_x, mouse_y);
 
 	// Context position
-	if (event->but1 && !mouse_pressed[1]) {
+	if (mod_pressed && event->but1 && !mouse_pressed[1]) {
 		mouse_pressed[0] = 1;
 		if (focused && !(focused->flags & WF_NO_DRAG)) {
 			focused->x = mouse_x;
@@ -124,13 +153,13 @@ static void handle_mouse(struct event_mouse *event)
 				redraw_all(); // TODO: Function to redraw one context
 			}
 		}
-	} else if (mouse_pressed[0]) {
+	} else if (mod_pressed && mouse_pressed[0]) {
 		mouse_pressed[0] = 0;
 		redraw_all();
 	}
 
 	// Context size
-	if (event->but2 && !mouse_pressed[0]) {
+	if (mod_pressed && event->but2 && !mouse_pressed[0]) {
 		if (focused && !mouse_pressed[1]) {
 			mouse_x = focused->x + focused->width;
 			mouse_y = focused->y + focused->height;
@@ -144,7 +173,7 @@ static void handle_mouse(struct event_mouse *event)
 			redraw_all(); // TODO: Function to redraw one context
 		}
 		mouse_pressed[1] = 1;
-	} else if (mouse_pressed[1]) {
+	} else if (mod_pressed && mouse_pressed[1]) {
 		mouse_pressed[1] = 0;
 		redraw_all();
 	}
@@ -153,33 +182,16 @@ static void handle_mouse(struct event_mouse *event)
 	cursor.y = mouse_y;
 	gfx_ctx_on_ctx(&direct, &cursor, cursor.x, cursor.y);
 	mouse_skip++;
-}
 
-#define SHIFT_PRESSED 1 << 0
-#define ALT_PRESSED 1 << 1
-#define CTRL_PRESSED 1 << 2
-static u32 special_keys_pressed;
-static void handle_keyboard(struct event_keyboard *event)
-{
-	if (event->magic != KEYBOARD_MAGIC || !focused)
+	if (!focused)
 		return;
-
-	struct msg_keyboard *msg = malloc(sizeof(*msg));
-	if (event->scancode == KEY_LEFTSHIFT || event->scancode == KEY_RIGHTSHIFT)
-		special_keys_pressed ^= SHIFT_PRESSED;
-	else if (event->scancode == KEY_LEFTALT || event->scancode == KEY_RIGHTALT)
-		special_keys_pressed ^= ALT_PRESSED;
-	else if (event->scancode == KEY_LEFTCTRL || event->scancode == KEY_RIGHTCTRL)
-		special_keys_pressed ^= CTRL_PRESSED;
-
-	if (special_keys_pressed & SHIFT_PRESSED)
-		msg->ch = keymap->shift_map[event->scancode];
-	else
-		msg->ch = keymap->map[event->scancode];
-
-	msg->press = event->press;
-	msg->scancode = event->scancode;
-	msg_send(focused->pid, WM_KEYBOARD, msg);
+	struct gui_event_mouse *msg = malloc(sizeof(*msg));
+	msg->x = mouse_x - focused->x;
+	msg->y = mouse_y - focused->y;
+	msg->but1 = event->but1;
+	msg->but2 = event->but2;
+	msg->but3 = event->but3;
+	msg_send(focused->pid, GUI_MOUSE, msg);
 }
 
 // TODO: Clean this god-function
@@ -224,7 +236,7 @@ int main(int argc, char **argv)
 		}
 
 		switch (msg->type) {
-		case WM_NEW_CONTEXT:
+		case GFX_NEW_CONTEXT:
 			printf("New context for pid %d\n", msg->src);
 			struct context *ctx = msg->data;
 			int width = ctx->width ? ctx->width : 1000;
@@ -237,9 +249,9 @@ int main(int argc, char **argv)
 			if (!(ctx->flags & WF_RELATIVE))
 				focused = ctx;
 			redraw_all();
-			msg_send(msg->src, WM_NEW_CONTEXT, ctx);
+			msg_send(msg->src, GFX_NEW_CONTEXT, ctx);
 			break;
-		case WM_REDRAW:
+		case GFX_REDRAW:
 			redraw_all();
 			break;
 		case EVENT_MOUSE:

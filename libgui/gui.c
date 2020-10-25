@@ -6,13 +6,15 @@
 #include <gui.h>
 #include <list.h>
 #include <mem.h>
+#include <print.h>
+#include <sys.h>
 
 #define MAX_WINDOWS 10
 
 u32 window_count = 0;
 static struct window windows[MAX_WINDOWS] = { 0 };
 
-struct window *new_window(const char *title, int x, int y, u32 width, u32 height, int flags)
+static struct window *new_window(const char *title, int x, int y, u32 width, u32 height, int flags)
 {
 	if (window_count + 1 >= MAX_WINDOWS)
 		return NULL;
@@ -37,9 +39,9 @@ struct window *new_window(const char *title, int x, int y, u32 width, u32 height
 	return win;
 }
 
-void merge_elements(struct element *container)
+static void merge_elements(struct element *container)
 {
-	if (!container->childs || !container->childs->head)
+	if (!container || !container->childs || !container->childs->head)
 		return;
 
 	struct node *iterator = container->childs->head;
@@ -52,8 +54,26 @@ void merge_elements(struct element *container)
 	}
 }
 
-struct element *gui_add_button(struct element *container, int x, int y, u32 width, u32 height,
-			       const char *text, u32 color)
+static struct element *element_at(struct element *container, int x, int y)
+{
+	if (!container || !container->childs || !container->childs->head)
+		return NULL;
+
+	struct element *ret = NULL;
+	struct node *iterator = container->childs->head;
+	while (iterator != NULL) {
+		struct context *ctx = ((struct element *)iterator->data)->ctx;
+		if (ctx != container->ctx && ctx->flags & WF_RELATIVE && x >= ctx->x &&
+		    x <= ctx->x + (int)ctx->width && y >= ctx->y && y <= ctx->y + (int)ctx->height)
+			ret = iterator->data;
+		iterator = iterator->next;
+	}
+
+	return ret;
+}
+
+struct element_button *gui_add_button(struct element *container, int x, int y, u32 width,
+				      u32 height, const char *text, u32 color)
 {
 	if (!container || !container->childs)
 		return NULL;
@@ -76,7 +96,36 @@ struct element *gui_add_button(struct element *container, int x, int y, u32 widt
 	list_add(container->childs, button);
 	merge_elements(container);
 
-	return button;
+	return button->data;
+}
+
+void gui_event_loop(struct element *container)
+{
+	if (!container)
+		return;
+
+	struct message *msg;
+	while (1) {
+		if (!(msg = msg_receive())) {
+			yield();
+			continue;
+		}
+
+		switch (msg->type) {
+		case GUI_MOUSE: {
+			struct gui_event_mouse *event = msg->data;
+			struct element *elem = element_at(container, event->x, event->y);
+			if (!elem)
+				continue;
+
+			if (elem->type == GUI_TYPE_BUTTON) {
+				struct element_button *button = elem->data;
+				if (event->but1 && button->on_click)
+					button->on_click();
+			}
+		}
+		}
+	}
 }
 
 struct element *gui_init(const char *title, u32 width, u32 height)

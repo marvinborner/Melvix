@@ -8,19 +8,22 @@
 #include <print.h>
 #include <str.h>
 
+void on_click()
+{
+	print("CLICK!\n");
+}
+
 int main()
 {
 	print("[test context loaded]\n");
 
 	struct element *container = gui_init("test", 0, 0);
-	gui_add_button(container, 10, 10, 100, 20, "hallo", COLOR_RED);
+	struct element_button *button =
+		gui_add_button(container, 10, 10, 100, 20, "hallo", COLOR_RED);
 
-	struct message *msg;
-	while (1) {
-		if (!(msg = msg_receive())) {
-			yield();
-			continue;
-		}
-	}
+	button->on_click = on_click;
+
+	gui_event_loop(container);
+
 	return 0;
 }

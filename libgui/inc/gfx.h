@@ -39,7 +39,7 @@
 #define WF_NO_RESIZE (1 << 2)
 #define WF_RELATIVE (1 << 3)
 
-enum message_type { WM_NEW_CONTEXT = EVENT_MAX + 1, WM_REDRAW, WM_KEYBOARD };
+enum message_type { GFX_NEW_CONTEXT = EVENT_MAX + 1, GFX_REDRAW };
 
 // Generalized font struct
 struct font {
@@ -61,12 +61,6 @@ struct context {
 	int flags;
 };
 
-struct msg_keyboard {
-	char ch;
-	int press;
-	int scancode;
-};
-
 void gfx_write_char(struct context *ctx, int x, int y, u32 c, char ch);
 void gfx_write(struct context *ctx, int x, int y, u32 c, char *text);
 void gfx_load_image(struct context *ctx, char *path, int x, int y);
@@ -86,7 +80,7 @@ int gfx_font_width();
  */
 
 #define gfx_new_ctx(ctx)                                                                           \
-	(msg_send(2, WM_NEW_CONTEXT, (ctx)), (struct context *)msg_receive_loop()->data)
-#define gfx_redraw() (msg_send(2, WM_REDRAW, NULL)) // TODO: Partial redraw (optimization)
+	(msg_send(2, GFX_NEW_CONTEXT, (ctx)), (struct context *)msg_receive_loop()->data)
+#define gfx_redraw() (msg_send(2, GFX_REDRAW, NULL)) // TODO: Partial redraw (optimization)
 
 #endif
