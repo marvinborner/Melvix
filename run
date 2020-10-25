@@ -244,8 +244,10 @@ elif [ "${mode}" = "again" ]; then
     make_test
 elif [ "${mode}" = "disasm" ]; then
     make_cross
+    make_clean
     make_build
     make_disasm
+    make_clean
 elif [ "${mode}" = "sync" ]; then
     make_sync
 elif [ "${mode}" = "disk" ]; then

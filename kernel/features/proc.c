@@ -15,6 +15,7 @@
 u32 pid = 0;
 u32 quantum = 0;
 struct proc *kernel_proc;
+struct proc *priority_proc;
 struct list *proc_list;
 struct node *current;
 
@@ -35,10 +36,15 @@ void scheduler(struct regs *regs)
 
 	memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
 
-	if (current->next)
+	if (priority_proc) {
+		current = list_first_data(proc_list, priority_proc);
+		priority_proc = NULL;
+		assert(current);
+	} else if (current->next) {
 		current = current->next;
-	else
+	} else {
 		current = proc_list->head;
+	}
 
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 
@@ -85,7 +91,7 @@ struct proc *proc_current()
 
 void proc_send(struct proc *src, struct proc *dest, u32 type, void *data)
 {
-	// TODO: Use unique key instead of pid for IPC messaging
+	// TODO: Use unique key instead of pid for IPC
 	if (!src || !dest)
 		return;
 	struct proc_message *msg = malloc(sizeof(*msg));
@@ -96,6 +102,7 @@ void proc_send(struct proc *src, struct proc *dest, u32 type, void *data)
 	msg->msg->type = type;
 	msg->msg->data = data;
 	list_add(dest->messages, msg);
+	priority_proc = dest;
 }
 
 struct proc_message *proc_receive(struct proc *proc)

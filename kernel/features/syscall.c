@@ -79,6 +79,7 @@ void syscall_handler(struct regs *r)
 	}
 	case SYS_SEND: {
 		proc_send(proc_current(), proc_from_pid(r->ebx), r->ecx, (void *)r->edx);
+		proc_yield(r);
 		break;
 	}
 	case SYS_RECEIVE: {
