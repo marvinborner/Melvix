@@ -37,6 +37,7 @@
 #define WF_NO_FOCUS (1 << 0)
 #define WF_NO_DRAG (1 << 1)
 #define WF_NO_RESIZE (1 << 2)
+#define WF_RELATIVE (1 << 3)
 
 enum message_type { WM_NEW_CONTEXT = EVENT_MAX + 1, WM_REDRAW, WM_KEYBOARD };
 

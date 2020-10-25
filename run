@@ -113,7 +113,7 @@ make_build() {
     rm -rf build/*
 
     printf "\nBuilding...\n"
-    $MAKE
+    $MAKE -j $($NPROC)
 
     # Create disk image
     dd if=/dev/zero of=build/disk.img bs=1k count=32k status=none
@@ -262,6 +262,7 @@ elif [ "${mode}" = "test" ] || [ "${mode}" = "net" ] || [ "${mode}" = "" ]; then
     make_build
     make_sync &
     make_test
+    make_clean
 else
     echo "Usage: ./run {cross | clean | build | test | debug | again | disasm | sync | disk} [-y]"
     printf "\nDescription of options:\n"

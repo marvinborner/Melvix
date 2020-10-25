@@ -8,7 +8,7 @@ CFLAGS_EXTRA = -fno-tree-bit-ccp -fno-tree-builtin-call-dce -fno-tree-ccp -fno-t
 
 export
 
-all: compile clean
+all: compile
 
 compile:
 	@$(MAKE) clean --no-print-directory -C libc/

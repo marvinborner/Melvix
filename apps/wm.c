@@ -57,8 +57,8 @@ static struct context *context_at(int x, int y)
 	struct node *iterator = contexts->head;
 	while (iterator != NULL) {
 		struct context *ctx = iterator->data;
-		if (ctx != &root && x >= ctx->x && x <= ctx->x + (int)ctx->width && y >= ctx->y &&
-		    y <= ctx->y + (int)ctx->height)
+		if (ctx != &root && !(ctx->flags & WF_RELATIVE) && x >= ctx->x &&
+		    x <= ctx->x + (int)ctx->width && y >= ctx->y && y <= ctx->y + (int)ctx->height)
 			ret = ctx;
 		iterator = iterator->next;
 	}
@@ -73,7 +73,7 @@ static void redraw_all()
 	struct node *iterator = contexts->head;
 	while (iterator != NULL) {
 		struct context *ctx = iterator->data;
-		if (ctx != focused)
+		if (ctx != focused && !(ctx->flags & WF_RELATIVE))
 			gfx_ctx_on_ctx(&exchange, ctx, ctx->x, ctx->y);
 		iterator = iterator->next;
 	}
@@ -207,10 +207,10 @@ int main(int argc, char **argv)
 	gfx_write(&direct, 0, 0, COLOR_FG, "Welcome to Melvix!");
 	gfx_write(&direct, 0, 32, COLOR_FG, "Loading resources...");
 
-	gfx_fill(&root, COLOR_BG);
-	gfx_border(&root, COLOR_FG, 2);
+	gfx_fill(&root, COLOR_FG);
+	//gfx_border(&root, COLOR_FG, 2);
 	gfx_load_image(&cursor, "/res/cursor.bmp", 0, 0);
-	gfx_load_wallpaper(&root, "/res/wall.bmp");
+	//gfx_load_wallpaper(&root, "/res/wall.bmp");
 	redraw_all();
 
 	event_register(EVENT_MOUSE);
@@ -234,7 +234,8 @@ int main(int argc, char **argv)
 			ctx->pid = msg->src;
 			new_context(ctx, msg->src, x, y, width, height, ctx->flags);
 			list_add(contexts, ctx);
-			focused = ctx;
+			if (!(ctx->flags & WF_RELATIVE))
+				focused = ctx;
 			redraw_all();
 			msg_send(msg->src, WM_NEW_CONTEXT, ctx);
 			break;
