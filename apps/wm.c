@@ -74,13 +74,15 @@ static void redraw_all()
 	struct node *iterator = contexts->head;
 	while (iterator != NULL) {
 		struct context *ctx = iterator->data;
-		if (ctx != focused && !(ctx->flags & WF_RELATIVE))
+		if (ctx != focused && !(ctx->flags & WF_RELATIVE)) {
 			gfx_ctx_on_ctx(&exchange, ctx, ctx->x, ctx->y);
+		}
 		iterator = iterator->next;
 	}
 
-	if (focused)
+	if (focused) {
 		gfx_ctx_on_ctx(&exchange, focused, focused->x, focused->y);
+	}
 
 	memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
 }

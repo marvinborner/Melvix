@@ -32,7 +32,7 @@ void kernel_main(struct vid_info *vid_info)
 	acpi_install();
 	pci_install();
 	interrupts_install();
-	fpu_install();
+	/* fpu_install(); */
 	timer_install();
 	keyboard_install();
 	mouse_install();

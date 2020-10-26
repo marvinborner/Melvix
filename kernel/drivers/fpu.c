@@ -10,7 +10,7 @@ void set_fpu_cw(const u16 cw)
 void fpu_install()
 {
 	__asm__ volatile("clts");
-	u32 t;
+	u32 t = 0;
 	__asm__ volatile("mov %%cr0, %0" : "=r"(t));
 	t &= ~(1 << 2);
 	t |= (1 << 1);

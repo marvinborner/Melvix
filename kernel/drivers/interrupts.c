@@ -6,6 +6,7 @@
 #include <interrupts.h>
 #include <mem.h>
 #include <print.h>
+#include <proc.h>
 #include <serial.h>
 
 /**
@@ -166,18 +167,18 @@ void isr_uninstall_handler(int isr)
 
 void isr_handler(struct regs *r)
 {
-	void (*handler)(struct regs * r);
-
 	// Execute fault handler if exists
-	handler = isr_routines[r->int_no];
+	void (*handler)(struct regs * r) = isr_routines[r->int_no];
 	if (handler) {
 		handler(r);
 	} else if (r->int_no <= 32) {
-		cli();
-		printf("\n%s Exception, halting!\n", isr_exceptions[r->int_no]);
-		printf("Error code: %d\n", r->err_code);
-		while (1) {
-		};
+		printf("%s Exception, exiting!\n", isr_exceptions[r->int_no]);
+		struct proc *proc = proc_current();
+		if (proc)
+			proc_exit(proc, 1);
+		else
+			__asm__ volatile("cli\nhlt");
+		proc_yield(r);
 	}
 }
 

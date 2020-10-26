@@ -34,13 +34,14 @@ void scheduler(struct regs *regs)
 
 	assert(proc_list->head);
 
-	memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
+	if (current)
+		memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
 
 	if (priority_proc) {
 		current = list_first_data(proc_list, priority_proc);
 		priority_proc = NULL;
 		assert(current);
-	} else if (current->next) {
+	} else if (current && current->next) {
 		current = current->next;
 	} else {
 		current = proc_list->head;
@@ -76,7 +77,7 @@ void proc_print()
 	struct node *node = proc_list->head;
 
 	printf("\nPROCESSES\n");
-	struct proc *proc;
+	struct proc *proc = NULL;
 	while (node && (proc = node->data)) {
 		printf("Process %d: %s\n", proc->pid, proc->name);
 		node = node->next;

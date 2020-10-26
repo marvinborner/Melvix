@@ -31,9 +31,7 @@ void timer_handler()
 // "Delay" function with CPU sleep
 void timer_wait(u32 ticks)
 {
-	u32 eticks;
-
-	eticks = timer_ticks + ticks;
+	u32 eticks = timer_ticks + ticks;
 	while (timer_ticks < eticks) {
 		__asm__ volatile("sti//hlt//cli");
 	}

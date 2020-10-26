@@ -46,7 +46,7 @@ u32 event_trigger(u32 id, void *data)
 {
 	assert(id < sizeof(event_table) / sizeof(*event_table));
 
-	if (memcmp(event_table[id], 0, sizeof(struct list)) == 0 || !event_table[id]->head) {
+	if (!event_table[id] || !event_table[id]->head) {
 		printf("Event %d not mapped!\n", id);
 		return 1;
 	}

@@ -20,6 +20,7 @@ int main()
 	struct element *container = gui_init("test", 0, 0);
 	struct element_button *button =
 		gui_add_button(container, 10, 10, FONT_24, "Baum!", COLOR_WHITE, COLOR_BLACK);
+	gfx_border(container->ctx, COLOR_FG, 2);
 
 	button->on_click = on_click;
 

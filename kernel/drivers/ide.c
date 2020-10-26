@@ -16,7 +16,7 @@ int ide_stat()
 
 void ide_wait()
 {
-	u8 stat;
+	u8 stat = 0;
 	do
 		stat = ide_stat();
 	while ((stat & IDE_BUSY) != 0);

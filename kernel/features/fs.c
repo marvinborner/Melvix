@@ -68,10 +68,10 @@ void *read_inode(struct inode *in)
 	printf("Loading %dKiB\n", sz >> 10);
 	assert(buf != NULL);
 
-	int indirect;
+	int indirect = 0;
 
-	int blocknum;
-	char *data;
+	int blocknum = 0;
+	char *data = 0;
 	// TODO: Support triply indirect pointers
 	// TODO: This can be heavily optimized by saving the indirect block lists
 	for (int i = 0; i < num_blocks; i++) {
@@ -105,7 +105,7 @@ void *read_file(char *path)
 	path++;
 	u32 current_inode = EXT2_ROOT;
 
-	int i;
+	int i = 0;
 	while (1) {
 		for (i = 0; path[i] != '/' && path[i] != '\0'; i++)
 			;
@@ -176,7 +176,7 @@ void ls_root()
 	struct dirent *d = (struct dirent *)buf;
 
 	int sum = 0;
-	int calc;
+	int calc = 0;
 	printf("\nRoot directory:\n");
 	do {
 		calc = (sizeof(struct dirent) + d->name_len + 4) & ~0x3;
