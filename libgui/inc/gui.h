@@ -14,6 +14,13 @@
 enum window_event_type { GUI_KEYBOARD = GFX_MAX + 1, GUI_MOUSE, GUI_MAX };
 enum element_type { GUI_TYPE_CONTAINER, GUI_TYPE_BUTTON, GUI_TYPE_TEXTBOX };
 
+enum container_flags { SPLIT };
+
+struct element_container {
+	u32 color_bg;
+	enum container_flags flags;
+};
+
 struct element_button {
 	char *text;
 	u32 color_fg;
@@ -59,8 +66,9 @@ struct gui_event_mouse {
 
 struct element *gui_init(const char *title, u32 width, u32 height);
 void gui_event_loop(struct element *container);
-struct element_button *gui_add_button(struct element *container, int x, int y,
-				      enum font_type font_type, char *text, u32 color_bg,
-				      u32 color_fg);
+struct element *gui_add_button(struct element *container, int x, int y, enum font_type font_type,
+			       char *text, u32 color_bg, u32 color_fg);
+struct element *gui_add_container(struct element *container, int x, int y, u32 width, u32 height,
+				  u32 color_bg);
 
 #endif

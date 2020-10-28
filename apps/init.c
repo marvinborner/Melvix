@@ -6,8 +6,9 @@
 
 int main(int argc, char **argv)
 {
-	printf("ARGC: %d\n", argc);
-	printf("[%s loaded]\n", argv[0]);
+	(void)argc;
+	/* printf("ARGC: %d\n", argc); */
+	/* printf("[%s loaded]\n", argv[0]); */
 
 	int wm = exec("/wm", "wm", argv[1], NULL);
 	int test = exec("/window", "test", NULL);

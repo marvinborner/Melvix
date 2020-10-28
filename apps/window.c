@@ -15,12 +15,13 @@ void on_click()
 
 int main()
 {
-	print("[test context loaded]\n");
+	/* print("[test context loaded]\n"); */
 
-	struct element *container = gui_init("test", 0, 0);
+	struct element *root = gui_init("test", 600, 400);
+	struct element *container =
+		gui_add_container(root, 100, 0, root->ctx->width / 2, root->ctx->height, COLOR_RED);
 	struct element_button *button =
-		gui_add_button(container, 10, 10, FONT_24, "Baum!", COLOR_WHITE, COLOR_BLACK);
-	gfx_border(container->ctx, COLOR_FG, 2);
+		gui_add_button(container, 10, 10, FONT_24, "Baum!", COLOR_WHITE, COLOR_BLACK)->data;
 
 	button->on_click = on_click;
 

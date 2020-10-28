@@ -165,17 +165,17 @@ void gfx_ctx_on_ctx(struct context *dest, struct context *src, int x, int y)
 	u8 *destfb = &dest->fb[x * bypp + y * dest->pitch];
 	for (u32 cy = 0; cy < src->height && cy + y < dest->height; cy++) {
 		int diff = 0;
-		// TODO: Fix cursor
 		for (u32 cx = 0; cx < src->width && cx + x < dest->width; cx++) {
 			if (srcfb[3]) {
 				destfb[0] = srcfb[0];
 				destfb[1] = srcfb[1];
 				destfb[2] = srcfb[2];
 				destfb[3] = srcfb[3];
-				srcfb += bypp;
-				destfb += bypp;
-				diff += bypp;
 			}
+
+			srcfb += bypp;
+			destfb += bypp;
+			diff += bypp;
 		}
 		srcfb += src->pitch - diff;
 		destfb += dest->pitch - diff;

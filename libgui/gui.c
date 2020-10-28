@@ -40,6 +40,7 @@ static struct window *new_window(const char *title, int x, int y, u32 width, u32
 	return win;
 }
 
+// TODO: Fix relative position in container
 static void merge_elements(struct element *container)
 {
 	if (!container || !container->childs || !container->childs->head)
@@ -49,6 +50,8 @@ static void merge_elements(struct element *container)
 	while (iterator != NULL) {
 		struct element *elem = iterator->data;
 		struct context *ctx = elem->ctx;
+		printf("Merging %dx%d onto %dx%d\n", ctx->width, ctx->height, container->ctx->width,
+		       container->ctx->height);
 		merge_elements(elem);
 		gfx_ctx_on_ctx(container->ctx, ctx, ctx->x, ctx->y);
 		iterator = iterator->next;
@@ -80,9 +83,15 @@ void gui_sync_button(struct element *elem)
 	gfx_write(elem->ctx, 0, 0, button->font_type, button->color_fg, button->text);
 }
 
-struct element_button *gui_add_button(struct element *container, int x, int y,
-				      enum font_type font_type, char *text, u32 color_bg,
-				      u32 color_fg)
+void gui_sync_container(struct element *elem)
+{
+	struct element_container *container = elem->data;
+	gfx_fill(elem->ctx, container->color_bg);
+	// TODO: Handle container flags
+}
+
+struct element *gui_add_button(struct element *container, int x, int y, enum font_type font_type,
+			       char *text, u32 color_bg, u32 color_fg)
 {
 	if (!container || !container->childs)
 		return NULL;
@@ -104,12 +113,41 @@ struct element_button *gui_add_button(struct element *container, int x, int y,
 	((struct element_button *)button->data)->color_fg = color_fg;
 	((struct element_button *)button->data)->color_bg = color_bg;
 	((struct element_button *)button->data)->font_type = font_type;
+
 	gfx_new_ctx(button->ctx);
 	list_add(container->childs, button);
 	gui_sync_button(button);
 	merge_elements(container);
 
-	return button->data;
+	return button;
+}
+
+struct element *gui_add_container(struct element *container, int x, int y, u32 width, u32 height,
+				  u32 color_bg)
+{
+	if (!container || !container->childs)
+		return NULL;
+
+	struct element *new_container = malloc(sizeof(*new_container));
+	new_container->type = GUI_TYPE_CONTAINER;
+	new_container->window_id = container->window_id;
+	new_container->ctx = malloc(sizeof(*new_container->ctx));
+	new_container->ctx->x = x;
+	new_container->ctx->y = y;
+	new_container->ctx->width = width;
+	new_container->ctx->height = height;
+	new_container->ctx->flags = WF_RELATIVE;
+	new_container->childs = list_new();
+	new_container->data = malloc(sizeof(struct element_container));
+	((struct element_container *)new_container->data)->color_bg = color_bg;
+	((struct element_container *)new_container->data)->flags = 0;
+
+	gfx_new_ctx(new_container->ctx);
+	list_add(container->childs, new_container);
+	gui_sync_container(new_container);
+	merge_elements(container);
+
+	return new_container;
 }
 
 void gui_event_loop(struct element *container)
@@ -146,7 +184,8 @@ struct element *gui_init(const char *title, u32 width, u32 height)
 	if (window_count != 0)
 		return NULL;
 
-	struct window *win = new_window(title, 0, 0, width, height, WF_DEFAULT);
+	// TODO: Add center flag
+	struct window *win = new_window(title, 30, 30, width, height, WF_DEFAULT);
 	if (!win)
 		return NULL;
 

@@ -66,6 +66,7 @@ static struct context *context_at(int x, int y)
 	return ret;
 }
 
+// TODO: Add dirty bitmap redraw (and clipping?): https://github.com/JMarlin/wsbe
 static void redraw_all()
 {
 	if (!contexts->head || !contexts->head->data)
@@ -74,15 +75,13 @@ static void redraw_all()
 	struct node *iterator = contexts->head;
 	while (iterator != NULL) {
 		struct context *ctx = iterator->data;
-		if (ctx != focused && !(ctx->flags & WF_RELATIVE)) {
+		if (ctx != focused && !(ctx->flags & WF_RELATIVE))
 			gfx_ctx_on_ctx(&exchange, ctx, ctx->x, ctx->y);
-		}
 		iterator = iterator->next;
 	}
 
-	if (focused) {
+	if (focused)
 		gfx_ctx_on_ctx(&exchange, focused, focused->x, focused->y);
-	}
 
 	memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
 }
@@ -171,8 +170,10 @@ static void handle_mouse(struct event_mouse *event)
 			mouse_skip = 0;
 			if (mouse_x - focused->x > 0)
 				focused->width = mouse_x - focused->x;
-			if (mouse_y - focused->y > 0)
+			if (mouse_y - focused->y > 0) {
 				focused->height = mouse_y - focused->y;
+				focused->pitch = focused->height * (focused->bpp >> 3);
+			}
 			redraw_all(); // TODO: Function to redraw one context
 		}
 		mouse_pressed[1] = 1;
@@ -203,7 +204,7 @@ int main(int argc, char **argv)
 	(void)argc;
 	int pid = getpid();
 	vbe = *(struct vbe *)argv[1];
-	printf("VBE: %dx%d\n", vbe.width, vbe.height);
+	/* printf("VBE: %dx%d\n", vbe.width, vbe.height); */
 
 	keymap = keymap_parse("/res/keymaps/en.keymap");
 
@@ -241,10 +242,10 @@ int main(int argc, char **argv)
 		case GFX_NEW_CONTEXT:
 			printf("New context for pid %d\n", msg->src);
 			struct context *ctx = msg->data;
-			int width = ctx->width ? ctx->width : 1000;
-			int height = ctx->height ? ctx->height : 800;
-			int x = ctx->x ? ctx->x : vbe.width / 2 - (width / 2);
-			int y = ctx->y ? ctx->y : vbe.height / 2 - (height / 2);
+			int width = ctx->width;
+			int height = ctx->height;
+			int x = ctx->x;
+			int y = ctx->y;
 			ctx->pid = msg->src;
 			new_context(ctx, msg->src, x, y, width, height, ctx->flags);
 			list_add(contexts, ctx);

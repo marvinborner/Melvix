@@ -54,9 +54,11 @@ void draw_mandelbrot(struct context *ctx, int resolution)
 
 int main()
 {
-	print("[mandelbrot context loaded]\n");
+	/* print("[mandelbrot context loaded]\n"); */
 
 	struct context ctx = { 0 };
+	ctx.x = 500;
+	ctx.y = 500;
 	ctx.width = 500;
 	ctx.height = 300;
 	gfx_new_ctx(&ctx);
