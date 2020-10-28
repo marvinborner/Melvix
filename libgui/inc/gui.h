@@ -12,7 +12,7 @@
 
 // TODO: Improve event types (maybe as struct header)
 enum window_event_type { GUI_KEYBOARD = GFX_MAX + 1, GUI_MOUSE, GUI_MAX };
-enum element_type { GUI_TYPE_CONTAINER, GUI_TYPE_BUTTON, GUI_TYPE_TEXTBOX };
+enum element_type { GUI_TYPE_ROOT, GUI_TYPE_CONTAINER, GUI_TYPE_BUTTON, GUI_TYPE_TEXTBOX };
 
 enum container_flags { SPLIT };
 

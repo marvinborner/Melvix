@@ -25,7 +25,7 @@ int main()
 
 	button->on_click = on_click;
 
-	gui_event_loop(container);
+	gui_event_loop(root);
 
 	return 0;
 }

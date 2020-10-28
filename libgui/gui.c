@@ -40,7 +40,6 @@ static struct window *new_window(const char *title, int x, int y, u32 width, u32
 	return win;
 }
 
-// TODO: Fix relative position in container
 static void merge_elements(struct element *container)
 {
 	if (!container || !container->childs || !container->childs->head)
@@ -63,17 +62,33 @@ static struct element *element_at(struct element *container, int x, int y)
 	if (!container || !container->childs || !container->childs->head)
 		return NULL;
 
-	struct element *ret = NULL;
 	struct node *iterator = container->childs->head;
 	while (iterator != NULL) {
 		struct context *ctx = ((struct element *)iterator->data)->ctx;
-		if (ctx != container->ctx && ctx->flags & WF_RELATIVE && x >= ctx->x &&
-		    x <= ctx->x + (int)ctx->width && y >= ctx->y && y <= ctx->y + (int)ctx->height)
-			ret = iterator->data;
+
+		int relative_x, relative_y;
+		if (container->type == GUI_TYPE_ROOT) {
+			relative_x = ctx->x;
+			relative_y = ctx->y;
+		} else {
+			relative_x = ctx->x + container->ctx->x;
+			relative_y = ctx->y + container->ctx->y;
+		}
+
+		if (ctx != container->ctx && ctx->flags & WF_RELATIVE && x >= relative_x &&
+		    x <= relative_x + (int)ctx->width && y >= relative_y &&
+		    y <= relative_y + (int)ctx->height) {
+			struct element *recursive = NULL;
+			if ((recursive = element_at(iterator->data, x, y)))
+				return recursive;
+			else
+				return iterator->data;
+		}
+
 		iterator = iterator->next;
 	}
 
-	return ret;
+	return NULL;
 }
 
 void gui_sync_button(struct element *elem)
@@ -192,7 +207,7 @@ struct element *gui_init(const char *title, u32 width, u32 height)
 	gfx_fill(win->ctx, COLOR_BG);
 
 	struct element *container = malloc(sizeof(*container));
-	container->type = GUI_TYPE_CONTAINER;
+	container->type = GUI_TYPE_ROOT;
 	container->window_id = win->id;
 	container->ctx = win->ctx;
 	container->childs = list_new();
