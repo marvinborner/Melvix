@@ -10,8 +10,8 @@ int main(int argc, char **argv)
 	/* printf("ARGC: %d\n", argc); */
 	/* printf("[%s loaded]\n", argv[0]); */
 
-	int wm = exec("/wm", "wm", argv[1], NULL);
-	int exec = exec("/exec", "test", NULL);
+	int wm = exec("/bin/wm", "wm", argv[1], NULL);
+	int exec = exec("/bin/exec", "test", NULL);
 
 	return wm + exec;
 }

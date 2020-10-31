@@ -1,6 +1,10 @@
 #include <gui.h>
+#include <mem.h>
 #include <print.h>
+#include <str.h>
 #include <sys.h>
+
+#define PATH "/bin/"
 
 #define HEIGHT 32
 #define WIDTH 300
@@ -10,7 +14,11 @@ void on_submit(struct gui_event_keyboard *event, struct element *elem)
 {
 	(void)event;
 	char *inp = ((struct element_text_input *)elem->data)->text;
-	exec(inp, inp, NULL);
+	u8 l = strlen(PATH) + strlen(inp) + 1;
+	char *final = malloc(l);
+	strcat(final, PATH);
+	strcat(final, inp);
+	exec(final, inp, NULL);
 }
 
 int main()
@@ -22,7 +30,6 @@ int main()
 
 	input->event.on_submit = on_submit;
 
-	gfx_redraw_focused(); // TODO: Remove once partial redrawing is finished
 	gui_event_loop(root);
 
 	return 0;

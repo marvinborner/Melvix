@@ -186,7 +186,7 @@ void proc_init()
 	kernel_proc = proc_make();
 
 	struct node *new = list_add(proc_list, proc_make());
-	bin_load("/init", new->data);
+	bin_load("/bin/init", new->data);
 	current = new;
 
 	_eip = ((struct proc *)new->data)->regs.eip;

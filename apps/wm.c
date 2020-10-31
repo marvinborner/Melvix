@@ -43,10 +43,11 @@ static struct context *new_context(struct context *ctx, u32 pid, int x, int y, u
 	ctx->fb = malloc(height * ctx->pitch);
 	memset(ctx->fb, 0, height * ctx->pitch);
 	ctx->flags = flags;
-	if (!(flags & WF_RELATIVE))
+	if (!(flags & WF_RELATIVE)) {
 		context_count++;
-	if (context_count % 2 == 1)
-		MOUSE_SKIP++;
+		if (context_count % 2 == 1)
+			MOUSE_SKIP++;
+	}
 	return ctx;
 }
 

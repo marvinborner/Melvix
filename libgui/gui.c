@@ -155,6 +155,7 @@ struct element *gui_add_button(struct element *container, int x, int y, enum fon
 	list_add(container->childs, button);
 	gui_sync_button(button);
 	merge_elements(get_root(container->window_id));
+	gfx_redraw_focused();
 
 	return button;
 }
@@ -185,6 +186,7 @@ struct element *gui_add_label(struct element *container, int x, int y, enum font
 	list_add(container->childs, label);
 	gui_sync_label(label);
 	merge_elements(get_root(container->window_id));
+	gfx_redraw_focused();
 
 	return label;
 }
@@ -214,6 +216,7 @@ struct element *gui_add_text_input(struct element *container, int x, int y, u32 
 	list_add(container->childs, text_input);
 	gui_sync_text_input(text_input);
 	merge_elements(get_root(container->window_id));
+	gfx_redraw_focused();
 
 	return text_input;
 }
@@ -242,6 +245,7 @@ struct element *gui_add_container(struct element *container, int x, int y, u32 w
 	list_add(container->childs, new_container);
 	gui_sync_container(new_container);
 	merge_elements(get_root(container->window_id));
+	gfx_redraw_focused();
 
 	return new_container;
 }
