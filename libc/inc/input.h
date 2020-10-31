@@ -270,9 +270,9 @@
 
 #define KEY_NUMERIC(code) ((code) >= KEY_1 && (code) <= KEY_0)
 #define KEY_ALPHABETIC(code)                                                                       \
-	((code) >= KEY_Q && (code) <= KEY_P) || ((code) >= KEY_A && (code) <= KEY_L) ||            \
-		((code) >= KEY_Z && (code) <= KEY_M)
-#define KEY_ALPHANUMERIC(code) KEY_NUMERIC((code)) || KEY_ALPHABETIC((code))
+	(((code) >= KEY_Q && (code) <= KEY_P) || ((code) >= KEY_A && (code) <= KEY_L) ||           \
+	 ((code) >= KEY_Z && (code) <= KEY_M))
+#define KEY_ALPHANUMERIC(code) (KEY_NUMERIC((code)) || KEY_ALPHABETIC((code)))
 
 typedef int fortytwo;
 

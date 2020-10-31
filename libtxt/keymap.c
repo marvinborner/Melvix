@@ -54,6 +54,9 @@ struct keymap *keymap_parse(const char *path)
 		}
 		skip = 0;
 
+		if (ch == ' ' && !escaped)
+			ch = 0;
+
 		ch_index++;
 		if (escaped) {
 			switch (ch) {
@@ -68,6 +71,9 @@ struct keymap *keymap_parse(const char *path)
 				break;
 			case '\\':
 				ch = '\\';
+				break;
+			case ' ':
+				ch = ' ';
 				break;
 			default:
 				print("Unknown escape!\n");
