@@ -10,6 +10,7 @@
 #include <str.h>
 #include <sys.h>
 
+// TODO: Use list (and add index-based access)
 #define MAX_WINDOWS 10
 
 u32 window_count = 0;
@@ -40,6 +41,14 @@ static struct window *new_window(const char *title, int x, int y, u32 width, u32
 	return win;
 }
 
+static struct element *get_root(u32 window_id)
+{
+	struct list *childs = windows[window_id].childs;
+	if (!childs || !childs->head || !childs->head->data)
+		return NULL;
+	return childs->head->data;
+}
+
 static void merge_elements(struct element *container)
 {
 	if (!container || !container->childs || !container->childs->head)
@@ -49,8 +58,6 @@ static void merge_elements(struct element *container)
 	while (iterator != NULL) {
 		struct element *elem = iterator->data;
 		struct context *ctx = elem->ctx;
-		printf("Merging %dx%d onto %dx%d\n", ctx->width, ctx->height, container->ctx->width,
-		       container->ctx->height);
 		merge_elements(elem);
 		gfx_ctx_on_ctx(container->ctx, ctx, ctx->x, ctx->y);
 		iterator = iterator->next;
@@ -132,7 +139,7 @@ struct element *gui_add_button(struct element *container, int x, int y, enum fon
 	gfx_new_ctx(button->ctx);
 	list_add(container->childs, button);
 	gui_sync_button(button);
-	merge_elements(container);
+	merge_elements(get_root(container->window_id));
 
 	return button;
 }
@@ -160,7 +167,7 @@ struct element *gui_add_container(struct element *container, int x, int y, u32 w
 	gfx_new_ctx(new_container->ctx);
 	list_add(container->childs, new_container);
 	gui_sync_container(new_container);
-	merge_elements(container);
+	merge_elements(get_root(container->window_id));
 
 	return new_container;
 }
