@@ -43,7 +43,8 @@ static struct context *new_context(struct context *ctx, u32 pid, int x, int y, u
 	ctx->fb = malloc(height * ctx->pitch);
 	memset(ctx->fb, 0, height * ctx->pitch);
 	ctx->flags = flags;
-	context_count++;
+	if (!(flags & WF_RELATIVE))
+		context_count++;
 	if (context_count % 2 == 1)
 		MOUSE_SKIP++;
 	return ctx;
@@ -64,6 +65,13 @@ static struct context *context_at(int x, int y)
 		iterator = iterator->next;
 	}
 	return ret;
+}
+
+// This only works if window hasn't moved - TODO!
+static void redraw_focused()
+{
+	gfx_ctx_on_ctx(&exchange, focused, focused->x, focused->y);
+	memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
 }
 
 // TODO: Add dirty bitmap redraw (and clipping?): https://github.com/JMarlin/wsbe
@@ -256,6 +264,9 @@ int main(int argc, char **argv)
 			break;
 		case GFX_REDRAW:
 			redraw_all();
+			break;
+		case GFX_REDRAW_FOCUSED:
+			redraw_focused();
 			break;
 		case EVENT_MOUSE:
 			handle_mouse(msg->data);

@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 // Some GFX functions
 // TODO: Better support for bpp < 32
+// TODO: Use efficient redrawing
 
 #include <assert.h>
 #include <bmp.h>
@@ -98,7 +99,7 @@ void gfx_write_char(struct context *ctx, int x, int y, enum font_type font_type,
 {
 	struct font *font = gfx_resolve_font(font_type);
 	write_char(ctx, x, y, font, c, ch);
-	gfx_redraw();
+	/* gfx_redraw(); */
 }
 
 void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 c, char *text)
@@ -107,7 +108,7 @@ void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 
 	for (u32 i = 0; i < strlen(text); i++) {
 		write_char(ctx, x + i * font->width, y, font, c, text[i]);
 	}
-	gfx_redraw();
+	/* gfx_redraw(); */
 }
 
 void gfx_load_image(struct context *ctx, char *path, int x, int y)
@@ -126,7 +127,7 @@ void gfx_load_image(struct context *ctx, char *path, int x, int y)
 		srcfb -= bmp->pitch;
 		destfb += ctx->pitch;
 	}
-	gfx_redraw();
+	/* gfx_redraw(); */
 }
 
 void gfx_load_wallpaper(struct context *ctx, char *path)
@@ -185,13 +186,13 @@ void gfx_ctx_on_ctx(struct context *dest, struct context *src, int x, int y)
 void gfx_draw_rectangle(struct context *ctx, int x1, int y1, int x2, int y2, u32 c)
 {
 	draw_rectangle(ctx, x1, y1, x2, y2, c);
-	gfx_redraw();
+	/* gfx_redraw(); */
 }
 
 void gfx_fill(struct context *ctx, u32 c)
 {
 	draw_rectangle(ctx, 0, 0, ctx->width, ctx->height, c);
-	gfx_redraw();
+	/* gfx_redraw(); */
 }
 
 void gfx_border(struct context *ctx, u32 c, u32 width)
@@ -209,7 +210,7 @@ void gfx_border(struct context *ctx, u32 c, u32 width)
 		}
 		draw += ctx->pitch;
 	}
-	gfx_redraw();
+	/* gfx_redraw(); */
 }
 
 int gfx_font_height(enum font_type font_type)

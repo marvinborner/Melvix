@@ -277,7 +277,7 @@ void gui_event_loop(struct element *container)
 				s[l + 1] = '\0';
 				gui_sync_text_input(focused);
 				merge_elements(get_root(focused->window_id));
-				gfx_redraw();
+				gfx_redraw_focused(); //  Only redraw window
 			}
 
 			if (focused && focused->event.on_key && event->ch) {

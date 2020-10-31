@@ -42,7 +42,7 @@
 
 enum font_type { FONT_8, FONT_12, FONT_16, FONT_24, FONT_32, FONT_64 };
 
-enum message_type { GFX_NEW_CONTEXT = EVENT_MAX + 1, GFX_REDRAW, GFX_MAX };
+enum message_type { GFX_NEW_CONTEXT = EVENT_MAX + 1, GFX_REDRAW, GFX_REDRAW_FOCUSED, GFX_MAX };
 
 // Generalized font struct
 struct font {
@@ -85,5 +85,6 @@ int gfx_font_width(enum font_type);
 #define gfx_new_ctx(ctx)                                                                           \
 	(msg_send(2, GFX_NEW_CONTEXT, (ctx)), (struct context *)msg_receive_loop()->data)
 #define gfx_redraw() (msg_send(2, GFX_REDRAW, NULL)) // TODO: Partial redraw (optimization)
+#define gfx_redraw_focused() (msg_send(2, GFX_REDRAW_FOCUSED, NULL))
 
 #endif
