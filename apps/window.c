@@ -19,11 +19,13 @@ int main()
 
 	struct element *root = gui_init("test", 600, 400);
 	struct element *container =
-		gui_add_container(root, 100, 0, root->ctx->width / 2, root->ctx->height, COLOR_RED);
-	struct element_button *button =
-		gui_add_button(container, 10, 10, FONT_24, "Baum!", COLOR_WHITE, COLOR_BLACK)->data;
+		gui_add_container(root, 0, 0, root->ctx->width / 2, root->ctx->height, COLOR_RED);
+	struct element *button =
+		gui_add_button(container, 10, 10, FONT_24, "Button", COLOR_WHITE, COLOR_BLACK);
+	struct element *text_input =
+		gui_add_text_input(container, 10, 50, 200, FONT_24, COLOR_WHITE, COLOR_BLACK);
 
-	button->on_click = on_click;
+	button->event.on_click = on_click;
 
 	gui_event_loop(root);
 

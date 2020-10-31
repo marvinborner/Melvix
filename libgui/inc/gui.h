@@ -8,13 +8,27 @@
 #include <gfx.h>
 #include <list.h>
 
+// TODO: Remove limits
 #define MAX_CHILDS 100
+#define MAX_INPUT_LENGTH 100
 
 // TODO: Improve event types (maybe as struct header)
 enum window_event_type { GUI_KEYBOARD = GFX_MAX + 1, GUI_MOUSE, GUI_MAX };
-enum element_type { GUI_TYPE_ROOT, GUI_TYPE_CONTAINER, GUI_TYPE_BUTTON, GUI_TYPE_TEXTBOX };
+enum element_type {
+	GUI_TYPE_ROOT,
+	GUI_TYPE_CONTAINER,
+	GUI_TYPE_BUTTON,
+	GUI_TYPE_LABEL,
+	GUI_TYPE_TEXT_INPUT
+};
 
 enum container_flags { SPLIT };
+
+struct element_event {
+	void (*on_click)();
+	void (*on_key)();
+	void (*on_submit)();
+};
 
 struct element_container {
 	u32 color_bg;
@@ -26,12 +40,19 @@ struct element_button {
 	u32 color_fg;
 	u32 color_bg;
 	enum font_type font_type;
-	void (*on_click)();
 };
 
-struct element_textbox {
-	const char *text;
-	u32 color;
+struct element_label {
+	char *text;
+	u32 color_fg;
+	u32 color_bg;
+	enum font_type font_type;
+};
+
+struct element_text_input {
+	char text[MAX_INPUT_LENGTH];
+	u32 color_fg;
+	u32 color_bg;
 	enum font_type font_type;
 };
 
@@ -39,6 +60,7 @@ struct element {
 	enum element_type type;
 	u32 window_id;
 	struct context *ctx; // Coordinates are relative to container
+	struct element_event event;
 	struct list *childs;
 	void *data; // Who needs static types anyways :)
 };
@@ -68,6 +90,10 @@ struct element *gui_init(const char *title, u32 width, u32 height);
 void gui_event_loop(struct element *container);
 struct element *gui_add_button(struct element *container, int x, int y, enum font_type font_type,
 			       char *text, u32 color_bg, u32 color_fg);
+struct element *gui_add_label(struct element *container, int x, int y, enum font_type font_type,
+			      char *text, u32 color_bg, u32 color_fg);
+struct element *gui_add_text_input(struct element *container, int x, int y, u32 width,
+				   enum font_type font_type, u32 color_bg, u32 color_fg);
 struct element *gui_add_container(struct element *container, int x, int y, u32 width, u32 height,
 				  u32 color_bg);
 

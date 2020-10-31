@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 // Mostly GFX function wrappers
+// TODO: Reduce code duplication
 
 #include <def.h>
 #include <gfx.h>
@@ -105,6 +106,20 @@ void gui_sync_button(struct element *elem)
 	gfx_write(elem->ctx, 0, 0, button->font_type, button->color_fg, button->text);
 }
 
+void gui_sync_label(struct element *elem)
+{
+	struct element_label *label = elem->data;
+	gfx_fill(elem->ctx, label->color_bg);
+	gfx_write(elem->ctx, 0, 0, label->font_type, label->color_fg, label->text);
+}
+
+void gui_sync_text_input(struct element *elem)
+{
+	struct element_text_input *text_input = elem->data;
+	gfx_fill(elem->ctx, text_input->color_bg);
+	gfx_write(elem->ctx, 0, 0, text_input->font_type, text_input->color_fg, text_input->text);
+}
+
 void gui_sync_container(struct element *elem)
 {
 	struct element_container *container = elem->data;
@@ -115,10 +130,8 @@ void gui_sync_container(struct element *elem)
 struct element *gui_add_button(struct element *container, int x, int y, enum font_type font_type,
 			       char *text, u32 color_bg, u32 color_fg)
 {
-	if (!container || !container->childs)
+	if (!container || !container->childs || !gfx_resolve_font(font_type))
 		return NULL;
-
-	gfx_resolve_font(font_type);
 
 	struct element *button = malloc(sizeof(*button));
 	button->type = GUI_TYPE_BUTTON;
@@ -142,6 +155,65 @@ struct element *gui_add_button(struct element *container, int x, int y, enum fon
 	merge_elements(get_root(container->window_id));
 
 	return button;
+}
+
+struct element *gui_add_label(struct element *container, int x, int y, enum font_type font_type,
+			      char *text, u32 color_bg, u32 color_fg)
+{
+	if (!container || !container->childs || !gfx_resolve_font(font_type))
+		return NULL;
+
+	struct element *label = malloc(sizeof(*label));
+	label->type = GUI_TYPE_LABEL;
+	label->window_id = container->window_id;
+	label->ctx = malloc(sizeof(*label->ctx));
+	label->ctx->x = x;
+	label->ctx->y = y;
+	label->ctx->width = strlen(text) * gfx_font_width(font_type);
+	label->ctx->height = gfx_font_height(font_type);
+	label->ctx->flags = WF_RELATIVE;
+	label->childs = list_new();
+	label->data = malloc(sizeof(struct element_label));
+	((struct element_label *)label->data)->text = text;
+	((struct element_label *)label->data)->color_fg = color_fg;
+	((struct element_label *)label->data)->color_bg = color_bg;
+	((struct element_label *)label->data)->font_type = font_type;
+
+	gfx_new_ctx(label->ctx);
+	list_add(container->childs, label);
+	gui_sync_label(label);
+	merge_elements(get_root(container->window_id));
+
+	return label;
+}
+
+struct element *gui_add_text_input(struct element *container, int x, int y, u32 width,
+				   enum font_type font_type, u32 color_bg, u32 color_fg)
+{
+	if (!container || !container->childs || !gfx_resolve_font(font_type))
+		return NULL;
+
+	struct element *text_input = malloc(sizeof(*text_input));
+	text_input->type = GUI_TYPE_TEXT_INPUT;
+	text_input->window_id = container->window_id;
+	text_input->ctx = malloc(sizeof(*text_input->ctx));
+	text_input->ctx->x = x;
+	text_input->ctx->y = y;
+	text_input->ctx->width = width;
+	text_input->ctx->height = gfx_font_height(font_type);
+	text_input->ctx->flags = WF_RELATIVE;
+	text_input->childs = list_new();
+	text_input->data = malloc(sizeof(struct element_text_input));
+	((struct element_text_input *)text_input->data)->color_fg = color_fg;
+	((struct element_text_input *)text_input->data)->color_bg = color_bg;
+	((struct element_text_input *)text_input->data)->font_type = font_type;
+
+	gfx_new_ctx(text_input->ctx);
+	list_add(container->childs, text_input);
+	gui_sync_text_input(text_input);
+	merge_elements(get_root(container->window_id));
+
+	return text_input;
 }
 
 struct element *gui_add_container(struct element *container, int x, int y, u32 width, u32 height,
@@ -172,12 +244,14 @@ struct element *gui_add_container(struct element *container, int x, int y, u32 w
 	return new_container;
 }
 
+// TODO: Split into small functions
 void gui_event_loop(struct element *container)
 {
 	if (!container)
 		return;
 
 	struct message *msg;
+	struct element *focused = NULL;
 	while (1) {
 		if (!(msg = msg_receive())) {
 			yield();
@@ -187,15 +261,30 @@ void gui_event_loop(struct element *container)
 		switch (msg->type) {
 		case GUI_MOUSE: {
 			struct gui_event_mouse *event = msg->data;
-			struct element *elem = element_at(container, event->x, event->y);
-			if (!elem)
-				continue;
+			focused = element_at(container, event->x, event->y);
+			if (focused && focused->event.on_click && event->but1)
+				focused->event.on_click(event);
+			break;
+		}
+		case GUI_KEYBOARD: {
+			struct gui_event_keyboard *event = msg->data;
 
-			if (elem->type == GUI_TYPE_BUTTON) {
-				struct element_button *button = elem->data;
-				if (event->but1 && button->on_click)
-					button->on_click();
+			if (focused && focused->type == GUI_TYPE_TEXT_INPUT && event->press &&
+			    event->ch) {
+				char *s = ((struct element_text_input *)focused->data)->text;
+				u32 l = strlen(s);
+				s[l] = event->ch;
+				s[l + 1] = '\0';
+				gui_sync_text_input(focused);
+				merge_elements(get_root(focused->window_id));
+				gfx_redraw();
 			}
+
+			if (focused && focused->event.on_key && event->ch) {
+				focused->event.on_key(event);
+			}
+
+			break;
 		}
 		}
 	}

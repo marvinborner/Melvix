@@ -13,6 +13,8 @@
 #define GET_GREEN(color) ((color >> 8) & 0x000000FF)
 #define GET_BLUE(color) ((color >> 0) & 0X000000FF)
 
+#define COLOR_TRANSPARENT 0x00000000
+#define COLOR_INVISIBLE 0x00000000
 #define COLOR_BLACK 0xff0f0f0f
 #define COLOR_RED 0xfff07f7f
 #define COLOR_GREEN 0xff7ff088
