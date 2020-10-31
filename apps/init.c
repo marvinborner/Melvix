@@ -11,8 +11,7 @@ int main(int argc, char **argv)
 	/* printf("[%s loaded]\n", argv[0]); */
 
 	int wm = exec("/wm", "wm", argv[1], NULL);
-	int test = exec("/window", "test", NULL);
-	int mandelbrot = exec("/mandelbrot", "mandelbrot", NULL);
+	int exec = exec("/exec", "test", NULL);
 
-	return wm + mandelbrot + test;
+	return wm + exec;
 }

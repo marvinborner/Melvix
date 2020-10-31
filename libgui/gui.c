@@ -2,9 +2,11 @@
 // Mostly GFX function wrappers
 // TODO: Reduce code duplication
 
+#include <assert.h>
 #include <def.h>
 #include <gfx.h>
 #include <gui.h>
+#include <input.h>
 #include <list.h>
 #include <mem.h>
 #include <print.h>
@@ -263,26 +265,37 @@ void gui_event_loop(struct element *container)
 			struct gui_event_mouse *event = msg->data;
 			focused = element_at(container, event->x, event->y);
 			if (focused && focused->event.on_click && event->but1)
-				focused->event.on_click(event);
+				focused->event.on_click(event, focused);
 			break;
 		}
 		case GUI_KEYBOARD: {
 			struct gui_event_keyboard *event = msg->data;
 
 			if (focused && focused->type == GUI_TYPE_TEXT_INPUT && event->press &&
-			    event->ch) {
+			    event->ch && event->ch >= ' ') {
 				char *s = ((struct element_text_input *)focused->data)->text;
 				u32 l = strlen(s);
+				if (l >= MAX_INPUT_LENGTH)
+					continue;
 				s[l] = event->ch;
 				s[l + 1] = '\0';
 				gui_sync_text_input(focused);
 				merge_elements(get_root(focused->window_id));
-				gfx_redraw_focused(); //  Only redraw window
+				gfx_redraw_focused();
 			}
 
-			if (focused && focused->event.on_key && event->ch) {
-				focused->event.on_key(event);
+			if (focused && focused->event.on_submit && event->press &&
+			    event->scancode == KEY_ENTER) {
+				focused->event.on_submit(event, focused);
+				// Clear!
+				((struct element_text_input *)focused->data)->text[0] = '\0';
+				gui_sync_text_input(focused);
+				merge_elements(get_root(focused->window_id));
+				gfx_redraw_focused();
 			}
+
+			if (focused && focused->event.on_key && event->press && event->ch)
+				focused->event.on_key(event, focused);
 
 			break;
 		}
@@ -290,7 +303,7 @@ void gui_event_loop(struct element *container)
 	}
 }
 
-struct element *gui_init(const char *title, u32 width, u32 height)
+struct element *gui_init(const char *title, u32 width, u32 height, u32 color_bg)
 {
 	if (window_count != 0)
 		return NULL;
@@ -300,7 +313,7 @@ struct element *gui_init(const char *title, u32 width, u32 height)
 	if (!win)
 		return NULL;
 
-	gfx_fill(win->ctx, COLOR_BG);
+	gfx_fill(win->ctx, color_bg);
 
 	struct element *container = malloc(sizeof(*container));
 	container->type = GUI_TYPE_ROOT;

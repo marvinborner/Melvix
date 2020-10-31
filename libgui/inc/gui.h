@@ -86,7 +86,7 @@ struct gui_event_mouse {
 	int but3;
 };
 
-struct element *gui_init(const char *title, u32 width, u32 height);
+struct element *gui_init(const char *title, u32 width, u32 height, u32 color_bg);
 void gui_event_loop(struct element *container);
 struct element *gui_add_button(struct element *container, int x, int y, enum font_type font_type,
 			       char *text, u32 color_bg, u32 color_fg);
