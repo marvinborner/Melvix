@@ -61,6 +61,7 @@ struct element {
 	u32 window_id;
 	struct context *ctx; // Coordinates are relative to container
 	struct element_event event;
+	void *attributes;
 	struct list *childs;
 	void *data; // Who needs static types anyways :)
 };
@@ -96,5 +97,7 @@ struct element *gui_add_text_input(struct element *container, int x, int y, u32 
 				   enum font_type font_type, u32 color_bg, u32 color_fg);
 struct element *gui_add_container(struct element *container, int x, int y, u32 width, u32 height,
 				  u32 color_bg);
+void gui_remove_childs(struct element *elem);
+void gui_remove_element(struct element *elem);
 
 #endif

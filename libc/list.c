@@ -13,6 +13,22 @@ struct list *list_new()
 	return list;
 }
 
+void list_destroy(struct list *list)
+{
+	struct node *iterator = list->head;
+	while (iterator != NULL) {
+		if (iterator->next == NULL) {
+			free(iterator);
+			break;
+		}
+		iterator = iterator->next;
+		free(iterator->prev);
+	}
+	list->head = NULL;
+	free(list);
+	list = NULL;
+}
+
 struct node *list_new_node()
 {
 	struct node *node = malloc(sizeof(*node));

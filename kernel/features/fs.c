@@ -151,7 +151,8 @@ int find_inode(const char *name, int dir_inode)
 	do {
 		// Calculate the 4byte aligned size of each entry
 		sum += d->total_len;
-		if (strncmp((void *)d->name, name, d->name_len) == 0) {
+		if (strlen(name) == d->name_len &&
+		    strncmp((void *)d->name, name, d->name_len) == 0) {
 			free(buf);
 			return d->inode_num;
 		}

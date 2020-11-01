@@ -115,6 +115,8 @@ static void handle_keyboard(struct event_keyboard *event)
 
 	if (special_keys_pressed & SHIFT_PRESSED)
 		msg->ch = keymap->shift_map[event->scancode];
+	else if (special_keys_pressed & ALT_PRESSED)
+		msg->ch = keymap->alt_map[event->scancode];
 	else
 		msg->ch = keymap->map[event->scancode];
 
@@ -245,8 +247,7 @@ int main(int argc, char **argv)
 		}
 
 		switch (msg->type) {
-		case GFX_NEW_CONTEXT:
-			printf("New context for pid %d\n", msg->src);
+		case GFX_NEW_CONTEXT: {
 			struct context *ctx = msg->data;
 			int width = ctx->width;
 			int height = ctx->height;
@@ -260,6 +261,7 @@ int main(int argc, char **argv)
 			redraw_all();
 			msg_send(msg->src, GFX_NEW_CONTEXT, ctx);
 			break;
+		}
 		case GFX_REDRAW:
 			redraw_all();
 			break;

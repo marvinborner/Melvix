@@ -67,6 +67,38 @@ static void merge_elements(struct element *container)
 	}
 }
 
+static void remove_childs(struct element *elem);
+static void remove_element(struct element *elem)
+{
+	if (!elem)
+		return;
+
+	remove_childs(elem);
+	free(elem->ctx->fb);
+	elem->ctx->fb = NULL;
+	free(elem->ctx);
+	elem->ctx = NULL;
+	free(elem->data);
+	elem->data = NULL;
+	free(elem);
+	elem = NULL;
+}
+
+static void remove_childs(struct element *elem)
+{
+	if (!elem || !elem->childs || !elem->childs->head)
+		return;
+
+	struct node *iterator = elem->childs->head;
+	while (iterator != NULL) {
+		struct element *child = iterator->data;
+		remove_element(child);
+		iterator = iterator->next;
+	}
+
+	list_destroy(elem->childs);
+}
+
 static struct element *element_at(struct element *container, int x, int y)
 {
 	if (!container || !container->childs || !container->childs->head)
@@ -248,6 +280,31 @@ struct element *gui_add_container(struct element *container, int x, int y, u32 w
 	gfx_redraw_focused();
 
 	return new_container;
+}
+
+void gui_remove_childs(struct element *elem)
+{
+	remove_childs(elem);
+	elem->childs = list_new();
+	gui_sync_container(elem);
+	merge_elements(get_root(elem->window_id));
+	gfx_redraw_focused();
+}
+
+void gui_remove_element(struct element *elem)
+{
+	if (!elem)
+		return;
+
+	u32 id = elem->window_id;
+	struct element *root = get_root(id);
+	u8 is_root = root == elem;
+	remove_element(elem);
+	elem = NULL;
+	if (!is_root) {
+		merge_elements(get_root(id));
+		gfx_redraw_focused();
+	}
 }
 
 // TODO: Split into small functions
