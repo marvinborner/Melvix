@@ -9,8 +9,9 @@
 #include <rtl8139.h>
 #include <str.h>
 
-static u32 is_ip_allocated = 0;
-static u32 ip_addr = 0x0e0014ac;
+static u32 ip_addr = 0x0f02000a;
+static u32 gateway_addr = 0x0202000a;
+static u8 gateway_mac[6] = { 0 };
 
 /**
  * Helper functions
@@ -18,16 +19,17 @@ static u32 ip_addr = 0x0e0014ac;
 
 u16 ip_calculate_checksum(struct ip_packet *packet)
 {
+	int array_size = sizeof(struct ip_packet) / 2;
+	u16 *array = (u16 *)packet;
 	u32 sum = 0;
-	u16 *s = (u16 *)packet;
-
-	for (int i = 0; i < 10; i++)
-		sum += ntohs(s[i]);
-
-	if (sum > 0xFFFF)
-		sum = (sum >> 16) + (sum & 0xFFFF);
-
-	return sum;
+	for (int i = 0; i < array_size; i++) {
+		sum += htons(array[i]);
+	}
+	u32 carry = sum >> 16;
+	sum = sum & 0x0000ffff;
+	sum = sum + carry;
+	u16 ret = ~sum;
+	return ret;
 }
 
 u16 icmp_calculate_checksum(struct icmp_packet *packet)
@@ -104,7 +106,7 @@ void ip_send_packet(u32 dst, void *data, int len, int prot)
 	memset(packet, 0, sizeof(*packet));
 	packet->version_ihl = ((0x4 << 4) | (0x5 << 0));
 	packet->length = sizeof(*packet) + len;
-	packet->id = 0; // TODO: IP fragmentation
+	packet->id = htons(1); // TODO: IP fragmentation
 	packet->ttl = 64;
 	packet->protocol = prot;
 	packet->src = ip_addr;
@@ -150,13 +152,13 @@ void udp_send_packet(u32 dst, u16 src_port, u16 dst_port, void *data, int len)
 	free(packet);
 }
 
-void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type, u32 request_ip);
-void dhcp_request(u32 request_ip)
+void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type);
+void dhcp_request()
 {
 	u32 dst = 0xffffffff;
 	struct dhcp_packet *packet = malloc(sizeof(*packet));
 	memset(packet, 0, sizeof(*packet));
-	dhcp_make_packet(packet, 3, request_ip);
+	dhcp_make_packet(packet, 3);
 	udp_send_packet(dst, 68, 67, packet, sizeof(*packet));
 	free(packet);
 }
@@ -184,11 +186,11 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 	print("DHCP!\n");
 	if (packet->op == DHCP_REPLY) {
 		u8 *type = dhcp_get_options(packet, 53);
-		if (*type == 2) {
-			dhcp_request(packet->your_ip);
-		} else if (*type == 5) {
+		if (*type == 2) { // Offer
+			print("DHCP offer\n");
+			dhcp_request();
+		} else if (*type == 5) { // ACK
 			ip_addr = packet->your_ip;
-			is_ip_allocated = 1;
 			printf("ACK! %x\n", ip_addr);
 		}
 		free(type);
@@ -198,7 +200,7 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 void udp_handle_packet(struct udp_packet *packet)
 {
 	printf("UDP Port: %d\n", ntohs(packet->dst_port));
-	void *data_ptr = (u32 *)packet + sizeof(*packet);
+	void *data_ptr = (u8 *)packet + sizeof(*packet);
 
 	if (ntohs(packet->dst_port) == 68)
 		dhcp_handle_packet(data_ptr);
@@ -277,15 +279,15 @@ void ethernet_handle_packet(struct ethernet_packet *packet, int len)
  * DHCP
  */
 
-void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type, u32 request_ip)
+void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type)
 {
 	packet->op = DHCP_REQUEST;
 	packet->hardware_type = HARDWARE_TYPE_ETHERNET;
-	packet->hardware_addr_len = 6;
+	packet->mac_len = 6;
 	packet->hops = 0;
-	packet->xid = htonl(DHCP_TRANSACTION_IDENTIFIER);
-	packet->flags = htons(0x8000);
-	memcpy(packet->client_hardware_addr, rtl8139_get_mac(), 6);
+	packet->xid = htonl(0x41c6);
+	packet->flags = htons(0x0001);
+	memcpy(packet->client_mac, rtl8139_get_mac(), 6);
 
 	// Magic Cookie
 	u8 *options = packet->options;
@@ -297,37 +299,7 @@ void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type, u32 request_ip)
 	*(options++) = 1;
 	*(options++) = msg_type;
 
-	// Client identifier
-	*(options++) = 61;
-	*(options++) = 0x07;
-	*(options++) = 0x01;
-	memcpy(options, rtl8139_get_mac(), 6);
-	options += 6;
-
-	// Requested IP address
-	*(options++) = 50;
-	*(options++) = 0x04;
-	*((u32 *)(options)) = request_ip;
-	options += 4;
-
-	// Host Name
-	*(options++) = 12;
-	*(options++) = 0x07;
-	memcpy(options, "melvix", strlen("melvix"));
-	options += strlen("melvix");
-	*(options++) = 0x00;
-
-	// Parameter request list
-	*(options++) = 55;
-	*(options++) = 8;
-	*(options++) = 0x1;
-	*(options++) = 0x3;
-	*(options++) = 0x6;
-	*(options++) = 0xf;
-	*(options++) = 0x2c;
-	*(options++) = 0x2e;
-	*(options++) = 0x2f;
-	*(options++) = 0x39;
+	// End
 	*(options++) = 0xff;
 }
 
@@ -337,7 +309,7 @@ void dhcp_discover()
 	u32 dst_ip = 0xffffffff;
 	struct dhcp_packet *packet = malloc(sizeof(*packet));
 	memset(packet, 0, sizeof(*packet));
-	dhcp_make_packet(packet, 1, 0);
+	dhcp_make_packet(packet, 1);
 	udp_send_packet(dst_ip, 68, 67, packet, sizeof(*packet));
 	free(packet);
 }
@@ -374,7 +346,14 @@ int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr)
 void net_install()
 {
 	if (rtl8139_install()) {
-		arp_lookup_add(broadcast_mac, 0xffffffff);
+		sti();
+		arp_send_packet(broadcast_mac, gateway_addr, ARP_REQUEST);
+		print("Waiting for gateway answer...\n");
+		while (!arp_lookup(gateway_mac, gateway_addr))
+			hlt(); // TODO: Add ARP timeout
+		print("Found gateway!\n");
+
+		arp_lookup_add(gateway_mac, 0xffffffff);
 		dhcp_discover();
 	}
 }

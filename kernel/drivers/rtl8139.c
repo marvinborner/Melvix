@@ -69,6 +69,7 @@ void rtl8139_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
 	}
 }
 
+// TODO: Fix late packet arrival
 void rtl8139_irq_handler()
 {
 	if (!rtl_device_pci)
@@ -79,6 +80,7 @@ void rtl8139_irq_handler()
 
 	if (status & RTL_TOK) {
 		print("Sent packet\n");
+		rtl8139_receive_packet();
 	} else if (status & RTL_ROK) {
 		rtl8139_receive_packet();
 	}

@@ -67,7 +67,7 @@ struct ip_packet {
 struct dhcp_packet {
 	u8 op;
 	u8 hardware_type;
-	u8 hardware_addr_len;
+	u8 mac_len;
 	u8 hops;
 	u32 xid;
 	u16 seconds;
@@ -76,7 +76,8 @@ struct dhcp_packet {
 	u32 your_ip;
 	u32 server_ip;
 	u32 gateway_ip;
-	u8 client_hardware_addr[16];
+	u8 client_mac[6];
+	u8 reserved[10];
 	u8 server_name[64];
 	u8 file[128];
 	u8 options[64];
