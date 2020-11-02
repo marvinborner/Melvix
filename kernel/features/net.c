@@ -129,8 +129,8 @@ void ip_send_packet(u32 dst, void *data, int len, int prot)
 		}
 	}
 	cli();
-	printf("%x:%x:%x:%x:%x:%x\n", dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3], dst_mac[4],
-	       dst_mac[5]);
+	printf("Destination: %x:%x:%x:%x:%x:%x\n", dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3],
+	       dst_mac[4], dst_mac[5]);
 	ethernet_send_packet(dst_mac, (u8 *)packet, htons(packet->length), ETHERNET_TYPE_IP4);
 
 	free(packet);
@@ -191,7 +191,7 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 			dhcp_request();
 		} else if (*type == 5) { // ACK
 			ip_addr = packet->your_ip;
-			printf("ACK! %x\n", ip_addr);
+			printf("ACK! New IP: %x\n", ip_addr);
 		}
 		free(type);
 	}

@@ -71,7 +71,7 @@ void rtl8139_send_packet(void *data, u32 len)
 	if (!rtl_device_pci)
 		return;
 
-	printf("Sending packet %d\n\n", len);
+	printf("RTL8139 send packet (size: %d)\n\n", len);
 	outl(rtl_iobase + tsad_array[tx_current], (u32)data);
 	outl(rtl_iobase + tsd_array[tx_current++], len);
 	if (tx_current > 3)
