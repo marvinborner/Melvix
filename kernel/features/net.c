@@ -49,8 +49,8 @@ u16 icmp_calculate_checksum(struct icmp_packet *packet)
 void *dhcp_get_options(struct dhcp_packet *packet, u8 type)
 {
 	u8 *options = packet->options + 4;
-	u8 curr_type = *options;
-	while (curr_type != 0xff) {
+	u8 curr_type = 0;
+	while ((curr_type = *options) != 0xff) {
 		u8 len = *(options + 1);
 		if (curr_type == type) {
 			void *ret = malloc(len);
@@ -285,7 +285,7 @@ void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type)
 	packet->hardware_type = HARDWARE_TYPE_ETHERNET;
 	packet->mac_len = 6;
 	packet->hops = 0;
-	packet->xid = htonl(0x41c6);
+	packet->xid = htonl(DHCP_TRANSACTION_IDENTIFIER);
 	packet->flags = htons(0x0001);
 	memcpy(packet->client_mac, rtl8139_get_mac(), 6);
 
