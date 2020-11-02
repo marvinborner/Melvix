@@ -16,11 +16,23 @@ void on_submit(struct gui_event_keyboard *event, struct element *elem)
 {
 	(void)event;
 	char *inp = ((struct element_text_input *)elem->data)->text;
+
+	// TODO: Support more than one arg
+	char *inp_copy = strdup(inp);
+	char *space = inp_copy;
+	char *arg = NULL;
+	if ((space = strchr(space, ' '))) {
+		inp[space - inp_copy] = '\0';
+		space++;
+		arg = space;
+	}
+	free(inp_copy);
+
 	u8 l = strlen(PATH) + strlen(inp) + 1;
 	char *final = malloc(l);
 	strcat(final, PATH);
 	strcat(final, inp);
-	exec(final, inp, NULL);
+	exec(final, inp, arg, NULL);
 }
 
 int main()
