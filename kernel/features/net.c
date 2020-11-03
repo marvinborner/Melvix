@@ -19,7 +19,7 @@ static u8 gateway_mac[6] = { 0 };
 
 u16 ip_calculate_checksum(struct ip_packet *packet)
 {
-	int array_size = sizeof(struct ip_packet) / 2;
+	int array_size = sizeof(*packet) / 2;
 	u16 *array = (u16 *)packet;
 	u32 sum = 0;
 	for (int i = 0; i < array_size; i++) {
@@ -32,6 +32,55 @@ u16 ip_calculate_checksum(struct ip_packet *packet)
 	return ret;
 }
 
+u16 tcp_calculate_checksum(struct tcp_packet *packet, struct tcp_pseudo_header *header, void *data,
+			   u32 len)
+{
+	u32 sum = 0;
+	u16 *s = (u16 *)header;
+
+	// TODO: Checksums for options?
+	for (int i = 0; i < 6; ++i) {
+		sum += ntohs(s[i]);
+		if (sum > 0xffff) {
+			sum = (sum >> 16) + (sum & 0xffff);
+		}
+	}
+
+	s = (u16 *)packet;
+	for (int i = 0; i < 10; ++i) {
+		sum += ntohs(s[i]);
+		if (sum > 0xffff) {
+			sum = (sum >> 16) + (sum & 0xffff);
+		}
+	}
+
+	u16 d_words = len / 2;
+
+	s = (u16 *)data;
+	for (unsigned int i = 0; i < d_words; ++i) {
+		sum += ntohs(s[i]);
+		if (sum > 0xffff) {
+			sum = (sum >> 16) + (sum & 0xffff);
+		}
+	}
+
+	if (d_words * 2 != len) {
+		u8 *t = (u8 *)data;
+		u8 tmp[2];
+		tmp[0] = t[d_words * sizeof(u16)];
+		tmp[1] = 0;
+
+		u16 *f = (u16 *)tmp;
+
+		sum += ntohs(f[0]);
+		if (sum > 0xffff) {
+			sum = (sum >> 16) + (sum & 0xffff);
+		}
+	}
+
+	return ~(sum & 0xffff) & 0xffff;
+}
+
 u16 icmp_calculate_checksum(struct icmp_packet *packet)
 {
 	u32 sum = 0;
@@ -40,8 +89,8 @@ u16 icmp_calculate_checksum(struct icmp_packet *packet)
 	for (int i = 0; i < 5; i++)
 		sum += s[i];
 
-	if (sum > 0xFFFF)
-		sum = (sum >> 16) + (sum & 0xFFFF);
+	if (sum > 0xffff)
+		sum = (sum >> 16) + (sum & 0xffff);
 
 	return ~sum;
 }
@@ -197,6 +246,13 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 	}
 }
 
+void tcp_handle_packet(struct tcp_packet *packet)
+{
+	printf("TCP Port: %d\n", ntohs(packet->dst_port));
+	u16 flags = ntohs(packet->flags);
+	printf("%b\n", flags);
+}
+
 void udp_handle_packet(struct udp_packet *packet)
 {
 	printf("UDP Port: %d\n", ntohs(packet->dst_port));
@@ -204,7 +260,6 @@ void udp_handle_packet(struct udp_packet *packet)
 
 	if (ntohs(packet->dst_port) == 68)
 		dhcp_handle_packet(data_ptr);
-	return;
 }
 
 void ip_handle_packet(struct ip_packet *packet, int len)
@@ -217,6 +272,7 @@ void ip_handle_packet(struct ip_packet *packet, int len)
 		break;
 	case IP_PROT_TCP:
 		print("TCP Packet!\n");
+		tcp_handle_packet((struct tcp_packet *)packet->data);
 		break;
 	case IP_PROT_UDP:
 		print("UDP Packet!\n");

@@ -20,6 +20,16 @@
 #define IP_PROT_TCP 0x06
 #define IP_PROT_UDP 0x11
 
+#define TCP_FLAG_FIN (1 << 0)
+#define TCP_FLAG_SYN (1 << 1)
+#define TCP_FLAG_RES (1 << 2)
+#define TCP_FLAG_PSH (1 << 3)
+#define TCP_FLAG_ACK (1 << 4)
+#define TCP_FLAG_URG (1 << 5)
+#define TCP_FLAG_ECE (1 << 6)
+#define TCP_FLAG_CWR (1 << 7)
+#define TCP_FLAG_NS (1 << 8)
+
 #define ARP_REQUEST 1
 #define ARP_REPLY 2
 
@@ -90,6 +100,27 @@ struct udp_packet {
 	u16 checksum;
 	u8 data[];
 } __attribute__((packed));
+
+struct tcp_packet {
+	u16 src_port;
+	u16 dst_port;
+	u32 seq_number;
+	u32 ack_number;
+	u16 flags;
+	u16 window_size;
+	u16 checksum;
+	u16 urgent;
+	u8 data[];
+} __attribute__((packed));
+
+struct tcp_pseudo_header {
+	u32 source;
+	u32 destination;
+	u8 zeros;
+	u8 protocol;
+	u16 tcp_len;
+	u8 tcp_header[];
+};
 
 struct icmp_packet {
 	u8 type;

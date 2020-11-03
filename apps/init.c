@@ -12,7 +12,6 @@ int main(int argc, char **argv)
 
 	int wm = exec("/bin/wm", "wm", argv[1], NULL);
 	int exec = exec("/bin/exec", "test", NULL);
-	/* exec("/bin/cc", "cc", "/res/test.c", NULL); */
 
 	return wm + exec;
 }
