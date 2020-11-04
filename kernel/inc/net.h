@@ -35,7 +35,7 @@
 
 #define DHCP_REQUEST 1
 #define DHCP_REPLY 2
-#define DHCP_TRANSACTION_IDENTIFIER 0x55555555
+#define DHCP_TRANSACTION_IDENTIFIER 0x18122002
 
 #define HARDWARE_TYPE_ETHERNET 0x01
 
@@ -114,12 +114,12 @@ struct tcp_packet {
 } __attribute__((packed));
 
 struct tcp_pseudo_header {
-	u32 source;
-	u32 destination;
+	u32 src;
+	u32 dst;
 	u8 zeros;
 	u8 protocol;
 	u16 tcp_len;
-	u8 tcp_header[];
+	u8 tcp_packet[];
 };
 
 struct icmp_packet {

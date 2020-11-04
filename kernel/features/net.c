@@ -160,9 +160,11 @@ void ip_send_packet(u32 dst, void *data, int len, int prot)
 	packet->protocol = prot;
 	packet->src = ip_addr;
 	packet->dst = dst;
-	memcpy(packet->data, data, len);
 	packet->length = htons(sizeof(*packet) + len);
 	packet->checksum = htons(ip_calculate_checksum(packet));
+
+	if (data)
+		memcpy(packet->data, data, len);
 
 	u8 dst_mac[6];
 
@@ -190,14 +192,55 @@ void udp_send_packet(u32 dst, u16 src_port, u16 dst_port, void *data, int len)
 	print("UDP send packet\n");
 	int length = sizeof(struct udp_packet) + len;
 	struct udp_packet *packet = malloc(length);
-	memset(packet, 0, sizeof(struct udp_packet));
+	memset(packet, 0, sizeof(*packet));
 	packet->src_port = htons(src_port);
 	packet->dst_port = htons(dst_port);
 	packet->length = htons(length);
 	packet->checksum = 0; // Optional
 
-	memcpy(packet->data, data, len);
+	if (data)
+		memcpy(packet->data, data, len);
+
 	ip_send_packet(dst, packet, length, IP_PROT_UDP);
+	free(packet);
+}
+
+u32 seq_no, ack_no = 0; // TODO: Per socket
+void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data, int len)
+{
+	print("TCP send packet\n");
+	int length = sizeof(struct tcp_packet) + len;
+	struct tcp_packet *packet = malloc(length);
+	memset(packet, 0, sizeof(*packet));
+	packet->src_port = htons(src_port);
+	packet->dst_port = htons(dst_port);
+	packet->seq_number = htonl(seq_no);
+	packet->ack_number = flags & TCP_FLAG_ACK ? htonl(ack_no) : 0;
+	packet->flags = htons(0x5000 ^ (flags & 0xff));
+	packet->window_size = htons(1548 - 54);
+	packet->urgent = 0;
+	packet->checksum = 0; // Later
+
+	if ((flags & 0xff) == TCP_FLAG_SYN)
+		seq_no++;
+	else
+		seq_no += len;
+
+	if (data)
+		memcpy(packet->data, data, len);
+
+	struct tcp_pseudo_header checksum_hd = {
+		.src = ip_addr,
+		.dst = dst,
+		.zeros = 0,
+		.protocol = 6,
+		.tcp_len = htons(length),
+	};
+	u16 checksum = tcp_calculate_checksum(packet, &checksum_hd, data,
+					      length - (htons(packet->flags) >> 12) * 4);
+	packet->checksum = htons(checksum);
+
+	ip_send_packet(dst, packet, length, IP_PROT_TCP);
 	free(packet);
 }
 
@@ -233,7 +276,7 @@ void icmp_handle_packet(struct icmp_packet *request_packet, u32 dst)
 void dhcp_handle_packet(struct dhcp_packet *packet)
 {
 	print("DHCP!\n");
-	if (packet->op == DHCP_REPLY) {
+	if (packet->op == DHCP_REPLY && htonl(packet->xid) == DHCP_TRANSACTION_IDENTIFIER) {
 		u8 *type = dhcp_get_options(packet, 53);
 		if (*type == 2) { // Offer
 			print("DHCP offer\n");
@@ -246,11 +289,49 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 	}
 }
 
-void tcp_handle_packet(struct tcp_packet *packet)
+void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 {
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
+	int data_length = len - (htons(packet->flags) >> 12) * 4;
 	u16 flags = ntohs(packet->flags);
 	printf("%b\n", flags);
+
+	if (seq_no != ntohl(packet->ack_number)) {
+		printf("Dropping packet seq_no: %d\n", seq_no);
+		return;
+	}
+
+	if ((htons(packet->flags) & TCP_FLAG_SYN) && (htons(packet->flags) & TCP_FLAG_ACK)) {
+		ack_no = ntohl(packet->seq_number) + data_length + 1;
+		tcp_send_packet(dst, packet->dst_port, packet->src_port, TCP_FLAG_ACK, NULL, 0);
+	} else if (htons(packet->flags) & TCP_FLAG_RES) {
+		print("Socket reset!\n");
+		return;
+	} else if (data_length == 0) {
+		if (htons(packet->flags) & TCP_FLAG_FIN) {
+			print("Finished, closing socket\n");
+			ack_no = ntohl(packet->seq_number) + data_length + 1;
+			tcp_send_packet(dst, packet->dst_port, packet->src_port,
+					TCP_FLAG_ACK | TCP_FLAG_FIN, NULL, 0);
+		}
+		return;
+	}
+
+	ack_no = ntohl(packet->seq_number) + data_length;
+	if ((htons(packet->flags) & TCP_FLAG_SYN) && (htons(packet->flags) & TCP_FLAG_ACK) &&
+	    data_length == 0)
+		ack_no++;
+	ack_no = ntohl(packet->seq_number) + data_length;
+
+	tcp_send_packet(dst, packet->dst_port, packet->src_port, TCP_FLAG_ACK, NULL, 0);
+
+	// TODO: Look at the spec again
+	if (htons(packet->flags) & TCP_FLAG_FIN) {
+		print("Finished, closing socket\n");
+		ack_no = ntohl(packet->seq_number) + data_length + 1;
+		tcp_send_packet(dst, packet->dst_port, packet->src_port,
+				TCP_FLAG_ACK | TCP_FLAG_FIN, NULL, 0);
+	}
 }
 
 void udp_handle_packet(struct udp_packet *packet)
@@ -272,7 +353,7 @@ void ip_handle_packet(struct ip_packet *packet, int len)
 		break;
 	case IP_PROT_TCP:
 		print("TCP Packet!\n");
-		tcp_handle_packet((struct tcp_packet *)packet->data);
+		tcp_handle_packet((struct tcp_packet *)packet->data, packet->src, len);
 		break;
 	case IP_PROT_UDP:
 		print("UDP Packet!\n");
