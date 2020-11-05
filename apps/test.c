@@ -63,11 +63,11 @@ void test_conv()
 
 void test_mem()
 {
-	char *str0 = "";
-	char *str1 = "";
-	char *str2 = "12345";
-	char *str3 = "12345";
-	char *str4 = "12354";
+	const char *str0 = "";
+	const char *str1 = "";
+	const char *str2 = "12345";
+	const char *str3 = "12345";
+	const char *str4 = "12354";
 	equals(memcmp(str4, str2, strlen(str2)), 1);
 	equals(memcmp(str2, str4, strlen(str2)), -1);
 	equals(memcmp(str2, str3, strlen(str2)), 0);

@@ -11,11 +11,11 @@ void timer_phase(int hz)
 {
 	int divisor = 3579545 / 3 / hz;
 	outb(0x43, 0x36); // 01 10 11 0b // CTR, RW, MODE, BCD
-	outb(0x40, divisor & 0xFF);
-	outb(0x40, divisor >> 8);
+	outb(0x40, (u8)(divisor & 0xFF));
+	outb(0x40, (u8)(divisor >> 8));
 }
 
-u32 timer_get()
+u32 timer_get(void)
 {
 	return timer_ticks;
 }
@@ -38,7 +38,7 @@ void timer_wait(u32 ticks)
 }
 
 // Install timer handler into IRQ0
-void timer_install()
+void timer_install(void)
 {
 	/* hpet_install(10000); // TODO: Find optimal femtosecond period */
 	/* if (!hpet) */

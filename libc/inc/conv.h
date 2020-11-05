@@ -5,9 +5,9 @@
 
 #include <def.h>
 
-int atoi(char *str);
+int atoi(const char *str);
 char *htoa(u32 n);
-int htoi(char *str);
+int htoi(const char *str);
 char *itoa(int n);
 
 char *conv_base(int value, char *result, int base, int is_signed);

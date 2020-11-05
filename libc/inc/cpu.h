@@ -18,14 +18,14 @@ void outl(u16 port, u32 data);
 
 void cpuid(int code, u32 *a, u32 *b, u32 *c, u32 *d);
 char *cpu_string(char buf[12]);
-void cpu_print();
+void cpu_print(void);
 
 #ifdef kernel
-void cli();
-void sti();
-void hlt();
-void idle();
-void loop();
+void cli(void);
+void sti(void);
+void hlt(void);
+void idle(void);
+void loop(void);
 #endif
 
 static inline void spinlock(int *ptr)

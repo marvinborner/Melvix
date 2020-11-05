@@ -100,7 +100,7 @@ static u32 pci_isa = 0;
 static u8 pci_remaps[4] = { 0 };
 
 // Remap
-void pci_install()
+void pci_install(void)
 {
 	pci_scan(&find_isa_bridge, -1, &pci_isa);
 	if (pci_isa) {
@@ -122,7 +122,7 @@ int pci_get_interrupt(u32 device)
 		u32 irq_pin = pci_read_field(device, 0x3D, 1);
 		if (irq_pin == 0)
 			return (int)pci_read_field(device, PCI_INTERRUPT_LINE, 1);
-		int pirq = (int)(irq_pin + pci_extract_slot(device) - 2) % 4;
+		int pirq = ((int)irq_pin + pci_extract_slot(device) - 2) % 4;
 		int int_line = (int)pci_read_field(device, PCI_INTERRUPT_LINE, 1);
 
 		if (pci_remaps[pirq] >= 0x80) {

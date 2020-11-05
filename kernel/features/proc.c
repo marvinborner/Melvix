@@ -12,9 +12,8 @@
 #include <str.h>
 #include <timer.h>
 
-u32 pid = 0;
+u32 current_pid = 0;
 u32 quantum = 0;
-struct proc *kernel_proc;
 struct proc *priority_proc;
 struct list *proc_list;
 struct node *current;
@@ -62,17 +61,17 @@ void scheduler(struct regs *regs)
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
 }
 
-void scheduler_enable()
+void scheduler_enable(void)
 {
 	irq_install_handler(0, scheduler);
 }
 
-void scheduler_disable()
+void scheduler_disable(void)
 {
-	irq_install_handler(0, timer_handler);
+	irq_install_handler(0, scheduler);
 }
 
-void proc_print()
+void proc_print(void)
 {
 	struct node *node = proc_list->head;
 
@@ -85,7 +84,7 @@ void proc_print()
 	printf("\n");
 }
 
-struct proc *proc_current()
+struct proc *proc_current(void)
 {
 	return current && current->data ? current->data : NULL;
 }
@@ -99,8 +98,8 @@ void proc_send(struct proc *src, struct proc *dest, u32 type, void *data)
 	msg->src = src;
 	msg->dest = dest;
 	msg->msg = malloc(sizeof(struct message));
-	msg->msg->src = src->pid;
-	msg->msg->type = type;
+	msg->msg->src = (int)src->pid;
+	msg->msg->type = (int)type;
 	msg->msg->data = data;
 	list_add(dest->messages, msg);
 	priority_proc = dest;
@@ -158,10 +157,10 @@ void proc_yield(struct regs *r)
 	scheduler(r);
 }
 
-struct proc *proc_make()
+struct proc *proc_make(void)
 {
 	struct proc *proc = malloc(sizeof(*proc));
-	proc->pid = pid++;
+	proc->pid = current_pid++;
 	proc->messages = list_new();
 	proc->state = PROC_RUNNING;
 
@@ -171,10 +170,10 @@ struct proc *proc_make()
 	return proc;
 }
 
-extern void proc_jump_userspace();
+extern void proc_jump_userspace(void);
 
 u32 _esp, _eip;
-void proc_init()
+void proc_init(void)
 {
 	if (proc_list)
 		return;
@@ -186,15 +185,15 @@ void proc_init()
 	kernel_proc = proc_make();
 
 	struct node *new = list_add(proc_list, proc_make());
-	bin_load("/bin/init", new->data);
+	bin_load((char *)"/bin/init", new->data);
 	current = new;
 
 	_eip = ((struct proc *)new->data)->regs.eip;
 	_esp = ((struct proc *)new->data)->regs.useresp;
 
-	int argc = 2;
+	u32 argc = 2;
 	char **argv = malloc(sizeof(*argv) * (argc + 1));
-	argv[0] = "init";
+	argv[0] = strdup("init");
 	argv[1] = (char *)boot_passed->vbe;
 	argv[2] = NULL;
 

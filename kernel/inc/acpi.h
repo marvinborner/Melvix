@@ -183,8 +183,8 @@ struct madt *madt;
 struct fadt *fadt;
 struct hpet *hpet;
 
-void acpi_install();
-void hpet_install(int frequency);
-void madt_install();
+void acpi_install(void);
+void hpet_install(u32 period);
+void madt_install(void);
 
 #endif

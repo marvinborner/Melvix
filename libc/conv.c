@@ -8,7 +8,7 @@
 static const char HTOA_TABLE[] = "0123456789ABCDEF";
 static const char ITOA_TABLE[] = "0123456789";
 
-int atoi(char *str)
+int atoi(const char *str)
 {
 	u32 s_str = strlen(str);
 	if (!s_str)
@@ -58,7 +58,7 @@ char *htoa(u32 n)
 	return ret;
 }
 
-int htoi(char *str)
+int htoi(const char *str)
 {
 	u32 s_str = strlen(str);
 

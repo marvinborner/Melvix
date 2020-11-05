@@ -138,6 +138,6 @@ struct arp_table_entry {
 };
 
 void ethernet_handle_packet(struct ethernet_packet *packet, int len);
-void net_install();
+void net_install(void);
 
 #endif

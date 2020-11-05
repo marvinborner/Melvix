@@ -5,6 +5,7 @@
 #include <def.h>
 #include <mem.h>
 #include <print.h>
+#include <str.h>
 #include <sys.h>
 
 char *p, *lp, // current position in source code
@@ -744,7 +745,7 @@ void stmt()
 
 int main(int argc, char **argv)
 {
-	int bt, ty, poolsz, *idmain;
+	int bt, poolsz, *idmain;
 	int *pc, *sp, *bp, a, cycle; // vm registers
 	int i, *t; // temps
 
@@ -777,8 +778,8 @@ int main(int argc, char **argv)
 	memset(e, 0, poolsz);
 	memset(data, 0, poolsz);
 
-	p = "char else enum if int return sizeof while "
-	    "open read close printf malloc free memset memcmp exit void main";
+	p = strdup("char else enum if int return sizeof while "
+		   "open read close printf malloc free memset memcmp exit void main");
 	i = Char;
 	while (i <= While) {
 		next();

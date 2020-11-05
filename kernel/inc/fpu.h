@@ -3,6 +3,6 @@
 #ifndef FPU_H
 #define FPU_H
 
-void fpu_install();
+void fpu_install(void);
 
 #endif

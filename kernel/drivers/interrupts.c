@@ -90,7 +90,7 @@ void irq_handler(struct regs *r)
 }
 
 // Map ISRs to the correct entries in the IDT
-void irq_install()
+void irq_install(void)
 {
 	irq_remap();
 
@@ -182,7 +182,7 @@ void isr_handler(struct regs *r)
 	}
 }
 
-void isr_install()
+void isr_install(void)
 {
 	idt_set_gate(0, (u32)isr0, 0x08, 0x8E);
 	idt_set_gate(1, (u32)isr1, 0x08, 0x8E);
@@ -224,7 +224,7 @@ void isr_install()
 /**
  * Combined
  */
-void interrupts_install()
+void interrupts_install(void)
 {
 	idt_install();
 	isr_install();

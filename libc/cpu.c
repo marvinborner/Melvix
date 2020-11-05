@@ -76,35 +76,35 @@ char *cpu_string(char buf[13])
 	return buf;
 }
 
-void cpu_print()
+void cpu_print(void)
 {
 	char buf[13] = { 0 };
 	printf("%s\n", cpu_string(buf));
 }
 
 #ifdef kernel
-void cli()
+void cli(void)
 {
 	__asm__ volatile("cli");
 }
 
-void sti()
+void sti(void)
 {
 	__asm__ volatile("sti");
 }
 
-void hlt()
+void hlt(void)
 {
 	__asm__ volatile("hlt");
 }
 
-void idle()
+void idle(void)
 {
 	while (1)
 		hlt();
 }
 
-void loop()
+void loop(void)
 {
 	cli();
 	idle();

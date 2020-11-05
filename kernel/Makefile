@@ -23,7 +23,8 @@ LD = ccache ../cross/opt/bin/i686-elf-ld
 OC = ccache ../cross/opt/bin/i686-elf-objcopy
 AS = ccache nasm
 
-CFLAGS = -Wall -Wextra -Wno-address-of-packed-member -nostdlib -nostdinc -ffreestanding -fno-builtin -mno-red-zone -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel $(CFLAGS_EXTRA) $(OPTIMIZATION)
+WARNINGS = -Wall -Wextra -pedantic-errors -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wno-long-long
+CFLAGS = $(WARNINGS) -Wno-address-of-packed-member -nostdlib -nostdinc -ffreestanding -fno-builtin -mno-red-zone -mgeneral-regs-only -std=c99 -m32 -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel $(CFLAGS_EXTRA) $(OPTIMIZATION)
 ASFLAGS = -f elf32
 
 all: compile
@@ -36,5 +37,5 @@ all: compile
 
 compile: $(COBJS)
 	@mkdir -p ../build/
-	@$(LD) -N -ekernel_main -Ttext 0x00050000 -o ../build/kernel.bin -L../build/ $+ -lk --oformat binary
-	@$(CC) $(CFLAGS) -o ../build/debug.o -L../build/ $+ -lk
+	@$(LD) -N -ekernel_main -Ttext 0x00050000 -o ../build/kernel.elf -L../build/ $+ -lk
+	@$(OC) -O binary ../build/kernel.elf ../build/kernel.bin

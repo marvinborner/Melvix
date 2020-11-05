@@ -12,7 +12,7 @@ int check_sdt(struct sdt_header *header)
 	u8 sum = 0;
 
 	for (u32 i = 0; i < header->length; i++)
-		sum += ((char *)header)[i];
+		sum += (u8)(((u8 *)header)[i]);
 
 	return sum == 0;
 }
@@ -22,12 +22,12 @@ int check_sdp(struct sdp_header *header)
 	u8 sum = 0;
 
 	for (u32 i = 0; i < sizeof(struct rsdp); i++)
-		sum += ((char *)header)[i];
+		sum += (u8)(((u8 *)header)[i]);
 
 	return sum == 0;
 }
 
-struct rsdp *find_rsdp()
+struct rsdp *find_rsdp(void)
 {
 	// Main BIOS area
 	for (int i = 0xe0000; i < 0xfffff; i++) {
@@ -47,9 +47,9 @@ struct rsdp *find_rsdp()
 
 void *find_sdt(struct rsdt *rsdt, const char *signature)
 {
-	int entries = (rsdt->header.length - sizeof(rsdt->header)) / 4;
+	u32 entries = (rsdt->header.length - sizeof(rsdt->header)) / 4;
 
-	for (int i = 0; i < entries; i++) {
+	for (u32 i = 0; i < entries; i++) {
 		struct sdt_header *header = (struct sdt_header *)rsdt->sdt_pointer[i];
 		if (memcmp(header->signature, signature, 4) == 0) {
 			if (check_sdt(header))
@@ -62,7 +62,7 @@ void *find_sdt(struct rsdt *rsdt, const char *signature)
 	return NULL;
 }
 
-void acpi_install()
+void acpi_install(void)
 {
 	struct rsdp *rsdp = find_rsdp();
 	assert(rsdp && rsdp->header.revision == 0 && check_sdp(&rsdp->header));
@@ -77,7 +77,7 @@ void acpi_install()
 	madt_install();
 }
 
-void hpet_install(int period)
+void hpet_install(u32 period)
 {
 	if (hpet && hpet->legacy_replacement && hpet->comparator_count > 0) {
 		struct hpet_registers *r = (struct hpet_registers *)hpet->address.phys;
@@ -97,7 +97,7 @@ void hpet_install(int period)
 	}
 }
 
-void madt_install()
+void madt_install(void)
 {
 	if (!madt)
 		return;

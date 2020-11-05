@@ -17,7 +17,7 @@ struct dirent {
 	char name[];
 };
 
-void render_list(char *path);
+void render_list(const char *path);
 void on_click(struct event_mouse *event, struct element *elem)
 {
 	(void)event;
@@ -31,7 +31,7 @@ void on_click(struct event_mouse *event, struct element *elem)
 }
 
 // TODO: Dir iterator as kernel syscall?
-void render_list(char *path)
+void render_list(const char *path)
 {
 	static struct element *list = NULL;
 	if (list)
@@ -49,7 +49,7 @@ void render_list(char *path)
 		d->name[d->name_len] = '\0';
 		struct element *label = gui_add_label(list, 5, cnt * (gfx_font_height(FONT_16) + 5),
 						      FONT_16, d->name, COLOR_BLACK, COLOR_WHITE);
-		label->attributes = path;
+		label->attributes = (char *)path;
 
 		if (d->type_indicator == 2) // Dir
 			label->event.on_click = on_click;

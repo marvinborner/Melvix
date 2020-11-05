@@ -34,6 +34,6 @@ struct bmp {
 	u32 pitch;
 };
 
-struct bmp *bmp_load(char *path);
+struct bmp *bmp_load(const char *path);
 
 #endif

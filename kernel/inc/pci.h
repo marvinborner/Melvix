@@ -61,25 +61,26 @@ struct pci_device_descriptor {
 	u8 revision;
 };
 
-static inline int pci_extract_bus(u32 device)
+static inline u8 pci_extract_bus(u32 device)
 {
 	return (u8)((device >> 16));
 }
 
-static inline int pci_extract_slot(u32 device)
+static inline u8 pci_extract_slot(u32 device)
 {
 	return (u8)((device >> 8));
 }
 
-static inline int pci_extract_func(u32 device)
+static inline u8 pci_extract_func(u32 device)
 {
 	return (u8)(device);
 }
 
 static inline u32 pci_get_addr(u32 device, int field)
 {
-	return 0x80000000 | (pci_extract_bus(device) << 16) | (pci_extract_slot(device) << 11) |
-	       (pci_extract_func(device) << 8) | ((field)&0xFC);
+	return 0x80000000 | (u32)(pci_extract_bus(device) << 16) |
+	       (u32)(pci_extract_slot(device) << 11) | (u32)(pci_extract_func(device) << 8) |
+	       ((field)&0xFC);
 }
 
 static inline u32 pci_box_device(int bus, int slot, int func)
@@ -96,6 +97,6 @@ void pci_scan_slot(pci_func_t f, int type, int bus, int slot, void *extra);
 void pci_scan_bus(pci_func_t f, int type, int bus, void *extra);
 void pci_scan(pci_func_t f, int type, void *extra);
 int pci_get_interrupt(u32 device);
-void pci_install();
+void pci_install(void);
 
 #endif

@@ -15,7 +15,7 @@ int state = 0;
 int merged = 0;
 void keyboard_handler()
 {
-	u32 scancode = (u32)inb(0x60);
+	int scancode = inb(0x60);
 
 	// TODO: Support more than two-byte scancodes
 	if (scancode == 0xe0) {
@@ -40,20 +40,20 @@ void keyboard_handler()
 	merged = 0;
 }
 
-void keyboard_acknowledge()
+void keyboard_acknowledge(void)
 {
 	while (inb(0x60) != 0xfa)
 		;
 }
 
-void keyboard_rate()
+void keyboard_rate(void)
 {
 	outb(0x60, 0xF3);
 	keyboard_acknowledge();
 	outb(0x60, 0x0); // Rate{00000} Delay{00} 0
 }
 
-void keyboard_install()
+void keyboard_install(void)
 {
 	//keyboard_rate(); TODO: Fix keyboard rate?
 	irq_install_handler(1, keyboard_handler);
@@ -67,7 +67,7 @@ char keymap[128] = {
 	0, // Alt key
 	' ', // Space bar
 	15, // Caps lock
-	0,    0,    0,   0,   0,   0,   0,   0,   0,   0, // F keys
+	0,    0,    0,	 0,   0,   0,	0,   0,	  0,   0, // F keys
 	0, // Num lock
 	0, // Scroll lock
 	0, // Home key

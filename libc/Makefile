@@ -16,7 +16,8 @@ LD = ccache ../cross/opt/bin/i686-elf-ld
 AR = ccache ../cross/opt/bin/i686-elf-ar
 AS = ccache nasm
 
-CFLAGS = -Wall -Wextra -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -pedantic-errors -Iinc/ -Ofast
+WARNINGS = -Wall -Wextra -pedantic-errors -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wno-long-long
+CFLAGS = $(WARNINGS) -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -Iinc/ -Ofast
 
 ASFLAGS = -f elf32
 
@@ -29,7 +30,7 @@ libc: $(COBJS)
 	@mkdir -p ../build/
 	@$(AR) rcs ../build/libc.a crt0.o $+
 
-libk: CFLAGS += -Dkernel -ffreestanding
+libk: CFLAGS += -Dkernel -ffreestanding $(CFLAGS_EXTRA)
 libk: $(COBJS)
 	@mkdir -p ../build/
 	@$(AR) rcs ../build/libk.a $+

@@ -17,18 +17,18 @@ void mouse_handler()
 {
 	switch (mouse_cycle) {
 	case 0:
-		mouse_byte[0] = inb(0x60);
+		mouse_byte[0] = (char)inb(0x60);
 		if (((mouse_byte[0] >> 3) & 1) == 1)
 			mouse_cycle++;
 		else
 			mouse_cycle = 0;
 		break;
 	case 1:
-		mouse_byte[1] = inb(0x60);
+		mouse_byte[1] = (char)inb(0x60);
 		mouse_cycle++;
 		break;
 	case 2:
-		mouse_byte[2] = inb(0x60);
+		mouse_byte[2] = (char)inb(0x60);
 
 		free(event);
 		event = malloc(sizeof(*event));
@@ -71,13 +71,13 @@ void mouse_write(u8 a_write)
 	outb(0x60, a_write);
 }
 
-char mouse_read()
+u8 mouse_read(void)
 {
 	mouse_wait(0);
 	return inb(0x60);
 }
 
-void mouse_install()
+void mouse_install(void)
 {
 	u8 status;
 

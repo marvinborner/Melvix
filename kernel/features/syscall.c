@@ -43,8 +43,8 @@ void syscall_handler(struct regs *r)
 	case SYS_EXEC: {
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make();
-		r->eax = bin_load(path, proc);
-		int argc = 3; // TODO: Add argc evaluator
+		r->eax = (u32)bin_load(path, proc);
+		u32 argc = 3; // TODO: Add argc evaluator
 		char **argv = malloc(sizeof(*argv) * (argc + 1));
 		argv[0] = (char *)r->ecx;
 		argv[1] = (char *)r->edx;
@@ -54,11 +54,11 @@ void syscall_handler(struct regs *r)
 		((u32 *)proc->regs.useresp)[0] = argc;
 		((u32 *)proc->regs.useresp)[1] = (u32)argv;
 		if (r->eax)
-			proc_exit(proc, r->eax);
+			proc_exit(proc, (int)r->eax);
 		break;
 	}
 	case SYS_EXIT: {
-		proc_exit(proc_current(), r->ebx);
+		proc_exit(proc_current(), (int)r->ebx);
 		break;
 	}
 	case SYS_YIELD: {
@@ -98,7 +98,7 @@ void syscall_handler(struct regs *r)
 	}
 }
 
-void syscall_init()
+void syscall_init(void)
 {
 	idt_set_gate(0x80, (u32)isr128, 0x08, 0x8E);
 	isr_install_handler(0x80, syscall_handler);

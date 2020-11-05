@@ -9,7 +9,7 @@
 #include <rtl8139.h>
 #include <str.h>
 
-static u32 ip_addr = 0x0f02000a;
+static u32 current_ip_addr = 0x0f02000a;
 static u32 gateway_addr = 0x0202000a;
 static u8 gateway_mac[6] = { 0 };
 
@@ -23,12 +23,12 @@ u16 ip_calculate_checksum(struct ip_packet *packet)
 	u16 *array = (u16 *)packet;
 	u32 sum = 0;
 	for (int i = 0; i < array_size; i++) {
-		sum += htons(array[i]);
+		sum += (u32)htons(array[i]);
 	}
 	u32 carry = sum >> 16;
 	sum = sum & 0x0000ffff;
 	sum = sum + carry;
-	u16 ret = ~sum;
+	u16 ret = (u16)~sum;
 	return ret;
 }
 
@@ -39,26 +39,26 @@ u16 tcp_calculate_checksum(struct tcp_packet *packet, struct tcp_pseudo_header *
 	u16 *s = (u16 *)header;
 
 	// TODO: Checksums for options?
-	for (int i = 0; i < 6; ++i) {
-		sum += ntohs(s[i]);
+	for (int i = 0; i < 6; i++) {
+		sum += (u32)ntohs(s[i]);
 		if (sum > 0xffff) {
 			sum = (sum >> 16) + (sum & 0xffff);
 		}
 	}
 
 	s = (u16 *)packet;
-	for (int i = 0; i < 10; ++i) {
-		sum += ntohs(s[i]);
+	for (int i = 0; i < 10; i++) {
+		sum += (u32)ntohs(s[i]);
 		if (sum > 0xffff) {
 			sum = (sum >> 16) + (sum & 0xffff);
 		}
 	}
 
-	u16 d_words = len / 2;
+	u16 d_words = (u16)(len / 2);
 
 	s = (u16 *)data;
-	for (unsigned int i = 0; i < d_words; ++i) {
-		sum += ntohs(s[i]);
+	for (u32 i = 0; i < d_words; ++i) {
+		sum += (u32)ntohs(s[i]);
 		if (sum > 0xffff) {
 			sum = (sum >> 16) + (sum & 0xffff);
 		}
@@ -72,7 +72,7 @@ u16 tcp_calculate_checksum(struct tcp_packet *packet, struct tcp_pseudo_header *
 
 		u16 *f = (u16 *)tmp;
 
-		sum += ntohs(f[0]);
+		sum += (u32)ntohs(f[0]);
 		if (sum > 0xffff) {
 			sum = (sum >> 16) + (sum & 0xffff);
 		}
@@ -92,7 +92,7 @@ u16 icmp_calculate_checksum(struct icmp_packet *packet)
 	if (sum > 0xffff)
 		sum = (sum >> 16) + (sum & 0xffff);
 
-	return ~sum;
+	return (u16)~sum;
 }
 
 void *dhcp_get_options(struct dhcp_packet *packet, u8 type)
@@ -118,12 +118,12 @@ void *dhcp_get_options(struct dhcp_packet *packet, u8 type)
 void ethernet_send_packet(u8 *dst, u8 *data, int len, int prot)
 {
 	print("Ethernet send packet\n");
-	struct ethernet_packet *packet = malloc(sizeof(*packet) + len);
+	struct ethernet_packet *packet = malloc(sizeof(*packet) + (u32)len);
 	memcpy(packet->src, rtl8139_get_mac(), 6);
 	memcpy(packet->dst, dst, 6);
-	memcpy(packet->data, data, len);
-	packet->type = htons(prot);
-	rtl8139_send_packet(packet, sizeof(*packet) + len);
+	memcpy(packet->data, data, (u32)len);
+	packet->type = (u16)htons(prot);
+	rtl8139_send_packet(packet, sizeof(*packet) + (u32)len);
 	free(packet);
 }
 
@@ -134,10 +134,10 @@ void arp_send_packet(u8 *dst_mac, u32 dst_protocol_addr, u8 opcode)
 	struct arp_packet *packet = malloc(sizeof(*packet));
 
 	memcpy(packet->src_mac, rtl8139_get_mac(), 6);
-	packet->src_protocol_addr = ip_addr;
+	packet->src_protocol_addr = current_ip_addr;
 	memcpy(packet->dst_mac, dst_mac, 6);
 	packet->dst_protocol_addr = dst_protocol_addr;
-	packet->opcode = htons(opcode);
+	packet->opcode = (u16)htons(opcode);
 	packet->hardware_addr_len = 6;
 	packet->protocol_addr_len = 4;
 	packet->hardware_type = htons(HARDWARE_TYPE_ETHERNET);
@@ -148,23 +148,23 @@ void arp_send_packet(u8 *dst_mac, u32 dst_protocol_addr, u8 opcode)
 }
 
 int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr);
-void ip_send_packet(u32 dst, void *data, int len, int prot)
+void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 {
 	print("IP send packet\n");
-	struct ip_packet *packet = malloc(sizeof(*packet) + len);
+	struct ip_packet *packet = malloc(sizeof(*packet) + (u32)len);
 	memset(packet, 0, sizeof(*packet));
 	packet->version_ihl = ((0x4 << 4) | (0x5 << 0));
-	packet->length = sizeof(*packet) + len;
+	packet->length = (u16)sizeof(*packet) + (u16)len;
 	packet->id = htons(1); // TODO: IP fragmentation
 	packet->ttl = 64;
 	packet->protocol = prot;
-	packet->src = ip_addr;
+	packet->src = current_ip_addr;
 	packet->dst = dst;
-	packet->length = htons(sizeof(*packet) + len);
-	packet->checksum = htons(ip_calculate_checksum(packet));
+	packet->length = (u16)htons(sizeof(*packet) + (u32)len);
+	packet->checksum = (u16)htons(ip_calculate_checksum(packet));
 
 	if (data)
-		memcpy(packet->data, data, len);
+		memcpy(packet->data, data, (u32)len);
 
 	u8 dst_mac[6];
 
@@ -190,18 +190,18 @@ void ip_send_packet(u32 dst, void *data, int len, int prot)
 void udp_send_packet(u32 dst, u16 src_port, u16 dst_port, void *data, int len)
 {
 	print("UDP send packet\n");
-	int length = sizeof(struct udp_packet) + len;
+	u32 length = sizeof(struct udp_packet) + (u32)len;
 	struct udp_packet *packet = malloc(length);
 	memset(packet, 0, sizeof(*packet));
-	packet->src_port = htons(src_port);
-	packet->dst_port = htons(dst_port);
-	packet->length = htons(length);
+	packet->src_port = (u16)htons(src_port);
+	packet->dst_port = (u16)htons(dst_port);
+	packet->length = (u16)htons(length);
 	packet->checksum = 0; // Optional
 
 	if (data)
-		memcpy(packet->data, data, len);
+		memcpy(packet->data, data, (u32)len);
 
-	ip_send_packet(dst, packet, length, IP_PROT_UDP);
+	ip_send_packet(dst, packet, (int)length, IP_PROT_UDP);
 	free(packet);
 }
 
@@ -209,14 +209,14 @@ u32 seq_no, ack_no = 0; // TODO: Per socket
 void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data, int len)
 {
 	print("TCP send packet\n");
-	int length = sizeof(struct tcp_packet) + len;
+	u32 length = sizeof(struct tcp_packet) + (u32)len;
 	struct tcp_packet *packet = malloc(length);
 	memset(packet, 0, sizeof(*packet));
-	packet->src_port = htons(src_port);
-	packet->dst_port = htons(dst_port);
+	packet->src_port = (u16)htons(src_port);
+	packet->dst_port = (u16)htons(dst_port);
 	packet->seq_number = htonl(seq_no);
 	packet->ack_number = flags & TCP_FLAG_ACK ? htonl(ack_no) : 0;
-	packet->flags = htons(0x5000 ^ (flags & 0xff));
+	packet->flags = (u16)htons(0x5000 ^ (flags & 0xff));
 	packet->window_size = htons(1548 - 54);
 	packet->urgent = 0;
 	packet->checksum = 0; // Later
@@ -224,28 +224,28 @@ void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data,
 	if ((flags & 0xff) == TCP_FLAG_SYN)
 		seq_no++;
 	else
-		seq_no += len;
+		seq_no += (u32)len;
 
 	if (data)
-		memcpy(packet->data, data, len);
+		memcpy(packet->data, data, (u32)len);
 
 	struct tcp_pseudo_header checksum_hd = {
-		.src = ip_addr,
+		.src = current_ip_addr,
 		.dst = dst,
 		.zeros = 0,
 		.protocol = 6,
-		.tcp_len = htons(length),
+		.tcp_len = (u16)htons(length),
 	};
 	u16 checksum = tcp_calculate_checksum(packet, &checksum_hd, data,
-					      length - (htons(packet->flags) >> 12) * 4);
-	packet->checksum = htons(checksum);
+					      length - ((u32)htons(packet->flags) >> 12) * 4);
+	packet->checksum = (u16)htons(checksum);
 
-	ip_send_packet(dst, packet, length, IP_PROT_TCP);
+	ip_send_packet(dst, packet, (int)length, IP_PROT_TCP);
 	free(packet);
 }
 
 void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type);
-void dhcp_request()
+void dhcp_request(void)
 {
 	u32 dst = 0xffffffff;
 	struct dhcp_packet *packet = malloc(sizeof(*packet));
@@ -282,8 +282,8 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 			print("DHCP offer\n");
 			dhcp_request();
 		} else if (*type == 5) { // ACK
-			ip_addr = packet->your_ip;
-			printf("ACK! New IP: %x\n", ip_addr);
+			current_ip_addr = packet->your_ip;
+			printf("ACK! New IP: %x\n", current_ip_addr);
 		}
 		free(type);
 	}
@@ -292,8 +292,8 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 {
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
-	int data_length = len - (htons(packet->flags) >> 12) * 4;
-	u16 flags = ntohs(packet->flags);
+	u32 data_length = (u32)len - ((u32)htons(packet->flags) >> 12) * 4;
+	u16 flags = (u16)ntohs(packet->flags);
 	printf("%b\n", flags);
 
 	if (seq_no != ntohl(packet->ack_number)) {
@@ -345,7 +345,6 @@ void udp_handle_packet(struct udp_packet *packet)
 
 void ip_handle_packet(struct ip_packet *packet, int len)
 {
-	(void)len;
 	switch (packet->protocol) {
 	case IP_PROT_ICMP:
 		print("ICMP Packet!\n");
@@ -375,7 +374,7 @@ void arp_handle_packet(struct arp_packet *packet, int len)
 	u32 dst_protocol_addr = packet->src_protocol_addr;
 	if (ntohs(packet->opcode) == ARP_REQUEST) {
 		print("Got ARP request\n");
-		if (packet->dst_protocol_addr == ip_addr) {
+		if (packet->dst_protocol_addr == current_ip_addr) {
 			print("Returning ARP request\n");
 			arp_send_packet(dst_mac, dst_protocol_addr, ARP_REPLY);
 		}
@@ -397,7 +396,7 @@ void arp_handle_packet(struct arp_packet *packet, int len)
 void ethernet_handle_packet(struct ethernet_packet *packet, int len)
 {
 	void *data = packet->data;
-	int data_len = len - sizeof(*packet);
+	int data_len = len - (int)sizeof(*packet);
 	if (ntohs(packet->type) == ETHERNET_TYPE_ARP) {
 		print("ARP PACKET\n");
 		arp_handle_packet(data, data_len);
@@ -440,7 +439,7 @@ void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type)
 	*(options++) = 0xff;
 }
 
-void dhcp_discover()
+void dhcp_discover(void)
 {
 	print("DHCP discover\n");
 	u32 dst_ip = 0xffffffff;
@@ -480,7 +479,7 @@ int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr)
  * Install
  */
 
-void net_install()
+void net_install(void)
 {
 	if (rtl8139_install()) {
 		sti();

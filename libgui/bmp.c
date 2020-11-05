@@ -6,7 +6,7 @@
 #include <print.h>
 #include <sys.h>
 
-struct bmp *bmp_load(char *path)
+struct bmp *bmp_load(const char *path)
 {
 	void *buf = read(path);
 	if (!buf)

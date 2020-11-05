@@ -9,12 +9,12 @@
 #include <print.h>
 #include <str.h>
 
-void *buffer_read(int block)
+void *buffer_read(u32 block)
 {
 	return ide_read(malloc(BLOCK_SIZE), block);
 }
 
-struct superblock *get_superblock()
+struct superblock *get_superblock(void)
 {
 	struct superblock *sb = buffer_read(EXT2_SUPER);
 	if (sb->magic != EXT2_MAGIC)
@@ -22,21 +22,21 @@ struct superblock *get_superblock()
 	return sb;
 }
 
-struct bgd *get_bgd()
+struct bgd *get_bgd(void)
 {
 	return buffer_read(EXT2_SUPER + 1);
 }
 
-struct inode *get_inode(int i)
+struct inode *get_inode(u32 i)
 {
 	struct superblock *s = get_superblock();
 	assert(s);
 	struct bgd *b = get_bgd();
 	assert(b);
 
-	int block_group = (i - 1) / s->inodes_per_group;
-	int index = (i - 1) % s->inodes_per_group;
-	int block = (index * INODE_SIZE) / BLOCK_SIZE;
+	u32 block_group = (i - 1) / s->inodes_per_group;
+	u32 index = (i - 1) % s->inodes_per_group;
+	u32 block = (index * INODE_SIZE) / BLOCK_SIZE;
 	b += block_group;
 
 	u32 *data = buffer_read(b->inode_table + block);
@@ -57,7 +57,7 @@ void *read_inode(struct inode *in)
 	if (!in)
 		return NULL;
 
-	int num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
+	u32 num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
 
 	assert(num_blocks != 0);
 	if (!num_blocks)
@@ -68,13 +68,12 @@ void *read_inode(struct inode *in)
 	printf("Loading %dKiB\n", sz >> 10);
 	assert(buf != NULL);
 
-	int indirect = 0;
-
-	int blocknum = 0;
+	u32 indirect = 0;
+	u32 blocknum = 0;
 	char *data = 0;
 	// TODO: Support triply indirect pointers
 	// TODO: This can be heavily optimized by saving the indirect block lists
-	for (int i = 0; i < num_blocks; i++) {
+	for (u32 i = 0; i < num_blocks; i++) {
 		if (i < 12) {
 			blocknum = in->block[i];
 			data = buffer_read(blocknum);
@@ -130,10 +129,10 @@ void *read_file(char *path)
 	return read_inode(get_inode(inode));
 }
 
-int find_inode(const char *name, int dir_inode)
+u32 find_inode(const char *name, u32 dir_inode)
 {
 	if (!dir_inode)
-		return -1;
+		return (unsigned)-1;
 
 	struct inode *i = get_inode(dir_inode);
 
@@ -160,10 +159,10 @@ int find_inode(const char *name, int dir_inode)
 
 	} while (sum < (1024 * i->blocks / 2));
 	free(buf);
-	return -1;
+	return (unsigned)-1;
 }
 
-void ls_root()
+void ls_root(void)
 {
 	struct inode *i = get_inode(2);
 
@@ -176,11 +175,11 @@ void ls_root()
 
 	struct dirent *d = (struct dirent *)buf;
 
+	u16 calc = 0;
 	int sum = 0;
-	int calc = 0;
 	printf("\nRoot directory:\n");
 	do {
-		calc = (sizeof(struct dirent) + d->name_len + 4) & ~0x3;
+		calc = (sizeof(struct dirent) + d->name_len + 4) & (u32)~0x3;
 		sum += d->total_len;
 		d->name[d->name_len] = '\0';
 		printf("/%s\n", d->name);

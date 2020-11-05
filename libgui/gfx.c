@@ -28,7 +28,7 @@ static void load_font(enum font_type font_type)
 	if (fonts[font_type])
 		return;
 
-	char *path = NULL;
+	const char *path = NULL;
 
 	switch (font_type) {
 	case FONT_8:
@@ -111,7 +111,7 @@ void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 
 	/* gfx_redraw(); */
 }
 
-void gfx_load_image(struct context *ctx, char *path, int x, int y)
+void gfx_load_image(struct context *ctx, const char *path, int x, int y)
 {
 	// TODO: Support x, y
 	struct bmp *bmp = bmp_load(path);
@@ -130,7 +130,7 @@ void gfx_load_image(struct context *ctx, char *path, int x, int y)
 	/* gfx_redraw(); */
 }
 
-void gfx_load_wallpaper(struct context *ctx, char *path)
+void gfx_load_wallpaper(struct context *ctx, const char *path)
 {
 	gfx_load_image(ctx, path, 0, 0);
 }

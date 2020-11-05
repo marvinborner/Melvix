@@ -16,7 +16,7 @@ int ide_stat()
 
 void ide_wait()
 {
-	u8 stat = 0;
+	int stat = 0;
 	do
 		stat = ide_stat();
 	while ((stat & IDE_BUSY) != 0);
@@ -25,10 +25,10 @@ void ide_wait()
 // TODO: Fix strange ide_read bugs
 void *ide_read(void *b, u32 block)
 {
-	int sector_count = BLOCK_SIZE / SECTOR_SIZE; // 2
-	int sector = block * sector_count;
+	u8 sector_count = BLOCK_SIZE / SECTOR_SIZE; // 2
+	u32 sector = block * sector_count;
 
-	outb(IDE_IO + IDE_SECTOR_COUNT, sector_count); // Number of sectors
+	outb(IDE_IO + IDE_SECTOR_COUNT, (u8)sector_count); // Number of sectors
 
 	outb(IDE_IO + IDE_LOW, LBA_LOW(sector));
 	outb(IDE_IO + IDE_MID, LBA_MID(sector));
