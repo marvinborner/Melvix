@@ -166,10 +166,9 @@ void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 	if (data)
 		memcpy(packet->data, data, (u32)len);
 
-	u8 dst_mac[6];
-
 	int arp_sent = 3;
 	u8 zero_hardware_addr[] = { 0, 0, 0, 0, 0, 0 };
+	u8 dst_mac[6];
 	sti();
 	while (!arp_lookup(dst_mac, dst)) {
 		if (arp_sent) {
@@ -217,14 +216,14 @@ void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data,
 	packet->seq_number = htonl(seq_no);
 	packet->ack_number = flags & TCP_FLAG_ACK ? htonl(ack_no) : 0;
 	packet->flags = (u16)htons(0x5000 ^ (flags & 0xff));
-	packet->window_size = htons(1548 - 54);
+	packet->window_size = htons(1024);
 	packet->urgent = 0;
 	packet->checksum = 0; // Later
 
-	if ((flags & 0xff) == TCP_FLAG_SYN)
-		seq_no++;
-	else
-		seq_no += (u32)len;
+	/* if ((flags & 0xff) == TCP_FLAG_SYN) */
+	/* 	seq_no++; */
+	/* else */
+	/* 	seq_no += (u32)len; */
 
 	if (data)
 		memcpy(packet->data, data, (u32)len);
@@ -292,45 +291,34 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 {
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
-	u32 data_length = (u32)len - ((u32)htons(packet->flags) >> 12) * 4;
+	u32 data_length = (u32)len - (htons(packet->flags) >> 12) * 4;
 	u16 flags = (u16)ntohs(packet->flags);
-	printf("%b\n", flags);
+	printf("%d\n", htonl(packet->seq_number));
 
-	if (seq_no != ntohl(packet->ack_number)) {
-		printf("Dropping packet seq_no: %d\n", seq_no);
-		return;
-	}
+	/* if (seq_no != ntohl(packet->ack_number)) { */
+	/* 	printf("Dropping packet seq_no: %d\n", seq_no); */
+	/* 	return; */
+	/* } */
 
-	if ((htons(packet->flags) & TCP_FLAG_SYN) && (htons(packet->flags) & TCP_FLAG_ACK)) {
-		ack_no = ntohl(packet->seq_number) + data_length + 1;
-		tcp_send_packet(dst, packet->dst_port, packet->src_port, TCP_FLAG_ACK, NULL, 0);
-	} else if (htons(packet->flags) & TCP_FLAG_RES) {
-		print("Socket reset!\n");
-		return;
-	} else if (data_length == 0) {
-		if (htons(packet->flags) & TCP_FLAG_FIN) {
-			print("Finished, closing socket\n");
-			ack_no = ntohl(packet->seq_number) + data_length + 1;
-			tcp_send_packet(dst, packet->dst_port, packet->src_port,
-					TCP_FLAG_ACK | TCP_FLAG_FIN, NULL, 0);
-		}
-		return;
-	}
-
-	ack_no = ntohl(packet->seq_number) + data_length;
-	if ((htons(packet->flags) & TCP_FLAG_SYN) && (htons(packet->flags) & TCP_FLAG_ACK) &&
-	    data_length == 0)
-		ack_no++;
-	ack_no = ntohl(packet->seq_number) + data_length;
-
-	tcp_send_packet(dst, packet->dst_port, packet->src_port, TCP_FLAG_ACK, NULL, 0);
-
-	// TODO: Look at the spec again
-	if (htons(packet->flags) & TCP_FLAG_FIN) {
+	/* ack_no = ntohl(packet->seq_number) + data_length; */
+	if (flags & TCP_FLAG_SYN) {
+		ack_no = ntohl(packet->seq_number) + 1;
+		seq_no = 1000;
+		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port),
+				TCP_FLAG_SYN | TCP_FLAG_ACK, NULL, 0);
+	} else if (flags & TCP_FLAG_FIN) {
 		print("Finished, closing socket\n");
-		ack_no = ntohl(packet->seq_number) + data_length + 1;
-		tcp_send_packet(dst, packet->dst_port, packet->src_port,
-				TCP_FLAG_ACK | TCP_FLAG_FIN, NULL, 0);
+		/* ack_no = ntohl(packet->seq_number) + 1; */
+		/* tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port), */
+		/* 		TCP_FLAG_ACK | TCP_FLAG_FIN, NULL, 0); */
+	} else if (flags & TCP_FLAG_ACK) {
+		print("ACK, sending back\n");
+		ack_no += 1;
+		seq_no += 1;
+		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port), TCP_FLAG_ACK,
+				NULL, 0);
+		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port),
+				TCP_FLAG_PSH | TCP_FLAG_ACK, NULL, 42);
 	}
 }
 
@@ -363,9 +351,8 @@ void ip_handle_packet(struct ip_packet *packet, int len)
 	}
 }
 
-static struct arp_table_entry arp_table[512];
-static int arp_table_size;
-static int arp_table_curr;
+static struct arp_table_entry arp_table[512] = { 0 };
+static int arp_table_size = 0;
 void arp_handle_packet(struct arp_packet *packet, int len)
 {
 	(void)len;
@@ -385,12 +372,12 @@ void arp_handle_packet(struct arp_packet *packet, int len)
 	}
 
 	// Store
-	arp_table[arp_table_curr].ip_addr = dst_protocol_addr;
-	memcpy(&arp_table[arp_table_curr].mac_addr, dst_mac, 6);
+	arp_table[arp_table_size].ip_addr = dst_protocol_addr;
+	memcpy(&arp_table[arp_table_size].mac_addr, dst_mac, 6);
 	if (arp_table_size < 512)
 		arp_table_size++;
-	if (arp_table_curr >= 512)
-		arp_table_curr = 0;
+	else
+		arp_table_size = 0;
 }
 
 void ethernet_handle_packet(struct ethernet_packet *packet, int len)
@@ -456,17 +443,17 @@ void dhcp_discover(void)
 
 void arp_lookup_add(u8 *ret_hardware_addr, u32 ip_addr)
 {
-	arp_table[arp_table_curr].ip_addr = ip_addr;
-	memcpy(&arp_table[arp_table_curr].mac_addr, ret_hardware_addr, 6);
+	arp_table[arp_table_size].ip_addr = ip_addr;
+	memcpy(&arp_table[arp_table_size].mac_addr, ret_hardware_addr, 6);
 	if (arp_table_size < 512)
 		arp_table_size++;
-	if (arp_table_curr >= 512)
-		arp_table_curr = 0;
+	else
+		arp_table_size = 0;
 }
 
 int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr)
 {
-	for (int i = 0; i < 512; i++) {
+	for (int i = 0; i < arp_table_size; i++) {
 		if (arp_table[i].ip_addr == ip_addr) {
 			memcpy(ret_hardware_addr, &arp_table[i].mac_addr, 6);
 			return 1;
