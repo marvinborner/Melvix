@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <assert.h>
 #include <cpu.h>
 #include <def.h>
 #include <mem.h>
@@ -204,7 +205,7 @@ void udp_send_packet(u32 dst, u16 src_port, u16 dst_port, void *data, int len)
 	free(packet);
 }
 
-u32 seq_no, ack_no = 0; // TODO: Per socket
+static u32 seq_no, ack_no, tcp_state = 0; // TODO: Per socket
 void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data, int len)
 {
 	print("TCP send packet\n");
@@ -219,11 +220,6 @@ void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data,
 	packet->window_size = htons(1024);
 	packet->urgent = 0;
 	packet->checksum = 0; // Later
-
-	/* if ((flags & 0xff) == TCP_FLAG_SYN) */
-	/* 	seq_no++; */
-	/* else */
-	/* 	seq_no += (u32)len; */
 
 	if (data)
 		memcpy(packet->data, data, (u32)len);
@@ -288,37 +284,62 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 	}
 }
 
+// enum tcp_state { TCP_LISTEN, TCP_SYN_SENT, TCP_SYN_RECIEVED, TCP_ESTABLISHED, TCP_FIN_WAIT_1, TCP_FIN_WAIT_2, TCP_CLOSE_WAIT, TCP_CLOSING, TCP_LAST_ACK, TCP_TIME_WAIT, TCP_CLOSED };
+// TODO: Fix TCP retransmission (dropped packages; probably race condition)
+//#define test_http "HTTP/1.1 200"
+#define test_http "HTTP/1.2 200\nContent-Length: 14\nConnection: close\n\n<h1>Hallo</h1>"
 void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 {
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
 	u32 data_length = (u32)len - (htons(packet->flags) >> 12) * 4;
 	u16 flags = (u16)ntohs(packet->flags);
-	printf("%d\n", htonl(packet->seq_number));
 
-	/* if (seq_no != ntohl(packet->ack_number)) { */
-	/* 	printf("Dropping packet seq_no: %d\n", seq_no); */
-	/* 	return; */
-	/* } */
+	u32 recv_ack = ntohl(packet->ack_number);
+	u32 recv_seq = ntohl(packet->seq_number);
 
-	/* ack_no = ntohl(packet->seq_number) + data_length; */
-	if (flags & TCP_FLAG_SYN) {
-		ack_no = ntohl(packet->seq_number) + 1;
+	if (tcp_state == 0 && (flags & 0xff) == TCP_FLAG_SYN) {
+		ack_no = recv_seq + 1;
 		seq_no = 1000;
 		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port),
 				TCP_FLAG_SYN | TCP_FLAG_ACK, NULL, 0);
-	} else if (flags & TCP_FLAG_FIN) {
-		print("Finished, closing socket\n");
-		/* ack_no = ntohl(packet->seq_number) + 1; */
-		/* tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port), */
-		/* 		TCP_FLAG_ACK | TCP_FLAG_FIN, NULL, 0); */
-	} else if (flags & TCP_FLAG_ACK) {
-		print("ACK, sending back\n");
-		ack_no += 1;
-		seq_no += 1;
+		tcp_state++;
+		return;
+	} else if (tcp_state == 1 && (flags & 0xff) == TCP_FLAG_ACK) {
+		/* assert(recv_ack == seq_no + 1); */
+
+		tcp_state++;
+		return;
+	} else if (tcp_state == 2 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
+		/* assert(recv_ack == seq_no + 1); */
+
+		/* for (u32 i = 0; i < data_length; ++i) { */
+		/* 	if (packet->data[i]) */
+		/* 		printf("%c", packet->data[i]); */
+		/* } */
+
+		ack_no += data_length;
+		seq_no++;
+
 		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port), TCP_FLAG_ACK,
 				NULL, 0);
 		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port),
-				TCP_FLAG_PSH | TCP_FLAG_ACK, NULL, 42);
+				TCP_FLAG_PSH | TCP_FLAG_ACK, strdup(test_http), strlen(test_http));
+		return;
+	} else if (tcp_state == 2 && (flags & 0xff) == (TCP_FLAG_ACK)) {
+		ack_no = recv_seq + 1;
+		seq_no = recv_ack;
+
+		tcp_state = 3;
+		return;
+	} else if (tcp_state == 3 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
+		ack_no = recv_seq + 1;
+		seq_no = recv_ack;
+
+		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port),
+				TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
+
+		tcp_state = 0;
+		return;
 	}
 }
 
@@ -333,6 +354,7 @@ void udp_handle_packet(struct udp_packet *packet)
 
 void ip_handle_packet(struct ip_packet *packet, int len)
 {
+	(void)len;
 	switch (packet->protocol) {
 	case IP_PROT_ICMP:
 		print("ICMP Packet!\n");
@@ -340,7 +362,8 @@ void ip_handle_packet(struct ip_packet *packet, int len)
 		break;
 	case IP_PROT_TCP:
 		print("TCP Packet!\n");
-		tcp_handle_packet((struct tcp_packet *)packet->data, packet->src, len);
+		tcp_handle_packet((struct tcp_packet *)packet->data, packet->src,
+				  ntohs(packet->length) - sizeof(*packet));
 		break;
 	case IP_PROT_UDP:
 		print("UDP Packet!\n");
@@ -365,10 +388,12 @@ void arp_handle_packet(struct arp_packet *packet, int len)
 			print("Returning ARP request\n");
 			arp_send_packet(dst_mac, dst_protocol_addr, ARP_REPLY);
 		}
+		return;
 	} else if (ntohs(packet->opcode) == ARP_REPLY) {
 		print("Got ARP reply\n");
 	} else {
 		printf("Got unknown ARP, opcode = %d\n", packet->opcode);
+		return;
 	}
 
 	// Store
