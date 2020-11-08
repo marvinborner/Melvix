@@ -29,6 +29,10 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 -   Small size (< 100KiB)
 -   Compiles with `-Wall -Wextra -pedantic-errors -std=c99 -Ofast`
 
+## Screenshot
+
+![Melvix screenshot](screenshot.png?raw=true "Screenshot")
+
 ## Build/Test
 
 -   Use any system running GNU/Linux or OpenBSD
