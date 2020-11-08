@@ -285,7 +285,6 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 }
 
 // enum tcp_state { TCP_LISTEN, TCP_SYN_SENT, TCP_SYN_RECIEVED, TCP_ESTABLISHED, TCP_FIN_WAIT_1, TCP_FIN_WAIT_2, TCP_CLOSE_WAIT, TCP_CLOSING, TCP_LAST_ACK, TCP_TIME_WAIT, TCP_CLOSED };
-// TODO: Fix TCP retransmission (dropped packages; probably race condition)
 //#define test_http "HTTP/1.1 200"
 #define test_http "HTTP/1.2 200\nContent-Length: 14\nConnection: close\n\n<h1>Hallo</h1>"
 void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
