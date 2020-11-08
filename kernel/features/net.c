@@ -11,8 +11,8 @@
 #include <rtl8139.h>
 #include <str.h>
 
-static u32 current_ip_addr = 0x0f02000a;
-static u32 gateway_addr = 0x0202000a;
+static u32 current_ip_addr = ip(10, 0, 2, 15);
+static u32 gateway_addr = ip(10, 0, 2, 2);
 static u8 gateway_mac[6] = { 0 };
 
 static struct list *tcp_sockets = NULL;
@@ -50,6 +50,12 @@ struct socket *socket_new(struct list *list)
 /**
  * Helper functions
  */
+
+u16 next_port(void)
+{
+	static u16 port = 49152;
+	return port++;
+}
 
 u16 ip_calculate_checksum(struct ip_packet *packet)
 {
@@ -168,9 +174,9 @@ void arp_send_packet(u8 *dst_mac, u32 dst_protocol_addr, u8 opcode)
 	struct arp_packet *packet = malloc(sizeof(*packet));
 
 	memcpy(packet->src_mac, rtl8139_get_mac(), 6);
-	packet->src_protocol_addr = current_ip_addr;
+	packet->src_protocol_addr = htonl(current_ip_addr);
 	memcpy(packet->dst_mac, dst_mac, 6);
-	packet->dst_protocol_addr = dst_protocol_addr;
+	packet->dst_protocol_addr = htonl(dst_protocol_addr);
 	packet->opcode = (u16)htons(opcode);
 	packet->hardware_addr_len = 6;
 	packet->protocol_addr_len = 4;
@@ -192,8 +198,8 @@ void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 	packet->id = htons(1); // TODO: IP fragmentation
 	packet->ttl = 64;
 	packet->protocol = prot;
-	packet->src = current_ip_addr;
-	packet->dst = dst;
+	packet->src = htonl(current_ip_addr);
+	packet->dst = htonl(dst);
 	packet->length = (u16)htons(sizeof(*packet) + (u32)len);
 	packet->checksum = (u16)htons(ip_calculate_checksum(packet));
 
@@ -258,8 +264,8 @@ void tcp_send_packet(struct socket *socket, u16 flags, void *data, int len)
 		memcpy(packet->data, data, (u32)len);
 
 	struct tcp_pseudo_header checksum_hd = {
-		.src = current_ip_addr,
-		.dst = socket->ip_addr,
+		.src = htonl(current_ip_addr),
+		.dst = htonl(socket->ip_addr),
 		.zeros = 0,
 		.protocol = 6,
 		.tcp_len = (u16)htons(length),
@@ -310,7 +316,7 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 			print("DHCP offer\n");
 			dhcp_request();
 		} else if (*type == 5) { // ACK
-			current_ip_addr = packet->your_ip;
+			current_ip_addr = htonl(packet->your_ip);
 			printf("ACK! New IP: %x\n", current_ip_addr);
 		}
 		free(type);
@@ -318,7 +324,8 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 }
 
 // enum tcp_state { TCP_LISTEN, TCP_SYN_SENT, TCP_SYN_RECIEVED, TCP_ESTABLISHED, TCP_FIN_WAIT_1, TCP_FIN_WAIT_2, TCP_CLOSE_WAIT, TCP_CLOSING, TCP_LAST_ACK, TCP_TIME_WAIT, TCP_CLOSED };
-#define test_http "HTTP/1.2 200\nContent-Length: 14\nConnection: close\n\n<h1>Hallo</h1>"
+#define http_res "HTTP/1.1 200\r\nContent-Length: 14\r\nConnection: close\r\n\r\n<h1>Hallo</h1>"
+#define http_req "GET / HTTP/1.1\r\nHost: localhost:80\r\n\r\n"
 void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 {
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
@@ -336,6 +343,7 @@ void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 	u32 recv_ack = ntohl(packet->ack_number);
 	u32 recv_seq = ntohl(packet->seq_number);
 
+	// Serve
 	if (tcp->state == 0 && (flags & 0xff) == TCP_FLAG_SYN) {
 		socket->ip_addr = dst;
 		socket->dst_port = ntohs(packet->src_port);
@@ -361,16 +369,62 @@ void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->seq_no++;
 
 		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
-		tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, strdup(test_http),
-				strlen(test_http));
+		/* tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, strdup(http_res), */
+		/* 		strlen(http_res)); */
+
+		tcp->state++;
 		return;
-	} else if (tcp->state == 2 && (flags & 0xff) == (TCP_FLAG_ACK)) {
+	} else if (tcp->state == 3 && (flags & 0xff) == TCP_FLAG_ACK) {
 		tcp->ack_no = recv_seq + 1;
 		tcp->seq_no = recv_ack;
 
-		tcp->state = 3;
+		/* tcp->state++; */
 		return;
-	} else if (tcp->state == 3 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
+	} else if (tcp->state == 4 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
+		tcp->ack_no = recv_seq + 1;
+		tcp->seq_no = recv_ack;
+
+		tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
+
+		tcp->state = 0;
+		return;
+	}
+
+	// Receive
+	if (tcp->state == 0 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_SYN)) {
+		tcp->ack_no = recv_seq + 1;
+		tcp->seq_no = recv_ack;
+
+		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
+		/* tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, strdup(http_req), */
+		/* 		strlen(http_req)); */
+
+		/* tcp->ack_no += strlen(http_req); */
+
+		print("Setting to 5!\n");
+		tcp->state = 5; // TODO: TCP enum state machine
+		return;
+	} else if (tcp->state == 5 && (flags & 0xff) == TCP_FLAG_ACK) {
+		tcp->ack_no = recv_seq;
+		tcp->seq_no = recv_ack;
+
+		tcp->state++;
+		return;
+	} else if (tcp->state == 6 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
+		for (u32 i = 0; i < data_length; ++i) {
+			if (packet->data[i])
+				printf("%c", packet->data[i]);
+		}
+
+		tcp->ack_no += data_length;
+		tcp->seq_no = recv_seq;
+
+		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
+		tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
+
+		tcp->state++;
+		return;
+	} else if (tcp->state == 5 && (flags & 0xff) == TCP_FLAG_ACK) {
 		tcp->ack_no = recv_seq + 1;
 		tcp->seq_no = recv_ack;
 
@@ -419,10 +473,10 @@ void arp_handle_packet(struct arp_packet *packet, int len)
 	(void)len;
 	u8 dst_mac[6];
 	memcpy(dst_mac, packet->src_mac, 6);
-	u32 dst_protocol_addr = packet->src_protocol_addr;
+	u32 dst_protocol_addr = htonl(packet->src_protocol_addr);
 	if (ntohs(packet->opcode) == ARP_REQUEST) {
 		print("Got ARP request\n");
-		if (packet->dst_protocol_addr == current_ip_addr) {
+		if (htonl(packet->dst_protocol_addr) == current_ip_addr) {
 			print("Returning ARP request\n");
 			arp_send_packet(dst_mac, dst_protocol_addr, ARP_REPLY);
 		}
@@ -526,6 +580,48 @@ int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr)
 }
 
 /**
+ * Wrappers
+ */
+
+struct socket *net_open(enum socket_type type)
+{
+	struct list *sockets = type == S_TCP ? tcp_sockets : udp_sockets; // TODO
+	struct socket *socket = socket_new(sockets);
+	socket->type = type;
+	return socket;
+}
+
+int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
+{
+	socket->ip_addr = ip_addr;
+	socket->dst_port = dst_port;
+	if (!socket->src_port)
+		socket->src_port = next_port();
+
+	if (socket->type == S_TCP) {
+		socket->prot.tcp.seq_no = 0;
+		socket->prot.tcp.ack_no = 0;
+		socket->prot.tcp.state = 0;
+		tcp_send_packet(socket, TCP_FLAG_SYN, NULL, 0);
+		struct tcp_socket *tcp = &socket->prot.tcp;
+		sti();
+		while (tcp->state != 3 && tcp->state != 5)
+			; // TODO: Timeout
+	} else {
+		return 0;
+	}
+
+	return 1;
+}
+
+void net_send(struct socket *socket, void *data, u32 len)
+{
+	// TODO: UDP socket support
+	tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, data, len);
+	socket->prot.tcp.ack_no += len;
+}
+
+/**
  * Install
  */
 
@@ -540,12 +636,25 @@ void net_install(void)
 		print("Found gateway!\n");
 
 		arp_lookup_add(gateway_mac, 0xffffffff);
+		arp_lookup_add(gateway_mac, ip(10, 0, 0, 33));
 		dhcp_discover();
 	}
 
 	tcp_sockets = list_new();
 	udp_sockets = list_new();
 
-	struct socket *socket = socket_new(tcp_sockets);
-	socket->src_port = 8000;
+	// Request
+	struct socket *socket = net_open(S_TCP);
+	if (net_connect(socket, ip(10, 0, 0, 33), 80))
+		net_send(socket, strdup(http_req), strlen(http_req));
+	else
+		print("Something went wrong!\n");
+
+	// Server // TODO: Serve using sockets
+	/* struct socket *socket2 = net_open(S_TCP); */
+	/* socket2->src_port = 8000; */
+	/* while (socket2->prot.tcp.state != 3) */
+	/* 	; */
+	/* while (socket2->prot.tcp.state == 3) */
+	/* 	net_send(socket2, strdup(http_res), strlen(http_res)); */
 }

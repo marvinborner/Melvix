@@ -6,11 +6,13 @@
 #include <def.h>
 
 #define htonl(l)                                                                                   \
-	((((l)&0xFF) << 24) | (((l)&0xFF00) << 8) | (((l)&0xFF0000) >> 8) |                        \
-	 (((l)&0xFF000000) >> 24))
-#define htons(s) ((((s)&0xFF) << 8) | (((s)&0xFF00) >> 8))
+	((((l)&0xff) << 24) | (((l)&0xff00) << 8) | (((l)&0xff0000) >> 8) |                        \
+	 (((l)&0xff000000) >> 24))
+#define htons(s) ((((s)&0xff) << 8) | (((s)&0xff00) >> 8))
 #define ntohl(l) htonl((l))
 #define ntohs(s) htons((s))
+#define ip(a, b, c, d)                                                                             \
+	((((a)&0xff) << 24) | (((b)&0xff) << 16) | (((c)&0xff) << 8) | (((d)&0xff) << 0))
 
 #define ETHERNET_TYPE_IP4 0x0800
 #define ETHERNET_TYPE_IP6 0x86dd
@@ -143,13 +145,15 @@ struct tcp_socket {
 	u32 state;
 };
 
+// TODO: Use actual socket types (stream etc)
+enum socket_type { S_TCP, S_UDP };
+
 struct socket {
 	u32 ip_addr;
-	u8 mac_addr[6];
 	u32 dst_port;
 	u32 src_port;
 	u32 status;
-	u32 type;
+	enum socket_type type;
 	u32 bytes_available;
 	u32 bytes_read;
 	void *current_packet;
