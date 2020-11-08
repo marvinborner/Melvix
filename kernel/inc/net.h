@@ -137,6 +137,28 @@ struct arp_table_entry {
 	u64 mac_addr;
 };
 
+struct tcp_socket {
+	u32 seq_no;
+	u32 ack_no;
+	u32 state;
+};
+
+struct socket {
+	u32 ip_addr;
+	u8 mac_addr[6];
+	u32 dst_port;
+	u32 src_port;
+	u32 status;
+	u32 type;
+	u32 bytes_available;
+	u32 bytes_read;
+	void *current_packet;
+	union {
+		struct tcp_socket tcp;
+		/* struct udp_socket udp; */
+	} prot;
+};
+
 void ethernet_handle_packet(struct ethernet_packet *packet, int len);
 void net_install(void);
 

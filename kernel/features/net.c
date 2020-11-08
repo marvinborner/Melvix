@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <cpu.h>
 #include <def.h>
+#include <list.h>
 #include <mem.h>
 #include <net.h>
 #include <pci.h>
@@ -13,6 +14,38 @@
 static u32 current_ip_addr = 0x0f02000a;
 static u32 gateway_addr = 0x0202000a;
 static u8 gateway_mac[6] = { 0 };
+
+static struct list *tcp_sockets = NULL;
+static struct list *udp_sockets = NULL;
+
+/**
+ * Socket functions
+ */
+
+struct socket *socket_get(struct list *list, u32 port)
+{
+	if (!list || !list->head || !port)
+		return NULL;
+
+	struct node *iterator = list->head;
+	while (iterator != NULL && iterator->data != NULL) {
+		if (((struct socket *)iterator->data)->src_port == port)
+			return iterator->data;
+		iterator = iterator->next;
+	}
+
+	return NULL;
+}
+
+struct socket *socket_new(struct list *list)
+{
+	struct socket *socket = malloc(sizeof(*socket));
+	memset(socket, 0, sizeof(*socket));
+	if (!list_add(list, socket))
+		return NULL;
+
+	return socket;
+}
 
 /**
  * Helper functions
@@ -205,17 +238,17 @@ void udp_send_packet(u32 dst, u16 src_port, u16 dst_port, void *data, int len)
 	free(packet);
 }
 
-static u32 seq_no, ack_no, tcp_state = 0; // TODO: Per socket
-void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data, int len)
+//void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data, int len)
+void tcp_send_packet(struct socket *socket, u16 flags, void *data, int len)
 {
 	print("TCP send packet\n");
 	u32 length = sizeof(struct tcp_packet) + (u32)len;
 	struct tcp_packet *packet = malloc(length);
 	memset(packet, 0, sizeof(*packet));
-	packet->src_port = (u16)htons(src_port);
-	packet->dst_port = (u16)htons(dst_port);
-	packet->seq_number = htonl(seq_no);
-	packet->ack_number = flags & TCP_FLAG_ACK ? htonl(ack_no) : 0;
+	packet->src_port = (u16)htons(socket->src_port);
+	packet->dst_port = (u16)htons(socket->dst_port);
+	packet->seq_number = htonl(socket->prot.tcp.seq_no);
+	packet->ack_number = flags & TCP_FLAG_ACK ? htonl(socket->prot.tcp.ack_no) : 0;
 	packet->flags = (u16)htons(0x5000 ^ (flags & 0xff));
 	packet->window_size = htons(1024);
 	packet->urgent = 0;
@@ -226,7 +259,7 @@ void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data,
 
 	struct tcp_pseudo_header checksum_hd = {
 		.src = current_ip_addr,
-		.dst = dst,
+		.dst = socket->ip_addr,
 		.zeros = 0,
 		.protocol = 6,
 		.tcp_len = (u16)htons(length),
@@ -235,7 +268,7 @@ void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data,
 					      length - ((u32)htons(packet->flags) >> 12) * 4);
 	packet->checksum = (u16)htons(checksum);
 
-	ip_send_packet(dst, packet, (int)length, IP_PROT_TCP);
+	ip_send_packet(socket->ip_addr, packet, (int)length, IP_PROT_TCP);
 	free(packet);
 }
 
@@ -285,30 +318,38 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 }
 
 // enum tcp_state { TCP_LISTEN, TCP_SYN_SENT, TCP_SYN_RECIEVED, TCP_ESTABLISHED, TCP_FIN_WAIT_1, TCP_FIN_WAIT_2, TCP_CLOSE_WAIT, TCP_CLOSING, TCP_LAST_ACK, TCP_TIME_WAIT, TCP_CLOSED };
-//#define test_http "HTTP/1.1 200"
 #define test_http "HTTP/1.2 200\nContent-Length: 14\nConnection: close\n\n<h1>Hallo</h1>"
 void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 {
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
-	u32 data_length = (u32)len - (htons(packet->flags) >> 12) * 4;
+
+	struct socket *socket = NULL;
+	if (!(socket = socket_get(tcp_sockets, ntohs(packet->dst_port)))) {
+		print("Port isn't mapped!\n");
+		return;
+	}
+	struct tcp_socket *tcp = &socket->prot.tcp;
+
+	u32 data_length = (u32)len - (ntohs(packet->flags) >> 12) * 4;
 	u16 flags = (u16)ntohs(packet->flags);
 
 	u32 recv_ack = ntohl(packet->ack_number);
 	u32 recv_seq = ntohl(packet->seq_number);
 
-	if (tcp_state == 0 && (flags & 0xff) == TCP_FLAG_SYN) {
-		ack_no = recv_seq + 1;
-		seq_no = 1000;
-		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port),
-				TCP_FLAG_SYN | TCP_FLAG_ACK, NULL, 0);
-		tcp_state++;
+	if (tcp->state == 0 && (flags & 0xff) == TCP_FLAG_SYN) {
+		socket->ip_addr = dst;
+		socket->dst_port = ntohs(packet->src_port);
+		tcp->ack_no = recv_seq + 1;
+		tcp->seq_no = 1000;
+		tcp_send_packet(socket, TCP_FLAG_SYN | TCP_FLAG_ACK, NULL, 0);
+		tcp->state++;
 		return;
-	} else if (tcp_state == 1 && (flags & 0xff) == TCP_FLAG_ACK) {
+	} else if (tcp->state == 1 && (flags & 0xff) == TCP_FLAG_ACK) {
 		/* assert(recv_ack == seq_no + 1); */
 
-		tcp_state++;
+		tcp->state++;
 		return;
-	} else if (tcp_state == 2 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
+	} else if (tcp->state == 2 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
 		/* assert(recv_ack == seq_no + 1); */
 
 		/* for (u32 i = 0; i < data_length; ++i) { */
@@ -316,28 +357,26 @@ void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		/* 		printf("%c", packet->data[i]); */
 		/* } */
 
-		ack_no += data_length;
-		seq_no++;
+		tcp->ack_no += data_length;
+		tcp->seq_no++;
 
-		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port), TCP_FLAG_ACK,
-				NULL, 0);
-		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port),
-				TCP_FLAG_PSH | TCP_FLAG_ACK, strdup(test_http), strlen(test_http));
+		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
+		tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, strdup(test_http),
+				strlen(test_http));
 		return;
-	} else if (tcp_state == 2 && (flags & 0xff) == (TCP_FLAG_ACK)) {
-		ack_no = recv_seq + 1;
-		seq_no = recv_ack;
+	} else if (tcp->state == 2 && (flags & 0xff) == (TCP_FLAG_ACK)) {
+		tcp->ack_no = recv_seq + 1;
+		tcp->seq_no = recv_ack;
 
-		tcp_state = 3;
+		tcp->state = 3;
 		return;
-	} else if (tcp_state == 3 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
-		ack_no = recv_seq + 1;
-		seq_no = recv_ack;
+	} else if (tcp->state == 3 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
+		tcp->ack_no = recv_seq + 1;
+		tcp->seq_no = recv_ack;
 
-		tcp_send_packet(dst, ntohs(packet->dst_port), ntohs(packet->src_port),
-				TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
+		tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
 
-		tcp_state = 0;
+		tcp->state = 0;
 		return;
 	}
 }
@@ -503,4 +542,10 @@ void net_install(void)
 		arp_lookup_add(gateway_mac, 0xffffffff);
 		dhcp_discover();
 	}
+
+	tcp_sockets = list_new();
+	udp_sockets = list_new();
+
+	struct socket *socket = socket_new(tcp_sockets);
+	socket->src_port = 8000;
 }
