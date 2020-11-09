@@ -12,7 +12,8 @@
 #include <str.h>
 
 static u32 current_ip_addr = ip(10, 0, 2, 15);
-static u32 gateway_addr = ip(10, 0, 2, 2);
+static u32 gateway_addr = 0;
+static u32 subnet_mask = 0;
 static u8 gateway_mac[6] = { 0 };
 
 static struct list *tcp_sockets = NULL;
@@ -55,6 +56,11 @@ u16 next_port(void)
 {
 	static u16 port = 49152;
 	return port++;
+}
+
+int same_net(u32 ip_addr)
+{
+	return (ip_addr & subnet_mask) == (gateway_addr & subnet_mask);
 }
 
 u16 ip_calculate_checksum(struct ip_packet *packet)
@@ -210,7 +216,7 @@ void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 	u8 zero_hardware_addr[] = { 0, 0, 0, 0, 0, 0 };
 	u8 dst_mac[6];
 	sti();
-	while (!arp_lookup(dst_mac, dst)) {
+	while (same_net(dst) && !arp_lookup(dst_mac, dst)) {
 		if (arp_sent) {
 			arp_sent--;
 			arp_send_packet(zero_hardware_addr, dst, ARP_REQUEST);
@@ -218,6 +224,10 @@ void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 			break;
 		}
 	}
+
+	if (!same_net(dst))
+		memcpy(dst_mac, gateway_mac, 6);
+
 	cli();
 	printf("Destination: %x:%x:%x:%x:%x:%x\n", dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3],
 	       dst_mac[4], dst_mac[5]);
@@ -317,7 +327,20 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 			dhcp_request();
 		} else if (*type == 5) { // ACK
 			current_ip_addr = htonl(packet->your_ip);
-			printf("ACK! New IP: %x\n", current_ip_addr);
+
+			memcpy(&subnet_mask, dhcp_get_options(packet, 1), 4);
+			memcpy(&gateway_addr, dhcp_get_options(packet, 3), 4);
+			subnet_mask = htonl(subnet_mask);
+			gateway_addr = htonl(gateway_addr);
+
+			u8 zero_hardware_addr[] = { 0, 0, 0, 0, 0, 0 };
+			printf("New IP: %x\n", current_ip_addr);
+			printf("Gateway: %x\n", gateway_addr);
+			assert(same_net(current_ip_addr));
+			arp_send_packet(zero_hardware_addr, gateway_addr, ARP_REQUEST);
+			/* sti(); */
+			/* while (!arp_lookup(gateway_mac, gateway_addr)) */
+			/* 	hlt(); */
 		}
 		free(type);
 	}
@@ -495,6 +518,9 @@ void arp_handle_packet(struct arp_packet *packet, int len)
 		arp_table_size++;
 	else
 		arp_table_size = 0;
+
+	if (dst_protocol_addr == gateway_addr)
+		memcpy(gateway_mac, dst_mac, 6);
 }
 
 void ethernet_handle_packet(struct ethernet_packet *packet, int len)
@@ -629,14 +655,7 @@ void net_install(void)
 {
 	if (rtl8139_install()) {
 		sti();
-		arp_send_packet(broadcast_mac, gateway_addr, ARP_REQUEST);
-		print("Waiting for gateway answer...\n");
-		while (!arp_lookup(gateway_mac, gateway_addr))
-			hlt(); // TODO: Add ARP timeout
-		print("Found gateway!\n");
-
-		arp_lookup_add(gateway_mac, 0xffffffff);
-		arp_lookup_add(gateway_mac, ip(10, 0, 0, 33));
+		arp_lookup_add(broadcast_mac, 0xffffffff);
 		dhcp_discover();
 	}
 
