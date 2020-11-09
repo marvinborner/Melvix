@@ -24,7 +24,7 @@ OC = ccache ../cross/opt/bin/i686-elf-objcopy
 AS = ccache nasm
 
 WARNINGS = -Wall -Wextra -pedantic-errors -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wno-long-long
-CFLAGS = $(WARNINGS) -Wno-address-of-packed-member -nostdlib -nostdinc -ffreestanding -fno-builtin -mno-red-zone -mgeneral-regs-only -std=c99 -m32 -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel $(CFLAGS_EXTRA) $(OPTIMIZATION)
+CFLAGS = $(WARNINGS) -Wno-address-of-packed-member -nostdlib -nostdinc -ffreestanding -fno-builtin -mno-red-zone -mgeneral-regs-only -std=c99 -m32 -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel $(CFLAGS_EXTRA) $(OPTIMIZATION) $(DEBUG)
 ASFLAGS = -f elf32
 
 all: compile

@@ -424,7 +424,6 @@ void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 
 		/* tcp->ack_no += strlen(http_req); */
 
-		print("Setting to 5!\n");
 		tcp->state = 5; // TODO: TCP enum state machine
 		return;
 	} else if (tcp->state == 5 && (flags & 0xff) == TCP_FLAG_ACK) {
@@ -653,11 +652,13 @@ void net_send(struct socket *socket, void *data, u32 len)
 
 void net_install(void)
 {
-	if (rtl8139_install()) {
-		sti();
-		arp_lookup_add(broadcast_mac, 0xffffffff);
-		dhcp_discover();
-	}
+	if (!rtl8139_install())
+		return;
+
+	sti();
+
+	arp_lookup_add(broadcast_mac, 0xffffffff);
+	dhcp_discover();
 
 	tcp_sockets = list_new();
 	udp_sockets = list_new();
