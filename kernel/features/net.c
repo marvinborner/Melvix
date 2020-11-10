@@ -331,6 +331,7 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 
 			memcpy(&subnet_mask, dhcp_get_options(packet, 1), 4);
 			memcpy(&gateway_addr, dhcp_get_options(packet, 3), 4);
+			memcpy(gateway_mac, dhcp_get_options(packet, 3), 4);
 			subnet_mask = htonl(subnet_mask);
 			gateway_addr = htonl(gateway_addr);
 
@@ -338,6 +339,7 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 			printf("New IP: %x\n", current_ip_addr);
 			printf("Gateway: %x\n", gateway_addr);
 			assert(same_net(current_ip_addr));
+			// TODO: Get mac from ethernet packet directly
 			arp_send_packet(zero_hardware_addr, gateway_addr, ARP_REQUEST);
 			/* sti(); */
 			/* while (!arp_lookup(gateway_mac, gateway_addr)) */
@@ -634,6 +636,7 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 		u32 time = timer_get();
 		while (tcp->state != 3 && tcp->state != 5 && timer_get() - time < 1000)
 			;
+		cli();
 		if (tcp->state != 3 && tcp->state != 5)
 			return 0;
 	} else {

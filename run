@@ -90,7 +90,7 @@ make_disk() {
     cp -r res/ disk/
 
     cd disk/font/
-    VERSION="1.8.1"
+    VERSION="1.8.2"
     wget -q "https://github.com/fcambus/spleen/releases/download/$VERSION/spleen-$VERSION.tar.gz"
     tar xzf "spleen-$VERSION.tar.gz"
     mv spleen-"$VERSION"/*.psfu .
