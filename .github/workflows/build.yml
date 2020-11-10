@@ -23,3 +23,5 @@ jobs:
         run: sh run cross -y
       - name: Build
         run: sh run build -y
+      - name: Test everything
+        run: sh run test -y

@@ -10,6 +10,7 @@
 #include <print.h>
 #include <rtl8139.h>
 #include <str.h>
+#include <timer.h>
 
 static u32 current_ip_addr = ip(10, 0, 2, 15);
 static u32 gateway_addr = 0;
@@ -630,8 +631,11 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 		tcp_send_packet(socket, TCP_FLAG_SYN, NULL, 0);
 		struct tcp_socket *tcp = &socket->prot.tcp;
 		sti();
-		while (tcp->state != 3 && tcp->state != 5)
-			; // TODO: Timeout
+		u32 time = timer_get();
+		while (tcp->state != 3 && tcp->state != 5 && timer_get() - time < 1000)
+			;
+		if (tcp->state != 3 && tcp->state != 5)
+			return 0;
 	} else {
 		return 0;
 	}
@@ -668,7 +672,7 @@ void net_install(void)
 	if (net_connect(socket, ip(10, 0, 0, 33), 80))
 		net_send(socket, strdup(http_req), strlen(http_req));
 	else
-		print("Something went wrong!\n");
+		print("Couldn't connect!\n");
 
 	// Server // TODO: Serve using sockets
 	/* struct socket *socket2 = net_open(S_TCP); */
