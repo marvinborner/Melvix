@@ -332,17 +332,23 @@ void gui_event_loop(struct element *container)
 		case GUI_KEYBOARD: {
 			struct gui_event_keyboard *event = msg->data;
 
-			if (focused && focused->type == GUI_TYPE_TEXT_INPUT && event->press &&
-			    event->ch && event->ch >= ' ') {
+			if (focused && focused->type == GUI_TYPE_TEXT_INPUT && event->press) {
 				char *s = ((struct element_text_input *)focused->data)->text;
 				u32 l = strlen(s);
-				if (l >= MAX_INPUT_LENGTH)
-					continue;
-				s[l] = event->ch;
-				s[l + 1] = '\0';
-				gui_sync_text_input(focused);
-				merge_elements(get_root(focused->window_id));
-				gfx_redraw_focused();
+				if (event->ch >= ' ') {
+					if (l >= MAX_INPUT_LENGTH)
+						continue;
+					s[l] = event->ch;
+					s[l + 1] = '\0';
+					gui_sync_text_input(focused);
+					merge_elements(get_root(focused->window_id));
+					gfx_redraw_focused();
+				} else if (event->scancode == KEY_BACKSPACE && l > 0) {
+					s[l - 1] = '\0';
+					gui_sync_text_input(focused);
+					merge_elements(get_root(focused->window_id));
+					gfx_redraw_focused();
+				}
 			}
 
 			if (focused && focused->event.on_submit && event->press &&
