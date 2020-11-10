@@ -23,5 +23,3 @@ jobs:
         run: sh run cross -y
       - name: Build
         run: sh run build -y
-      - name: Test everything
-        uses: mxschmitt/action-tmate@v3
