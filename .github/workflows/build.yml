@@ -24,4 +24,4 @@ jobs:
       - name: Build
         run: sh run build -y
       - name: Test everything
-        run: sh run test -y
+        uses: mxschmitt/action-tmate@v3
