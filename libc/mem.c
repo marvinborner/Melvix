@@ -58,29 +58,29 @@ int memcmp(const void *s1, const void *s2, u32 n)
 
 #ifdef kernel
 
-#define ALIGNMENT 16ul
-#define ALIGN_TYPE char
-#define ALIGN_INFO sizeof(ALIGN_TYPE) * 16
+/* #define ALIGNMENT 1ul */
+/* #define ALIGN_TYPE char */
+/* #define ALIGN_INFO sizeof(ALIGN_TYPE) * 16 */
 
-#define ALIGN(ptr)                                                                                 \
-	if (ALIGNMENT > 1) {                                                                       \
-		u32 diff;                                                                          \
-		ptr = (void *)((u32)ptr + ALIGN_INFO);                                             \
-		diff = (u32)ptr & (ALIGNMENT - 1);                                                 \
-		if (diff != 0) {                                                                   \
-			diff = ALIGNMENT - diff;                                                   \
-			ptr = (void *)((u32)ptr + diff);                                           \
-		}                                                                                  \
-		*((ALIGN_TYPE *)((u32)ptr - ALIGN_INFO)) = diff + ALIGN_INFO;                      \
-	}
+/* #define ALIGN(ptr)                                                                                 \ */
+/* 	if (ALIGNMENT > 1) {                                                                       \ */
+/* 		u32 diff;                                                                          \ */
+/* 		ptr = (void *)((u32)ptr + ALIGN_INFO);                                             \ */
+/* 		diff = (u32)ptr & (ALIGNMENT - 1);                                                 \ */
+/* 		if (diff != 0) {                                                                   \ */
+/* 			diff = ALIGNMENT - diff;                                                   \ */
+/* 			ptr = (void *)((u32)ptr + diff);                                           \ */
+/* 		}                                                                                  \ */
+/* 		*((ALIGN_TYPE *)((u32)ptr - ALIGN_INFO)) = diff + ALIGN_INFO;                      \ */
+/* 	} */
 
-#define UNALIGN(ptr)                                                                               \
-	if (ALIGNMENT > 1) {                                                                       \
-		u32 diff = *((ALIGN_TYPE *)((u32)ptr - ALIGN_INFO));                               \
-		if (diff < (ALIGNMENT + ALIGN_INFO)) {                                             \
-			ptr = (void *)((u32)ptr - diff);                                           \
-		}                                                                                  \
-	}
+/* #define UNALIGN(ptr)                                                                               \ */
+/* 	if (ALIGNMENT > 1) {                                                                       \ */
+/* 		u32 diff = *((ALIGN_TYPE *)((u32)ptr - ALIGN_INFO));                               \ */
+/* 		if (diff < (ALIGNMENT + ALIGN_INFO)) {                                             \ */
+/* 			ptr = (void *)((u32)ptr - diff);                                           \ */
+/* 		}                                                                                  \ */
+/* 	} */
 
 static u32 *heap;
 static u32 index;
@@ -110,13 +110,13 @@ void *malloc(u32 size)
 	if (size < 1)
 		return NULL;
 
-	size = size + ALIGNMENT + ALIGN_INFO;
+	/* size = size + ALIGNMENT + ALIGN_INFO; */
 
 	heap[index] = size;
 	index += size + 1;
 
 	void *p = (void *)(heap + index - size);
-	ALIGN(p);
+	/* ALIGN(p); */
 
 	return p;
 }
@@ -124,7 +124,8 @@ void *malloc(u32 size)
 // TODO: Implement free, realloc and find_smallest_hole
 void free(void *ptr)
 {
-	UNALIGN(ptr);
+	(void)ptr;
+	/* UNALIGN(ptr); */
 }
 
 void *realloc(void *ptr, u32 size)

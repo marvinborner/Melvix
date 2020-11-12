@@ -20,7 +20,7 @@ int vsprintf(char *str, const char *format, va_list ap)
 
 	int i = 0;
 	char buf = 0;
-	char format_buffer[20] = "\0";
+	char format_buffer[20] = { '\0' };
 
 	for (; *format; format++) {
 		if (ready_to_format) {
@@ -79,8 +79,7 @@ int vsprintf(char *str, const char *format, va_list ap)
 
 int vprintf(const char *format, va_list ap)
 {
-	char buf[1024];
-	memset(buf, 0, 1024);
+	char buf[1024] = { 0 };
 	int len = vsprintf(buf, format, ap);
 	serial_print(buf); // TODO: Remove temporary serial print
 	return len;
