@@ -8,11 +8,12 @@
 #include <net.h>
 #include <pci.h>
 #include <print.h>
+#include <random.h>
 #include <rtl8139.h>
 #include <str.h>
 #include <timer.h>
 
-static u32 current_ip_addr = ip(10, 0, 2, 15);
+static u32 current_ip_addr = 0;
 static u32 gateway_addr = 0;
 static u32 subnet_mask = 0;
 static u8 gateway_mac[6] = { 0 };
@@ -61,7 +62,10 @@ static u16 next_port(void)
 
 static int same_net(u32 ip_addr)
 {
-	return (ip_addr & subnet_mask) == (gateway_addr & subnet_mask);
+	if (gateway_addr && ip_addr > 1)
+		return (ip_addr & subnet_mask) == (gateway_addr & subnet_mask);
+	else
+		return 0;
 }
 
 u16 ip_calculate_checksum(struct ip_packet *packet)
@@ -217,16 +221,16 @@ void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 	u8 zero_hardware_addr[] = { 0, 0, 0, 0, 0, 0 };
 	u8 dst_mac[6];
 	sti();
-	while (same_net(dst) && !arp_lookup(dst_mac, dst)) {
-		if (arp_sent) {
-			arp_sent--;
-			arp_send_packet(zero_hardware_addr, dst, ARP_REQUEST);
-		} else {
-			break;
+	if (same_net(dst))
+		while (!arp_lookup(dst_mac, dst)) {
+			if (arp_sent) {
+				arp_sent--;
+				arp_send_packet(zero_hardware_addr, dst, ARP_REQUEST);
+			} else {
+				break;
+			}
 		}
-	}
-
-	if (!same_net(dst))
+	else
 		memcpy(dst_mac, gateway_mac, 6);
 
 	cli();
@@ -267,7 +271,7 @@ void tcp_send_packet(struct socket *socket, u16 flags, void *data, int len)
 	packet->seq_number = htonl(socket->prot.tcp.seq_no);
 	packet->ack_number = flags & TCP_FLAG_ACK ? htonl(socket->prot.tcp.ack_no) : 0;
 	packet->flags = (u16)htons(0x5000 ^ (flags & 0xff));
-	packet->window_size = htons(1024);
+	packet->window_size = htons((2 << 15) - 1); // TODO: Support TCP windows
 	packet->urgent = 0;
 	packet->checksum = 0; // Later
 
@@ -338,9 +342,8 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 			u8 zero_hardware_addr[] = { 0, 0, 0, 0, 0, 0 };
 			printf("New IP: %x\n", current_ip_addr);
 			printf("Gateway: %x\n", gateway_addr);
-			assert(same_net(current_ip_addr));
-			// TODO: Get mac from ethernet packet directly
-			arp_send_packet(zero_hardware_addr, gateway_addr, ARP_REQUEST);
+			if (same_net(current_ip_addr))
+				arp_send_packet(zero_hardware_addr, gateway_addr, ARP_REQUEST);
 			/* sti(); */
 			/* while (!arp_lookup(gateway_mac, gateway_addr)) */
 			/* 	hlt(); */
@@ -351,7 +354,7 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 
 // enum tcp_state { TCP_LISTEN, TCP_SYN_SENT, TCP_SYN_RECIEVED, TCP_ESTABLISHED, TCP_FIN_WAIT_1, TCP_FIN_WAIT_2, TCP_CLOSE_WAIT, TCP_CLOSING, TCP_LAST_ACK, TCP_TIME_WAIT, TCP_CLOSED };
 #define http_res "HTTP/1.1 200\r\nContent-Length: 14\r\nConnection: close\r\n\r\n<h1>Hallo</h1>"
-#define http_req "GET / HTTP/1.1\r\nHost: localhost:80\r\n\r\n"
+#define http_req "GET / HTTP/1.1\r\nHost: marvinborner.de\r\n\r\n"
 void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 {
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
@@ -368,6 +371,8 @@ void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 
 	u32 recv_ack = ntohl(packet->ack_number);
 	u32 recv_seq = ntohl(packet->seq_number);
+
+	// TODO: Verify checksum first, then send ACK
 
 	// Serve
 	if (tcp->state == 0 && (flags & 0xff) == TCP_FLAG_SYN) {
@@ -442,18 +447,18 @@ void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		}
 
 		tcp->ack_no += data_length;
-		tcp->seq_no = recv_seq;
+		tcp->seq_no = recv_ack;
 
 		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
 		tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
 
 		tcp->state++;
 		return;
-	} else if (tcp->state == 5 && (flags & 0xff) == TCP_FLAG_ACK) {
+	} else if (tcp->state == 7 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
 		tcp->ack_no = recv_seq + 1;
 		tcp->seq_no = recv_ack;
 
-		tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
+		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
 
 		tcp->state = 0;
 		return;
@@ -627,7 +632,8 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 		socket->src_port = next_port();
 
 	if (socket->type == S_TCP) {
-		socket->prot.tcp.seq_no = 0;
+		srand(timer_get());
+		socket->prot.tcp.seq_no = rand();
 		socket->prot.tcp.ack_no = 0;
 		socket->prot.tcp.state = 0;
 		tcp_send_packet(socket, TCP_FLAG_SYN, NULL, 0);
@@ -667,13 +673,22 @@ void net_install(void)
 	arp_lookup_add(broadcast_mac, 0xffffffff);
 	dhcp_discover();
 
+	u32 time = timer_get();
+	while (!arp_lookup(gateway_mac, gateway_addr) && timer_get() - time < 1000)
+		timer_wait(10);
+
+	if (timer_get() - time >= 1000) {
+		printf("Gateway ARP timeout at address %x\n", gateway_addr);
+		loop();
+		return;
+	}
+
 	tcp_sockets = list_new();
 	udp_sockets = list_new();
 
 	// Request
 	struct socket *socket = net_open(S_TCP);
-	// if (net_connect(socket, ip(216, 58, 206, 227), 80)) // TODO: Google!
-	if (net_connect(socket, ip(216, 58, 206, 227), 80))
+	if (net_connect(socket, ip(91, 89, 253, 227), 80))
 		net_send(socket, strdup(http_req), strlen(http_req));
 	else
 		print("Couldn't connect!\n");
