@@ -7,7 +7,7 @@ OPTIMIZATION = -Ofast
 #CFLAGS_EXTRA = -fno-tree-bit-ccp -fno-tree-builtin-call-dce -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-fre -fno-tree-pta -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-loop-vectorize -fno-inline-functions -fno-inline-functions-called-once
 # Remove ipa optimizations for kernel
 #CFLAGS_EXTRA += -fno-inline-functions -fno-inline-functions-called-once -fno-reorder-functions -fno-reorder-blocks -fno-reorder-blocks-and-partition -fno-ipa-profile -fno-ipa-pure-const -fno-ipa-reference -fno-ipa-reference-addressable -fno-merge-constants -fno-ipa-bit-cp -fno-ipa-cp -fno-ipa-icf -fno-ipa-ra -fno-ipa-sra -fno-ipa-vrp -fno-ipa-cp-clone
-#CFLAGS_EXTRA = -pie -fPIE -mno-80387 -mno-mmx -mno-sse -mno-sse2 -fno-asynchronous-unwind-tables
+CFLAGS_EXTRA = -fno-inline -fno-inline-functions -fno-asynchronous-unwind-tables
 
 all: compile
 

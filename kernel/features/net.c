@@ -53,13 +53,13 @@ struct socket *socket_new(struct list *list)
  * Helper functions
  */
 
-u16 next_port(void)
+static u16 next_port(void)
 {
 	static u16 port = 49152;
 	return port++;
 }
 
-int same_net(u32 ip_addr)
+static int same_net(u32 ip_addr)
 {
 	return (ip_addr & subnet_mask) == (gateway_addr & subnet_mask);
 }
@@ -672,7 +672,8 @@ void net_install(void)
 
 	// Request
 	struct socket *socket = net_open(S_TCP);
-	if (net_connect(socket, ip(10, 0, 0, 33), 80))
+	// if (net_connect(socket, ip(216, 58, 206, 227), 80)) // TODO: Google!
+	if (net_connect(socket, ip(216, 58, 206, 227), 80))
 		net_send(socket, strdup(http_req), strlen(http_req));
 	else
 		print("Couldn't connect!\n");

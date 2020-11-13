@@ -1,6 +1,5 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include <acpi.h>
 #include <cpu.h>
 #include <def.h>
 #include <interrupts.h>

@@ -1,10 +1,8 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
-
+# acpi.o fpu.o
 COBJS = main.o \
-	drivers/acpi.o \
 	drivers/interrupts.o \
 	drivers/interrupts_asm.o \
-	drivers/fpu.o \
 	drivers/keyboard.o \
 	drivers/mouse.o \
 	drivers/pci.o \

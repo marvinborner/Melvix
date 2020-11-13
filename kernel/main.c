@@ -1,17 +1,15 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include <acpi.h>
 #include <boot.h>
 #include <cpu.h>
-#include <fpu.h>
 #include <fs.h>
+#include <interrupts.h>
 #include <keyboard.h>
 #include <load.h>
 #include <mem.h>
 #include <mouse.h>
 #include <net.h>
 #include <pci.h>
-#include <print.h>
 #include <serial.h>
 #include <syscall.h>
 #include <timer.h>
@@ -29,10 +27,8 @@ void kernel_main(struct vid_info *vid_info)
 	cpu_print();
 
 	// Install drivers
-	acpi_install();
 	pci_install();
 	interrupts_install();
-	/* fpu_install(); */
 	timer_install();
 	keyboard_install();
 	mouse_install();
