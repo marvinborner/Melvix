@@ -13,7 +13,7 @@ void srand(u32 seed)
 
 u32 rand()
 {
-	g_seed = (214013 * g_seed + 2531011);
+	g_seed = g_seed * 1103515245 + 12345;
 	return (g_seed >> 16) & 0x7FFF;
 }
 
