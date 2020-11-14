@@ -41,6 +41,10 @@
 
 #define HARDWARE_TYPE_ETHERNET 0x01
 
+// Hardcoded ports - TODO!
+#define DHCP_PORT 68
+#define DNS_PORT 50053
+
 // Protocol structs
 
 struct ethernet_packet {
@@ -93,6 +97,16 @@ struct dhcp_packet {
 	u8 server_name[64];
 	u8 file[128];
 	u8 options[64];
+} __attribute__((packed));
+
+struct dns_packet {
+	u16 qid;
+	u16 flags;
+	u16 questions;
+	u16 answers;
+	u16 authorities;
+	u16 additional;
+	u8 data[];
 } __attribute__((packed));
 
 struct udp_packet {

@@ -13,6 +13,7 @@
 #include <str.h>
 #include <timer.h>
 
+static u32 dns_ip_addr = ip(1, 1, 1, 1);
 static u32 current_ip_addr = 0;
 static u32 gateway_addr = 0;
 static u32 subnet_mask = 0;
@@ -341,6 +342,24 @@ static void dhcp_request(void)
 	free(packet);
 }
 
+// TODO: Split name into tld etc automagically
+static void dns_make_packet(struct dns_packet *packet, const char *name, const char *tld);
+static void dns_request(const char *name, const char *tld)
+{
+	struct socket *socket = net_open(S_UDP);
+	if (socket)
+		socket->src_port = DNS_PORT;
+	if (!socket || !net_connect(socket, dns_ip_addr, 53))
+		return;
+
+	u32 length = sizeof(struct dns_packet) + strlen(name) + strlen(tld) + 7; // TODO: 7 :)
+	struct dns_packet *packet = malloc(length);
+	memset(packet, 0, length);
+	dns_make_packet(packet, name, tld);
+	net_send(socket, packet, length);
+	free(packet);
+}
+
 /**
  * Responses
  */
@@ -357,6 +376,16 @@ static void icmp_handle_packet(struct icmp_packet *request_packet, u32 dst)
 	packet->checksum = icmp_calculate_checksum(packet);
 	ip_send_packet(dst, packet, sizeof(*packet), IP_PROT_ICMP);
 	free(packet);
+}
+
+// TODO: Less magic numbers :)
+static void dns_handle_packet(struct dns_packet *packet)
+{
+	print("DNS!\n");
+	u8 *start = &packet->data[1] + strlen((char *)&packet->data[1]);
+	printf("TTL of %s: %ds\n", &packet->data[1], (u32)start[14]);
+	u8 *ip = &start[17];
+	printf("IP: %d.%d.%d.%d\n", ip[0], ip[1], ip[2], ip[3]);
 }
 
 static void dhcp_handle_packet(struct dhcp_packet *packet)
@@ -505,12 +534,25 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 static void udp_handle_packet(struct udp_packet *packet)
 {
 	printf("UDP Port: %d\n", ntohs(packet->dst_port));
+
 	void *data_ptr = (u8 *)packet + sizeof(*packet);
 
-	// TODO: Resolve UDP sockets, etc.
-
-	if (ntohs(packet->dst_port) == 68)
+	if (ntohs(packet->dst_port) == DHCP_PORT) {
 		dhcp_handle_packet(data_ptr);
+		return;
+	} else if (ntohs(packet->dst_port) == DNS_PORT) {
+		dns_handle_packet(data_ptr);
+		return;
+	}
+
+	struct socket *socket = NULL;
+	if (!(socket = socket_get(S_UDP, ntohs(packet->dst_port)))) {
+		print("Port isn't mapped!\n");
+		return;
+	}
+
+	// TODO: Socket event to process
+	(void)socket;
 }
 
 static void ip_handle_packet(struct ip_packet *packet, int len)
@@ -619,7 +661,7 @@ static int dhcp_discover(void)
 {
 	print("DHCP discover\n");
 	struct socket *socket = net_open(S_UDP);
-	socket->src_port = 68;
+	socket->src_port = DHCP_PORT;
 	if (!socket || !net_connect(socket, 0xffffffff, 67))
 		return 0;
 
@@ -629,6 +671,29 @@ static int dhcp_discover(void)
 	net_send(socket, packet, sizeof(*packet));
 	free(packet);
 	return 1;
+}
+
+/**
+ * DNS
+ */
+
+// TODO: Cleaner dns implementation
+static void dns_make_packet(struct dns_packet *packet, const char *name, const char *tld)
+{
+	packet->qid = htons(rand());
+	packet->flags = htons(0x0100); // Standard query
+	packet->questions = htons(1);
+	packet->answers = htons(0);
+	packet->authorities = htons(0);
+	packet->additional = htons(0);
+
+	packet->data[0] = (u8)strlen(name);
+	memcpy(&packet->data[1], name, (u8)strlen(name));
+	packet->data[(u8)strlen(name) + 1] = (u8)strlen(tld);
+	memcpy(&packet->data[(u8)strlen(name) + 2], tld, (u8)strlen(tld));
+	packet->data[(u8)strlen(name) + (u8)strlen(tld) + 2] = 0x00; // Name end
+	packet->data[(u8)strlen(name) + (u8)strlen(tld) + 4] = 0x01; // A
+	packet->data[(u8)strlen(name) + (u8)strlen(tld) + 6] = 0x01; // IN
 }
 
 /**
@@ -663,10 +728,8 @@ static int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr)
 struct socket *net_open(enum socket_type type)
 {
 	struct socket *socket = socket_new(type);
-	if (!socket) {
-		print("BIG CRASH\n");
+	if (!socket)
 		return NULL;
-	}
 
 	socket->type = type;
 	return socket;
@@ -749,6 +812,8 @@ void net_install(void)
 	}
 
 	// Request
+	dns_request("google", "de");
+
 	struct socket *socket = net_open(S_TCP);
 	if (socket && net_connect(socket, ip(91, 89, 253, 227), 80))
 		net_send(socket, strdup(http_req), strlen(http_req));
