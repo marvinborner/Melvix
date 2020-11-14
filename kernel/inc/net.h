@@ -164,6 +164,12 @@ struct socket {
 };
 
 void ethernet_handle_packet(struct ethernet_packet *packet, int len);
+
+struct socket *net_open(enum socket_type type);
+void net_close(struct socket *socket);
+int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port);
+void net_send(struct socket *socket, void *data, u32 len);
+
 void net_install(void);
 
 #endif

@@ -25,8 +25,20 @@ static struct list *udp_sockets = NULL;
  * Socket functions
  */
 
-struct socket *socket_get(struct list *list, u32 port)
+static struct list *socket_list(enum socket_type type)
 {
+	struct list *list = NULL;
+	if (type == S_TCP)
+		list = tcp_sockets;
+	else if (type == S_UDP)
+		list = udp_sockets;
+	return list;
+}
+
+static struct socket *socket_get(enum socket_type type, u32 port)
+{
+	struct list *list = socket_list(type);
+
 	if (!list || !list->head || !port)
 		return NULL;
 
@@ -40,14 +52,36 @@ struct socket *socket_get(struct list *list, u32 port)
 	return NULL;
 }
 
-struct socket *socket_new(struct list *list)
+static struct socket *socket_new(enum socket_type type)
 {
+	struct list *list = socket_list(type);
+
+	if (!list)
+		return NULL;
+
 	struct socket *socket = malloc(sizeof(*socket));
 	memset(socket, 0, sizeof(*socket));
 	if (!list_add(list, socket))
 		return NULL;
 
 	return socket;
+}
+
+static int socket_close(struct socket *socket)
+{
+	struct list *list = socket_list(socket->type);
+
+	if (!list)
+		return 0;
+
+	struct node *iterator = list->head;
+	while (iterator != NULL && iterator->data != NULL) {
+		iterator = iterator->next;
+		if (iterator->data == socket)
+			return list_remove(list, iterator) != NULL;
+	}
+
+	return 0;
 }
 
 /**
@@ -68,7 +102,7 @@ static int same_net(u32 ip_addr)
 		return 0;
 }
 
-u16 ip_calculate_checksum(struct ip_packet *packet)
+static u16 ip_calculate_checksum(struct ip_packet *packet)
 {
 	int array_size = sizeof(*packet) / 2;
 	u16 *array = (u16 *)packet;
@@ -83,8 +117,8 @@ u16 ip_calculate_checksum(struct ip_packet *packet)
 	return ret;
 }
 
-u16 tcp_calculate_checksum(struct tcp_packet *packet, struct tcp_pseudo_header *header, void *data,
-			   u32 len)
+static u16 tcp_calculate_checksum(struct tcp_packet *packet, struct tcp_pseudo_header *header,
+				  void *data, u32 len)
 {
 	u32 sum = 0;
 	u16 *s = (u16 *)header;
@@ -132,7 +166,7 @@ u16 tcp_calculate_checksum(struct tcp_packet *packet, struct tcp_pseudo_header *
 	return ~(sum & 0xffff) & 0xffff;
 }
 
-u16 icmp_calculate_checksum(struct icmp_packet *packet)
+static u16 icmp_calculate_checksum(struct icmp_packet *packet)
 {
 	u32 sum = 0;
 	u16 *s = (u16 *)packet;
@@ -146,7 +180,7 @@ u16 icmp_calculate_checksum(struct icmp_packet *packet)
 	return (u16)~sum;
 }
 
-void *dhcp_get_options(struct dhcp_packet *packet, u8 type)
+static void *dhcp_get_options(struct dhcp_packet *packet, u8 type)
 {
 	u8 *options = packet->options + 4;
 	u8 curr_type = 0;
@@ -166,7 +200,7 @@ void *dhcp_get_options(struct dhcp_packet *packet, u8 type)
  * Requests
  */
 
-void ethernet_send_packet(u8 *dst, u8 *data, int len, int prot)
+static void ethernet_send_packet(u8 *dst, u8 *data, int len, int prot)
 {
 	print("Ethernet send packet\n");
 	struct ethernet_packet *packet = malloc(sizeof(*packet) + (u32)len);
@@ -179,7 +213,7 @@ void ethernet_send_packet(u8 *dst, u8 *data, int len, int prot)
 }
 
 static u8 broadcast_mac[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-void arp_send_packet(u8 *dst_mac, u32 dst_protocol_addr, u8 opcode)
+static void arp_send_packet(u8 *dst_mac, u32 dst_protocol_addr, u8 opcode)
 {
 	print("ARP send packet\n");
 	struct arp_packet *packet = malloc(sizeof(*packet));
@@ -198,8 +232,8 @@ void arp_send_packet(u8 *dst_mac, u32 dst_protocol_addr, u8 opcode)
 	free(packet);
 }
 
-int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr);
-void ip_send_packet(u32 dst, void *data, int len, u8 prot)
+static int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr);
+static void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 {
 	print("IP send packet\n");
 	struct ip_packet *packet = malloc(sizeof(*packet) + (u32)len);
@@ -241,26 +275,26 @@ void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 	free(packet);
 }
 
-void udp_send_packet(u32 dst, u16 src_port, u16 dst_port, void *data, int len)
+static void udp_send_packet(struct socket *socket, void *data, int len)
 {
 	print("UDP send packet\n");
 	u32 length = sizeof(struct udp_packet) + (u32)len;
 	struct udp_packet *packet = malloc(length);
 	memset(packet, 0, sizeof(*packet));
-	packet->src_port = (u16)htons(src_port);
-	packet->dst_port = (u16)htons(dst_port);
+	packet->src_port = (u16)htons(socket->src_port);
+	packet->dst_port = (u16)htons(socket->dst_port);
 	packet->length = (u16)htons(length);
 	packet->checksum = 0; // Optional
 
 	if (data)
 		memcpy(packet->data, data, (u32)len);
 
-	ip_send_packet(dst, packet, (int)length, IP_PROT_UDP);
+	ip_send_packet(socket->ip_addr, packet, (int)length, IP_PROT_UDP);
 	free(packet);
 }
 
 //void tcp_send_packet(u32 dst, u16 src_port, u16 dst_port, u16 flags, void *data, int len)
-void tcp_send_packet(struct socket *socket, u16 flags, void *data, int len)
+static void tcp_send_packet(struct socket *socket, u16 flags, void *data, int len)
 {
 	print("TCP send packet\n");
 	u32 length = sizeof(struct tcp_packet) + (u32)len;
@@ -293,14 +327,17 @@ void tcp_send_packet(struct socket *socket, u16 flags, void *data, int len)
 	free(packet);
 }
 
-void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type);
-void dhcp_request(void)
+static void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type);
+static void dhcp_request(void)
 {
-	u32 dst = 0xffffffff;
+	struct socket *socket = net_open(S_UDP);
+	if (!socket || !net_connect(socket, 0xffffffff, 67))
+		return;
+
 	struct dhcp_packet *packet = malloc(sizeof(*packet));
 	memset(packet, 0, sizeof(*packet));
 	dhcp_make_packet(packet, 3);
-	udp_send_packet(dst, 68, 67, packet, sizeof(*packet));
+	net_send(socket, packet, sizeof(*packet));
 	free(packet);
 }
 
@@ -308,7 +345,7 @@ void dhcp_request(void)
  * Responses
  */
 
-void icmp_handle_packet(struct icmp_packet *request_packet, u32 dst)
+static void icmp_handle_packet(struct icmp_packet *request_packet, u32 dst)
 {
 	struct icmp_packet *packet = malloc(sizeof(*packet));
 	memset(packet, 0, sizeof(*packet));
@@ -322,7 +359,7 @@ void icmp_handle_packet(struct icmp_packet *request_packet, u32 dst)
 	free(packet);
 }
 
-void dhcp_handle_packet(struct dhcp_packet *packet)
+static void dhcp_handle_packet(struct dhcp_packet *packet)
 {
 	print("DHCP!\n");
 	if (packet->op == DHCP_REPLY && htonl(packet->xid) == DHCP_TRANSACTION_IDENTIFIER) {
@@ -355,12 +392,12 @@ void dhcp_handle_packet(struct dhcp_packet *packet)
 // enum tcp_state { TCP_LISTEN, TCP_SYN_SENT, TCP_SYN_RECIEVED, TCP_ESTABLISHED, TCP_FIN_WAIT_1, TCP_FIN_WAIT_2, TCP_CLOSE_WAIT, TCP_CLOSING, TCP_LAST_ACK, TCP_TIME_WAIT, TCP_CLOSED };
 #define http_res "HTTP/1.1 200\r\nContent-Length: 14\r\nConnection: close\r\n\r\n<h1>Hallo</h1>"
 #define http_req "GET / HTTP/1.1\r\nHost: marvinborner.de\r\n\r\n"
-void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
+static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 {
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
 
 	struct socket *socket = NULL;
-	if (!(socket = socket_get(tcp_sockets, ntohs(packet->dst_port)))) {
+	if (!(socket = socket_get(S_TCP, ntohs(packet->dst_port)))) {
 		print("Port isn't mapped!\n");
 		return;
 	}
@@ -465,16 +502,18 @@ void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 	}
 }
 
-void udp_handle_packet(struct udp_packet *packet)
+static void udp_handle_packet(struct udp_packet *packet)
 {
 	printf("UDP Port: %d\n", ntohs(packet->dst_port));
 	void *data_ptr = (u8 *)packet + sizeof(*packet);
+
+	// TODO: Resolve UDP sockets, etc.
 
 	if (ntohs(packet->dst_port) == 68)
 		dhcp_handle_packet(data_ptr);
 }
 
-void ip_handle_packet(struct ip_packet *packet, int len)
+static void ip_handle_packet(struct ip_packet *packet, int len)
 {
 	(void)len;
 	switch (packet->protocol) {
@@ -498,7 +537,7 @@ void ip_handle_packet(struct ip_packet *packet, int len)
 
 static struct arp_table_entry arp_table[512] = { 0 };
 static int arp_table_size = 0;
-void arp_handle_packet(struct arp_packet *packet, int len)
+static void arp_handle_packet(struct arp_packet *packet, int len)
 {
 	(void)len;
 	u8 dst_mac[6];
@@ -552,7 +591,7 @@ void ethernet_handle_packet(struct ethernet_packet *packet, int len)
  * DHCP
  */
 
-void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type)
+static void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type)
 {
 	packet->op = DHCP_REQUEST;
 	packet->hardware_type = HARDWARE_TYPE_ETHERNET;
@@ -576,22 +615,27 @@ void dhcp_make_packet(struct dhcp_packet *packet, u8 msg_type)
 	*(options++) = 0xff;
 }
 
-void dhcp_discover(void)
+static int dhcp_discover(void)
 {
 	print("DHCP discover\n");
-	u32 dst_ip = 0xffffffff;
+	struct socket *socket = net_open(S_UDP);
+	socket->src_port = 68;
+	if (!socket || !net_connect(socket, 0xffffffff, 67))
+		return 0;
+
 	struct dhcp_packet *packet = malloc(sizeof(*packet));
 	memset(packet, 0, sizeof(*packet));
 	dhcp_make_packet(packet, 1);
-	udp_send_packet(dst_ip, 68, 67, packet, sizeof(*packet));
+	net_send(socket, packet, sizeof(*packet));
 	free(packet);
+	return 1;
 }
 
 /**
  * ARP
  */
 
-void arp_lookup_add(u8 *ret_hardware_addr, u32 ip_addr)
+static void arp_lookup_add(u8 *ret_hardware_addr, u32 ip_addr)
 {
 	arp_table[arp_table_size].ip_addr = ip_addr;
 	memcpy(&arp_table[arp_table_size].mac_addr, ret_hardware_addr, 6);
@@ -601,7 +645,7 @@ void arp_lookup_add(u8 *ret_hardware_addr, u32 ip_addr)
 		arp_table_size = 0;
 }
 
-int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr)
+static int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr)
 {
 	for (int i = 0; i < arp_table_size; i++) {
 		if (arp_table[i].ip_addr == ip_addr) {
@@ -618,10 +662,19 @@ int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr)
 
 struct socket *net_open(enum socket_type type)
 {
-	struct list *sockets = type == S_TCP ? tcp_sockets : udp_sockets; // TODO
-	struct socket *socket = socket_new(sockets);
+	struct socket *socket = socket_new(type);
+	if (!socket) {
+		print("BIG CRASH\n");
+		return NULL;
+	}
+
 	socket->type = type;
 	return socket;
+}
+
+void net_close(struct socket *socket)
+{
+	socket_close(socket);
 }
 
 int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
@@ -645,6 +698,8 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 		cli();
 		if (tcp->state != 3 && tcp->state != 5)
 			return 0;
+	} else if (socket->type == S_UDP) {
+		return 1;
 	} else {
 		return 0;
 	}
@@ -654,9 +709,12 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 
 void net_send(struct socket *socket, void *data, u32 len)
 {
-	// TODO: UDP socket support
-	tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, data, len);
-	socket->prot.tcp.ack_no += len;
+	if (socket->type == S_TCP) {
+		tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, data, len);
+		socket->prot.tcp.ack_no += len;
+	} else if (socket->type == S_UDP) {
+		udp_send_packet(socket, data, len);
+	}
 }
 
 /**
@@ -670,8 +728,15 @@ void net_install(void)
 
 	sti();
 
+	tcp_sockets = list_new();
+	udp_sockets = list_new();
+
 	arp_lookup_add(broadcast_mac, 0xffffffff);
-	dhcp_discover();
+	if (!dhcp_discover()) {
+		print("DHCP discover failed\n");
+		loop();
+		return;
+	}
 
 	u32 time = timer_get();
 	while (!arp_lookup(gateway_mac, gateway_addr) && timer_get() - time < 1000)
@@ -683,12 +748,9 @@ void net_install(void)
 		return;
 	}
 
-	tcp_sockets = list_new();
-	udp_sockets = list_new();
-
 	// Request
 	struct socket *socket = net_open(S_TCP);
-	if (net_connect(socket, ip(91, 89, 253, 227), 80))
+	if (socket && net_connect(socket, ip(91, 89, 253, 227), 80))
 		net_send(socket, strdup(http_req), strlen(http_req));
 	else
 		print("Couldn't connect!\n");
