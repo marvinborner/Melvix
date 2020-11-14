@@ -1,7 +1,7 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
 # Kernel optimization
-OPTIMIZATION = -Ofast
+OPTIMIZATION = -Os
 
 # Remove tree optimizations for kernel
 #CFLAGS_EXTRA = -fno-tree-bit-ccp -fno-tree-builtin-call-dce -fno-tree-ccp -fno-tree-ch -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-fre -fno-tree-pta -fno-tree-sink -fno-tree-slsr -fno-tree-sra -fno-tree-ter -fno-tree-loop-vectorize -fno-inline-functions -fno-inline-functions-called-once

@@ -13,6 +13,9 @@
  * IDT
  */
 
+struct idt_entry idt[256] = { 0 };
+struct idt_ptr idt_ptr = { 0 };
+
 void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags)
 {
 	// Specify the interrupt routine's base address

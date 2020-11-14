@@ -25,9 +25,6 @@ struct idt_ptr {
 	void *base;
 } __attribute__((packed));
 
-struct idt_entry idt[256];
-struct idt_ptr idt_ptr;
-
 void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags);
 
 void irq_install_handler(int irq, void (*handler)(struct regs *r));

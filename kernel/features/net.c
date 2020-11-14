@@ -70,6 +70,9 @@ static struct socket *socket_new(enum socket_type type)
 
 static int socket_close(struct socket *socket)
 {
+	if (!socket)
+		return 0;
+
 	struct list *list = socket_list(socket->type);
 
 	if (!list)
@@ -81,6 +84,9 @@ static int socket_close(struct socket *socket)
 		if (iterator->data == socket)
 			return list_remove(list, iterator) != NULL;
 	}
+
+	socket->state = S_CLOSED;
+	free(socket);
 
 	return 0;
 }
@@ -279,6 +285,9 @@ static void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 static void udp_send_packet(struct socket *socket, void *data, int len)
 {
 	print("UDP send packet\n");
+	if (!socket || socket->state == S_FAILED)
+		return;
+
 	u32 length = sizeof(struct udp_packet) + (u32)len;
 	struct udp_packet *packet = malloc(length);
 	memset(packet, 0, sizeof(*packet));
@@ -298,6 +307,10 @@ static void udp_send_packet(struct socket *socket, void *data, int len)
 static void tcp_send_packet(struct socket *socket, u16 flags, void *data, int len)
 {
 	print("TCP send packet\n");
+
+	if (!socket || socket->state == S_FAILED)
+		return;
+
 	u32 length = sizeof(struct tcp_packet) + (u32)len;
 	struct tcp_packet *packet = malloc(length);
 	memset(packet, 0, sizeof(*packet));
@@ -426,7 +439,8 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
 
 	struct socket *socket = NULL;
-	if (!(socket = socket_get(S_TCP, ntohs(packet->dst_port)))) {
+	if (!(socket = socket_get(S_TCP, ntohs(packet->dst_port))) || socket->state == S_CLOSED ||
+	    socket->state == S_FAILED) {
 		print("Port isn't mapped!\n");
 		return;
 	}
@@ -469,6 +483,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		/* tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, strdup(http_res), */
 		/* 		strlen(http_res)); */
 
+		socket->state = S_CONNECTED;
 		tcp->state++;
 		return;
 	} else if (tcp->state == 3 && (flags & 0xff) == TCP_FLAG_ACK) {
@@ -483,6 +498,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 
 		tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
 
+		socket->state = S_CLOSED;
 		tcp->state = 0;
 		return;
 	}
@@ -493,11 +509,8 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->seq_no = recv_ack;
 
 		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
-		/* tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, strdup(http_req), */
-		/* 		strlen(http_req)); */
 
-		/* tcp->ack_no += strlen(http_req); */
-
+		socket->state = S_CONNECTED;
 		tcp->state = 5; // TODO: TCP enum state machine
 		return;
 	} else if (tcp->state == 5 && (flags & 0xff) == TCP_FLAG_ACK) {
@@ -526,6 +539,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 
 		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
 
+		socket->state = S_CLOSED;
 		tcp->state = 0;
 		return;
 	}
@@ -546,7 +560,8 @@ static void udp_handle_packet(struct udp_packet *packet)
 	}
 
 	struct socket *socket = NULL;
-	if (!(socket = socket_get(S_UDP, ntohs(packet->dst_port)))) {
+	if (!(socket = socket_get(S_UDP, ntohs(packet->dst_port))) || socket->state == S_CLOSED ||
+	    socket->state == S_FAILED) {
 		print("Port isn't mapped!\n");
 		return;
 	}
@@ -661,7 +676,8 @@ static int dhcp_discover(void)
 {
 	print("DHCP discover\n");
 	struct socket *socket = net_open(S_UDP);
-	socket->src_port = DHCP_PORT;
+	if (socket)
+		socket->src_port = DHCP_PORT;
 	if (!socket || !net_connect(socket, 0xffffffff, 67))
 		return 0;
 
@@ -732,16 +748,21 @@ struct socket *net_open(enum socket_type type)
 		return NULL;
 
 	socket->type = type;
+	socket->state = S_OPEN;
 	return socket;
 }
 
 void net_close(struct socket *socket)
 {
-	socket_close(socket);
+	if (socket)
+		socket_close(socket);
 }
 
 int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 {
+	if (!socket || socket->state != S_OPEN)
+		return 0;
+
 	socket->ip_addr = ip_addr;
 	socket->dst_port = dst_port;
 	if (!socket->src_port)
@@ -752,31 +773,39 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 		socket->prot.tcp.seq_no = rand();
 		socket->prot.tcp.ack_no = 0;
 		socket->prot.tcp.state = 0;
+		socket->state = S_CONNECTING;
 		tcp_send_packet(socket, TCP_FLAG_SYN, NULL, 0);
-		struct tcp_socket *tcp = &socket->prot.tcp;
 		sti();
 		u32 time = timer_get();
-		while (tcp->state != 3 && tcp->state != 5 && timer_get() - time < 1000)
+		while (socket->state != S_CONNECTED && timer_get() - time < 1000)
 			;
 		cli();
-		if (tcp->state != 3 && tcp->state != 5)
+		if (socket->state != S_CONNECTED) {
+			socket->state = S_FAILED;
 			return 0;
+		}
+		return 1;
 	} else if (socket->type == S_UDP) {
+		socket->state = S_CONNECTED;
 		return 1;
 	} else {
+		socket->state = S_FAILED;
 		return 0;
 	}
-
-	return 1;
 }
 
 void net_send(struct socket *socket, void *data, u32 len)
 {
+	if (!socket || socket->state != S_CONNECTED)
+		return;
+
 	if (socket->type == S_TCP) {
 		tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, data, len);
 		socket->prot.tcp.ack_no += len;
 	} else if (socket->type == S_UDP) {
 		udp_send_packet(socket, data, len);
+	} else {
+		print("Unknown socket type!\n");
 	}
 }
 
@@ -801,7 +830,19 @@ void net_install(void)
 		return;
 	}
 
+	// DHCP timeout (no gateway address)
 	u32 time = timer_get();
+	while (!gateway_addr && timer_get() - time < 1000)
+		timer_wait(10);
+
+	if (timer_get() - time >= 1000) {
+		print("DHCP timeout\n");
+		loop();
+		return;
+	}
+
+	// ARP lookup timeout
+	time = timer_get();
 	while (!arp_lookup(gateway_mac, gateway_addr) && timer_get() - time < 1000)
 		timer_wait(10);
 

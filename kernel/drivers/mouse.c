@@ -8,10 +8,10 @@
 #include <print.h>
 #include <sys.h>
 
-char mouse_cycle = 0;
-char mouse_byte[3];
+static char mouse_cycle = 0;
+static char mouse_byte[3] = { 0 };
 
-struct event_mouse *event;
+static struct event_mouse *event = NULL;
 
 void mouse_handler()
 {
@@ -30,7 +30,8 @@ void mouse_handler()
 	case 2:
 		mouse_byte[2] = (char)inb(0x60);
 
-		free(event);
+		if (event)
+			free(event);
 		event = malloc(sizeof(*event));
 		event->magic = MOUSE_MAGIC;
 		event->diff_x = mouse_byte[1];
@@ -140,14 +141,14 @@ void mouse_install(void)
 		printf("4th and 5th mouse button support!\n");
 
 	/* TODO: Fix mouse laggyness
-    mouse_write(0xE8);
-    mouse_read();
-    mouse_write(0x03);
-    mouse_read();
-    mouse_write(0xF3);
-    mouse_read();
-    mouse_write(200);
-    mouse_read(); */
+	mouse_write(0xE8);
+	mouse_read();
+	mouse_write(0x03);
+	mouse_read();
+	mouse_write(0xF3);
+	mouse_read();
+	mouse_write(200);
+	mouse_read(); */
 
 	// Enable mouse
 	mouse_write(0xF4);

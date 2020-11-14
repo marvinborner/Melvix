@@ -8,7 +8,7 @@
 #include <proc.h>
 #include <sys.h>
 
-struct list *event_table[] = { [EVENT_KEYBOARD] = NULL, [EVENT_MOUSE] = NULL };
+static struct list *event_table[] = { [EVENT_KEYBOARD] = NULL, [EVENT_MOUSE] = NULL };
 
 u32 event_register(u32 id, struct proc *proc)
 {

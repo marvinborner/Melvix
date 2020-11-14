@@ -12,9 +12,9 @@
 #include <rtl8139.h>
 
 static int rtl_irq = 0;
-static u8 mac[6];
+static u8 mac[6] = { 0 };
 static u8 *last_packet = NULL;
-static u8 *rtl_rx_buffer;
+static u8 *rtl_rx_buffer = NULL;
 static u32 rtl_device_pci = 0;
 static u32 rtl_iobase = 0;
 static u32 cur_rx = 0;
