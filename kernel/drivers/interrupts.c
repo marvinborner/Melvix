@@ -13,8 +13,8 @@
  * IDT
  */
 
-struct idt_entry idt[256] = { 0 };
-struct idt_ptr idt_ptr = { 0 };
+static struct idt_entry idt[256] = { 0 };
+static struct idt_ptr idt_ptr = { 0 };
 
 void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags)
 {
@@ -45,7 +45,7 @@ void idt_install()
  * IRQ
  */
 
-void (*irq_routines[16])(struct regs *) = { 0 };
+static void (*irq_routines[16])(struct regs *) = { 0 };
 
 // Install IRQ handler
 void irq_install_handler(int irq, void (*handler)(struct regs *r))
@@ -120,7 +120,7 @@ void irq_install(void)
  * ISR
  */
 
-void (*isr_routines[256])(struct regs *) = { 0 };
+static void (*isr_routines[256])(struct regs *) = { 0 };
 
 const char *isr_exceptions[32] = { "Division By Zero",
 				   "Debug",

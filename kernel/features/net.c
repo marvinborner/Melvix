@@ -248,6 +248,7 @@ static void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 	packet->version_ihl = ((0x4 << 4) | (0x5 << 0));
 	packet->length = (u16)sizeof(*packet) + (u16)len;
 	packet->id = htons(1); // TODO: IP fragmentation
+	/* packet->flags_fragment = htons(1); */
 	packet->ttl = 64;
 	packet->protocol = prot;
 	packet->src = htonl(current_ip_addr);
@@ -395,6 +396,13 @@ static void icmp_handle_packet(struct icmp_packet *request_packet, u32 dst)
 static void dns_handle_packet(struct dns_packet *packet)
 {
 	print("DNS!\n");
+	u16 flags = htons(packet->flags);
+	u8 reply_code = flags & 0xf;
+	if (reply_code != DNS_NOERROR) {
+		printf("DNS error: %d\n", reply_code);
+		return;
+	}
+
 	u8 *start = &packet->data[1] + strlen((char *)&packet->data[1]);
 	printf("TTL of %s: %ds\n", &packet->data[1], (u32)start[14]);
 	u8 *ip = &start[17];
@@ -433,7 +441,7 @@ static void dhcp_handle_packet(struct dhcp_packet *packet)
 
 // enum tcp_state { TCP_LISTEN, TCP_SYN_SENT, TCP_SYN_RECIEVED, TCP_ESTABLISHED, TCP_FIN_WAIT_1, TCP_FIN_WAIT_2, TCP_CLOSE_WAIT, TCP_CLOSING, TCP_LAST_ACK, TCP_TIME_WAIT, TCP_CLOSED };
 #define http_res "HTTP/1.1 200\r\nContent-Length: 14\r\nConnection: close\r\n\r\n<h1>Hallo</h1>"
-#define http_req "GET / HTTP/1.1\r\nHost: marvinborner.de\r\n\r\n"
+#define http_req "GET / HTTP/1.1\r\nHost: google.de\r\n\r\n"
 static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 {
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
