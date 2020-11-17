@@ -36,4 +36,4 @@ all: compile
 compile: $(COBJS)
 	@mkdir -p ../build/
 	@$(LD) -N -ekernel_main -Ttext 0x00050000 -o ../build/kernel.elf -L../build/ $+ -lk
-	@$(OC) -O binary ../build/kernel.elf ../build/kernel.bin
+	@$(LD) -N -Tlink.ld -o ../build/kernel.bin -L../build/ $+ -lk
