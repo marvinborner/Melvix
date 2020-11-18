@@ -26,6 +26,7 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 -   EXT2 filesystem
 -   Minimal GUI
 -   Fast boot time (< 1s)
+-   TCP/IP stack and rtl8139 driver
 -   Small size (< 100KiB)
 -   Compiles with `-Wall -Wextra -pedantic-errors -std=c99 -Ofast`
 
@@ -33,14 +34,23 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 
 ![Melvix screenshot](screenshot.png?raw=true "Screenshot")
 
-## Build/Test
+## Test
+
+-   Install the qemu i386 emulator
+-   Download the `disk-img` artifact from the newest [GitHub Workflow build](https://github.com/marvinborner/Melvix/actions)
+-   Unzip `disk-img.zip`
+-   Run `qemu-system-i386 -vga std -drive file=path/to/disk.img,format=raw,index=1,media=disk -netdev user,id=net0 -device rtl8139,netdev=net0`
+-   Enjoy, or try building it yourself!
+
+## Build & Test
 
 -   Use any system running GNU/Linux or OpenBSD
 
 -   Install build dependencies (package names may vary depending on your operating system)
 
     -   Ubuntu/Debian _"instructions"_ can be found here: [GitHub Workflow](https://raw.githubusercontent.com/marvinborner/Melvix/main/.github/workflows/build.yml)
-    -   OpenBSD: `pkg_add ccache gcc g++ gmake bison gmp libmpc mpfr texinfo curl nasm qemu e2fsprogs`
+    -   OpenBSD: `pkg_add git ccache gcc g++ gmake bison gmp libmpc mpfr texinfo curl nasm qemu e2fsprogs`
+    -   git
     -   binutils
     -   ccache
     -   gcc
@@ -54,6 +64,8 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
     -   curl
     -   nasm
     -   qemu
+
+-   Clone this repository using `git clone --recurse-submodules https://github.com/marvinborner/Melvix.git`
 
 -   Load fonts and images into the disk image via `./run disk`
 
