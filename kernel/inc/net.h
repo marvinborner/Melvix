@@ -4,6 +4,7 @@
 #define NET_H
 
 #include <def.h>
+#include <socket.h>
 
 #define htonl(l)                                                                                   \
 	((((l)&0xff) << 24) | (((l)&0xff00) << 8) | (((l)&0xff0000) >> 8) |                        \
@@ -162,31 +163,6 @@ struct icmp_packet {
 struct arp_table_entry {
 	u32 ip_addr;
 	u64 mac_addr;
-};
-
-struct tcp_socket {
-	u32 seq_no;
-	u32 ack_no;
-	u32 state;
-};
-
-// TODO: Use actual socket types (stream etc)
-enum socket_type { S_TCP, S_UDP };
-enum socket_state { S_CONNECTING, S_CONNECTED, S_OPEN, S_CLOSED, S_FAILED };
-
-struct socket {
-	u32 ip_addr;
-	u32 dst_port;
-	u32 src_port;
-	enum socket_state state;
-	enum socket_type type;
-	u32 bytes_available;
-	u32 bytes_read;
-	void *current_packet;
-	union {
-		struct tcp_socket tcp;
-		/* struct udp_socket udp; */
-	} prot;
 };
 
 void ethernet_handle_packet(struct ethernet_packet *packet, int len);

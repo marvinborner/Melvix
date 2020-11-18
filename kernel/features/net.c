@@ -10,10 +10,10 @@
 #include <print.h>
 #include <random.h>
 #include <rtl8139.h>
+#include <socket.h>
 #include <str.h>
 #include <timer.h>
 
-static u32 dns_ip_addr = ip(1, 1, 1, 1);
 static u32 current_ip_addr = 0;
 static u32 gateway_addr = 0;
 static u32 subnet_mask = 0;
@@ -356,24 +356,6 @@ static void dhcp_request(void)
 	free(packet);
 }
 
-// TODO: Split name into tld etc automagically
-static void dns_make_packet(struct dns_packet *packet, const char *name, const char *tld);
-static void dns_request(const char *name, const char *tld)
-{
-	struct socket *socket = net_open(S_UDP);
-	if (socket)
-		socket->src_port = DNS_PORT;
-	if (!socket || !net_connect(socket, dns_ip_addr, 53))
-		return;
-
-	u32 length = sizeof(struct dns_packet) + strlen(name) + strlen(tld) + 7; // TODO: 7 :)
-	struct dns_packet *packet = malloc(length);
-	memset(packet, 0, length);
-	dns_make_packet(packet, name, tld);
-	net_send(socket, packet, length);
-	free(packet);
-}
-
 /**
  * Responses
  */
@@ -698,29 +680,6 @@ static int dhcp_discover(void)
 }
 
 /**
- * DNS
- */
-
-// TODO: Cleaner dns implementation
-static void dns_make_packet(struct dns_packet *packet, const char *name, const char *tld)
-{
-	packet->qid = htons(rand());
-	packet->flags = htons(0x0100); // Standard query
-	packet->questions = htons(1);
-	packet->answers = htons(0);
-	packet->authorities = htons(0);
-	packet->additional = htons(0);
-
-	packet->data[0] = (u8)strlen(name);
-	memcpy(&packet->data[1], name, (u8)strlen(name));
-	packet->data[(u8)strlen(name) + 1] = (u8)strlen(tld);
-	memcpy(&packet->data[(u8)strlen(name) + 2], tld, (u8)strlen(tld));
-	packet->data[(u8)strlen(name) + (u8)strlen(tld) + 2] = 0x00; // Name end
-	packet->data[(u8)strlen(name) + (u8)strlen(tld) + 4] = 0x01; // A
-	packet->data[(u8)strlen(name) + (u8)strlen(tld) + 6] = 0x01; // IN
-}
-
-/**
  * ARP
  */
 
@@ -861,13 +820,13 @@ void net_install(void)
 	}
 
 	// Request
-	dns_request("google", "de");
+	/* dns_request("google", "de"); */
 
-	struct socket *socket = net_open(S_TCP);
-	if (socket && net_connect(socket, ip(91, 89, 253, 227), 80))
-		net_send(socket, strdup(http_req), strlen(http_req));
-	else
-		print("Couldn't connect!\n");
+	/* struct socket *socket = net_open(S_TCP); */
+	/* if (socket && net_connect(socket, ip(91, 89, 253, 227), 80)) */
+	/* 	net_send(socket, strdup(http_req), strlen(http_req)); */
+	/* else */
+	/* 	print("Couldn't connect!\n"); */
 
 	// Server // TODO: Serve using sockets
 	/* struct socket *socket2 = net_open(S_TCP); */

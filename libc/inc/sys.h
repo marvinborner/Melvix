@@ -21,7 +21,11 @@ enum sys {
 	SYS_UNREGISTER, // Unregister event
 	SYS_SEND, // Send message to process
 	SYS_RECEIVE, // Receive message (non-blocking/sync)
-	SYS_GETPID // Get the process ID
+	SYS_GETPID, // Get the process ID
+	SYS_NET_OPEN, // Open network socket
+	SYS_NET_CLOSE, // Close network socket
+	SYS_NET_CONNECT, // Connect to destination
+	SYS_NET_SEND, // Send to socket
 };
 
 enum event_type { EVENT_KEYBOARD, EVENT_MOUSE, EVENT_MAX };

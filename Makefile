@@ -27,6 +27,8 @@ compile:
 	@echo "Compiled libgui"
 	@$(MAKE) --no-print-directory -C libtxt/
 	@echo "Compiled libtxt"
+	@$(MAKE) --no-print-directory -C libnet/
+	@echo "Compiled libnet"
 	@$(MAKE) --no-print-directory -C kernel/
 	@echo "Compiled kernel"
 	@$(MAKE) --no-print-directory -C boot/

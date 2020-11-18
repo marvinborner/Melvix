@@ -6,6 +6,7 @@
 #include <interrupts.h>
 #include <load.h>
 #include <mem.h>
+#include <net.h>
 #include <print.h>
 #include <proc.h>
 #include <str.h>
@@ -89,6 +90,22 @@ void syscall_handler(struct regs *r)
 	}
 	case SYS_GETPID: {
 		r->eax = proc_current()->pid;
+		break;
+	}
+	case SYS_NET_OPEN: {
+		r->eax = (int)net_open(r->ebx);
+		break;
+	}
+	case SYS_NET_CLOSE: {
+		net_close((void *)r->ebx);
+		break;
+	}
+	case SYS_NET_CONNECT: {
+		r->eax = net_connect((void *)r->ebx, r->ecx, r->edx);
+		break;
+	}
+	case SYS_NET_SEND: {
+		net_send((void *)r->ebx, (void *)r->ecx, r->edx);
 		break;
 	}
 	default: {

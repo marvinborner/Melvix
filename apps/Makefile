@@ -6,14 +6,14 @@ LD = ccache ../cross/opt/bin/i686-elf-ld
 OC = ccache ../cross/opt/bin/i686-elf-objcopy
 
 WARNINGS = -Wall -Wextra -pedantic-errors -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wno-long-long
-CFLAGS = $(WARNINGS) -nostdlib -nostdinc -fno-builtin -std=c99 -m32 -I../libc/inc/ -I../libgui/inc/ -I../libtxt/inc/ -fPIE -Duserspace -Ofast
+CFLAGS = $(WARNINGS) -nostdlib -nostdinc -fno-builtin -std=c99 -m32 -I../libc/inc/ -I../libgui/inc/ -I../libtxt/inc/ -I../libnet/inc/ -fPIE -Duserspace -Ofast
 
 all: $(COBJS)
 
 %.o: %.c
 	@mkdir -p ../build/apps/
 	@$(CC) -c $(CFLAGS) $< -o $@
-	@$(LD) -o $(@:.o=.elf) -Tlink.ld -L../build/ $@ -lgui -ltxt -lc
+	@$(LD) -o $(@:.o=.elf) -Tlink.ld -L../build/ $@ -lgui -ltxt -lnet -lc
 	@$(OC) -O binary $(@:.o=.elf) ../build/apps/$(@:.o=)
 # @cp $(@:.o=.elf) ../build/apps/$(@:.o=.dbg)
 
