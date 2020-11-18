@@ -3,6 +3,7 @@
 #ifndef NET_H
 #define NET_H
 
+#include <http.h>
 #include <socket.h>
 #include <sys.h>
 

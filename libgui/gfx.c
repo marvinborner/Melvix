@@ -108,13 +108,20 @@ void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 
 	u32 cnt = 0;
 	for (u32 i = 0; i < strlen(text); i++) {
 		// TODO: Should this be here?
-		if (text[i] == '\n') {
+		if (text[i] == '\r') {
+			cnt = 0;
+		} else if (text[i] == '\n') {
 			cnt = 0;
 			y += font->height;
 		} else {
+			// TODO: Overflow on single line input
+			if ((cnt + 1) * font->width > ctx->width) {
+				cnt = 0;
+				y += font->height;
+			}
 			write_char(ctx, x + cnt * font->width, y, font, c, text[i]);
+			cnt++;
 		}
-		cnt++;
 	}
 	/* gfx_redraw(); */
 }
