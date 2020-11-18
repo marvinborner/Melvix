@@ -101,7 +101,7 @@ static void redraw_all()
 static u32 special_keys_pressed;
 static void handle_keyboard(struct event_keyboard *event)
 {
-	if (event->magic != KEYBOARD_MAGIC || !focused)
+	if (event->magic != KEYBOARD_MAGIC)
 		return;
 
 	if (event->scancode == KEY_LEFTSHIFT || event->scancode == KEY_RIGHTSHIFT)
@@ -110,6 +110,9 @@ static void handle_keyboard(struct event_keyboard *event)
 		special_keys_pressed ^= ALT_PRESSED;
 	else if (event->scancode == KEY_LEFTCTRL || event->scancode == KEY_RIGHTCTRL)
 		special_keys_pressed ^= CTRL_PRESSED;
+
+	if (!focused)
+		return;
 
 	struct gui_event_keyboard *msg = malloc(sizeof(*msg));
 
