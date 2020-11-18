@@ -25,3 +25,8 @@ jobs:
         run: sh run build -y
       - name: Test everything
         run: sh run test -y
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: disk-img
+          path: build/disk.img
