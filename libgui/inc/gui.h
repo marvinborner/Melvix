@@ -19,6 +19,7 @@ enum element_type {
 	GUI_TYPE_CONTAINER,
 	GUI_TYPE_BUTTON,
 	GUI_TYPE_LABEL,
+	GUI_TYPE_TEXT_BOX,
 	GUI_TYPE_TEXT_INPUT
 };
 
@@ -43,6 +44,13 @@ struct element_button {
 };
 
 struct element_label {
+	char *text;
+	u32 color_fg;
+	u32 color_bg;
+	enum font_type font_type;
+};
+
+struct element_text_box {
 	char *text;
 	u32 color_fg;
 	u32 color_bg;
@@ -90,13 +98,17 @@ struct gui_event_mouse {
 struct element *gui_init(const char *title, u32 width, u32 height, u32 color_bg);
 void gui_event_loop(struct element *container);
 struct element *gui_add_button(struct element *container, int x, int y, enum font_type font_type,
-			       char *text, u32 color_bg, u32 color_fg);
+			       const char *text, u32 color_bg, u32 color_fg);
 struct element *gui_add_label(struct element *container, int x, int y, enum font_type font_type,
-			      char *text, u32 color_bg, u32 color_fg);
+			      const char *text, u32 color_bg, u32 color_fg);
+struct element *gui_add_text_box(struct element *container, int x, int y, u32 width, u32 height,
+				 enum font_type font_type, const char *text, u32 color_bg,
+				 u32 color_fg);
 struct element *gui_add_text_input(struct element *container, int x, int y, u32 width,
 				   enum font_type font_type, u32 color_bg, u32 color_fg);
 struct element *gui_add_container(struct element *container, int x, int y, u32 width, u32 height,
 				  u32 color_bg);
+void gui_sync(struct element *container, struct element *elem);
 void gui_remove_childs(struct element *elem);
 void gui_remove_element(struct element *elem);
 

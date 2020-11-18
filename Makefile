@@ -37,4 +37,4 @@ compile:
 	@echo "Compiled apps"
 
 clean:
-	@find kernel/ apps/ libc/ libtxt/ libgui/ boot/ \( -name "*.o" -or -name "*.a" -or -name "*.elf" -or -name "*.bin" \) -type f -delete
+	@find kernel/ apps/ libc/ libtxt/ libgui/ libnet/ boot/ \( -name "*.o" -or -name "*.a" -or -name "*.elf" -or -name "*.bin" \) -type f -delete

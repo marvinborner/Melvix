@@ -26,6 +26,7 @@ enum sys {
 	SYS_NET_CLOSE, // Close network socket
 	SYS_NET_CONNECT, // Connect to destination
 	SYS_NET_SEND, // Send to socket
+	SYS_NET_RECEIVE, // Receive data from socket
 };
 
 enum event_type { EVENT_KEYBOARD, EVENT_MOUSE, EVENT_MAX };

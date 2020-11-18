@@ -36,14 +36,18 @@ void scheduler(struct regs *regs)
 	if (current)
 		memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
 
-	if (priority_proc) {
+	if (priority_proc && priority_proc->state == PROC_RUNNING) {
 		current = list_first_data(proc_list, priority_proc);
 		priority_proc = NULL;
 		assert(current);
-	} else if (current && current->next) {
+	} else if (current && current->next &&
+		   ((struct proc *)current->next->data)->state == PROC_RUNNING) {
 		current = current->next;
-	} else {
+	} else if (((struct proc *)proc_list->head->data)->state == PROC_RUNNING) {
 		current = proc_list->head;
+	} else {
+		print("TODO: All processes are sleeping!\n"); // TODO!
+		/* loop(); */
 	}
 
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));

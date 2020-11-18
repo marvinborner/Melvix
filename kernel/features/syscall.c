@@ -108,6 +108,14 @@ void syscall_handler(struct regs *r)
 		net_send((void *)r->ebx, (void *)r->ecx, r->edx);
 		break;
 	}
+	case SYS_NET_RECEIVE: {
+		if (!net_data_available((void *)r->ebx)) {
+			proc_current()->state = PROC_SLEEPING;
+			proc_yield(r);
+		}
+		r->eax = net_receive((void *)r->ebx, (void *)r->ecx, r->edx);
+		break;
+	}
 	default: {
 		print("Unknown syscall!\n");
 		break;

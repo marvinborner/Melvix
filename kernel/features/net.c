@@ -374,23 +374,6 @@ static void icmp_handle_packet(struct icmp_packet *request_packet, u32 dst)
 	free(packet);
 }
 
-// TODO: Less magic numbers :)
-static void dns_handle_packet(struct dns_packet *packet)
-{
-	print("DNS!\n");
-	u16 flags = htons(packet->flags);
-	u8 reply_code = flags & 0xf;
-	if (reply_code != DNS_NOERROR) {
-		printf("DNS error: %d\n", reply_code);
-		return;
-	}
-
-	u8 *start = &packet->data[1] + strlen((char *)&packet->data[1]);
-	printf("TTL of %s: %ds\n", &packet->data[1], (u32)start[14]);
-	u8 *ip = &start[17];
-	printf("IP: %d.%d.%d.%d\n", ip[0], ip[1], ip[2], ip[3]);
-}
-
 static void dhcp_handle_packet(struct dhcp_packet *packet)
 {
 	print("DHCP!\n");
@@ -510,10 +493,16 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->state++;
 		return;
 	} else if (tcp->state == 6 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
-		for (u32 i = 0; i < data_length; ++i) {
-			if (packet->data[i])
-				printf("%c", packet->data[i]);
+		struct socket_data *sdata = malloc(sizeof(*sdata));
+		sdata->length = data_length;
+		if (sdata->length) {
+			sdata->data = malloc(data_length);
+			memcpy(sdata->data, packet->data, data_length);
+		} else {
+			sdata->data = NULL;
 		}
+		list_add(socket->packets, sdata);
+		proc_from_pid(socket->pid)->state = PROC_RUNNING;
 
 		tcp->ack_no += data_length;
 		tcp->seq_no = recv_ack;
@@ -539,13 +528,10 @@ static void udp_handle_packet(struct udp_packet *packet)
 {
 	printf("UDP Port: %d\n", ntohs(packet->dst_port));
 
-	void *data_ptr = (u8 *)packet + sizeof(*packet);
+	void *data_ptr = packet->data;
 
 	if (ntohs(packet->dst_port) == DHCP_PORT) {
 		dhcp_handle_packet(data_ptr);
-		return;
-	} else if (ntohs(packet->dst_port) == DNS_PORT) {
-		dns_handle_packet(data_ptr);
 		return;
 	}
 
@@ -557,7 +543,16 @@ static void udp_handle_packet(struct udp_packet *packet)
 	}
 
 	// TODO: Socket event to process
-	(void)socket;
+	struct socket_data *sdata = malloc(sizeof(*sdata));
+	sdata->length = ntohs(packet->length);
+	if (sdata->length) {
+		sdata->data = malloc(sdata->length);
+		memcpy(sdata->data, packet->data, sdata->length);
+	} else {
+		sdata->data = NULL;
+	}
+	list_add(socket->packets, sdata);
+	proc_from_pid(socket->pid)->state = PROC_RUNNING;
 }
 
 static void ip_handle_packet(struct ip_packet *packet, int len)
@@ -716,6 +711,8 @@ struct socket *net_open(enum socket_type type)
 
 	socket->type = type;
 	socket->state = S_OPEN;
+	socket->packets = list_new();
+	socket->pid = proc_current()->pid;
 	return socket;
 }
 
@@ -727,7 +724,7 @@ void net_close(struct socket *socket)
 
 int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 {
-	if (!socket || socket->state != S_OPEN)
+	if (!socket || socket->state != S_OPEN || !ip_addr || !dst_port)
 		return 0;
 
 	socket->ip_addr = ip_addr;
@@ -741,6 +738,7 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 		socket->prot.tcp.ack_no = 0;
 		socket->prot.tcp.state = 0;
 		socket->state = S_CONNECTING;
+		// TODO: Don't block kernel
 		tcp_send_packet(socket, TCP_FLAG_SYN, NULL, 0);
 		sti();
 		u32 time = timer_get();
@@ -774,6 +772,37 @@ void net_send(struct socket *socket, void *data, u32 len)
 	} else {
 		print("Unknown socket type!\n");
 	}
+}
+
+int net_data_available(struct socket *socket)
+{
+	if (socket && socket->packets && socket->packets->head &&
+	    ((struct socket_data *)socket->packets->head->data)->length > 0)
+		return 1;
+	else
+		return 0;
+}
+
+int net_receive(struct socket *socket, void *buf, u32 len)
+{
+	if (!socket || !socket->packets)
+		return 0;
+
+	u32 offset = 0;
+	struct node *iterator = socket->packets->head;
+	while (iterator != NULL) {
+		struct socket_data *sdata = iterator->data;
+		u32 length = sdata->length;
+		if (offset + length < len) {
+			memcpy((u8 *)buf + offset, sdata->data, length);
+			offset += length;
+		} else {
+			break;
+		};
+		iterator = iterator->next;
+	}
+
+	return offset;
 }
 
 /**
@@ -820,8 +849,6 @@ void net_install(void)
 	}
 
 	// Request
-	/* dns_request("google", "de"); */
-
 	/* struct socket *socket = net_open(S_TCP); */
 	/* if (socket && net_connect(socket, ip(91, 89, 253, 227), 80)) */
 	/* 	net_send(socket, strdup(http_req), strlen(http_req)); */

@@ -147,6 +147,13 @@ void gui_sync_label(struct element *elem)
 	gfx_write(elem->ctx, 0, 0, label->font_type, label->color_fg, label->text);
 }
 
+void gui_sync_text_box(struct element *elem)
+{
+	struct element_text_box *text_box = elem->data;
+	gfx_fill(elem->ctx, text_box->color_bg);
+	gfx_write(elem->ctx, 0, 0, text_box->font_type, text_box->color_fg, text_box->text);
+}
+
 void gui_sync_text_input(struct element *elem)
 {
 	struct element_text_input *text_input = elem->data;
@@ -161,8 +168,33 @@ void gui_sync_container(struct element *elem)
 	// TODO: Handle container flags
 }
 
+void gui_sync(struct element *container, struct element *elem)
+{
+	switch (elem->type) {
+	case GUI_TYPE_BUTTON:
+		gui_sync_button(elem);
+		break;
+	case GUI_TYPE_LABEL:
+		gui_sync_label(elem);
+		break;
+	case GUI_TYPE_TEXT_BOX:
+		gui_sync_text_box(elem);
+		break;
+	case GUI_TYPE_TEXT_INPUT:
+		gui_sync_text_input(elem);
+		break;
+	case GUI_TYPE_CONTAINER:
+		gui_sync_container(elem);
+		break;
+	default:
+		break;
+	}
+	merge_elements(get_root(container->window_id));
+	gfx_redraw_focused();
+}
+
 struct element *gui_add_button(struct element *container, int x, int y, enum font_type font_type,
-			       char *text, u32 color_bg, u32 color_fg)
+			       const char *text, u32 color_bg, u32 color_fg)
 {
 	if (!container || !container->childs || !gfx_resolve_font(font_type))
 		return NULL;
@@ -178,22 +210,20 @@ struct element *gui_add_button(struct element *container, int x, int y, enum fon
 	button->ctx->flags = WF_RELATIVE;
 	button->childs = list_new();
 	button->data = malloc(sizeof(struct element_button));
-	((struct element_button *)button->data)->text = text;
+	((struct element_button *)button->data)->text = strdup(text);
 	((struct element_button *)button->data)->color_fg = color_fg;
 	((struct element_button *)button->data)->color_bg = color_bg;
 	((struct element_button *)button->data)->font_type = font_type;
 
 	gfx_new_ctx(button->ctx);
 	list_add(container->childs, button);
-	gui_sync_button(button);
-	merge_elements(get_root(container->window_id));
-	gfx_redraw_focused();
+	gui_sync(container, button);
 
 	return button;
 }
 
 struct element *gui_add_label(struct element *container, int x, int y, enum font_type font_type,
-			      char *text, u32 color_bg, u32 color_fg)
+			      const char *text, u32 color_bg, u32 color_fg)
 {
 	if (!container || !container->childs || !gfx_resolve_font(font_type))
 		return NULL;
@@ -209,18 +239,46 @@ struct element *gui_add_label(struct element *container, int x, int y, enum font
 	label->ctx->flags = WF_RELATIVE;
 	label->childs = list_new();
 	label->data = malloc(sizeof(struct element_label));
-	((struct element_label *)label->data)->text = text;
+	((struct element_label *)label->data)->text = strdup(text);
 	((struct element_label *)label->data)->color_fg = color_fg;
 	((struct element_label *)label->data)->color_bg = color_bg;
 	((struct element_label *)label->data)->font_type = font_type;
 
 	gfx_new_ctx(label->ctx);
 	list_add(container->childs, label);
-	gui_sync_label(label);
-	merge_elements(get_root(container->window_id));
-	gfx_redraw_focused();
+	gui_sync(container, label);
 
 	return label;
+}
+
+struct element *gui_add_text_box(struct element *container, int x, int y, u32 width, u32 height,
+				 enum font_type font_type, const char *text, u32 color_bg,
+				 u32 color_fg)
+{
+	if (!container || !container->childs || !gfx_resolve_font(font_type))
+		return NULL;
+
+	struct element *text_box = malloc(sizeof(*text_box));
+	text_box->type = GUI_TYPE_TEXT_BOX;
+	text_box->window_id = container->window_id;
+	text_box->ctx = malloc(sizeof(*text_box->ctx));
+	text_box->ctx->x = x;
+	text_box->ctx->y = y;
+	text_box->ctx->width = width;
+	text_box->ctx->height = height;
+	text_box->ctx->flags = WF_RELATIVE;
+	text_box->childs = list_new();
+	text_box->data = malloc(sizeof(struct element_text_box));
+	((struct element_text_box *)text_box->data)->text = strdup(text);
+	((struct element_text_box *)text_box->data)->color_fg = color_fg;
+	((struct element_text_box *)text_box->data)->color_bg = color_bg;
+	((struct element_text_box *)text_box->data)->font_type = font_type;
+
+	gfx_new_ctx(text_box->ctx);
+	list_add(container->childs, text_box);
+	gui_sync(container, text_box);
+
+	return text_box;
 }
 
 struct element *gui_add_text_input(struct element *container, int x, int y, u32 width,
@@ -246,9 +304,7 @@ struct element *gui_add_text_input(struct element *container, int x, int y, u32 
 
 	gfx_new_ctx(text_input->ctx);
 	list_add(container->childs, text_input);
-	gui_sync_text_input(text_input);
-	merge_elements(get_root(container->window_id));
-	gfx_redraw_focused();
+	gui_sync(container, text_input);
 
 	return text_input;
 }
@@ -275,9 +331,7 @@ struct element *gui_add_container(struct element *container, int x, int y, u32 w
 
 	gfx_new_ctx(new_container->ctx);
 	list_add(container->childs, new_container);
-	gui_sync_container(new_container);
-	merge_elements(get_root(container->window_id));
-	gfx_redraw_focused();
+	gui_sync(container, new_container);
 
 	return new_container;
 }

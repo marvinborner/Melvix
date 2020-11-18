@@ -105,8 +105,16 @@ void gfx_write_char(struct context *ctx, int x, int y, enum font_type font_type,
 void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 c, char *text)
 {
 	struct font *font = gfx_resolve_font(font_type);
+	u32 cnt = 0;
 	for (u32 i = 0; i < strlen(text); i++) {
-		write_char(ctx, x + i * font->width, y, font, c, text[i]);
+		// TODO: Should this be here?
+		if (text[i] == '\n') {
+			cnt = 0;
+			y += font->height;
+		} else {
+			write_char(ctx, x + cnt * font->width, y, font, c, text[i]);
+		}
+		cnt++;
 	}
 	/* gfx_redraw(); */
 }
