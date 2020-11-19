@@ -405,8 +405,6 @@ static void dhcp_handle_packet(struct dhcp_packet *packet)
 }
 
 // enum tcp_state { TCP_LISTEN, TCP_SYN_SENT, TCP_SYN_RECIEVED, TCP_ESTABLISHED, TCP_FIN_WAIT_1, TCP_FIN_WAIT_2, TCP_CLOSE_WAIT, TCP_CLOSING, TCP_LAST_ACK, TCP_TIME_WAIT, TCP_CLOSED };
-#define http_res "HTTP/1.1 200\r\nContent-Length: 14\r\nConnection: close\r\n\r\n<h1>Hallo</h1>"
-#define http_req "GET / HTTP/1.1\r\nHost: google.de\r\n\r\n"
 static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 {
 	printf("TCP Port: %d\n", ntohs(packet->dst_port));
@@ -429,7 +427,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 
 	// Serve
 	if (tcp->state == 0 && (flags & 0xff) == TCP_FLAG_SYN) {
-		socket->ip_addr = dst;
+		socket->ip_addr = ntohl(dst);
 		socket->dst_port = ntohs(packet->src_port);
 		tcp->ack_no = recv_seq + 1;
 		tcp->seq_no = 1000;
@@ -437,24 +435,24 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->state++;
 		return;
 	} else if (tcp->state == 1 && (flags & 0xff) == TCP_FLAG_ACK) {
-		/* assert(recv_ack == seq_no + 1); */
-
 		tcp->state++;
 		return;
 	} else if (tcp->state == 2 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
-		/* assert(recv_ack == seq_no + 1); */
-
-		/* for (u32 i = 0; i < data_length; ++i) { */
-		/* 	if (packet->data[i]) */
-		/* 		printf("%c", packet->data[i]); */
-		/* } */
+		struct socket_data *sdata = malloc(sizeof(*sdata));
+		sdata->length = data_length;
+		if (sdata->length) {
+			sdata->data = malloc(data_length);
+			memcpy(sdata->data, packet->data, data_length);
+		} else {
+			sdata->data = NULL;
+		}
+		list_add(socket->packets, sdata);
+		proc_from_pid(socket->pid)->state = PROC_RUNNING;
 
 		tcp->ack_no += data_length;
 		tcp->seq_no++;
 
 		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
-		/* tcp_send_packet(socket, TCP_FLAG_PSH | TCP_FLAG_ACK, strdup(http_res), */
-		/* 		strlen(http_res)); */
 
 		socket->state = S_CONNECTED;
 		tcp->state++;
@@ -463,7 +461,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->ack_no = recv_seq + 1;
 		tcp->seq_no = recv_ack;
 
-		/* tcp->state++; */
+		tcp->state++; // ?
 		return;
 	} else if (tcp->state == 4 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
 		tcp->ack_no = recv_seq + 1;
