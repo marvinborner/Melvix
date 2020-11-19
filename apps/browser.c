@@ -32,6 +32,32 @@ char **dns_split(char *url, char **buf)
 	return buf;
 }
 
+u32 status_color(char *http_code)
+{
+	u32 c = 0;
+	switch (http_code[0]) {
+	case '1': // Information response
+		c = COLOR_BLUE;
+		break;
+	case '2': // Successful response
+		c = COLOR_GREEN;
+		break;
+	case '3': // Redirects
+		c = COLOR_YELLOW;
+		break;
+	case '4': // Client error
+		c = COLOR_RED;
+		break;
+	case '5': // Server error
+		c = COLOR_MAGENTA;
+		break;
+	default:
+		c = COLOR_WHITE;
+		break;
+	}
+	return c;
+}
+
 void on_submit(void *event, struct element *box)
 {
 	(void)event;
@@ -56,6 +82,7 @@ void on_submit(void *event, struct element *box)
 		net_receive(socket, buf, 4096);
 		l->text = http_data(buf);
 		c->text = http_code(buf);
+		c->color_fg = status_color(c->text);
 	} else {
 		l->text = strdup("Can't connect to server.");
 		c->text = strdup("000");
@@ -69,7 +96,7 @@ int main()
 {
 	// TODO: Dynamic element positioning
 	root = gui_init("browser", WIDTH + 2 * BORDER, HEIGHT + 2 * BORDER, COLOR_BG);
-	code_label = gui_add_label(root, BORDER, BORDER, FONT_24, "000", COLOR_WHITE, COLOR_BLACK);
+	code_label = gui_add_label(root, BORDER, BORDER, FONT_24, "000", COLOR_BLACK, COLOR_WHITE);
 	struct element *text_input =
 		gui_add_text_input(root, LABEL_WIDTH + 2 * BORDER, BORDER,
 				   WIDTH - LABEL_WIDTH - BORDER, FONT_24, COLOR_WHITE, COLOR_BLACK);

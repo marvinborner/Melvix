@@ -66,7 +66,8 @@ struct context {
 
 struct font *gfx_resolve_font(enum font_type font_type);
 void gfx_write_char(struct context *ctx, int x, int y, enum font_type font_type, u32 c, char ch);
-void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 c, char *text);
+void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 c,
+	       const char *text);
 void gfx_load_image(struct context *ctx, const char *path, int x, int y);
 void gfx_load_wallpaper(struct context *ctx, const char *path);
 void gfx_copy(struct context *dest, struct context *src, int x, int y, u32 width, u32 height);

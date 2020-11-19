@@ -102,7 +102,7 @@ void gfx_write_char(struct context *ctx, int x, int y, enum font_type font_type,
 	/* gfx_redraw(); */
 }
 
-void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 c, char *text)
+void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 c, const char *text)
 {
 	struct font *font = gfx_resolve_font(font_type);
 	u32 cnt = 0;
