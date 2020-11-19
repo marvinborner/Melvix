@@ -10,6 +10,12 @@
 #include <print.h>
 #include <str.h>
 
+#define WIDTH 640
+#define HEIGHT 400
+#define FONT_HEIGHT 24
+#define LABEL_WIDTH 36 // Thx Lars
+#define BORDER 2
+
 static struct element *root;
 static struct element *code_label;
 static struct element *output;
@@ -62,12 +68,14 @@ void on_submit(void *event, struct element *box)
 int main()
 {
 	// TODO: Dynamic element positioning
-	root = gui_init("browser", 640, 400, COLOR_BG);
-	code_label = gui_add_label(root, 2, 2, FONT_24, "000", COLOR_WHITE, COLOR_BLACK);
+	root = gui_init("browser", WIDTH + 2 * BORDER, HEIGHT + 2 * BORDER, COLOR_BG);
+	code_label = gui_add_label(root, BORDER, BORDER, FONT_24, "000", COLOR_WHITE, COLOR_BLACK);
 	struct element *text_input =
-		gui_add_text_input(root, 40, 2, 598, FONT_24, COLOR_WHITE, COLOR_BLACK);
-	output = gui_add_text_box(root, 2, 28, 636, 370, FONT_16, "Enter URL and press Enter :)",
-				  COLOR_WHITE, COLOR_BLACK);
+		gui_add_text_input(root, LABEL_WIDTH + 2 * BORDER, BORDER,
+				   WIDTH - LABEL_WIDTH - BORDER, FONT_24, COLOR_WHITE, COLOR_BLACK);
+	output = gui_add_text_box(root, BORDER, FONT_HEIGHT + 2 * BORDER, WIDTH,
+				  HEIGHT - FONT_HEIGHT - BORDER, FONT_16,
+				  "Enter URL and press Enter :)", COLOR_WHITE, COLOR_BLACK);
 
 	text_input->event.on_submit = on_submit;
 
