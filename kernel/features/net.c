@@ -323,7 +323,7 @@ static void tcp_send_packet(struct socket *socket, u16 flags, void *data, int le
 	packet->seq_number = htonl(socket->prot.tcp.seq_no);
 	packet->ack_number = flags & TCP_FLAG_ACK ? htonl(socket->prot.tcp.ack_no) : 0;
 	packet->flags = (u16)htons(0x5000 ^ (flags & 0xff));
-	packet->window_size = htons((2 << 15) - 1); // TODO: Support TCP windows
+	packet->window_size = htons(U16_MAX); // TODO: Support TCP windows
 	packet->urgent = 0;
 	packet->checksum = 0; // Later
 
@@ -494,7 +494,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		socket->state = S_CONNECTED;
 		tcp->state++;
 		return;
-	} else if (tcp->state == 6 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
+	} else if (tcp->state == 6 && flags & TCP_FLAG_ACK) {
 		struct socket_data *sdata = malloc(sizeof(*sdata));
 		sdata->length = data_length;
 		if (sdata->length) {
@@ -504,16 +504,19 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 			sdata->data = NULL;
 		}
 		list_add(socket->packets, sdata);
-		proc_from_pid(socket->pid)->state = PROC_RUNNING;
 
 		tcp->ack_no += data_length;
 		tcp->seq_no = recv_ack;
 
-		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
-		tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
+		// TODO: How many segments are going to be sent?!
+		if ((flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
+			proc_from_pid(socket->pid)->state = PROC_RUNNING;
+			tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
+			tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
+			tcp->state++;
+		}
 
 		socket->state = S_CONNECTED;
-		tcp->state++;
 		return;
 	} else if (tcp->state == 7 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
 		tcp->ack_no = recv_seq + 1;
@@ -834,9 +837,10 @@ void net_install(void)
 	}
 
 	// DHCP timeout (no gateway address)
+	sti();
 	u32 time = timer_get();
 	while (!gateway_addr && timer_get() - time < 1000)
-		timer_wait(10);
+		;
 
 	if (timer_get() - time >= 1000) {
 		print("DHCP timeout\n");
@@ -845,9 +849,10 @@ void net_install(void)
 	}
 
 	// ARP lookup timeout
+	sti();
 	time = timer_get();
 	while (!arp_lookup(gateway_mac, gateway_addr) && timer_get() - time < 1000)
-		timer_wait(10);
+		;
 
 	if (timer_get() - time >= 1000) {
 		printf("Gateway ARP timeout at address %x\n", gateway_addr);

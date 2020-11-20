@@ -161,33 +161,3 @@ u32 find_inode(const char *name, u32 dir_inode)
 	free(buf);
 	return (unsigned)-1;
 }
-
-void ls_root(void)
-{
-	struct inode *i = get_inode(2);
-
-	char *buf = malloc(BLOCK_SIZE * i->blocks / 2);
-
-	for (u32 q = 0; q < i->blocks / 2; q++) {
-		char *data = buffer_read(i->block[q]);
-		memcpy((u32 *)((u32)buf + q * BLOCK_SIZE), data, BLOCK_SIZE);
-	}
-
-	struct dirent *d = (struct dirent *)buf;
-
-	u16 calc = 0;
-	int sum = 0;
-	printf("\nRoot directory:\n");
-	do {
-		calc = (sizeof(struct dirent) + d->name_len + 4) & (u32)~0x3;
-		sum += d->total_len;
-		d->name[d->name_len] = '\0';
-		printf("/%s\n", d->name);
-		if (d->total_len != calc && sum == 1024)
-			d->total_len = calc;
-
-		d = (struct dirent *)((u32)d + d->total_len);
-
-	} while (sum < 1024);
-	printf("\n");
-}

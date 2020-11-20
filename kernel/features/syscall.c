@@ -98,7 +98,7 @@ void syscall_handler(struct regs *r)
 	}
 	case SYS_NET_CLOSE: {
 		struct socket *s = (void *)r->ebx;
-		if (s->type == S_TCP && s->state != S_CLOSED) {
+		if (s->type == S_TCP && s->state == S_CONNECTED) {
 			proc_current()->state = PROC_SLEEPING;
 			proc_yield(r);
 			return;

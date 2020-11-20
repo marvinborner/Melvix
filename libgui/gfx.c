@@ -69,8 +69,12 @@ static void write_char(struct context *ctx, int x, int y, struct font *font, u32
 		for (int cx = 0; cx < font->width; cx++) {
 			u8 bits = font->chars[ch * font->char_size + cy * stride + cx / 8];
 			u8 bit = bits >> (7 - cx % 8) & 1;
-			if (bit)
-				memset(&draw[bypp * cx], c, bypp);
+			if (bit) {
+				draw[bypp * cx] = GET_BLUE(c);
+				draw[bypp * cx + 1] = GET_GREEN(c);
+				draw[bypp * cx + 2] = GET_RED(c);
+				draw[bypp * cx + 3] = GET_ALPHA(c);
+			}
 		}
 		draw += ctx->pitch;
 	}
@@ -81,8 +85,12 @@ static void draw_rectangle(struct context *ctx, int x1, int y1, int x2, int y2, 
 	int bypp = ctx->bpp >> 3;
 	u8 *draw = &ctx->fb[x1 * bypp + y1 * ctx->pitch];
 	for (int i = 0; i < y2 - y1; i++) {
-		for (int j = 0; j < x2 - x1; j++)
-			memset(&draw[bypp * j], c, bypp);
+		for (int j = 0; j < x2 - x1; j++) {
+			draw[bypp * j] = GET_BLUE(c);
+			draw[bypp * j + 1] = GET_GREEN(c);
+			draw[bypp * j + 2] = GET_RED(c);
+			draw[bypp * j + 3] = GET_ALPHA(c);
+		}
 		draw += ctx->pitch;
 	}
 }
@@ -220,8 +228,13 @@ void gfx_border(struct context *ctx, u32 c, u32 width)
 	for (u32 i = 0; i < ctx->height; i++) {
 		for (u32 j = 0; j < ctx->width; j++) {
 			if (j <= width - 1 || i <= width - 1 ||
-			    j - ctx->width + width + 1 <= width || i - ctx->height + width <= width)
-				memset(&draw[bypp * j], c, bypp);
+			    j - ctx->width + width + 1 <= width ||
+			    i - ctx->height + width <= width) {
+				draw[bypp * j + 0] = GET_BLUE(c);
+				draw[bypp * j + 1] = GET_GREEN(c);
+				draw[bypp * j + 2] = GET_RED(c);
+				draw[bypp * j + 3] = GET_ALPHA(c);
+			}
 		}
 		draw += ctx->pitch;
 	}

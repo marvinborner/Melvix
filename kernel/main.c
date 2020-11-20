@@ -37,8 +37,6 @@ void kernel_main(struct vid_info *vid_info)
 	// Enable drivers
 	sti();
 
-	ls_root();
-
 	syscall_init();
 	proc_init();
 
