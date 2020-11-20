@@ -39,7 +39,7 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 -   Install the qemu i386 emulator
 -   Download the `disk-img` artifact from the newest [GitHub Workflow build](https://github.com/marvinborner/Melvix/actions)
 -   Unzip `disk-img.zip`
--   Run `qemu-system-i386 -vga std -drive file=path/to/disk.img,format=raw,index=1,media=disk -netdev user,id=net0 -device rtl8139,netdev=net0`
+-   Run `qemu-system-i386 -m 256M -vga std -drive file=path/to/disk.img,format=raw,index=1,media=disk -netdev user,id=net0 -device rtl8139,netdev=net0`
 -   Enjoy, or try building it yourself!
 
 ## Build & Test
