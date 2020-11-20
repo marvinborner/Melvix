@@ -16,6 +16,7 @@ struct bmp *bmp_load(const char *path)
 	if (h->signature[0] != 'B' || h->signature[1] != 'M')
 		return NULL;
 
+	// TODO: Support padding with odd widths
 	struct bmp_info *info = (struct bmp_info *)((u32)buf + sizeof(*h));
 	struct bmp *bmp = malloc(sizeof(*bmp));
 	bmp->width = info->width;

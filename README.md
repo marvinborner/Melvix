@@ -89,3 +89,6 @@ Resources:
 
 -   [Spleen font](https://github.com/fcambus/spleen) - [MIT License](https://github.com/fcambus/spleen/blob/5759e9abb130b89ba192edc5324b12ef07b7dad3/LICENSE)
 -   [ext2util](https://github.com/lazear/ext2util) - [MIT License](https://github.com/lazear/ext2util/blob/9bbcc81be46416491f8d46f25f7f775cfb7f2261/LICENSE)
+
+Libraries:
+-   [upng (heavily modified lodepng)](https://github.com/elanthis/upng) - [ZLIB License](https://github.com/lvandeve/lodepng/blob/7fdcc96a5e5864eee72911c3ca79b1d9f0d12292/LICENSE)

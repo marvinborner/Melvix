@@ -235,8 +235,8 @@ int main(int argc, char **argv)
 	gfx_write(&direct, 0, 0, FONT_32, COLOR_FG, "Welcome to Melvix!");
 	gfx_write(&direct, 0, 32, FONT_32, COLOR_FG, "Loading resources...");
 	gfx_fill(&root, COLOR_FG);
-	gfx_load_wallpaper(&root, "/res/wall.bmp");
-	gfx_load_image(&cursor, "/res/cursor.bmp", 0, 0);
+	gfx_load_wallpaper(&root, "/res/wall.png");
+	gfx_load_image(&cursor, "/res/cursor.png", 0, 0);
 	redraw_all();
 
 	event_register(EVENT_MOUSE);

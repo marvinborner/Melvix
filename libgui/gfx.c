@@ -7,6 +7,7 @@
 #include <bmp.h>
 #include <gfx.h>
 #include <mem.h>
+#include <png.h>
 #include <psf.h>
 #include <str.h>
 #include <sys.h>
@@ -137,17 +138,21 @@ void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 
 void gfx_load_image(struct context *ctx, const char *path, int x, int y)
 {
 	// TODO: Support x, y
-	struct bmp *bmp = bmp_load(path);
+	// TODO: Detect image type
+	// struct bmp *bmp = bmp_load(path);
+	struct bmp *bmp = png_load(path);
 	assert(bmp && bmp->width + x <= ctx->width);
 	assert(bmp && bmp->height + y <= ctx->height);
 
-	// TODO: Support padding with odd widths
+	// TODO: Fix reversed png in decoder
 	int bypp = bmp->bpp >> 3;
-	u8 *srcfb = &bmp->data[bypp + (bmp->height - 1) * bmp->pitch];
+	// u8 *srcfb = &bmp->data[bypp + (bmp->height - 1) * bmp->pitch];
+	u8 *srcfb = bmp->data;
 	u8 *destfb = &ctx->fb[bypp];
 	for (u32 cy = 0; cy < bmp->height; cy++) {
 		memcpy(destfb, srcfb, bmp->pitch);
-		srcfb -= bmp->pitch;
+		// srcfb -= bmp->pitch;
+		srcfb += bmp->pitch;
 		destfb += ctx->pitch;
 	}
 	/* gfx_redraw(); */
