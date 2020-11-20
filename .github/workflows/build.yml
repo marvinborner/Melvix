@@ -21,6 +21,8 @@ jobs:
       - name: Build cross compiler
         if: steps.cache-cross.outputs.cache-hit != 'true'
         run: sh run cross -y
+      - name: Create disk image
+        run: sh run disk -y
       - name: Build
         run: sh run build -y
       - name: Upload as artifact
