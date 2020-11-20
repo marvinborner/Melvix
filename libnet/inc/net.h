@@ -28,14 +28,21 @@
 	((((a)&0xff) << 24) | (((b)&0xff) << 16) | (((c)&0xff) << 8) | (((d)&0xff) << 0))
 
 #define net_open(type) (void *)sys1(SYS_NET_OPEN, (int)(type))
-#define net_close(socket) (void)sys1(SYS_NET_CLOSE, (int)(socket))
 #define net_connect(socket, ip_addr, dst_port)                                                     \
 	(int)sys3(SYS_NET_CONNECT, (int)(socket), (int)(ip_addr), (int)(dst_port))
 #define net_send(socket, data, len) (void)sys3(SYS_NET_SEND, (int)(socket), (int)(data), (int)(len))
+#include <print.h>
+static inline int net_close(struct socket *socket)
+{
+	int res = 0;
+	while (!(res = (int)sys1(SYS_NET_CLOSE, (int)(socket))))
+		;
+	return res;
+}
 static inline int net_receive(struct socket *socket, void *buf, u32 len)
 {
 	int res = 0;
-	while ((res = (int)sys3(SYS_NET_RECEIVE, (int)(socket), (int)(buf), (int)(len))) == 0)
+	while (!(res = (int)sys3(SYS_NET_RECEIVE, (int)(socket), (int)(buf), (int)(len))))
 		;
 	return res;
 }

@@ -82,13 +82,13 @@ static int socket_close(struct socket *socket)
 	while (iterator != NULL && iterator->data != NULL) {
 		iterator = iterator->next;
 		if (iterator->data == socket)
-			return list_remove(list, iterator) != NULL;
+			list_remove(list, iterator);
 	}
 
 	socket->state = S_CLOSED;
 	free(socket);
 
-	return 0;
+	return 1;
 }
 
 /**
@@ -262,8 +262,9 @@ static void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 	int arp_sent = 3;
 	u8 zero_hardware_addr[] = { 0, 0, 0, 0, 0, 0 };
 	u8 dst_mac[6];
-	sti();
-	if (same_net(dst))
+	if (same_net(dst)) {
+		scheduler_disable();
+		sti();
 		while (!arp_lookup(dst_mac, dst)) {
 			if (arp_sent) {
 				arp_sent--;
@@ -272,10 +273,12 @@ static void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 				break;
 			}
 		}
-	else
+		cli();
+		scheduler_enable();
+	} else {
 		memcpy(dst_mac, gateway_mac, 6);
+	}
 
-	cli();
 	printf("Destination: %x:%x:%x:%x:%x:%x\n", dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3],
 	       dst_mac[4], dst_mac[5]);
 	ethernet_send_packet(dst_mac, (u8 *)packet, htons(packet->length), ETHERNET_TYPE_IP4);
@@ -488,6 +491,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->ack_no = recv_seq;
 		tcp->seq_no = recv_ack;
 
+		socket->state = S_CONNECTED;
 		tcp->state++;
 		return;
 	} else if (tcp->state == 6 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
@@ -508,6 +512,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
 		tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
 
+		socket->state = S_CONNECTED;
 		tcp->state++;
 		return;
 	} else if (tcp->state == 7 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
@@ -515,6 +520,8 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->seq_no = recv_ack;
 
 		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
+
+		proc_from_pid(socket->pid)->state = PROC_RUNNING;
 
 		socket->state = S_CLOSED;
 		tcp->state = 0;
@@ -540,7 +547,6 @@ static void udp_handle_packet(struct udp_packet *packet)
 		return;
 	}
 
-	// TODO: Socket event to process
 	struct socket_data *sdata = malloc(sizeof(*sdata));
 	sdata->length = ntohs(packet->length);
 	if (sdata->length) {
@@ -551,6 +557,7 @@ static void udp_handle_packet(struct udp_packet *packet)
 	}
 	list_add(socket->packets, sdata);
 	proc_from_pid(socket->pid)->state = PROC_RUNNING;
+	/* printf("Waking up %d\n", socket->pid); */
 }
 
 static void ip_handle_packet(struct ip_packet *packet, int len)
@@ -714,10 +721,9 @@ struct socket *net_open(enum socket_type type)
 	return socket;
 }
 
-void net_close(struct socket *socket)
+int net_close(struct socket *socket)
 {
-	if (socket)
-		socket_close(socket);
+	return socket_close(socket);
 }
 
 int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
@@ -738,11 +744,13 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 		socket->state = S_CONNECTING;
 		// TODO: Don't block kernel
 		tcp_send_packet(socket, TCP_FLAG_SYN, NULL, 0);
+		scheduler_disable();
 		sti();
 		u32 time = timer_get();
 		while (socket->state != S_CONNECTED && timer_get() - time < 1000)
 			;
 		cli();
+		scheduler_enable();
 		if (socket->state != S_CONNECTED) {
 			socket->state = S_FAILED;
 			return 0;
@@ -791,6 +799,7 @@ int net_receive(struct socket *socket, void *buf, u32 len)
 	while (iterator != NULL) {
 		struct socket_data *sdata = iterator->data;
 		u32 length = sdata->length;
+		// TODO: Fix underflow breaking
 		if (offset + length < len) {
 			memcpy((u8 *)buf + offset, sdata->data, length);
 			offset += length;

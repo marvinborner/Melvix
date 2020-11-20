@@ -67,12 +67,14 @@ void scheduler(struct regs *regs)
 
 void scheduler_enable(void)
 {
+	timer_install();
 	irq_install_handler(0, scheduler);
 }
 
 void scheduler_disable(void)
 {
-	irq_install_handler(0, scheduler);
+	irq_uninstall_handler(0);
+	timer_install();
 }
 
 void proc_print(void)
@@ -82,7 +84,8 @@ void proc_print(void)
 	printf("\nPROCESSES\n");
 	struct proc *proc = NULL;
 	while (node && (proc = node->data)) {
-		printf("Process %d: %s\n", proc->pid, proc->name);
+		printf("Process %d: %s [%s]\n", proc->pid, proc->name,
+		       proc->state == PROC_RUNNING ? "RUNNING" : "SLEEPING");
 		node = node->next;
 	}
 	printf("\n");

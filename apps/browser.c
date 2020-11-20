@@ -89,7 +89,7 @@ void on_submit(void *event, struct element *box)
 	}
 	gui_sync(root, output);
 	gui_sync(root, code_label);
-	/* net_close(socket); */ // TODO: Fix net close before FIN/ACK got ACK'ed
+	net_close(socket);
 }
 
 int main()

@@ -59,8 +59,6 @@ static u32 dns_handle_packet(struct dns_packet *packet)
 u32 dns_request(const char *name, const char *tld)
 {
 	struct socket *socket = net_open(S_UDP);
-	/* if (socket) */
-	/* 	socket->src_port = 50053; */
 	if (!socket || !net_connect(socket, dns_ip_addr, 53))
 		return 0;
 
@@ -71,8 +69,9 @@ u32 dns_request(const char *name, const char *tld)
 	net_send(socket, packet, length);
 	free(packet);
 
-	u8 buf[128] = { 0 };
-	int l = net_receive(socket, buf, 128);
+	u8 buf[1024] = { 0 };
+	int l = net_receive(socket, buf, 1024);
+	net_close(socket);
 	if (l > 0)
 		return dns_handle_packet((void *)buf);
 	else

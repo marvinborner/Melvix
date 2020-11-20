@@ -97,7 +97,13 @@ void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_NET_CLOSE: {
-		net_close((void *)r->ebx);
+		struct socket *s = (void *)r->ebx;
+		if (s->type == S_TCP && s->state != S_CLOSED) {
+			proc_current()->state = PROC_SLEEPING;
+			proc_yield(r);
+			return;
+		}
+		r->eax = net_close(s);
 		break;
 	}
 	case SYS_NET_CONNECT: {
@@ -112,6 +118,7 @@ void syscall_handler(struct regs *r)
 		if (!net_data_available((void *)r->ebx)) {
 			proc_current()->state = PROC_SLEEPING;
 			proc_yield(r);
+			return;
 		}
 		r->eax = net_receive((void *)r->ebx, (void *)r->ecx, r->edx);
 		break;
