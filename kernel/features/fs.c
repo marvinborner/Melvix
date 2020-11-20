@@ -96,39 +96,6 @@ void *read_inode(struct inode *in)
 	return buf;
 }
 
-void *read_file(char *path)
-{
-	if (path[0] != '/')
-		return 0;
-
-	path++;
-	u32 current_inode = EXT2_ROOT;
-
-	int i = 0;
-	while (1) {
-		for (i = 0; path[i] != '/' && path[i] != '\0'; i++)
-			;
-
-		if (path[i] == '\0')
-			break;
-
-		path[i] = '\0';
-		current_inode = find_inode(path, current_inode);
-		path[i] = '/';
-
-		if (current_inode == 0)
-			return 0;
-
-		path += i + 1;
-	}
-
-	u32 inode = find_inode(path, current_inode);
-	if ((signed)inode <= 0)
-		return 0;
-
-	return read_inode(get_inode(inode));
-}
-
 u32 find_inode(const char *name, u32 dir_inode)
 {
 	if (!dir_inode)
@@ -160,4 +127,59 @@ u32 find_inode(const char *name, u32 dir_inode)
 	} while (sum < (1024 * i->blocks / 2));
 	free(buf);
 	return (unsigned)-1;
+}
+
+struct inode *find_inode_by_path(char *path)
+{
+	if (path[0] != '/')
+		return 0;
+
+	path++;
+	u32 current_inode = EXT2_ROOT;
+
+	int i = 0;
+	while (1) {
+		for (i = 0; path[i] != '/' && path[i] != '\0'; i++)
+			;
+
+		if (path[i] == '\0')
+			break;
+
+		path[i] = '\0';
+		current_inode = find_inode(path, current_inode);
+		path[i] = '/';
+
+		if (current_inode == 0)
+			return 0;
+
+		path += i + 1;
+	}
+
+	u32 inode = find_inode(path, current_inode);
+	if ((signed)inode <= 0)
+		return 0;
+
+	return get_inode(inode);
+}
+
+void *file_read(char *path)
+{
+	return read_inode(find_inode_by_path(path));
+}
+
+u32 file_stat(char *path)
+{
+	struct inode *in = find_inode_by_path(path);
+	assert(in);
+	if (!in)
+		return 0;
+
+	u32 num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
+
+	assert(num_blocks != 0);
+	if (!num_blocks)
+		return 0;
+
+	u32 sz = BLOCK_SIZE * num_blocks;
+	return sz;
 }

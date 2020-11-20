@@ -33,8 +33,12 @@ void syscall_handler(struct regs *r)
 		free((void *)r->ebx);
 		break;
 	}
+	case SYS_STAT: {
+		r->eax = (u32)file_stat((char *)r->ebx);
+		break;
+	}
 	case SYS_READ: {
-		r->eax = (u32)read_file((char *)r->ebx);
+		r->eax = (u32)file_read((char *)r->ebx);
 		break;
 	}
 	case SYS_WRITE: {

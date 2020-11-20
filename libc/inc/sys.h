@@ -11,6 +11,7 @@ enum sys {
 	SYS_LOOP, // To infinity and beyond (debug)!
 	SYS_MALLOC, // Allocate memory
 	SYS_FREE, // Free memory
+	SYS_STAT, // Get file information
 	SYS_READ, // Read file
 	SYS_WRITE, // Write to file
 	SYS_EXEC, // Execute path
@@ -67,6 +68,7 @@ int sysv(enum sys num, ...);
  */
 
 #define loop() sys0(SYS_LOOP)
+#define stat(path) (u32) sys1(SYS_STAT, (int)(path))
 #define read(path) (void *)sys1(SYS_READ, (int)(path))
 #define write(path, buf) sys2(SYS_WRITE, (int)(path), (buf))
 #define exec(path, ...) (int)sysv(SYS_EXEC, (int)(path), ##__VA_ARGS__)
