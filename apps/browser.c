@@ -72,9 +72,7 @@ void on_submit(void *event, struct element *box)
 
 	u32 ip = 0;
 	if (!ip_pton(url, &ip)) {
-		char *dns[2];
-		dns_split(url, dns);
-		ip = dns_request(dns[0], dns[1]);
+		ip = dns_request(url);
 	}
 
 	struct element_text_box *l = output->data;

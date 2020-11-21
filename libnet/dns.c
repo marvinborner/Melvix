@@ -22,7 +22,40 @@ struct dns_packet {
 	u8 data[];
 } __attribute__((packed));
 
-static void dns_make_packet(struct dns_packet *packet, const char *name, const char *tld)
+static u32 part_count(const char *name)
+{
+	u32 cnt = 0;
+	for (u32 i = 0; i < strlen(name); i++) {
+		if (name[i] == '.')
+			cnt++;
+	}
+	return cnt + 1;
+}
+
+static u32 part_len(const char *name, u32 index)
+{
+	char *data = (char *)name;
+
+	u32 cnt = 0;
+	for (u32 i = 0; i < strlen(name); i++) {
+		if (cnt == index) {
+			data += i;
+			break;
+		}
+
+		if (name[i] == '.')
+			cnt++;
+	}
+
+	for (cnt = 0; cnt < strlen(data); cnt++) {
+		if (data[cnt] == '.' || data[cnt] == '\0')
+			break;
+	}
+
+	return cnt;
+}
+
+static void dns_make_packet(struct dns_packet *packet, const char *name)
 {
 	packet->qid = htons(rand());
 	packet->flags = htons(0x0100); // Standard query
@@ -31,13 +64,17 @@ static void dns_make_packet(struct dns_packet *packet, const char *name, const c
 	packet->authorities = htons(0);
 	packet->additional = htons(0);
 
-	packet->data[0] = (u8)strlen(name);
-	memcpy(&packet->data[1], name, (u8)strlen(name));
-	packet->data[(u8)strlen(name) + 1] = (u8)strlen(tld);
-	memcpy(&packet->data[(u8)strlen(name) + 2], tld, (u8)strlen(tld));
-	packet->data[(u8)strlen(name) + (u8)strlen(tld) + 2] = 0x00; // Name end
-	packet->data[(u8)strlen(name) + (u8)strlen(tld) + 4] = 0x01; // A
-	packet->data[(u8)strlen(name) + (u8)strlen(tld) + 6] = 0x01; // IN
+	u8 *data = packet->data;
+	u32 cnt = 0;
+	for (u32 i = 0; i < part_count(name) * 2; i += 2) {
+		data[cnt] = part_len(name, i / 2);
+		memcpy(&data[cnt + 1], &name[cnt], data[i]);
+		cnt += data[cnt] + 1;
+	}
+
+	packet->data[cnt + 0] = 0x00; // Name end
+	packet->data[cnt + 2] = 0x01; // A
+	packet->data[cnt + 4] = 0x01; // IN
 }
 
 static u32 dns_handle_packet(struct dns_packet *packet)
@@ -56,16 +93,16 @@ static u32 dns_handle_packet(struct dns_packet *packet)
 	return ip(ip[0], ip[1], ip[2], ip[3]);
 }
 
-u32 dns_request(const char *name, const char *tld)
+u32 dns_request(const char *name)
 {
 	struct socket *socket = net_open(S_UDP);
 	if (!socket || !net_connect(socket, dns_ip_addr, 53))
 		return 0;
 
-	u32 length = sizeof(struct dns_packet) + strlen(name) + strlen(tld) + 7; // TODO: 7 :)
+	u32 length = sizeof(struct dns_packet) + strlen(name) + part_count(name) + 4;
 	struct dns_packet *packet = malloc(length);
 	memset(packet, 0, length);
-	dns_make_packet(packet, name, tld);
+	dns_make_packet(packet, name);
 	net_send(socket, packet, length);
 	free(packet);
 
