@@ -80,9 +80,9 @@ static int socket_close(struct socket *socket)
 
 	struct node *iterator = list->head;
 	while (iterator != NULL && iterator->data != NULL) {
-		iterator = iterator->next;
 		if (iterator->data == socket)
 			list_remove(list, iterator);
+		iterator = iterator->next;
 	}
 
 	socket->state = S_CLOSED;
@@ -471,6 +471,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->ack_no = recv_seq + 1;
 		tcp->seq_no = recv_ack;
 
+		socket->state = S_CONNECTED;
 		tcp->state++; // ?
 		return;
 	} else if (tcp->state == 4 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
@@ -479,9 +480,14 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 
 		tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
 
+		socket->state = S_CONNECTED;
+		tcp->state++;
+		return;
+	} else if (tcp->state == 5 && (flags & 0xff) == TCP_FLAG_ACK) {
+		proc_from_pid(socket->pid)->state = PROC_RUNNING;
+
 		socket->state = S_CLOSED;
 		tcp->state = 0;
-		return;
 	}
 
 	// Receive
@@ -492,16 +498,16 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
 
 		socket->state = S_CONNECTED;
-		tcp->state = 5; // TODO: TCP enum state machine
+		tcp->state = 6; // TODO: TCP enum state machine
 		return;
-	} else if (tcp->state == 5 && (flags & 0xff) == TCP_FLAG_ACK) {
+	} else if (tcp->state == 6 && (flags & 0xff) == TCP_FLAG_ACK) {
 		tcp->ack_no = recv_seq;
 		tcp->seq_no = recv_ack;
 
 		socket->state = S_CONNECTED;
 		tcp->state++;
 		return;
-	} else if (tcp->state == 6 && flags & TCP_FLAG_ACK) {
+	} else if (tcp->state == 7 && flags & TCP_FLAG_ACK) {
 		struct socket_data *sdata = malloc(sizeof(*sdata));
 		sdata->length = data_length;
 		if (sdata->length) {
@@ -522,11 +528,10 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 			tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
 			tcp->state++;
 		}
-		/* tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0); */
 
 		socket->state = S_CONNECTED;
 		return;
-	} else if (tcp->state == 7 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
+	} else if (tcp->state == 8 && (flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_FIN)) {
 		tcp->ack_no = recv_seq + 1;
 		tcp->seq_no = recv_ack;
 

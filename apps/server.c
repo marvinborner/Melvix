@@ -19,9 +19,8 @@ int main()
 		socket->state = S_CONNECTED;
 		char buf[4096] = { 0 };
 		net_receive(socket, buf, 4096);
-		printf("%s\n", buf);
 		net_send(socket, strdup(RESP), strlen(RESP));
-		/* net_close(socket); // TODO: Fix */
+		net_close(socket);
 	}
 
 	return 0;
