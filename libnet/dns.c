@@ -68,7 +68,7 @@ static void dns_make_packet(struct dns_packet *packet, const char *name)
 	u32 cnt = 0;
 	for (u32 i = 0; i < part_count(name) * 2; i += 2) {
 		data[cnt] = part_len(name, i / 2);
-		memcpy(&data[cnt + 1], &name[cnt], data[i]);
+		memcpy(&data[cnt + 1], &name[cnt], data[cnt]);
 		cnt += data[cnt] + 1;
 	}
 
