@@ -25,7 +25,7 @@
 
 #define TCP_FLAG_FIN (1 << 0)
 #define TCP_FLAG_SYN (1 << 1)
-#define TCP_FLAG_RES (1 << 2)
+#define TCP_FLAG_RST (1 << 2)
 #define TCP_FLAG_PSH (1 << 3)
 #define TCP_FLAG_ACK (1 << 4)
 #define TCP_FLAG_URG (1 << 5)

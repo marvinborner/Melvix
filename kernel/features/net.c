@@ -428,6 +428,13 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 
 	// TODO: Verify checksum first, then send ACK
 
+	if (flags & TCP_FLAG_RST) {
+		proc_from_pid(socket->pid)->state = PROC_RUNNING;
+		socket->state = S_FAILED;
+		tcp->state = 0;
+		return;
+	}
+
 	// Serve
 	if (tcp->state == 0 && (flags & 0xff) == TCP_FLAG_SYN) {
 		socket->ip_addr = ntohl(dst);
@@ -515,6 +522,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 			tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
 			tcp->state++;
 		}
+		/* tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0); */
 
 		socket->state = S_CONNECTED;
 		return;
@@ -756,8 +764,10 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 		scheduler_disable();
 		sti();
 		u32 time = timer_get();
-		while (socket->state != S_CONNECTED && timer_get() - time < 1000)
-			;
+		while ((socket->state != S_CONNECTED && timer_get() - time < 1000)) {
+			if (socket->state == S_FAILED)
+				break;
+		}
 		cli();
 		scheduler_enable();
 		if (socket->state != S_CONNECTED) {
