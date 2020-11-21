@@ -163,6 +163,7 @@ void net_send(struct socket *socket, void *data, u32 len);
 int net_receive(struct socket *socket, void *buf, u32 len);
 int net_data_available(struct socket *socket);
 
+int net_installed(void);
 void net_install(void);
 
 #endif

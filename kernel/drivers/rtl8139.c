@@ -19,7 +19,7 @@ static u32 rtl_device_pci = 0;
 static u32 rtl_iobase = 0;
 static u32 cur_rx = 0;
 
-u8 *rtl8139_get_mac()
+u8 *rtl8139_get_mac(void)
 {
 	if (!rtl_device_pci)
 		return NULL;
@@ -27,7 +27,7 @@ u8 *rtl8139_get_mac()
 	return mac;
 }
 
-void rtl8139_receive_packet()
+void rtl8139_receive_packet(void)
 {
 	while ((inb(rtl_iobase + RTL_PORT_CMD) & 0x01) == 0) {
 		int offset = cur_rx % 0x2000;
@@ -93,7 +93,7 @@ void rtl8139_irq_handler()
 		rtl8139_receive_packet();
 }
 
-void rtl8139_init()
+void rtl8139_init(void)
 {
 	if (!rtl_device_pci)
 		return;
@@ -160,7 +160,12 @@ void rtl8139_init()
 	outl(rtl_iobase + RTL_PORT_RXMISS, 0);
 }
 
-int rtl8139_install()
+int rtl8139_installed(void)
+{
+	return rtl_device_pci != 0;
+}
+
+int rtl8139_install(void)
 {
 	pci_scan(&rtl8139_find, -1, &rtl_device_pci);
 

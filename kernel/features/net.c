@@ -713,6 +713,9 @@ static int arp_lookup(u8 *ret_hardware_addr, u32 ip_addr)
 
 struct socket *net_open(enum socket_type type)
 {
+	if (!net_installed())
+		return NULL;
+
 	struct socket *socket = socket_new(type);
 	if (!socket)
 		return NULL;
@@ -726,12 +729,15 @@ struct socket *net_open(enum socket_type type)
 
 int net_close(struct socket *socket)
 {
+	if (!net_installed())
+		return 1;
+
 	return socket_close(socket);
 }
 
 int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 {
-	if (!socket || socket->state != S_OPEN || !ip_addr || !dst_port)
+	if (!net_installed() || !socket || socket->state != S_OPEN || !ip_addr || !dst_port)
 		return 0;
 
 	socket->ip_addr = ip_addr;
@@ -770,7 +776,7 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 
 void net_send(struct socket *socket, void *data, u32 len)
 {
-	if (!socket || socket->state != S_CONNECTED)
+	if (!net_installed() || !socket || socket->state != S_CONNECTED)
 		return;
 
 	if (socket->type == S_TCP) {
@@ -785,7 +791,7 @@ void net_send(struct socket *socket, void *data, u32 len)
 
 int net_data_available(struct socket *socket)
 {
-	if (socket && socket->packets && socket->packets->head &&
+	if (net_installed() && socket && socket->packets && socket->packets->head &&
 	    ((struct socket_data *)socket->packets->head->data)->length > 0)
 		return 1;
 	else
@@ -794,7 +800,7 @@ int net_data_available(struct socket *socket)
 
 int net_receive(struct socket *socket, void *buf, u32 len)
 {
-	if (!socket || !socket->packets)
+	if (!net_installed() || !socket || !socket->packets)
 		return 0;
 
 	u32 offset = 0;
@@ -818,6 +824,11 @@ int net_receive(struct socket *socket, void *buf, u32 len)
 /**
  * Install
  */
+
+int net_installed()
+{
+	return rtl8139_installed() != 0;
+}
 
 void net_install(void)
 {
