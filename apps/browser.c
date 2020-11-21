@@ -70,13 +70,18 @@ void on_submit(void *event, struct element *box)
 	}
 	char *query = http_query_get(url, path ? path : "/");
 
-	char *dns[2];
-	dns_split(url, dns);
+	u32 ip = 0;
+	if (!ip_pton(url, &ip)) {
+		char *dns[2];
+		dns_split(url, dns);
+		ip = dns_request(dns[0], dns[1]);
+	}
+
 	struct element_text_box *l = output->data;
 	struct element_label *c = code_label->data;
 
 	struct socket *socket = net_open(S_TCP);
-	if (socket && net_connect(socket, dns_request(dns[0], dns[1]), 80)) {
+	if (socket && net_connect(socket, ip, 80)) {
 		net_send(socket, query, strlen(query));
 		char buf[4096] = { 0 };
 		net_receive(socket, buf, 4096);
@@ -86,6 +91,7 @@ void on_submit(void *event, struct element *box)
 	} else {
 		l->text = strdup("Can't connect to server.");
 		c->text = strdup("000");
+		c->color_fg = COLOR_RED;
 	}
 	gui_sync(root, output);
 	gui_sync(root, code_label);

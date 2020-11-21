@@ -4,6 +4,7 @@
 #define NET_H
 
 #include <http.h>
+#include <ip.h>
 #include <socket.h>
 #include <sys.h>
 
