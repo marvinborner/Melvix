@@ -409,7 +409,8 @@ void gui_event_loop(struct element *container)
 			    event->scancode == KEY_ENTER) {
 				focused->event.on_submit(event, focused);
 				// Clear!
-				((struct element_text_input *)focused->data)->text[0] = '\0';
+				char *t = ((struct element_text_input *)focused->data)->text;
+				memset(t, 0, strlen(t));
 				gui_sync_text_input(focused);
 				merge_elements(get_root(focused->window_id));
 				gfx_redraw_focused();
