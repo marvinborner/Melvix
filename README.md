@@ -21,7 +21,6 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 ## Features
 
 -   From scratch (no POSIX/UNIX compatibility at all)
--   No external libraries
 -   Efficient Multitasking
 -   EXT2 filesystem
 -   Minimal GUI
@@ -40,9 +39,11 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 -   Download the `disk-img` artifact from the newest [GitHub Workflow build](https://github.com/marvinborner/Melvix/actions)
 -   Unzip `disk-img.zip`
 -   Run `qemu-system-i386 -m 256M -vga std -drive file=path/to/disk.img,format=raw,index=1,media=disk -netdev user,id=net0 -device rtl8139,netdev=net0`
+-   Try entering `browser`, `files`, `mandelbrot` (or any other program in `apps/`) into the input field and press enter
+-   Move windows using `ALT`+`Left click`
 -   Enjoy, or try building it yourself!
 
-## Build & Test
+## Build it yourself
 
 -   Use any system running GNU/Linux or OpenBSD
 
@@ -67,9 +68,7 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 
 -   Clone this repository using `git clone --recurse-submodules https://github.com/marvinborner/Melvix.git`
 
--   Load fonts and images into the disk image via `./run disk`
-
--   Run `./run`
+-   Run `./run` (pure magic!)
 
 -   If you need help: `./run to help`
 
