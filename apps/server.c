@@ -7,7 +7,9 @@
 #include <str.h>
 
 #define PORT 8000
-#define FILE "/res/index.html"
+#define FILE "/res/www/index.html"
+#define PATH "/res/www"
+#define ERROR "/res/www/404.html"
 
 int main()
 {
@@ -18,11 +20,25 @@ int main()
 		assert(socket);
 		socket->src_port = PORT;
 		socket->state = S_CONNECTED;
+
 		char buf[4096] = { 0 };
 		net_receive(socket, buf, 4096);
+
+		char path[128] = { 0 };
+		strcat(path, PATH);
+		http_query_path(buf, path);
+		if (strlen(path) == strlen(PATH) + 1)
+			strcat(path, "index.html");
+
 		memset(buf, 0, 4096);
-		int l = http_response(HTTP_200, stat(FILE), read(FILE), buf);
-		net_send(socket, buf, l);
+
+		u32 len = 0;
+		if ((len = stat(path)))
+			len = http_response(HTTP_200, len, read(path), buf);
+		else
+			len = http_response(HTTP_404, stat(ERROR), read(ERROR), buf);
+
+		net_send(socket, buf, len);
 		net_close(socket);
 	}
 

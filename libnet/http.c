@@ -65,3 +65,25 @@ char *http_query_get(const char *url, const char *path)
 	strcat(query, "\r\n\r\n");
 	return query;
 }
+
+char *http_query_path(const char *query, char *path)
+{
+	u8 b = 0;
+	u32 s = 0;
+	u32 e = 0;
+
+	while (1) {
+		if (!b && query[e] == ' ' && query[++e]) {
+			s = e;
+			b = 1;
+		} else if (b && query[e] == ' ') {
+			strncat(path, &query[s], e - s);
+			break;
+		} else if (query[e] == '\0') {
+			return NULL;
+		}
+		e++;
+	}
+
+	return path;
+}

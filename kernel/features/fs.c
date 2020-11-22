@@ -63,7 +63,8 @@ void *read_inode(struct inode *in)
 	if (!num_blocks)
 		return NULL;
 
-	u32 sz = BLOCK_SIZE * num_blocks;
+	/* u32 sz = BLOCK_SIZE * num_blocks; */
+	u32 sz = in->size;
 	void *buf = malloc(sz);
 	printf("Loading %dKiB\n", sz >> 10);
 	assert(buf != NULL);
@@ -164,22 +165,18 @@ struct inode *find_inode_by_path(char *path)
 
 void *file_read(char *path)
 {
-	return read_inode(find_inode_by_path(path));
+	struct inode *in = find_inode_by_path(path);
+	if (in)
+		return read_inode(in);
+	else
+		return NULL;
 }
 
 u32 file_stat(char *path)
 {
 	struct inode *in = find_inode_by_path(path);
-	assert(in);
 	if (!in)
 		return 0;
 
-	u32 num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
-
-	assert(num_blocks != 0);
-	if (!num_blocks)
-		return 0;
-
-	u32 sz = BLOCK_SIZE * num_blocks;
-	return sz;
+	return in->size;
 }

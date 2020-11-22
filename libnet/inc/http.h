@@ -6,9 +6,10 @@
 #include <def.h>
 
 char *http_data(char *response);
+char *http_code(char *r);
 u32 http_response(const char *http_code, u32 content_length, const char *data, char *resp);
 char *http_query_get(const char *url, const char *path);
-char *http_code(char *r);
+char *http_query_path(const char *query, char *path);
 
 #define HTTP_100 "100 Continue"
 #define HTTP_101 "101 Switching Protocol"

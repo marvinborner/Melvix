@@ -24,6 +24,16 @@ char *strcpy(char *dst, const char *src)
 	return dst;
 }
 
+char *strncpy(char *dst, const char *src, u32 n)
+{
+	char *q = dst;
+
+	while (n-- && (*dst++ = *src++))
+		;
+
+	return q;
+}
+
 int strcmp(const char *s1, const char *s2)
 {
 	const u8 *c1 = (const u8 *)s1;
@@ -70,6 +80,12 @@ char *strchr(const char *s, int c)
 char *strcat(char *dst, const char *src)
 {
 	strcpy(strchr(dst, '\0'), src);
+	return dst;
+}
+
+char *strncat(char *dst, const char *src, u32 n)
+{
+	strncpy(strchr(dst, '\0'), src, n);
 	return dst;
 }
 
