@@ -14,23 +14,10 @@
 #define HEIGHT 400
 #define FONT_HEIGHT 24
 #define LABEL_WIDTH 36 // Thx Lars
-#define BORDER 2
 
 static struct element *root;
 static struct element *code_label;
 static struct element *output;
-
-// Temporary: Will be moved to libnet
-char **dns_split(char *url, char **buf)
-{
-	strchr(url, '.')[0] = '\0';
-	char *first = url;
-	char *second = url + strlen(url) + 1;
-	buf[0] = first;
-	buf[1] = second;
-
-	return buf;
-}
 
 u32 status_color(char *http_code)
 {
@@ -99,13 +86,11 @@ void on_submit(void *event, struct element *box)
 int main()
 {
 	// TODO: Dynamic element positioning
-	root = gui_init("browser", WIDTH + 2 * BORDER, HEIGHT + 2 * BORDER, COLOR_BG);
-	code_label = gui_add_label(root, BORDER, BORDER, FONT_24, "000", COLOR_BLACK, COLOR_WHITE);
+	root = gui_init("browser", WIDTH, HEIGHT, COLOR_BG);
+	code_label = gui_add_label(root, 0, 0, FONT_24, "000", COLOR_BLACK, COLOR_WHITE);
 	struct element *text_input =
-		gui_add_text_input(root, LABEL_WIDTH + 2 * BORDER, BORDER,
-				   WIDTH - LABEL_WIDTH - BORDER, FONT_24, COLOR_WHITE, COLOR_BLACK);
-	output = gui_add_text_box(root, BORDER, FONT_HEIGHT + 2 * BORDER, WIDTH,
-				  HEIGHT - FONT_HEIGHT - BORDER, FONT_16,
+		gui_add_text_input(root, LABEL_WIDTH, 0, 100, FONT_24, COLOR_WHITE, COLOR_BLACK);
+	output = gui_add_text_box(root, 0, FONT_HEIGHT + 2, 100, 100, FONT_16,
 				  "Enter URL and press Enter :)", COLOR_WHITE, COLOR_BLACK);
 
 	text_input->event.on_submit = on_submit;

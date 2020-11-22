@@ -10,7 +10,6 @@
 
 #define HEIGHT 32
 #define WIDTH 300
-#define BORDER 2
 
 void on_submit(struct gui_event_keyboard *event, struct element *elem)
 {
@@ -37,10 +36,9 @@ void on_submit(struct gui_event_keyboard *event, struct element *elem)
 
 int main()
 {
-	struct element *root =
-		gui_init("Exec", WIDTH + BORDER * 2, HEIGHT + BORDER * 2, COLOR_BLACK);
+	struct element *root = gui_init("Exec", WIDTH, HEIGHT, COLOR_BLACK);
 	struct element *input =
-		gui_add_text_input(root, BORDER, BORDER, WIDTH, FONT_32, COLOR_WHITE, COLOR_BLACK);
+		gui_add_text_input(root, 0, 0, 100, FONT_32, COLOR_WHITE, COLOR_BLACK);
 
 	input->event.on_submit = on_submit;
 

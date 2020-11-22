@@ -15,6 +15,8 @@
 
 // TODO: Use list (and add index-based access)
 #define MAX_WINDOWS 10
+#define BORDER 2
+#define PERCENTAGE(c, e) ((u32)((double)(c) * (double)(e) / 100.0))
 
 u32 window_count = 0;
 static struct window windows[MAX_WINDOWS] = { 0 };
@@ -208,6 +210,7 @@ struct element *gui_add_button(struct element *container, int x, int y, enum fon
 	button->ctx->width = strlen(text) * gfx_font_width(font_type);
 	button->ctx->height = gfx_font_height(font_type);
 	button->ctx->flags = WF_RELATIVE;
+	button->parent = container;
 	button->childs = list_new();
 	button->data = malloc(sizeof(struct element_button));
 	((struct element_button *)button->data)->text = strdup(text);
@@ -237,6 +240,7 @@ struct element *gui_add_label(struct element *container, int x, int y, enum font
 	label->ctx->width = strlen(text) * gfx_font_width(font_type);
 	label->ctx->height = gfx_font_height(font_type);
 	label->ctx->flags = WF_RELATIVE;
+	label->parent = container;
 	label->childs = list_new();
 	label->data = malloc(sizeof(struct element_label));
 	((struct element_label *)label->data)->text = strdup(text);
@@ -264,11 +268,14 @@ struct element *gui_add_text_box(struct element *container, int x, int y, u32 wi
 	text_box->ctx = malloc(sizeof(*text_box->ctx));
 	text_box->ctx->x = x;
 	text_box->ctx->y = y;
-	text_box->ctx->width = width;
-	text_box->ctx->height = height;
+	text_box->ctx->width = PERCENTAGE(container->ctx->width, width);
+	text_box->ctx->height = PERCENTAGE(container->ctx->height, height);
 	text_box->ctx->flags = WF_RELATIVE;
+	text_box->parent = container;
 	text_box->childs = list_new();
 	text_box->data = malloc(sizeof(struct element_text_box));
+	((struct element_text_box *)text_box->data)->width = width;
+	((struct element_text_box *)text_box->data)->height = height;
 	((struct element_text_box *)text_box->data)->text = strdup(text);
 	((struct element_text_box *)text_box->data)->color_fg = color_fg;
 	((struct element_text_box *)text_box->data)->color_bg = color_bg;
@@ -293,11 +300,13 @@ struct element *gui_add_text_input(struct element *container, int x, int y, u32 
 	text_input->ctx = malloc(sizeof(*text_input->ctx));
 	text_input->ctx->x = x;
 	text_input->ctx->y = y;
-	text_input->ctx->width = width;
+	text_input->ctx->width = PERCENTAGE(container->ctx->width, width);
 	text_input->ctx->height = gfx_font_height(font_type);
 	text_input->ctx->flags = WF_RELATIVE;
+	text_input->parent = container;
 	text_input->childs = list_new();
 	text_input->data = malloc(sizeof(struct element_text_input));
+	((struct element_text_input *)text_input->data)->width = width;
 	((struct element_text_input *)text_input->data)->color_fg = color_fg;
 	((struct element_text_input *)text_input->data)->color_bg = color_bg;
 	((struct element_text_input *)text_input->data)->font_type = font_type;
@@ -321,11 +330,14 @@ struct element *gui_add_container(struct element *container, int x, int y, u32 w
 	new_container->ctx = malloc(sizeof(*new_container->ctx));
 	new_container->ctx->x = x;
 	new_container->ctx->y = y;
-	new_container->ctx->width = width;
-	new_container->ctx->height = height;
+	new_container->ctx->width = PERCENTAGE(container->ctx->width, width);
+	new_container->ctx->height = PERCENTAGE(container->ctx->height, height);
 	new_container->ctx->flags = WF_RELATIVE;
+	new_container->parent = container;
 	new_container->childs = list_new();
 	new_container->data = malloc(sizeof(struct element_container));
+	((struct element_container *)new_container->data)->width = width;
+	((struct element_container *)new_container->data)->height = height;
 	((struct element_container *)new_container->data)->color_bg = color_bg;
 	((struct element_container *)new_container->data)->flags = 0;
 
@@ -431,7 +443,8 @@ struct element *gui_init(const char *title, u32 width, u32 height, u32 color_bg)
 		return NULL;
 
 	// TODO: Add center flag
-	struct window *win = new_window(title, 30, 30, width, height, WF_DEFAULT);
+	struct window *win =
+		new_window(title, 30, 30, width + BORDER * 2, height + BORDER * 2, WF_DEFAULT);
 	if (!win)
 		return NULL;
 
@@ -445,5 +458,11 @@ struct element *gui_init(const char *title, u32 width, u32 height, u32 color_bg)
 	container->data = NULL;
 	list_add(win->childs, container);
 
-	return container;
+	struct element *root = gui_add_container(container, BORDER, BORDER, 100, 100, COLOR_BLACK);
+	if (!root)
+		return NULL;
+	root->ctx->width -= BORDER * 2;
+	root->ctx->height -= BORDER * 2;
+
+	return root;
 }

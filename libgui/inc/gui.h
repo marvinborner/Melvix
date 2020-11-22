@@ -32,6 +32,8 @@ struct element_event {
 };
 
 struct element_container {
+	u32 width;
+	u32 height;
 	u32 color_bg;
 	enum container_flags flags;
 };
@@ -52,6 +54,8 @@ struct element_label {
 
 struct element_text_box {
 	char *text;
+	u32 width;
+	u32 height;
 	u32 color_fg;
 	u32 color_bg;
 	enum font_type font_type;
@@ -59,6 +63,7 @@ struct element_text_box {
 
 struct element_text_input {
 	char text[MAX_INPUT_LENGTH];
+	u32 width;
 	u32 color_fg;
 	u32 color_bg;
 	enum font_type font_type;
@@ -70,6 +75,7 @@ struct element {
 	struct context *ctx; // Coordinates are relative to container
 	struct element_event event;
 	void *attributes;
+	struct element *parent;
 	struct list *childs;
 	void *data; // Who needs static types anyways :)
 };
