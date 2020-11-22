@@ -96,7 +96,7 @@ static u32 dns_handle_packet(struct dns_packet *packet)
 u32 dns_request(const char *name)
 {
 	struct socket *socket = net_open(S_UDP);
-	if (!socket || !net_connect(socket, dns_ip_addr, 53))
+	if (!socket || !net_connect(socket, dns_ip_addr, 53) || part_count(name) == 1)
 		return 0;
 
 	u32 length = sizeof(struct dns_packet) + strlen(name) + part_count(name) + 4;
