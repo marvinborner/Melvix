@@ -1,6 +1,9 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <assert.h>
+#include <conv.h>
 #include <def.h>
+#include <http.h>
 #include <mem.h>
 #include <print.h>
 #include <str.h>
@@ -26,6 +29,27 @@ char *http_code(char *r)
 	code[3] = '\0';
 	r[12] = tmp;
 	return code;
+}
+
+u32 http_response(const char *http_code, u32 content_length, const char *data, char *resp)
+{
+	char buf[16] = { 0 };
+
+	resp[0] = '\0';
+	strcat(resp, "HTTP/1.1 ");
+	strcat(resp, buf);
+	strcat(resp, http_code);
+	strcat(resp, "\r\n");
+	strcat(resp, "Content-Length: ");
+	strcat(resp, conv_base(content_length, buf, 10, 0));
+	strcat(resp, "\r\n");
+	strcat(resp, "Server: Melvix\r\n");
+	strcat(resp, "Content-Type: text/html\r\n");
+	strcat(resp, "Connection: close\r\n\r\n");
+	u32 len = strlen(resp);
+	memcpy(&resp[len], data, content_length);
+
+	return len + content_length;
 }
 
 char *http_query_get(const char *url, const char *path)
