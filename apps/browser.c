@@ -4,6 +4,7 @@
 #include <def.h>
 #include <gfx.h>
 #include <gui.h>
+#include <html.h>
 #include <input.h>
 #include <mem.h>
 #include <net.h>
@@ -63,7 +64,7 @@ void parse(void *data, u32 len, char *out)
 	enum xml_error err = xml_parse(&parser, buffer, len, tokens, 128);
 
 	if (err != XML_SUCCESS) {
-		printf("XML parse error: %d\n", err);
+		printf("\nXML parse error: %d\n", err);
 		return;
 	}
 
@@ -74,10 +75,13 @@ void parse(void *data, u32 len, char *out)
 		name[0] = '\0';
 		switch (token->type) {
 		case XML_START_TAG:
-			print_indent(out, indent++);
 			memcpy(&name, (u8 *)buffer + token->start_pos,
 			       token->end_pos - token->start_pos);
 			name[token->end_pos - token->start_pos] = '\0';
+			if (html_self_closing(name))
+				print_indent(out, indent);
+			else
+				print_indent(out, indent++);
 			strcat(out, name);
 			strcat(out, "\n");
 			break;
@@ -108,12 +112,12 @@ void parse(void *data, u32 len, char *out)
 					break;
 				}
 			}
-			if (strlen(clean_name)) {
-				print_indent(out, indent++);
-				strcat(out, clean_name);
-				strcat(out, "\n");
-				indent--;
-			}
+			if (!strlen(clean_name))
+				break;
+			print_indent(out, indent++);
+			strcat(out, clean_name);
+			strcat(out, "\n");
+			indent--;
 			break;
 		default:
 			break;
@@ -144,7 +148,7 @@ void on_submit(void *event, struct element *box)
 	struct element_label *c = code_label->data;
 
 	struct socket *socket = net_open(S_TCP);
-	if (socket && net_connect(socket, ip, 8000)) {
+	if (socket && net_connect(socket, ip, 80)) {
 		net_send(socket, query, strlen(query));
 		char buf[4096] = { 0 };
 		char parsed[4096] = { 0 };
