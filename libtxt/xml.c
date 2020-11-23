@@ -129,10 +129,11 @@ static int state_push_token(struct xml *state, struct xml_args *args, enum xml_t
 			    const char *start, const char *end)
 {
 	struct xml_token *token;
-	u32 i = state->ntokens++;
-	if (args->num_tokens < state->ntokens)
+	u32 i;
+	if (args->num_tokens <= state->ntokens)
 		return 0;
 
+	i = state->ntokens++;
 	token = &args->tokens[i];
 	token->type = type;
 	token->start_pos = buffer_tooffset(args, start);
@@ -313,11 +314,12 @@ static enum xml_error parse_instruction(struct xml *state, struct xml_args *args
 static enum xml_error parse_doctype(struct xml *state, struct xml_args *args)
 {
 	static const char START_TAG[] = "<!DOCTYPE";
-	static const char END_TAG[] = "]>";
+	static const char END_TAG[] = ">";
 
 	const char *bracket;
 	const char *start = buffer_from_offset(args, state->buffer_pos);
 	const char *end = buffer_getend(args);
+	print("GOT HERE\n");
 	if (end - start < (int)TAG_LEN(START_TAG))
 		return XML_ERROR_BUFFERDRY;
 
@@ -328,6 +330,7 @@ static enum xml_error parse_doctype(struct xml *state, struct xml_args *args)
 	bracket = str_findstr(start, end, END_TAG);
 	if (bracket == end)
 		return XML_ERROR_BUFFERDRY;
+	print("GOT HERE!!!!\n");
 
 	state_push_token(state, args, XML_DOCTYPE, start, bracket);
 	return state_set_pos(state, args, bracket + TAG_LEN(END_TAG));
@@ -458,7 +461,8 @@ enum xml_error xml_parse(struct xml *state, const char *buffer, u32 buffer_lengt
 			err = parse_instruction(&temp, &args);
 			break;
 		case '!':
-			err = parse_doctype(&temp, &args);
+			err = (lt[2] == '-') ? parse_comment(&temp, &args) :
+						     parse_doctype(&temp, &args);
 			break;
 		default:
 			err = parse_start(&temp, &args);

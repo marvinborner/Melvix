@@ -46,24 +46,27 @@ u32 status_color(char *http_code)
 	return c;
 }
 
-void parse(void *data, u32 len, char **out)
+void print_indent(char *buf, u32 n)
+{
+	for (u32 i = 0; i < n; i++)
+		strcat(buf, "\t");
+}
+
+void parse(void *data, u32 len, char *out)
 {
 	struct xml_token tokens[128];
-
 	struct xml parser;
 	xml_init(&parser);
 	void *buffer = data;
 	len = strlen(data);
+	out[0] = '\0';
 	enum xml_error err = xml_parse(&parser, buffer, len, tokens, 128);
-	printf("%s\n", data);
+
 	if (err != XML_SUCCESS) {
-		printf("ERROR %d\n", err);
+		printf("XML parse error: %d\n", err);
 		return;
 	}
 
-	*out[0] = '\0';
-
-	u32 pos = 0;
 	u32 indent = 0;
 	char name[16] = { 0 };
 	for (u32 i = 0; i < parser.ntokens; i++) {
@@ -71,27 +74,46 @@ void parse(void *data, u32 len, char **out)
 		name[0] = '\0';
 		switch (token->type) {
 		case XML_START_TAG:
-			for (u32 j = 0; j < indent; j++)
-				strcat(*out, "\t");
-			indent++;
+			print_indent(out, indent++);
 			memcpy(&name, (u8 *)buffer + token->start_pos,
 			       token->end_pos - token->start_pos);
 			name[token->end_pos - token->start_pos] = '\0';
-			printf("%s\n", name);
-			print("START TAG\n");
-			strcat(*out, name);
-			strcat(*out, "\n");
+			strcat(out, name);
+			strcat(out, "\n");
 			break;
 		case XML_END_TAG:
-			indent--;
-			for (u32 j = 0; j < indent; j++)
-				strcat(*out, "\t");
+			print_indent(out, --indent);
 			memcpy(&name, (u8 *)buffer + token->start_pos,
 			       token->end_pos - token->start_pos);
 			name[token->end_pos - token->start_pos] = '\0';
-			print("END TAG\n");
-			strcat(*out, name);
-			strcat(*out, "/\n");
+			strcat(out, name);
+			strcat(out, "/\n");
+			break;
+		case XML_CHARACTER:
+			if (token->end_pos == token->start_pos + 2) {
+				const char *ptr = (char *)buffer + token->start_pos;
+
+				if (ptr[0] == '\r' && ptr[1] == '\n')
+					continue;
+			}
+			memcpy(&name, (u8 *)buffer + token->start_pos,
+			       token->end_pos - token->start_pos);
+			name[token->end_pos - token->start_pos] = '\0';
+			char *clean_name = name;
+			for (u32 j = 0; j < strlen(name); j++) {
+				if (name[j] == ' ' || name[j] == '\n' || name[j] == '\r' ||
+				    name[j] == '\t') {
+					clean_name++;
+				} else {
+					break;
+				}
+			}
+			if (strlen(clean_name)) {
+				print_indent(out, indent++);
+				strcat(out, clean_name);
+				strcat(out, "\n");
+				indent--;
+			}
 			break;
 		default:
 			break;
@@ -99,7 +121,6 @@ void parse(void *data, u32 len, char **out)
 
 		i += token->size;
 	}
-	printf("%s\n", *out);
 }
 
 void on_submit(void *event, struct element *box)
@@ -128,8 +149,8 @@ void on_submit(void *event, struct element *box)
 		char buf[4096] = { 0 };
 		char parsed[4096] = { 0 };
 		net_receive(socket, buf, 4096);
-		parse(http_data(buf), 4096, (char **)&parsed);
-		l->text = http_data(parsed);
+		parse(http_data(buf), 4096, parsed);
+		l->text = parsed[0] ? parsed : http_data(buf);
 		c->text = http_code(buf);
 		c->color_fg = status_color(c->text);
 	} else {
@@ -149,10 +170,8 @@ int main()
 	code_label = gui_add_label(root, 0, 0, FONT_24, "000", COLOR_BLACK, COLOR_WHITE);
 	struct element *text_input =
 		gui_add_text_input(root, LABEL_WIDTH, 0, 100, FONT_24, COLOR_WHITE, COLOR_BLACK);
-	memcpy(((struct element_text_input *)text_input->data)->text, strdup("127.0.0.1"), 10);
 	output = gui_add_text_box(root, 0, FONT_HEIGHT + 2, 100, 100, FONT_16,
 				  "Enter URL and press Enter :)", COLOR_WHITE, COLOR_BLACK);
-	gui_sync(root, text_input);
 
 	text_input->event.on_submit = on_submit;
 
