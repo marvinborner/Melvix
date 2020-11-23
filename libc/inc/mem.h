@@ -22,6 +22,7 @@ void free(void *ptr);
 
 void *memcpy(void *dest, const void *src, u32 n);
 void *memset(void *dest, int val, u32 n);
+void *memchr(void *src, int c, u32 n);
 int memcmp(const void *s1, const void *s2, u32 n);
 
 #endif

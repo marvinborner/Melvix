@@ -43,6 +43,18 @@ void *memset(void *dest, int val, u32 n)
 	return dest;
 }
 
+void *memchr(void *src, int c, u32 n)
+{
+	const u8 *s = (const u8 *)src;
+
+	while (n-- > 0) {
+		if (*s == c)
+			return (void *)s;
+		s++;
+	}
+	return NULL;
+}
+
 int memcmp(const void *s1, const void *s2, u32 n)
 {
 	const u8 *a = (const u8 *)s1;

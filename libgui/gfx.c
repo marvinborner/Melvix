@@ -121,7 +121,10 @@ void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 
 			cnt = 0;
 		} else if (text[i] == '\n') {
 			cnt = 0;
+			x = 0;
 			y += font->height;
+		} else if (text[i] == '\t') {
+			x += 4 * font->width;
 		} else {
 			// TODO: Overflow on single line input
 			if ((cnt + 1) * font->width > ctx->width) {

@@ -7,9 +7,8 @@
 #include <str.h>
 
 #define PORT 8000
-#define FILE "/res/www/index.html"
 #define PATH "/res/www"
-#define ERROR "/res/www/404.html"
+#define ERROR PATH "/404.html"
 
 int main()
 {

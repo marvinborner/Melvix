@@ -1,6 +1,6 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
-COBJS = keymap.o
+COBJS = keymap.o xml.o
 CC = ccache ../cross/opt/bin/i686-elf-gcc
 LD = ccache ../cross/opt/bin/i686-elf-ld
 AR = ccache ../cross/opt/bin/i686-elf-ar

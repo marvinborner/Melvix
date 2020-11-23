@@ -91,3 +91,4 @@ Resources:
 
 Libraries:
 -   [upng (heavily modified lodepng)](https://github.com/elanthis/upng) - [ZLIB License](https://github.com/lvandeve/lodepng/blob/7fdcc96a5e5864eee72911c3ca79b1d9f0d12292/LICENSE)
+-   [sxml](https://github.com/capmar/sxml) - [Unlicense License](https://github.com/capmar/sxml/blob/91176b4c62ef7c6342804e02fc440b2e82326469/UNLICENSE)
