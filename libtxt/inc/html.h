@@ -4,6 +4,16 @@
 #ifndef HTML_H
 #define HTML_H
 
-int html_self_closing(const char *tag);
+#include <def.h>
+#include <list.h>
+
+struct dom {
+	char *tag;
+	char *content;
+	struct dom *parent;
+	struct list *children;
+};
+
+int html_render(struct element *container, char *data, u32 length);
 
 #endif

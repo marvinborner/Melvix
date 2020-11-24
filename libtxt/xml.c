@@ -485,10 +485,6 @@ enum xml_error xml_parse(struct xml *state, const char *buffer, u32 buffer_lengt
 			state_commit(state, &temp);
 		}
 
-		// TODO: Only for self-closing tags
-		if (end - lt == 0)
-			break;
-
 		if (end - lt < TAG_MINSIZE)
 			return XML_ERROR_BUFFERDRY;
 

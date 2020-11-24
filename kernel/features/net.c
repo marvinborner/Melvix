@@ -863,19 +863,4 @@ void net_install(void)
 		loop();
 		return;
 	}
-
-	// Request
-	/* struct socket *socket = net_open(S_TCP); */
-	/* if (socket && net_connect(socket, ip(91, 89, 253, 227), 80)) */
-	/* 	net_send(socket, strdup(http_req), strlen(http_req)); */
-	/* else */
-	/* 	print("Couldn't connect!\n"); */
-
-	// Server // TODO: Serve using sockets
-	/* struct socket *socket2 = net_open(S_TCP); */
-	/* socket2->src_port = 8000; */
-	/* while (socket2->prot.tcp.state != 3) */
-	/* 	; */
-	/* while (socket2->prot.tcp.state == 3) */
-	/* 	net_send(socket2, strdup(http_res), strlen(http_res)); */
 }
