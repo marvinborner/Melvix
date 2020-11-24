@@ -132,6 +132,14 @@ void on_submit(void *event, struct element *box)
 	(void)event;
 	char *url = ((struct element_text_input *)box->data)->text;
 
+	u16 port = 80;
+	char *port_str = strchr(url, ':');
+	if (port_str) {
+		port_str[0] = '\0';
+		port_str++;
+		port = atoi(port_str);
+	}
+
 	char *path = strchr(url, '/');
 	if (path) {
 		path[0] = '\0';
@@ -148,7 +156,7 @@ void on_submit(void *event, struct element *box)
 	struct element_label *c = code_label->data;
 
 	struct socket *socket = net_open(S_TCP);
-	if (socket && net_connect(socket, ip, 80, NET_TIMEOUT)) {
+	if (socket && net_connect(socket, ip, port, NET_TIMEOUT)) {
 		net_send(socket, query, strlen(query));
 		char buf[4096] = { 0 };
 		char parsed[4096] = { 0 };
