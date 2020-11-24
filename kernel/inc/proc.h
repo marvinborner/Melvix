@@ -36,8 +36,7 @@ struct proc_message {
 
 struct proc *kernel_proc;
 
-void scheduler_enable(void);
-void scheduler_disable(void);
+void scheduler(struct regs *regs);
 void proc_init(void);
 void proc_print(void);
 struct proc *proc_current(void);

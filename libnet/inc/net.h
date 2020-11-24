@@ -19,7 +19,7 @@
 #define ip(a, b, c, d)                                                                             \
 	((((a)&0xff) << 24) | (((b)&0xff) << 16) | (((c)&0xff) << 8) | (((d)&0xff) << 0))
 
-#define NET_TIMEOUT 500
+#define NET_TIMEOUT 2000
 #define NET_NO_TIMEOUT 0
 
 static inline int net_data_available(struct socket *socket)

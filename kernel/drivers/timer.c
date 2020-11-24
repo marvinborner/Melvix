@@ -3,8 +3,10 @@
 #include <cpu.h>
 #include <def.h>
 #include <interrupts.h>
+#include <proc.h>
 
 static u32 timer_ticks = 0;
+static u8 call_scheduler = 0;
 
 void timer_phase(int hz)
 {
@@ -19,12 +21,15 @@ u32 timer_get(void)
 	return timer_ticks;
 }
 
-void timer_handler()
+void timer_handler(struct regs *r)
 {
 	if (timer_ticks >= U32_MAX)
 		timer_ticks = 0;
 	else
 		timer_ticks++;
+
+	if (call_scheduler)
+		scheduler(r);
 }
 
 // "Delay" function with CPU sleep
@@ -42,5 +47,17 @@ void timer_install(void)
 	/* hpet_install(10000); // TODO: Find optimal femtosecond period */
 	/* if (!hpet) */
 	timer_phase(1000);
+	irq_install_handler(0, timer_handler);
+}
+
+void scheduler_enable(void)
+{
+	call_scheduler = 1;
+	irq_install_handler(0, timer_handler);
+}
+
+void scheduler_disable(void)
+{
+	call_scheduler = 0;
 	irq_install_handler(0, timer_handler);
 }

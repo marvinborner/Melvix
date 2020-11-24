@@ -22,8 +22,6 @@ struct node *current;
 // TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
 void scheduler(struct regs *regs)
 {
-	timer_handler();
-
 	if (quantum == 0) {
 		quantum = PROC_QUANTUM;
 	} else {
@@ -63,18 +61,6 @@ void scheduler(struct regs *regs)
 	}
 
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
-}
-
-void scheduler_enable(void)
-{
-	timer_install();
-	irq_install_handler(0, scheduler);
-}
-
-void scheduler_disable(void)
-{
-	irq_uninstall_handler(0);
-	timer_install();
 }
 
 void proc_print(void)
