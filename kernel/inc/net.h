@@ -161,7 +161,6 @@ int net_close(struct socket *socket);
 int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port);
 void net_send(struct socket *socket, void *data, u32 len);
 int net_receive(struct socket *socket, void *buf, u32 len);
-int net_data_available(struct socket *socket);
 
 int net_installed(void);
 void net_install(void);

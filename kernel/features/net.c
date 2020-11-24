@@ -504,6 +504,8 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->ack_no = recv_seq;
 		tcp->seq_no = recv_ack;
 
+		proc_from_pid(socket->pid)->state = PROC_RUNNING;
+
 		socket->state = S_CONNECTED;
 		tcp->state++;
 		return;
@@ -523,7 +525,6 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 
 		// TODO: How many segments are going to be sent?!
 		if ((flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
-			proc_from_pid(socket->pid)->state = PROC_RUNNING;
 			tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
 			tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
 			tcp->state++;
@@ -764,22 +765,8 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 		socket->prot.tcp.ack_no = 0;
 		socket->prot.tcp.state = 0;
 		socket->state = S_CONNECTING;
-		// TODO: Don't block kernel
 		tcp_send_packet(socket, TCP_FLAG_SYN, NULL, 0);
-		scheduler_disable();
-		sti();
-		u32 time = timer_get();
-		while ((socket->state != S_CONNECTED && timer_get() - time < 1000)) {
-			if (socket->state == S_FAILED)
-				break;
-		}
-		cli();
-		scheduler_enable();
-		if (socket->state != S_CONNECTED) {
-			socket->state = S_FAILED;
-			return 0;
-		}
-		return 1;
+		return 0;
 	} else if (socket->type == S_UDP) {
 		socket->state = S_CONNECTED;
 		return 1;
@@ -802,15 +789,6 @@ void net_send(struct socket *socket, void *data, u32 len)
 	} else {
 		print("Unknown socket type!\n");
 	}
-}
-
-int net_data_available(struct socket *socket)
-{
-	if (net_installed() && socket && socket->packets && socket->packets->head &&
-	    ((struct socket_data *)socket->packets->head->data)->length > 0)
-		return 1;
-	else
-		return 0;
 }
 
 int net_receive(struct socket *socket, void *buf, u32 len)

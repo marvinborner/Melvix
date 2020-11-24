@@ -21,7 +21,8 @@ int main()
 		socket->state = S_CONNECTED;
 
 		char buf[4096] = { 0 };
-		net_receive(socket, buf, 4096);
+		if (!net_receive(socket, buf, 4096, NET_NO_TIMEOUT))
+			break;
 
 		char path[128] = { 0 };
 		strcat(path, PATH);
@@ -41,5 +42,7 @@ int main()
 		net_close(socket);
 	}
 
-	return 0;
+	print("Server closed!\n");
+
+	return 1;
 }

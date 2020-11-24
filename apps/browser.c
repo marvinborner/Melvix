@@ -148,11 +148,12 @@ void on_submit(void *event, struct element *box)
 	struct element_label *c = code_label->data;
 
 	struct socket *socket = net_open(S_TCP);
-	if (socket && net_connect(socket, ip, 80)) {
+	if (socket && net_connect(socket, ip, 80, NET_TIMEOUT)) {
 		net_send(socket, query, strlen(query));
 		char buf[4096] = { 0 };
 		char parsed[4096] = { 0 };
-		net_receive(socket, buf, 4096);
+		if (!net_receive(socket, buf, 4096, NET_TIMEOUT))
+			return;
 		parse(http_data(buf), 4096, parsed);
 		l->text = parsed[0] ? parsed : http_data(buf);
 		c->text = http_code(buf);

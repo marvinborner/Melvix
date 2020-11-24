@@ -80,7 +80,7 @@ int sysv(enum sys num, ...);
 		}                                                                                  \
 	}
 #define yield() (int)sys0(SYS_YIELD)
-#define time() (int)sys0(SYS_TIME)
+#define time() (u32) sys0(SYS_TIME)
 
 #define event_register(id) sys1(SYS_REGISTER, (int)(id))
 #define event_unregister(id) sys1(SYS_UNREGISTER, (int)(id))
