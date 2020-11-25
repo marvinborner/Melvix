@@ -14,6 +14,13 @@ struct dom {
 	struct list *children;
 };
 
+struct html_element {
+	u32 x_offset;
+	u32 y_offset;
+	struct dom *dom;
+	struct element *obj;
+};
+
 int html_render(struct element *container, char *data, u32 length);
 
 #endif

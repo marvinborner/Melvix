@@ -120,15 +120,80 @@ static struct dom *generate_dom(char *data, u32 length)
 	return root;
 }
 
-int html_render_dom(struct element *container, struct dom *dom)
+static struct html_element *new_html_element(struct element *container, struct dom *dom)
 {
-	(void)container;
-	(void)dom;
+	struct html_element *elem = malloc(sizeof(*elem));
+	elem->x_offset = 0;
+	elem->y_offset = 0;
+	elem->dom = dom;
+	elem->obj = container;
+	return elem;
+}
+
+// TODO: Better structure?
+// TODO: Less code duplication (e.g. for headings)
+static struct html_element *render_object(struct html_element *container, struct dom *dom)
+{
+	char *tag = dom->tag;
+
+	if (!strcmp(tag, "html")) {
+		struct element *obj =
+			gui_add_container(container->obj, 0, 0, 100, 100, COLOR_WHITE);
+		return new_html_element(obj, dom);
+	} else if (!strcmp(tag, "body")) {
+		struct element *obj =
+			gui_add_container(container->obj, 0, 0, 100, 100, COLOR_WHITE);
+		return new_html_element(obj, dom);
+	} else if (!strcmp(tag, "h1")) {
+		struct element *obj =
+			gui_add_label(container->obj, container->x_offset, container->y_offset,
+				      FONT_32, dom->content, COLOR_WHITE, COLOR_BLACK);
+		container->x_offset = 0;
+		container->y_offset += obj->ctx->height;
+		return new_html_element(obj, dom);
+	} else if (!strcmp(tag, "h2")) {
+		struct element *obj =
+			gui_add_label(container->obj, container->x_offset, container->y_offset,
+				      FONT_24, dom->content, COLOR_WHITE, COLOR_BLACK);
+		container->x_offset = 0;
+		container->y_offset += obj->ctx->height;
+		return new_html_element(obj, dom);
+	} else if (!strcmp(tag, "h3")) {
+		struct element *obj =
+			gui_add_label(container->obj, container->x_offset, container->y_offset,
+				      FONT_16, dom->content, COLOR_WHITE, COLOR_BLACK);
+		container->x_offset = 0;
+		container->y_offset += obj->ctx->height;
+		return new_html_element(obj, dom);
+	} else if (!strcmp(tag, "hr")) {
+		gfx_draw_rectangle(container->obj->ctx, container->x_offset, container->y_offset,
+				   container->obj->ctx->width - container->x_offset,
+				   container->y_offset + 2, COLOR_BLACK);
+		container->x_offset = 0;
+		container->y_offset += 2;
+		return container;
+	} else {
+		printf("UNKNOWN %s\n", tag);
+		return container;
+	}
+}
+
+int html_render_dom(struct html_element *container, struct dom *dom)
+{
+	struct node *iterator = dom->children->head;
+	while (iterator != NULL) {
+		struct dom *obj = iterator->data;
+		struct html_element *rendered = render_object(container, obj);
+		if (obj->children->head && rendered)
+			html_render_dom(rendered, obj);
+		iterator = iterator->next;
+	}
 	return 1;
 }
 
 int html_render(struct element *container, char *data, u32 length)
 {
 	struct dom *dom = generate_dom(data, length);
-	return dom && html_render_dom(container, dom);
+	struct html_element *obj = new_html_element(container, dom);
+	return dom && obj && html_render_dom(obj, dom);
 }
