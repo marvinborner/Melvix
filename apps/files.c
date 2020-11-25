@@ -36,7 +36,7 @@ void render_list(const char *path)
 	static struct element *list = NULL;
 	if (list)
 		gui_remove_element(list);
-	list = gui_add_container(root, 0, 0, 600, 400, COLOR_BLACK);
+	list = gui_add_container(root, 0, 0, 100, 100, COLOR_BLACK);
 
 	struct dirent *d = read(path);
 
