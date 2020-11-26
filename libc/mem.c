@@ -68,8 +68,6 @@ int memcmp(const void *s1, const void *s2, u32 n)
 	return 0;
 }
 
-#ifdef kernel
-
 #define ALIGNMENT 16ul
 #define ALIGN_TYPE char
 #define ALIGN_INFO sizeof(ALIGN_TYPE) * 16
@@ -94,6 +92,8 @@ int memcmp(const void *s1, const void *s2, u32 n)
 		}                                                                                  \
 	}
 
+#ifdef kernel
+
 static u32 *heap;
 static u32 index;
 
@@ -117,6 +117,7 @@ int count()
 	return i;
 }
 
+// TODO: Identify by pid (for freeing)
 void *malloc(u32 size)
 {
 	if (size < 1)
@@ -144,6 +145,46 @@ void *realloc(void *ptr, u32 size)
 {
 	(void)size;
 	return ptr;
+}
+
+#elif defined(userspace)
+
+#define HEAP_SIZE 100000
+
+#define kmalloc(n) (void *)sys1(SYS_MALLOC, n)
+#define kfree(ptr) (void)(sys1(SYS_FREE, (int)ptr))
+
+static u32 *heap = NULL;
+static u32 index = 0;
+static u32 malloced = 0;
+
+void *malloc(u32 size)
+{
+	if (size < 1)
+		return NULL;
+
+	size = size + ALIGNMENT + ALIGN_INFO;
+
+	if (!malloced || size > malloced) {
+		heap = kmalloc(HEAP_SIZE);
+		malloced = HEAP_SIZE;
+	}
+	malloced -= size;
+
+	heap[index] = size;
+	index += size + 1;
+
+	void *p = (void *)(heap + index - size);
+	ALIGN(p);
+
+	return p;
+}
+
+// TODO: Implement free, realloc and find_smallest_hole
+void free(void *ptr)
+{
+	(void)ptr;
+	/* UNALIGN(ptr); */
 }
 
 #endif
