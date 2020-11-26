@@ -22,10 +22,17 @@ static int is_self_closing(const char *tag)
 	return 0;
 }
 
+static char *normalize_tag_name(char *tag)
+{
+	for (char *p = tag; *p; ++p)
+		*p = *p > 0x40 && *p < 0x5b ? *p | 0x60 : *p;
+	return tag;
+}
+
 static struct dom *new_object(const char *tag, struct dom *parent)
 {
 	struct dom *object = malloc(sizeof(*object));
-	object->tag = strdup(tag);
+	object->tag = normalize_tag_name(strdup(tag));
 	object->parent = parent;
 	object->content = NULL;
 	object->children = list_new();
@@ -132,40 +139,48 @@ static struct html_element *new_html_element(struct element *container, struct d
 
 // TODO: Better structure?
 // TODO: Less code duplication (e.g. for headings)
+#define CMP(tag, tag_string) (!strcmp((tag), (tag_string)))
 static struct html_element *render_object(struct html_element *container, struct dom *dom)
 {
 	char *tag = dom->tag;
 
-	if (!strcmp(tag, "html")) {
+	if (CMP(tag, "html")) {
 		struct element *obj =
 			gui_add_container(container->obj, 0, 0, 100, 100, COLOR_WHITE);
 		return new_html_element(obj, dom);
-	} else if (!strcmp(tag, "body")) {
+	} else if (CMP(tag, "body")) {
 		struct element *obj =
 			gui_add_container(container->obj, 0, 0, 100, 100, COLOR_WHITE);
 		return new_html_element(obj, dom);
-	} else if (!strcmp(tag, "h1")) {
+	} else if (CMP(tag, "h1")) {
+		struct element *obj =
+			gui_add_label(container->obj, container->x_offset, container->y_offset,
+				      FONT_64, dom->content, COLOR_WHITE, COLOR_BLACK);
+		container->x_offset = 0;
+		container->y_offset += obj->ctx->height;
+		return new_html_element(obj, dom);
+	} else if (CMP(tag, "h2")) {
 		struct element *obj =
 			gui_add_label(container->obj, container->x_offset, container->y_offset,
 				      FONT_32, dom->content, COLOR_WHITE, COLOR_BLACK);
 		container->x_offset = 0;
 		container->y_offset += obj->ctx->height;
 		return new_html_element(obj, dom);
-	} else if (!strcmp(tag, "h2")) {
+	} else if (CMP(tag, "h3")) {
 		struct element *obj =
 			gui_add_label(container->obj, container->x_offset, container->y_offset,
 				      FONT_24, dom->content, COLOR_WHITE, COLOR_BLACK);
 		container->x_offset = 0;
 		container->y_offset += obj->ctx->height;
 		return new_html_element(obj, dom);
-	} else if (!strcmp(tag, "h3")) {
+	} else if (CMP(tag, "p")) {
 		struct element *obj =
 			gui_add_label(container->obj, container->x_offset, container->y_offset,
 				      FONT_16, dom->content, COLOR_WHITE, COLOR_BLACK);
 		container->x_offset = 0;
 		container->y_offset += obj->ctx->height;
 		return new_html_element(obj, dom);
-	} else if (!strcmp(tag, "hr")) {
+	} else if (CMP(tag, "hr")) {
 		gfx_draw_rectangle(container->obj->ctx, container->x_offset, container->y_offset,
 				   container->obj->ctx->width - container->x_offset,
 				   container->y_offset + 2, COLOR_BLACK);
