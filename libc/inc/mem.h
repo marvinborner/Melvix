@@ -13,9 +13,8 @@ void heap_init(u32 start);
 void *malloc(u32 size);
 void free(void *ptr);
 #elif defined(userspace)
-#include <sys.h>
-#define malloc(n) (void *)sys1(SYS_MALLOC, n)
-#define free(ptr) (void)(sys1(SYS_FREE, (int)ptr))
+void *malloc(u32 size);
+void free(void *ptr);
 #else
 #error "No lib target specified. Please use -Dkernel or -Duserspace"
 #endif
