@@ -13,7 +13,7 @@
 #define MAX_INPUT_LENGTH 100
 
 // TODO: Improve event types (maybe as struct header)
-enum window_event_type { GUI_KEYBOARD = GFX_MAX + 1, GUI_MOUSE, GUI_MAX };
+enum window_event_type { GUI_KEYBOARD = GFX_MAX + 1, GUI_MOUSE, GUI_RESIZE, GUI_MAX };
 enum element_type {
 	GUI_TYPE_ROOT,
 	GUI_TYPE_CONTAINER,
@@ -99,6 +99,10 @@ struct gui_event_mouse {
 	int but1;
 	int but2;
 	int but3;
+};
+
+struct gui_event_resize {
+	struct context *new_ctx;
 };
 
 struct element *gui_init(const char *title, u32 width, u32 height, u32 color_bg);

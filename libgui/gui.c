@@ -406,14 +406,10 @@ void gui_event_loop(struct element *container)
 						continue;
 					s[l] = event->ch;
 					s[l + 1] = '\0';
-					gui_sync_text_input(focused);
-					merge_elements(get_root(focused->window_id));
-					gfx_redraw_focused();
+					gui_sync(get_root(focused->window_id), focused);
 				} else if (event->scancode == KEY_BACKSPACE && l > 0) {
 					s[l - 1] = '\0';
-					gui_sync_text_input(focused);
-					merge_elements(get_root(focused->window_id));
-					gfx_redraw_focused();
+					gui_sync(get_root(focused->window_id), focused);
 				}
 			}
 
@@ -423,14 +419,23 @@ void gui_event_loop(struct element *container)
 				// Clear!
 				char *t = ((struct element_text_input *)focused->data)->text;
 				memset(t, 0, strlen(t));
-				gui_sync_text_input(focused);
-				merge_elements(get_root(focused->window_id));
-				gfx_redraw_focused();
+				gui_sync(get_root(focused->window_id), focused);
 			}
 
 			if (focused && focused->event.on_key && event->press && event->ch)
 				focused->event.on_key(event, focused);
 
+			break;
+		}
+		case GUI_RESIZE: {
+			struct gui_event_resize *event = msg->data;
+			struct element *root = get_root(container->window_id);
+			printf("RESIZE: %d->%d %d->%d\n", root->ctx->width, event->new_ctx->width,
+			       root->ctx->height, event->new_ctx->height);
+			root->ctx = event->new_ctx;
+			gui_sync_container(root);
+			merge_elements(root);
+			gfx_redraw_focused();
 			break;
 		}
 		}
