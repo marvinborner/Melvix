@@ -51,6 +51,17 @@ static struct context *new_context(struct context *ctx, u32 pid, int x, int y, u
 	return ctx;
 }
 
+static void remove_context(struct context *ctx)
+{
+	assert(list_remove(contexts, list_first_data(contexts, ctx)));
+	free(ctx->fb);
+	ctx->fb = NULL;
+	free(ctx);
+	ctx = NULL;
+	free(ctx);
+	ctx = NULL;
+}
+
 static struct context *context_at(int x, int y)
 {
 	if (!contexts->head || !contexts->head->data)
@@ -186,14 +197,24 @@ static void handle_mouse(struct event_mouse *event)
 				focused->width = mouse_x - focused->x;
 			if (mouse_y - focused->y > 0) {
 				focused->height = mouse_y - focused->y;
-				focused->pitch = focused->height * (focused->bpp >> 3);
 			}
-			redraw_all(); // TODO: Function to redraw one context
+			/* redraw_all(); // TODO: Function to redraw one context */
 		}
 		mouse_pressed[1] = 1;
 	} else if (mod_pressed && mouse_pressed[1]) {
 		mouse_pressed[1] = 0;
-		redraw_all();
+		if (focused) {
+			struct context *resized = malloc(sizeof(*resized));
+			new_context(resized, focused->pid, focused->x, focused->y, focused->width,
+				    focused->height, focused->flags);
+			remove_context(focused);
+			list_add(contexts, resized);
+			focused = resized;
+			struct gui_event_resize *msg = malloc(sizeof(*msg));
+			msg->new_ctx = resized;
+			msg_send(resized->pid, GUI_RESIZE, msg);
+			redraw_all();
+		}
 	}
 
 	cursor.x = mouse_x;
