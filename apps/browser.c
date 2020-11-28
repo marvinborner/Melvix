@@ -53,10 +53,16 @@ void print_indent(char *buf, u32 n)
 		strcat(buf, "\t");
 }
 
+void print_error(const char *error)
+{
+	gui_add_label(output, 0, 0, FONT_24, error, COLOR_BLACK, COLOR_RED);
+}
+
 void on_submit(void *event, struct element *box)
 {
 	(void)event;
 	char *url = ((struct element_text_input *)box->data)->text;
+	gui_remove_childs(output);
 
 	u16 port = 80;
 	char *port_str = strchr(url, ':');
@@ -86,14 +92,12 @@ void on_submit(void *event, struct element *box)
 		char buf[4096] = { 0 };
 		if (!net_receive(socket, buf, 4096, NET_TIMEOUT) ||
 		    !html_render(output, http_data(buf), 4096))
-			return;
+			print_error("HTML parsing failed.\n");
 
 		c->text = http_code(buf);
 		c->color_fg = status_color(c->text);
 	} else {
-		/* l->text = strdup("Can't connect to server."); */
-		gui_add_label(output, 0, 0, FONT_16, "Can't connect to server.", COLOR_WHITE,
-			      COLOR_BLACK);
+		print_error("Can't connect to server.\n");
 		c->text = strdup("000");
 		c->color_fg = COLOR_RED;
 	}
@@ -110,7 +114,7 @@ int main()
 	struct element *text_input =
 		gui_add_text_input(root, LABEL_WIDTH, 0, 100, FONT_24, COLOR_WHITE, COLOR_BLACK);
 	output = gui_add_container(root, 0, FONT_HEIGHT + 2, 100, 100, COLOR_WHITE);
-	gui_add_label(output, 0, 0, FONT_16, "Enter URL and press Enter :)", COLOR_WHITE,
+	gui_add_label(output, 0, 0, FONT_24, "Enter URL and press Enter :)", COLOR_WHITE,
 		      COLOR_BLACK);
 
 	text_input->event.on_submit = on_submit;
