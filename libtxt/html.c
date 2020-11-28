@@ -63,7 +63,7 @@ static struct dom *generate_dom(char *data, u32 length)
 
 	if (err != XML_SUCCESS && err != XML_ERROR_BUFFERDRY) {
 		printf("\nXML parse error: %d\n", err);
-		return 0;
+		return NULL;
 	}
 
 	struct dom *root = new_object("root", NULL);
@@ -90,8 +90,13 @@ static struct dom *generate_dom(char *data, u32 length)
 			       token->end_pos - token->start_pos);
 			name[token->end_pos - token->start_pos] = '\0';
 			normalize_tag_name(name);
+
+			if (is_self_closing(name))
+				break;
+
 			if (!current || !current->parent || strcmp(name, current->tag))
 				return NULL;
+
 			current = current->parent;
 			break;
 		case XML_CHARACTER:
