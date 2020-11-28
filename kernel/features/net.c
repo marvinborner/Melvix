@@ -504,8 +504,6 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->ack_no = recv_seq;
 		tcp->seq_no = recv_ack;
 
-		proc_from_pid(socket->pid)->state = PROC_RUNNING;
-
 		socket->state = S_CONNECTED;
 		tcp->state++;
 		return;
