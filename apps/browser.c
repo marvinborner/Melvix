@@ -92,6 +92,8 @@ void on_submit(void *event, struct element *box)
 		c->color_fg = status_color(c->text);
 	} else {
 		/* l->text = strdup("Can't connect to server."); */
+		gui_add_label(output, 0, 0, FONT_16, "Can't connect to server.", COLOR_WHITE,
+			      COLOR_BLACK);
 		c->text = strdup("000");
 		c->color_fg = COLOR_RED;
 	}
@@ -107,7 +109,9 @@ int main()
 	code_label = gui_add_label(root, 0, 0, FONT_24, "000", COLOR_BLACK, COLOR_WHITE);
 	struct element *text_input =
 		gui_add_text_input(root, LABEL_WIDTH, 0, 100, FONT_24, COLOR_WHITE, COLOR_BLACK);
-	output = gui_add_container(root, 0, FONT_HEIGHT + 2, 100, 100, COLOR_GREEN);
+	output = gui_add_container(root, 0, FONT_HEIGHT + 2, 100, 100, COLOR_WHITE);
+	gui_add_label(output, 0, 0, FONT_16, "Enter URL and press Enter :)", COLOR_WHITE,
+		      COLOR_BLACK);
 
 	text_input->event.on_submit = on_submit;
 

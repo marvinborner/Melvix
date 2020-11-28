@@ -32,7 +32,7 @@ static char *normalize_tag_name(char *tag)
 static struct dom *new_object(const char *tag, struct dom *parent)
 {
 	struct dom *object = malloc(sizeof(*object));
-	object->tag = normalize_tag_name(strdup(tag));
+	object->tag = strdup(tag);
 	object->parent = parent;
 	object->content = NULL;
 	object->children = list_new();
@@ -69,7 +69,7 @@ static struct dom *generate_dom(char *data, u32 length)
 	struct dom *root = new_object("root", NULL);
 	struct dom *current = root;
 
-	char name[256] = { 0 };
+	static char name[256] = { 0 };
 	for (u32 i = 0; i < parser.ntokens; i++) {
 		const struct xml_token *token = tokens + i;
 		name[0] = '\0';
@@ -78,15 +78,20 @@ static struct dom *generate_dom(char *data, u32 length)
 			memcpy(&name, (u8 *)buffer + token->start_pos,
 			       token->end_pos - token->start_pos);
 			name[token->end_pos - token->start_pos] = '\0';
+			normalize_tag_name(name);
 			current = new_object(name, current);
 			printf("Adding %s to %s\n", current->tag, current->parent->tag);
 			list_add(current->parent->children, current);
+			if (is_self_closing(name))
+				current = current->parent;
 			break;
 		case XML_END_TAG:
 			memcpy(&name, (u8 *)buffer + token->start_pos,
 			       token->end_pos - token->start_pos);
 			name[token->end_pos - token->start_pos] = '\0';
-			assert(current && !strcmp(normalize_tag_name(name), current->tag));
+			normalize_tag_name(name);
+			if (!current || !current->parent || strcmp(name, current->tag))
+				return NULL;
 			current = current->parent;
 			break;
 		case XML_CHARACTER:
@@ -122,6 +127,7 @@ static struct dom *generate_dom(char *data, u32 length)
 		i += token->size;
 	}
 
+	assert(root);
 	print("GENERATED!\n");
 	print_dom(root, 0);
 	return root;
@@ -144,6 +150,7 @@ static struct html_element *render_object(struct html_element *container, struct
 {
 	char *tag = dom->tag;
 
+	assert(container);
 	if (CMP(tag, "html")) {
 		struct element *obj =
 			gui_add_container(container->obj, 0, 0, 100, 100, COLOR_WHITE);
@@ -155,21 +162,21 @@ static struct html_element *render_object(struct html_element *container, struct
 	} else if (CMP(tag, "h1")) {
 		struct element *obj =
 			gui_add_label(container->obj, container->x_offset, container->y_offset,
-				      FONT_64, dom->content, COLOR_WHITE, COLOR_BLACK);
+				      FONT_32, dom->content, COLOR_WHITE, COLOR_BLACK);
 		container->x_offset = 0;
 		container->y_offset += obj->ctx->height;
 		return new_html_element(obj, dom);
 	} else if (CMP(tag, "h2")) {
 		struct element *obj =
 			gui_add_label(container->obj, container->x_offset, container->y_offset,
-				      FONT_32, dom->content, COLOR_WHITE, COLOR_BLACK);
+				      FONT_24, dom->content, COLOR_WHITE, COLOR_BLACK);
 		container->x_offset = 0;
 		container->y_offset += obj->ctx->height;
 		return new_html_element(obj, dom);
 	} else if (CMP(tag, "h3")) {
 		struct element *obj =
 			gui_add_label(container->obj, container->x_offset, container->y_offset,
-				      FONT_24, dom->content, COLOR_WHITE, COLOR_BLACK);
+				      FONT_16, dom->content, COLOR_WHITE, COLOR_BLACK);
 		container->x_offset = 0;
 		container->y_offset += obj->ctx->height;
 		return new_html_element(obj, dom);
@@ -189,6 +196,14 @@ static struct html_element *render_object(struct html_element *container, struct
 		return container;
 	} else {
 		printf("UNKNOWN %s\n", tag);
+		if (dom->content && strlen(dom->content) > 0) {
+			struct element *obj = gui_add_label(container->obj, container->x_offset,
+							    container->y_offset, FONT_16,
+							    dom->content, COLOR_WHITE, COLOR_BLACK);
+			container->x_offset = 0;
+			container->y_offset += obj->ctx->height;
+			return new_html_element(obj, dom);
+		}
 		return container;
 	}
 }
