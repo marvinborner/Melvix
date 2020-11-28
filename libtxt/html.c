@@ -86,7 +86,7 @@ static struct dom *generate_dom(char *data, u32 length)
 			memcpy(&name, (u8 *)buffer + token->start_pos,
 			       token->end_pos - token->start_pos);
 			name[token->end_pos - token->start_pos] = '\0';
-			assert(current && !strcmp(name, current->tag));
+			assert(current && !strcmp(normalize_tag_name(name), current->tag));
 			current = current->parent;
 			break;
 		case XML_CHARACTER:
