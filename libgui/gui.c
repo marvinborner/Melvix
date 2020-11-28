@@ -36,7 +36,16 @@ static struct window *new_window(const char *title, int x, int y, u32 width, u32
 	win->id = window_count + 1;
 	win->title = title;
 	win->childs = list_new();
-	gfx_new_ctx(win->ctx);
+
+	if (win->ctx->flags & WF_RELATIVE) {
+		win->ctx->pid = getpid();
+		win->ctx->bpp = 32; // TODO: Dynamic bpp
+		win->ctx->pitch = win->ctx->width * (win->ctx->bpp >> 3);
+		win->ctx->fb = malloc(win->ctx->height * win->ctx->pitch);
+		memset(win->ctx->fb, 0, win->ctx->height * win->ctx->pitch);
+	} else {
+		gfx_new_ctx(win->ctx);
+	}
 
 	if (!win->ctx->fb)
 		return NULL;
