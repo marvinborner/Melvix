@@ -63,7 +63,7 @@ static struct dom *generate_dom(char *data, u32 length)
 
 	if (err != XML_SUCCESS && err != XML_ERROR_BUFFERDRY) {
 		printf("\nXML parse error: %d\n", err);
-		return NULL;
+		/* return NULL; */
 	}
 
 	struct dom *root = new_object("root", NULL);

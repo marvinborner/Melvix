@@ -14,7 +14,8 @@
 void on_submit(struct gui_event_keyboard *event, struct element *elem)
 {
 	(void)event;
-	char *inp = ((struct element_text_input *)elem->data)->text;
+	struct element_text_input *inp_elem = (struct element_text_input *)elem->data;
+	char *inp = inp_elem->text;
 
 	// TODO: Support more than one arg
 	char *inp_copy = strdup(inp);
@@ -31,7 +32,14 @@ void on_submit(struct gui_event_keyboard *event, struct element *elem)
 	char *final = malloc(l);
 	strcat(final, PATH);
 	strcat(final, inp);
-	exec(final, inp, arg, NULL);
+
+	if (stat(final)) {
+		inp_elem->color_bg = COLOR_WHITE;
+		exec(final, inp, arg, NULL);
+	} else {
+		inp_elem->color_bg = COLOR_BRIGHT_RED;
+	}
+	gui_sync(elem);
 }
 
 int main()

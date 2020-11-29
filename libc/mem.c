@@ -154,30 +154,33 @@ void *realloc(void *ptr, u32 size)
 #define kmalloc(n) (void *)sys1(SYS_MALLOC, n)
 #define kfree(ptr) (void)(sys1(SYS_FREE, (int)ptr))
 
-static u32 *heap = NULL;
-static u32 index = 0;
-static u32 malloced = 0;
+/* static u32 *heap = NULL; */
+/* static u32 index = 0; */
+/* static u32 malloced = 0; */
 
+// TODO: Fix userspace malloc (for size > HEAP_SIZE)!
 void *malloc(u32 size)
 {
-	if (size < 1)
-		return NULL;
+	return kmalloc(size);
 
-	size = size + ALIGNMENT + ALIGN_INFO;
+	/* if (size < 1) */
+	/* 	return NULL; */
 
-	if (!malloced || size > malloced) {
-		heap = kmalloc(HEAP_SIZE);
-		malloced = HEAP_SIZE;
-	}
-	malloced -= size;
+	/* size = size + ALIGNMENT + ALIGN_INFO; */
 
-	heap[index] = size;
-	index += size + 1;
+	/* if (!malloced || size > malloced) { */
+	/* 	heap = kmalloc(HEAP_SIZE); */
+	/* 	malloced = HEAP_SIZE; */
+	/* } */
+	/* malloced -= size; */
 
-	void *p = (void *)(heap + index - size);
-	ALIGN(p);
+	/* heap[index] = size; */
+	/* index += size + 1; */
 
-	return p;
+	/* void *p = (void *)(heap + index - size); */
+	/* ALIGN(p); */
+
+	/* return p; */
 }
 
 // TODO: Implement free, realloc and find_smallest_hole

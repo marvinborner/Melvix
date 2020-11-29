@@ -32,6 +32,8 @@ struct element_event {
 };
 
 struct element_container {
+	int x;
+	int y;
 	u32 width;
 	u32 height;
 	u32 color_bg;
@@ -39,6 +41,8 @@ struct element_container {
 };
 
 struct element_button {
+	int x;
+	int y;
 	char *text;
 	u32 color_fg;
 	u32 color_bg;
@@ -46,6 +50,8 @@ struct element_button {
 };
 
 struct element_label {
+	int x;
+	int y;
 	char *text;
 	u32 color_fg;
 	u32 color_bg;
@@ -53,6 +59,8 @@ struct element_label {
 };
 
 struct element_text_box {
+	int x;
+	int y;
 	char *text;
 	u32 width;
 	u32 height;
@@ -62,8 +70,10 @@ struct element_text_box {
 };
 
 struct element_text_input {
-	char text[MAX_INPUT_LENGTH];
+	int x;
+	int y;
 	u32 width;
+	char text[MAX_INPUT_LENGTH];
 	u32 color_fg;
 	u32 color_bg;
 	enum font_type font_type;
@@ -118,7 +128,7 @@ struct element *gui_add_text_input(struct element *container, int x, int y, u32 
 				   enum font_type font_type, u32 color_bg, u32 color_fg);
 struct element *gui_add_container(struct element *container, int x, int y, u32 width, u32 height,
 				  u32 color_bg);
-void gui_sync(struct element *container, struct element *elem);
+void gui_sync(struct element *elem);
 void gui_remove_childs(struct element *elem);
 void gui_remove_element(struct element *elem);
 

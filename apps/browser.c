@@ -17,7 +17,6 @@
 #define FONT_HEIGHT 24
 #define LABEL_WIDTH 36 // Thx Lars
 
-static struct element *root;
 static struct element *code_label;
 static struct element *output;
 
@@ -101,15 +100,15 @@ void on_submit(void *event, struct element *box)
 		c->text = strdup("000");
 		c->color_fg = COLOR_RED;
 	}
-	gui_sync(root, output);
-	gui_sync(root, code_label);
+	gui_sync(output);
+	gui_sync(code_label);
 	net_close(socket);
 }
 
 int main()
 {
 	// TODO: Dynamic element positioning
-	root = gui_init("browser", WIDTH, HEIGHT, COLOR_BG);
+	struct element *root = gui_init("browser", WIDTH, HEIGHT, COLOR_BG);
 	code_label = gui_add_label(root, 0, 0, FONT_24, "000", COLOR_BLACK, COLOR_WHITE);
 	struct element *text_input =
 		gui_add_text_input(root, LABEL_WIDTH, 0, 100, FONT_24, COLOR_WHITE, COLOR_BLACK);

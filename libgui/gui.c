@@ -16,7 +16,7 @@
 // TODO: Use list (and add index-based access)
 #define MAX_WINDOWS 10
 #define BORDER 2
-#define PERCENTAGE(c, e) ((u32)((double)(c) * (double)(e) / 100.0))
+#define PERC(c, e) ((u32)((double)(c) * (double)(e) / 100.0))
 
 u32 window_count = 0;
 static struct window windows[MAX_WINDOWS] = { 0 };
@@ -37,15 +37,7 @@ static struct window *new_window(const char *title, int x, int y, u32 width, u32
 	win->title = title;
 	win->childs = list_new();
 
-	if (win->ctx->flags & WF_RELATIVE) {
-		win->ctx->pid = getpid();
-		win->ctx->bpp = 32; // TODO: Dynamic bpp
-		win->ctx->pitch = win->ctx->width * (win->ctx->bpp >> 3);
-		win->ctx->fb = malloc(win->ctx->height * win->ctx->pitch);
-		memset(win->ctx->fb, 0, win->ctx->height * win->ctx->pitch);
-	} else {
-		gfx_new_ctx(win->ctx);
-	}
+	gfx_new_ctx(win->ctx);
 
 	if (!win->ctx->fb)
 		return NULL;
@@ -78,6 +70,17 @@ static void merge_elements(struct element *container)
 	}
 }
 
+static void free_context(struct context *ctx)
+{
+	if (!ctx)
+		return;
+
+	free(ctx->fb);
+	ctx->fb = NULL;
+	free(ctx);
+	ctx = NULL;
+}
+
 static void remove_childs(struct element *elem);
 static void remove_element(struct element *elem)
 {
@@ -85,10 +88,7 @@ static void remove_element(struct element *elem)
 		return;
 
 	remove_childs(elem);
-	free(elem->ctx->fb);
-	elem->ctx->fb = NULL;
-	free(elem->ctx);
-	elem->ctx = NULL;
+	free_context(elem->ctx);
 	free(elem->data);
 	elem->data = NULL;
 	free(elem);
@@ -144,42 +144,147 @@ static struct element *element_at(struct element *container, int x, int y)
 	return NULL;
 }
 
+static int absolute_x_off(struct element *elem)
+{
+	if (!elem->parent)
+		return 0;
+
+	int x = 0;
+
+	struct element *iterator = elem;
+	while ((iterator = iterator->parent) && iterator->ctx)
+		if (iterator->parent)
+			x += iterator->ctx->x;
+
+	return x;
+}
+
+static int absolute_y_off(struct element *elem)
+{
+	if (!elem->parent)
+		return 0;
+
+	int y = 0;
+
+	struct element *iterator = elem;
+	while ((iterator = iterator->parent) && iterator->ctx) {
+		if (iterator->parent)
+			y += iterator->ctx->y;
+	}
+
+	return y;
+}
+
+struct context *gui_get_context(int x, int y, u32 width, u32 height)
+{
+	struct context *ctx = malloc(sizeof(*ctx));
+	ctx->pid = getpid();
+	ctx->x = x;
+	ctx->y = y;
+	ctx->width = width;
+	ctx->height = height;
+	ctx->bpp = 32; // TODO: Dynamic bpp
+	ctx->pitch = ctx->width * (ctx->bpp >> 3);
+	ctx->fb = malloc(ctx->height * ctx->pitch);
+	memset(ctx->fb, 0, ctx->height * ctx->pitch);
+	ctx->flags = WF_RELATIVE;
+	return ctx;
+}
+
 void gui_sync_button(struct element *elem)
 {
+	assert(elem->type == GUI_TYPE_BUTTON);
 	struct element_button *button = elem->data;
+
+	if (!elem->ctx) {
+		elem->ctx =
+			gui_get_context(button->x, button->y,
+					strlen(button->text) * gfx_font_width(button->font_type),
+					gfx_font_height(button->font_type));
+	}
+
 	gfx_fill(elem->ctx, button->color_bg);
 	gfx_write(elem->ctx, 0, 0, button->font_type, button->color_fg, button->text);
 }
 
 void gui_sync_label(struct element *elem)
 {
+	assert(elem->type == GUI_TYPE_LABEL);
 	struct element_label *label = elem->data;
+
+	if (!elem->ctx) {
+		elem->ctx = gui_get_context(label->x, label->y,
+					    strlen(label->text) * gfx_font_width(label->font_type),
+					    gfx_font_height(label->font_type));
+	}
+
 	gfx_fill(elem->ctx, label->color_bg);
 	gfx_write(elem->ctx, 0, 0, label->font_type, label->color_fg, label->text);
 }
 
 void gui_sync_text_box(struct element *elem)
 {
+	assert(elem->type == GUI_TYPE_TEXT_BOX);
 	struct element_text_box *text_box = elem->data;
+
+	int abs_x = absolute_x_off(elem) + text_box->x;
+	int abs_y = absolute_y_off(elem) + text_box->y;
+	if (!elem->ctx ||
+	    PERC(elem->parent->ctx->width, text_box->width) - abs_x != elem->ctx->width ||
+	    PERC(elem->parent->ctx->height, text_box->height) - abs_y != elem->ctx->height) {
+		free_context(elem->ctx);
+		elem->ctx =
+			gui_get_context(text_box->x, text_box->y,
+					PERC(elem->parent->ctx->width, text_box->width) - abs_x,
+					PERC(elem->parent->ctx->height, text_box->height) - abs_y);
+	}
+
 	gfx_fill(elem->ctx, text_box->color_bg);
 	gfx_write(elem->ctx, 0, 0, text_box->font_type, text_box->color_fg, text_box->text);
 }
 
 void gui_sync_text_input(struct element *elem)
 {
+	assert(elem->type == GUI_TYPE_TEXT_INPUT);
 	struct element_text_input *text_input = elem->data;
+
+	int abs_x = absolute_x_off(elem) + text_input->x;
+	if (!elem->ctx ||
+	    PERC(elem->parent->ctx->width, text_input->width) - abs_x != elem->ctx->width ||
+	    (u32)gfx_font_height(text_input->font_type) != elem->ctx->height) {
+		free_context(elem->ctx);
+		elem->ctx =
+			gui_get_context(text_input->x, text_input->y,
+					PERC(elem->parent->ctx->width, text_input->width) - abs_x,
+					gfx_font_height(text_input->font_type));
+	}
+
 	gfx_fill(elem->ctx, text_input->color_bg);
 	gfx_write(elem->ctx, 0, 0, text_input->font_type, text_input->color_fg, text_input->text);
 }
 
 void gui_sync_container(struct element *elem)
 {
+	assert(elem->type == GUI_TYPE_CONTAINER);
 	struct element_container *container = elem->data;
+
+	int abs_x = absolute_x_off(elem) + container->x;
+	int abs_y = absolute_y_off(elem) + container->y;
+	if (!elem->ctx ||
+	    PERC(elem->parent->ctx->width, container->width) - abs_x != elem->ctx->width ||
+	    PERC(elem->parent->ctx->height, container->height) - abs_y != elem->ctx->height) {
+		free_context(elem->ctx);
+		elem->ctx =
+			gui_get_context(container->x, container->y,
+					PERC(elem->parent->ctx->width, container->width) - abs_x,
+					PERC(elem->parent->ctx->height, container->height) - abs_y);
+	}
+
 	gfx_fill(elem->ctx, container->color_bg);
 	// TODO: Handle container flags
 }
 
-void gui_sync(struct element *container, struct element *elem)
+void gui_sync(struct element *elem)
 {
 	switch (elem->type) {
 	case GUI_TYPE_BUTTON:
@@ -200,7 +305,8 @@ void gui_sync(struct element *container, struct element *elem)
 	default:
 		break;
 	}
-	merge_elements(get_root(container->window_id));
+
+	merge_elements(get_root(elem->window_id));
 	gfx_redraw_focused();
 }
 
@@ -213,23 +319,19 @@ struct element *gui_add_button(struct element *container, int x, int y, enum fon
 	struct element *button = malloc(sizeof(*button));
 	button->type = GUI_TYPE_BUTTON;
 	button->window_id = container->window_id;
-	button->ctx = malloc(sizeof(*button->ctx));
-	button->ctx->x = x;
-	button->ctx->y = y;
-	button->ctx->width = strlen(text) * gfx_font_width(font_type);
-	button->ctx->height = gfx_font_height(font_type);
-	button->ctx->flags = WF_RELATIVE;
+	button->ctx = NULL;
 	button->parent = container;
 	button->childs = list_new();
 	button->data = malloc(sizeof(struct element_button));
+	((struct element_button *)button->data)->x = x;
+	((struct element_button *)button->data)->y = y;
 	((struct element_button *)button->data)->text = strdup(text);
 	((struct element_button *)button->data)->color_fg = color_fg;
 	((struct element_button *)button->data)->color_bg = color_bg;
 	((struct element_button *)button->data)->font_type = font_type;
 
-	gfx_new_ctx(button->ctx);
 	list_add(container->childs, button);
-	gui_sync(container, button);
+	gui_sync(button);
 
 	return button;
 }
@@ -243,23 +345,19 @@ struct element *gui_add_label(struct element *container, int x, int y, enum font
 	struct element *label = malloc(sizeof(*label));
 	label->type = GUI_TYPE_LABEL;
 	label->window_id = container->window_id;
-	label->ctx = malloc(sizeof(*label->ctx));
-	label->ctx->x = x;
-	label->ctx->y = y;
-	label->ctx->width = strlen(text) * gfx_font_width(font_type);
-	label->ctx->height = gfx_font_height(font_type);
-	label->ctx->flags = WF_RELATIVE;
+	label->ctx = NULL;
 	label->parent = container;
 	label->childs = list_new();
 	label->data = malloc(sizeof(struct element_label));
+	((struct element_label *)label->data)->x = x;
+	((struct element_label *)label->data)->y = y;
 	((struct element_label *)label->data)->text = strdup(text);
 	((struct element_label *)label->data)->color_fg = color_fg;
 	((struct element_label *)label->data)->color_bg = color_bg;
 	((struct element_label *)label->data)->font_type = font_type;
 
-	gfx_new_ctx(label->ctx);
 	list_add(container->childs, label);
-	gui_sync(container, label);
+	gui_sync(label);
 
 	return label;
 }
@@ -274,15 +372,12 @@ struct element *gui_add_text_box(struct element *container, int x, int y, u32 wi
 	struct element *text_box = malloc(sizeof(*text_box));
 	text_box->type = GUI_TYPE_TEXT_BOX;
 	text_box->window_id = container->window_id;
-	text_box->ctx = malloc(sizeof(*text_box->ctx));
-	text_box->ctx->x = x;
-	text_box->ctx->y = y;
-	text_box->ctx->width = PERCENTAGE(container->ctx->width, width);
-	text_box->ctx->height = PERCENTAGE(container->ctx->height, height);
-	text_box->ctx->flags = WF_RELATIVE;
+	text_box->ctx = NULL;
 	text_box->parent = container;
 	text_box->childs = list_new();
 	text_box->data = malloc(sizeof(struct element_text_box));
+	((struct element_text_box *)text_box->data)->x = x;
+	((struct element_text_box *)text_box->data)->y = y;
 	((struct element_text_box *)text_box->data)->width = width;
 	((struct element_text_box *)text_box->data)->height = height;
 	((struct element_text_box *)text_box->data)->text = strdup(text);
@@ -290,9 +385,8 @@ struct element *gui_add_text_box(struct element *container, int x, int y, u32 wi
 	((struct element_text_box *)text_box->data)->color_bg = color_bg;
 	((struct element_text_box *)text_box->data)->font_type = font_type;
 
-	gfx_new_ctx(text_box->ctx);
 	list_add(container->childs, text_box);
-	gui_sync(container, text_box);
+	gui_sync(text_box);
 
 	return text_box;
 }
@@ -306,23 +400,19 @@ struct element *gui_add_text_input(struct element *container, int x, int y, u32 
 	struct element *text_input = malloc(sizeof(*text_input));
 	text_input->type = GUI_TYPE_TEXT_INPUT;
 	text_input->window_id = container->window_id;
-	text_input->ctx = malloc(sizeof(*text_input->ctx));
-	text_input->ctx->x = x;
-	text_input->ctx->y = y;
-	text_input->ctx->width = PERCENTAGE(container->ctx->width, width);
-	text_input->ctx->height = gfx_font_height(font_type);
-	text_input->ctx->flags = WF_RELATIVE;
+	text_input->ctx = NULL;
 	text_input->parent = container;
 	text_input->childs = list_new();
 	text_input->data = malloc(sizeof(struct element_text_input));
+	((struct element_text_input *)text_input->data)->x = x;
+	((struct element_text_input *)text_input->data)->y = y;
 	((struct element_text_input *)text_input->data)->width = width;
 	((struct element_text_input *)text_input->data)->color_fg = color_fg;
 	((struct element_text_input *)text_input->data)->color_bg = color_bg;
 	((struct element_text_input *)text_input->data)->font_type = font_type;
 
-	gfx_new_ctx(text_input->ctx);
 	list_add(container->childs, text_input);
-	gui_sync(container, text_input);
+	gui_sync(text_input);
 
 	return text_input;
 }
@@ -336,23 +426,19 @@ struct element *gui_add_container(struct element *container, int x, int y, u32 w
 	struct element *new_container = malloc(sizeof(*new_container));
 	new_container->type = GUI_TYPE_CONTAINER;
 	new_container->window_id = container->window_id;
-	new_container->ctx = malloc(sizeof(*new_container->ctx));
-	new_container->ctx->x = x;
-	new_container->ctx->y = y;
-	new_container->ctx->width = PERCENTAGE(container->ctx->width, width);
-	new_container->ctx->height = PERCENTAGE(container->ctx->height, height);
-	new_container->ctx->flags = WF_RELATIVE;
+	new_container->ctx = NULL;
 	new_container->parent = container;
 	new_container->childs = list_new();
 	new_container->data = malloc(sizeof(struct element_container));
+	((struct element_container *)new_container->data)->x = x;
+	((struct element_container *)new_container->data)->y = y;
 	((struct element_container *)new_container->data)->width = width;
 	((struct element_container *)new_container->data)->height = height;
 	((struct element_container *)new_container->data)->color_bg = color_bg;
 	((struct element_container *)new_container->data)->flags = 0;
 
-	gfx_new_ctx(new_container->ctx);
 	list_add(container->childs, new_container);
-	gui_sync(container, new_container);
+	gui_sync(new_container);
 
 	return new_container;
 }
@@ -361,9 +447,7 @@ void gui_remove_childs(struct element *elem)
 {
 	remove_childs(elem);
 	elem->childs = list_new();
-	gui_sync_container(elem);
-	merge_elements(get_root(elem->window_id));
-	gfx_redraw_focused();
+	gui_sync(elem);
 }
 
 void gui_remove_element(struct element *elem)
@@ -415,10 +499,10 @@ void gui_event_loop(struct element *container)
 						continue;
 					s[l] = event->ch;
 					s[l + 1] = '\0';
-					gui_sync(get_root(focused->window_id), focused);
+					gui_sync(focused);
 				} else if (event->scancode == KEY_BACKSPACE && l > 0) {
 					s[l - 1] = '\0';
-					gui_sync(get_root(focused->window_id), focused);
+					gui_sync(focused);
 				}
 			}
 
@@ -428,7 +512,7 @@ void gui_event_loop(struct element *container)
 				// Clear!
 				char *t = ((struct element_text_input *)focused->data)->text;
 				memset(t, 0, strlen(t));
-				gui_sync(get_root(focused->window_id), focused);
+				gui_sync(focused);
 			}
 
 			if (focused && focused->event.on_key && event->press && event->ch)
@@ -439,10 +523,8 @@ void gui_event_loop(struct element *container)
 		case GUI_RESIZE: {
 			struct gui_event_resize *event = msg->data;
 			struct element *root = get_root(container->window_id);
-			printf("RESIZE: %d->%d %d->%d\n", root->ctx->width, event->new_ctx->width,
-			       root->ctx->height, event->new_ctx->height);
 			root->ctx = event->new_ctx;
-			gui_sync_container(root);
+			gui_sync_container(container);
 			merge_elements(root);
 			gfx_redraw_focused();
 			break;
@@ -475,8 +557,6 @@ struct element *gui_init(const char *title, u32 width, u32 height, u32 color_bg)
 	struct element *root = gui_add_container(container, BORDER, BORDER, 100, 100, COLOR_BLACK);
 	if (!root)
 		return NULL;
-	root->ctx->width -= BORDER * 2;
-	root->ctx->height -= BORDER * 2;
 
 	return root;
 }
