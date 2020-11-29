@@ -199,6 +199,8 @@ static struct html_element *render_object(struct html_element *container, struct
 		container->x_offset = 0;
 		container->y_offset += 2;
 		return container;
+	} else if (CMP(tag, "head") || CMP(tag, "meta") || CMP(tag, "title")) {
+		return container;
 	} else {
 		printf("UNKNOWN %s\n", tag);
 		if (dom->content && strlen(dom->content) > 0) {

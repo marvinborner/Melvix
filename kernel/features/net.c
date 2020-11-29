@@ -536,8 +536,6 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 
 		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
 
-		proc_from_pid(socket->pid)->state = PROC_RUNNING;
-
 		socket->state = S_CLOSED;
 		tcp->state = 0;
 		return;
@@ -571,8 +569,6 @@ static void udp_handle_packet(struct udp_packet *packet)
 		sdata->data = NULL;
 	}
 	list_add(socket->packets, sdata);
-	proc_from_pid(socket->pid)->state = PROC_RUNNING;
-	/* printf("Waking up %d\n", socket->pid); */
 }
 
 static void ip_handle_packet(struct ip_packet *packet, int len)

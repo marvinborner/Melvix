@@ -54,6 +54,13 @@ static struct context *new_context(struct context *ctx, u32 pid, int x, int y, u
 static void remove_context(struct context *ctx)
 {
 	assert(list_remove(contexts, list_first_data(contexts, ctx)));
+
+	if (!(ctx->flags & WF_RELATIVE)) {
+		if (context_count % 2 == 1)
+			MOUSE_SKIP--;
+		context_count--;
+	}
+
 	free(ctx->fb);
 	ctx->fb = NULL;
 	free(ctx);
@@ -198,7 +205,6 @@ static void handle_mouse(struct event_mouse *event)
 			if (mouse_y - focused->y > 0) {
 				focused->height = mouse_y - focused->y;
 			}
-			/* redraw_all(); // TODO: Function to redraw one context */
 		}
 		mouse_pressed[1] = 1;
 	} else if (mod_pressed && mouse_pressed[1]) {
