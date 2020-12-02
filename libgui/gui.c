@@ -284,7 +284,7 @@ void gui_sync_container(struct element *elem)
 	// TODO: Handle container flags
 }
 
-void gui_sync(struct element *elem)
+void gui_only_sync(struct element *elem)
 {
 	switch (elem->type) {
 	case GUI_TYPE_BUTTON:
@@ -305,8 +305,43 @@ void gui_sync(struct element *elem)
 	default:
 		break;
 	}
+}
 
+void gui_sync(struct element *elem)
+{
+	gui_only_sync(elem);
 	merge_elements(get_root(elem->window_id));
+	gfx_redraw_focused();
+}
+
+void gui_sync_recursive(struct element *container)
+{
+	if (!container || !container->childs || !container->childs->head)
+		return;
+
+	struct node *iterator = container->childs->head;
+	while (iterator != NULL) {
+		gui_only_sync(iterator->data);
+		gui_sync_recursive(iterator->data);
+		iterator = iterator->next;
+	}
+}
+
+void gui_sync_window(u32 window_id)
+{
+	struct element *root = get_root(window_id);
+
+	if (!root || !root->childs || !root->childs->head)
+		return;
+
+	struct node *iterator = root->childs->head;
+	while (iterator != NULL) {
+		gui_only_sync(iterator->data);
+		gui_sync_recursive(iterator->data);
+		iterator = iterator->next;
+	}
+
+	merge_elements(root);
 	gfx_redraw_focused();
 }
 
@@ -524,9 +559,7 @@ void gui_event_loop(struct element *container)
 			struct gui_event_resize *event = msg->data;
 			struct element *root = get_root(container->window_id);
 			root->ctx = event->new_ctx;
-			gui_sync_container(container);
-			merge_elements(root);
-			gfx_redraw_focused();
+			gui_sync_window(container->window_id);
 			break;
 		}
 		}
