@@ -4,12 +4,16 @@
 #define HTTP_H
 
 #include <def.h>
+#include <socket.h>
 
 char *http_data(char *response);
+char *http_header_key(char *r, const char *key);
+u32 http_content_length(char *r);
 char *http_code(char *r);
 u32 http_response(const char *http_code, u32 content_length, const char *data, char *resp);
 char *http_query_get(const char *url, const char *path);
 char *http_query_path(const char *query, char *path);
+char *http_receive(struct socket *socket);
 
 #define HTTP_100 "100 Continue"
 #define HTTP_101 "101 Switching Protocol"

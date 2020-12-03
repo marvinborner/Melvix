@@ -8,7 +8,7 @@
 
 // TODO: Use actual socket types (stream etc)
 enum socket_type { S_TCP, S_UDP };
-enum socket_state { S_CONNECTING, S_CONNECTED, S_OPEN, S_CLOSED, S_FAILED };
+enum socket_state { S_CONNECTING, S_CONNECTED, S_OPEN, S_CLOSING, S_CLOSED, S_FAILED };
 
 struct tcp_socket {
 	u32 seq_no;

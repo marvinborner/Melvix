@@ -5,6 +5,7 @@
 #include <gfx.h>
 #include <gui.h>
 #include <html.h>
+#include <http.h>
 #include <input.h>
 #include <mem.h>
 #include <net.h>
@@ -88,13 +89,13 @@ void on_submit(void *event, struct element *box)
 	struct socket *socket = net_open(S_TCP);
 	if (socket && net_connect(socket, ip, port, NET_TIMEOUT)) {
 		net_send(socket, query, strlen(query));
-		char buf[4096] = { 0 };
-		if (!net_receive(socket, buf, 4096, NET_TIMEOUT) ||
-		    !html_render(output, http_data(buf), 4096))
+		char *buf = NULL;
+		if (!(buf = http_receive(socket)) || !html_render(output, http_data(buf), 4096)) {
 			print_error("HTML parsing failed.\n");
-
-		c->text = http_code(buf);
-		c->color_fg = status_color(c->text);
+		} else {
+			c->text = http_code(buf);
+			c->color_fg = status_color(c->text);
+		}
 	} else {
 		print_error("Can't connect to server.\n");
 		c->text = strdup("000");

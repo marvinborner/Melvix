@@ -4,7 +4,6 @@
 #define NET_H
 
 #include <dns.h>
-#include <http.h>
 #include <ip.h>
 #include <print.h>
 #include <socket.h>
@@ -48,8 +47,8 @@ static inline int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port, 
 static inline int net_close(struct socket *socket)
 {
 	int res = 0;
-	while (!(res = (int)sys1(SYS_NET_CLOSE, (int)(socket))))
-		;
+	while (socket->state == S_CLOSING || !(res = (int)sys1(SYS_NET_CLOSE, (int)(socket))))
+		yield();
 	return res;
 }
 

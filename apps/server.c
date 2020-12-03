@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
+#include <http.h>
 #include <mem.h>
 #include <net.h>
 #include <print.h>

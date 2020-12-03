@@ -3,9 +3,10 @@
 #include <assert.h>
 #include <conv.h>
 #include <def.h>
-#include <http.h>
 #include <mem.h>
+#include <net.h>
 #include <print.h>
+#include <socket.h>
 #include <str.h>
 
 char *http_data(char *r)
@@ -18,6 +19,33 @@ char *http_data(char *r)
 		}
 	}
 	return h;
+}
+
+char *http_header_key(char *r, const char *key)
+{
+	char *res = NULL;
+	for (char *p = r; *p; p++) {
+		/* printf("'%c%c%c' vs '%c%c%c'\n", p[0], p[1], p[2], key[0], key[1], key[2]); */
+		if (strlen(p) >= strlen(key) && !memcmp(p, key, strlen(key))) {
+			char *start = p + strlen(key) + 2;
+			char *end = start;
+			for (; *end != '\n'; end++)
+				;
+			res = malloc(end - start);
+			memcpy(res, start, end - start - 1);
+			res[end - start] = '\0';
+			break;
+		}
+	}
+	return res;
+}
+
+u32 http_content_length(char *r)
+{
+	char *value = http_header_key(r, "Content-Length");
+	int length = value ? atoi(value) : 0;
+	free(value);
+	return length;
 }
 
 char *http_code(char *r)
@@ -86,4 +114,20 @@ char *http_query_path(const char *query, char *path)
 	}
 
 	return path;
+}
+
+char *http_receive(struct socket *socket)
+{
+	char buf[4096] = { 0 };
+	if (!net_receive(socket, buf, 4096, NET_TIMEOUT))
+		return NULL;
+
+	u32 length = http_content_length(buf);
+	char *data = malloc(strlen(buf) + length);
+	memcpy(data, buf, strlen(buf));
+	while (strlen(http_data(data)) != length) {
+		if (!net_receive(socket, data, length, NET_TIMEOUT))
+			break;
+	}
+	return data;
 }

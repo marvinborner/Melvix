@@ -521,12 +521,7 @@ static void tcp_handle_packet(struct tcp_packet *packet, u32 dst, int len)
 		tcp->ack_no += data_length;
 		tcp->seq_no = recv_ack;
 
-		// TODO: How many segments are going to be sent?!
-		if ((flags & 0xff) == (TCP_FLAG_ACK | TCP_FLAG_PSH)) {
-			tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
-			tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
-			tcp->state++;
-		}
+		tcp_send_packet(socket, TCP_FLAG_ACK, NULL, 0);
 
 		socket->state = S_CONNECTED;
 		return;
@@ -739,6 +734,16 @@ int net_close(struct socket *socket)
 {
 	if (!net_installed())
 		return 1;
+
+	if (socket->state == S_CLOSING)
+		return 0;
+
+	if (socket->type == S_TCP && socket->state != S_CLOSED) {
+		tcp_send_packet(socket, TCP_FLAG_FIN | TCP_FLAG_ACK, NULL, 0);
+		socket->state = S_CLOSING;
+		socket->prot.tcp.state++;
+		return 0;
+	}
 
 	return socket_close(socket);
 }
