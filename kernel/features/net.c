@@ -732,7 +732,7 @@ struct socket *net_open(enum socket_type type)
 
 int net_close(struct socket *socket)
 {
-	if (!net_installed())
+	if (!net_installed() || !socket)
 		return 1;
 
 	if (socket->state == S_CLOSING)

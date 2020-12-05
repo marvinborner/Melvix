@@ -62,8 +62,9 @@ static struct dom *generate_dom(char *data, u32 length)
 	enum xml_error err = xml_parse(&parser, buffer, length, tokens, 128);
 
 	if (err != XML_SUCCESS && err != XML_ERROR_BUFFERDRY) {
-		printf("\nXML parse error: %d\n", err);
-		/* return NULL; */
+		printf("XML parse error: %d\n", err);
+		printf("DATA: '%s'\n", data);
+		return NULL;
 	}
 
 	struct dom *root = new_object("root", NULL);
@@ -113,9 +114,8 @@ static struct dom *generate_dom(char *data, u32 length)
 			       token->end_pos - token->start_pos);
 			name[token->end_pos - token->start_pos] = '\0';
 			char *clean_name = name;
-			for (u32 j = 0; j < strlen(name); j++) {
-				if (name[j] == ' ' || name[j] == '\n' || name[j] == '\r' ||
-				    name[j] == '\t') {
+			for (char *p = name; *p; p++) {
+				if (*p == ' ' || *p == '\n' || *p == '\r' || *p == '\t') {
 					clean_name++;
 				} else {
 					break;

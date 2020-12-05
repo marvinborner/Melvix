@@ -86,8 +86,8 @@ void on_submit(void *event, struct element *box)
 
 	struct element_label *c = code_label->data;
 
-	struct socket *socket = net_open(S_TCP);
-	if (socket && net_connect(socket, ip, port, NET_TIMEOUT)) {
+	struct socket *socket = NULL;
+	if (ip && (socket = net_open(S_TCP)) && net_connect(socket, ip, port, NET_TIMEOUT)) {
 		net_send(socket, query, strlen(query));
 		char *buf = NULL;
 		if (!(buf = http_receive(socket)) || !html_render(output, http_data(buf), 4096)) {
