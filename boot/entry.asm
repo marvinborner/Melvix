@@ -268,9 +268,9 @@ lba:
 times SECTOR_SIZE - ($ - $$) db 0
 dw SECTOR_END
 
-; This is the second stage. It tries to load the kernel (inode 5) into memory.
+; This is the second stage. It tries to load the kernel into memory.
 ; To do this, it first checks the integrity of the ext2 fs. Then it has to find
-; the address of the fifth inode and load its contents into memory.
+; the address of the root inode (2), find the filename in it and load its contents into memory.
 ; After this is finished, the stage can jump into the protected mode, enable the
 ; A20 line and finally jump to the kernel! ez
 stage_two:
@@ -283,8 +283,9 @@ stage_two:
 	mov ax, [superblock + EXT2_SB_SIZE + EXT2_TABLE_OFFSET] ; Inode table
 	shl ax, 1 ; Multiply ax by 2
 	mov [lba], ax ; Sector
-	mov ax, 2
-	mov [count], ax ; Read 1024 bytes
+	; TODO: This might only work with smaller inodes
+	;mov ax, 4
+	;mov [count], ax ; Read 4kb
 	mov bx, EXT2_INODE_TABLE_LOC ; Copy data to 0x1000
 	mov [dest], bx
 	call disk_read

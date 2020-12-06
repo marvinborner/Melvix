@@ -122,25 +122,10 @@ make_build() {
         (echo "e 0"; echo 83; echo n; echo 0; echo "*"; echo "quit") | $SUDO fdisk -e $VND >/dev/null
         $SUDO mkfs.ext2 -F /dev/${VND}i >/dev/null
 
-        if [ "$(cd ext2util/ && git diff --name-only | wc -l | xargs)" -ne "5" ]; then
-            cd ext2util
-            git stash
-            find ./ -type f -exec sed -i -e 's/sync/fs_sync/g' {} \;
-            sed -i 's/gcc/egcc/g' Makefile
-            $MAKE
-            cd ..
-        fi
-
         $SUDO dd if=build/boot.bin of=/dev/${VND}i conv=notrunc status=none
-        cp build/load.bin . # For nicer disk img
-        $SUDO ./ext2util/ext2util -x /dev/${VND}i -wf load.bin -i 5 >/dev/null
-        rm load.bin
     else
         $SUDO mke2fs -q build/disk.img
         dd if=build/boot.bin of=build/disk.img conv=notrunc status=none
-        cp build/load.bin . # For nicer disk img
-        ./ext2util/ext2util -x build/disk.img -wf load.bin -i 5 >/dev/null
-        rm load.bin
     fi
 
     # Set test app as init
@@ -156,6 +141,7 @@ make_build() {
     fi
     $SUDO cp -r disk/* mnt/
     $SUDO cp -r build/apps/ mnt/bin/
+    $SUDO cp build/load.bin mnt/
     $SUDO cp build/kernel.bin mnt/
     $SUDO umount mnt/
     rm -rf mnt/
@@ -203,7 +189,7 @@ ${data}"
 }
 
 make_sync() {
-    $TAGS -R --exclude=.git --exclude=build --exclude=disk --exclude=cross --exclude=ext2util --exclude=boot .
+    $TAGS -R --exclude=.git --exclude=build --exclude=disk --exclude=cross --exclude=boot .
 
     rm -f compile_commands.json
     output=$($MAKE --always-make --dry-run)

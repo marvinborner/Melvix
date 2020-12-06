@@ -1,4 +1,0 @@
-[submodule "ext2util"]
-	path = ext2util
-	url = https://github.com/lazear/ext2util.git
-	ignore = dirty
