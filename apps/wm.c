@@ -84,6 +84,15 @@ static struct context *context_at(int x, int y)
 	return ret;
 }
 
+static void kill_focused()
+{
+	if (!focused)
+		return;
+	msg_send(focused->pid, GUI_KILL, NULL);
+	remove_context(focused);
+	focused = context_at(mouse_x, mouse_y);
+}
+
 // This only works if window hasn't moved - TODO!
 static void redraw_focused()
 {
@@ -127,18 +136,20 @@ static void handle_keyboard(struct event_keyboard *event)
 	else if (event->scancode == KEY_LEFTCTRL || event->scancode == KEY_RIGHTCTRL)
 		special_keys_pressed ^= CTRL_PRESSED;
 
-	if (!focused)
-		return;
-
 	// Special key combos
 	char ch = keymap->map[event->scancode];
-	if (event->press && special_keys_pressed & ALT_PRESSED && ch == 'q') {
-		msg_send(focused->pid, GUI_KILL, NULL);
-		remove_context(focused);
-		focused = NULL;
+	int mod = event->press && special_keys_pressed & ALT_PRESSED;
+	if (mod && focused && ch == 'q') {
+		kill_focused();
 		redraw_all();
 		return;
+	} else if (mod && ch == 'p') {
+		exec("/bin/exec", NULL);
+		return;
 	}
+
+	if (!focused)
+		return;
 
 	// Key maps
 	struct gui_event_keyboard *msg = malloc(sizeof(*msg));
@@ -298,6 +309,12 @@ int main(int argc, char **argv)
 				focused = ctx;
 			redraw_all();
 			msg_send(msg->src, GFX_NEW_CONTEXT, ctx);
+
+			// Send mouse position
+			struct gui_event_mouse *mouse = malloc(sizeof(*msg));
+			mouse->x = mouse_x - focused->x;
+			mouse->y = mouse_y - focused->y;
+			msg_send(focused->pid, GUI_MOUSE, mouse);
 			break;
 		}
 		case GFX_REDRAW:

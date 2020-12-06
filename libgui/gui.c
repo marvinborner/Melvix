@@ -590,6 +590,7 @@ void gui_event_loop(struct element *container)
 			break;
 		}
 		}
+		free(msg);
 	}
 
 	exit(1);
