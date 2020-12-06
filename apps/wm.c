@@ -65,8 +65,6 @@ static void remove_context(struct context *ctx)
 	ctx->fb = NULL;
 	free(ctx);
 	ctx = NULL;
-	free(ctx);
-	ctx = NULL;
 }
 
 static struct context *context_at(int x, int y)
@@ -132,14 +130,24 @@ static void handle_keyboard(struct event_keyboard *event)
 	if (!focused)
 		return;
 
-	struct gui_event_keyboard *msg = malloc(sizeof(*msg));
+	// Special key combos
+	char ch = keymap->map[event->scancode];
+	if (event->press && special_keys_pressed & ALT_PRESSED && ch == 'q') {
+		msg_send(focused->pid, GUI_KILL, NULL);
+		remove_context(focused);
+		focused = NULL;
+		redraw_all();
+		return;
+	}
 
+	// Key maps
+	struct gui_event_keyboard *msg = malloc(sizeof(*msg));
 	if (special_keys_pressed & SHIFT_PRESSED)
 		msg->ch = keymap->shift_map[event->scancode];
 	else if (special_keys_pressed & ALT_PRESSED)
 		msg->ch = keymap->alt_map[event->scancode];
 	else
-		msg->ch = keymap->map[event->scancode];
+		msg->ch = ch;
 
 	msg->press = event->press;
 	msg->scancode = event->scancode;

@@ -110,6 +110,29 @@ static void remove_childs(struct element *elem)
 	list_destroy(elem->childs);
 }
 
+static void remove_window(struct window *win)
+{
+	if (!win || !win->childs || !win->childs->head)
+		return;
+
+	struct node *iterator = win->childs->head;
+	while (iterator != NULL) {
+		struct element *child = iterator->data;
+		remove_element(child);
+		iterator = iterator->next;
+	}
+
+	free_context(win->ctx);
+	list_destroy(win->childs);
+}
+
+static void remove_all()
+{
+	for (int i = 0; i < MAX_WINDOWS; i++) {
+		remove_window(&windows[i]);
+	}
+}
+
 static struct element *element_at(struct element *container, int x, int y)
 {
 	if (!container || !container->childs || !container->childs->head)
@@ -516,6 +539,10 @@ void gui_event_loop(struct element *container)
 		}
 
 		switch (msg->type) {
+		case GUI_KILL: {
+			remove_all();
+			exit(0);
+		}
 		case GUI_MOUSE: {
 			struct gui_event_mouse *event = msg->data;
 			focused = element_at(container, event->x, event->y);
@@ -564,6 +591,8 @@ void gui_event_loop(struct element *container)
 		}
 		}
 	}
+
+	exit(1);
 }
 
 struct element *gui_init(const char *title, u32 width, u32 height, u32 color_bg)
