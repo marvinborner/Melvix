@@ -41,13 +41,16 @@
 %define EXT2_SIG_OFFSET 0x38 ; Signature offset in superblock
 %define EXT2_TABLE_OFFSET 0x08 ; Inode table offset after superblock
 %define EXT2_INODE_TABLE_LOC 0x1000 ; New inode table location in memory
-%define EXT2_KERNEL_INODE 0x05 ; Kernel inode
+%define EXT2_ROOT_INODE 0x02 ; Root inode
 %define EXT2_INODE_SIZE 0x80 ; Single inode size
 %define EXT2_GET_ADDRESS(inode) (EXT2_INODE_TABLE_LOC + (inode - 1) * EXT2_INODE_SIZE)
 %define EXT2_COUNT_OFFSET 0x1c ; Inode offset of number of data blocks
 %define EXT2_POINTER_OFFSET 0x28 ; Inode offset of first data pointer
 %define EXT2_IND_POINTER_OFFSET 0x2c ; Inode offset of singly indirect data pointer
 %define EXT2_DIRECT_POINTER_COUNT 0x0c ; Direct pointer count
+%define EXT2_ENTRY_LENGTH_OFFSET 0x04 ; Dirent offset of entry length
+%define EXT2_FILENAME_OFFSET 0x08 ; Dirent offset of filename
+%define EXT2_INODE_OFFSET 0x00 ; Dirent offset of inode number
 %define EXT2_SIG 0xef53 ; Signature
 
 ; Video constants (VESA)
@@ -235,6 +238,12 @@ video_map:
 disk_error_msg db "Disk error!", NEWLINE, RETURN, NULL
 lba_error_msg db "LBA error!", NEWLINE, RETURN, NULL
 video_error_msg db "Video error!", NEWLINE, RETURN, NULL
+found_msg db "FOUND!", NEWLINE, RETURN, NULL
+
+; Filenames
+loader_name db "load.bin"
+loader_name_len equ $ - loader_name
+
 drive db 0
 
 ; Video info struct
@@ -280,22 +289,49 @@ stage_two:
 	mov [dest], bx
 	call disk_read
 
-	; Load kernel
-	mov bx, EXT2_GET_ADDRESS(EXT2_KERNEL_INODE) ; First block
+	; Load root directory
+	mov bx, EXT2_GET_ADDRESS(EXT2_ROOT_INODE) ; First block
+	mov ax, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
+	shl ax, 1 ; Multiply ax by 2
+	mov [lba], ax
+	mov bx, 0x3500 ; Load to this address
+	mov [dest], bx
+	call disk_read
+
+.search_loop:
+	lea si, [bx + EXT2_FILENAME_OFFSET] ; First comparison string
+	mov di, loader_name ; Second comparison string
+	mov cx, loader_name_len ; String length
+	rep cmpsb ; Compare strings
+	je .found ; Found loader!
+	add bx, EXT2_ENTRY_LENGTH_OFFSET ; Add dirent struct size
+	jmp .search_loop ; Next dirent!
+.found:
+	mov si, found_msg
+	call print ; Print success message
+	mov ax, word [bx + EXT2_INODE_OFFSET] ; Get inode number from dirent
+	; Calculate address: (EXT2_INODE_TABLE_LOC + (inode - 1) * EXT2_INODE_SIZE)
+	dec ax ; (inode - 1)
+	mov cx, EXT2_INODE_SIZE ; Prepare for multiplication
+	mul cx ; Multiply inode number
+	mov bx, ax ; Transfer calculation
+	add bx, EXT2_INODE_TABLE_LOC ; bx is at the start of the inode now!
 	mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of blocks for inode
+	cmp cx, 0
+	je disk_error
 	lea di, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
 	mov bx, 0x4000 ; Load to this address
 	mov [dest + 2], bx
 	mov bx, 0 ; Inode location = 0xF0000
 	mov [dest], bx
-	call kernel_load
+	call inode_load
 
 	; Set video mode
 	call video_map
 
 	jmp protected_mode_enter
 
-kernel_load:
+inode_load:
 	mov ax, [di] ; Set ax = block pointer
 	shl ax, 1 ; Multiply ax by 2
 	mov [lba], ax
@@ -307,7 +343,7 @@ kernel_load:
 	add bx, 0x400 ; 1kb increase
 	add di, 0x4 ; Move to next block pointer
 	sub cx, 0x2 ; Read 2 blocks
-	jnz kernel_load
+	jnz inode_load
 	ret
 
 protected_mode_enter:
