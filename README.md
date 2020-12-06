@@ -66,7 +66,7 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
     -   nasm
     -   qemu
 
--   Clone this repository using `git clone --recurse-submodules https://github.com/marvinborner/Melvix.git`
+-   Clone this repository using `git clone https://github.com/marvinborner/Melvix.git`
 
 -   Run `./run` (pure magic!)
 
