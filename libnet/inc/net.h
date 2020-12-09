@@ -46,6 +46,8 @@ static inline int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port, 
 
 static inline int net_close(struct socket *socket)
 {
+	if (!socket)
+		return 0;
 	int res = 0;
 	while (socket->state == S_CLOSING || !(res = (int)sys1(SYS_NET_CLOSE, (int)(socket))))
 		yield();
