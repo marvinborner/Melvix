@@ -1,5 +1,4 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
-// EXT2 based filesystem
 
 #include <assert.h>
 #include <def.h>
@@ -8,6 +7,10 @@
 #include <mem.h>
 #include <print.h>
 #include <str.h>
+
+/**
+ * EXT2
+ */
 
 void *buffer_read(u32 block)
 {
@@ -179,4 +182,39 @@ u32 file_stat(char *path)
 		return 0;
 
 	return in->size;
+}
+
+/**
+ * VFS
+ */
+
+static struct list *mount_points = NULL;
+
+struct device *vfs_mounted(const char *path)
+{
+	struct node *iterator = mount_points->head;
+	while (iterator) {
+		if (!strcmp(iterator->data, path))
+			return iterator->data;
+		iterator = iterator->next;
+	}
+	return NULL;
+}
+
+u32 vfs_mount(struct device *dev, const char *path)
+{
+	if (!dev || !dev->id || vfs_mounted(path))
+		return 0;
+
+	struct mount_info *m = malloc(sizeof(*m));
+	m->path = strdup(path);
+	m->dev = dev;
+	list_add(mount_points, m);
+
+	return 1;
+}
+
+void vfs_install()
+{
+	mount_points = list_new();
 }

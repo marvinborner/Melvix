@@ -1,10 +1,13 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
-// EXT2 based filesystem
 
 #ifndef FS_H
 #define FS_H
 
 #include <def.h>
+
+/**
+ * EXT2
+ */
 
 #define EXT2_BOOT 0
 #define EXT2_SUPER 1
@@ -95,5 +98,30 @@ struct file {
 
 void *file_read(char *path);
 u32 file_stat(char *path);
+
+/**
+ * VFS
+ */
+
+struct device {
+	u32 id;
+	const char *name;
+	int type; // TODO: Block, char device
+	struct vfs *vfs;
+	u8 (*read)(u8 *buf, u32 offset, u32 count, struct device *dev);
+	u8 (*write)(u8 *buf, u32 offset, u32 count, struct device *dev);
+};
+
+struct vfs {
+	const char *name;
+	u8 (*probe)(struct device *);
+	u8 (*read)(char *, char *, struct device *, void *);
+	u8 (*mount)(struct device *, void *);
+};
+
+struct mount_info {
+	const char *path;
+	struct device *dev;
+};
 
 #endif
