@@ -6,7 +6,79 @@
 #include <ide.h>
 #include <mem.h>
 #include <print.h>
+#include <random.h>
 #include <str.h>
+
+/**
+ * VFS
+ */
+
+static struct list *mount_points = NULL;
+
+struct device *vfs_mounted(const char *path)
+{
+	struct node *iterator = mount_points->head;
+	while (iterator) {
+		if (!strcmp(iterator->data, path))
+			return iterator->data;
+		iterator = iterator->next;
+	}
+	return NULL;
+}
+
+u32 vfs_mount(struct device *dev, const char *path)
+{
+	if (!dev || !dev->id || vfs_mounted(path))
+		return 0;
+
+	struct mount_info *m = malloc(sizeof(*m));
+	m->path = strdup(path);
+	m->dev = dev;
+	list_add(mount_points, m);
+
+	return 1;
+}
+
+void vfs_install()
+{
+	mount_points = list_new();
+}
+
+/**
+ * Device
+ */
+
+static struct list *devices = NULL;
+
+void device_add(struct device *dev)
+{
+	dev->id = rand();
+	list_add(devices, dev);
+}
+
+struct device *device_get(u32 id)
+{
+	struct node *iterator = devices->head;
+	while (iterator) {
+		if (((struct device *)iterator->data)->id == id)
+			return iterator->data;
+		iterator = iterator->next;
+	}
+	return NULL;
+}
+
+void device_install()
+{
+	devices = list_new();
+
+	struct vfs *vfs = malloc(sizeof(*vfs));
+	vfs->name = strdup("devfs");
+	struct device *dev = malloc(sizeof(*dev));
+	dev->name = "dev";
+	dev->vfs = vfs;
+	device_add(dev);
+	vfs_mount(dev, "/dev/");
+}
 
 /**
  * EXT2
@@ -182,39 +254,4 @@ u32 file_stat(char *path)
 		return 0;
 
 	return in->size;
-}
-
-/**
- * VFS
- */
-
-static struct list *mount_points = NULL;
-
-struct device *vfs_mounted(const char *path)
-{
-	struct node *iterator = mount_points->head;
-	while (iterator) {
-		if (!strcmp(iterator->data, path))
-			return iterator->data;
-		iterator = iterator->next;
-	}
-	return NULL;
-}
-
-u32 vfs_mount(struct device *dev, const char *path)
-{
-	if (!dev || !dev->id || vfs_mounted(path))
-		return 0;
-
-	struct mount_info *m = malloc(sizeof(*m));
-	m->path = strdup(path);
-	m->dev = dev;
-	list_add(mount_points, m);
-
-	return 1;
-}
-
-void vfs_install()
-{
-	mount_points = list_new();
 }
