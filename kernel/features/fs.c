@@ -19,8 +19,10 @@ struct device *vfs_mounted(const char *path)
 {
 	struct node *iterator = mount_points->head;
 	while (iterator) {
-		if (!strcmp(iterator->data, path))
-			return iterator->data;
+		struct mount_info *m = iterator->data;
+		printf("Looping %s\n", m->path);
+		if (!strcmp(m->path, path))
+			return m->dev;
 		iterator = iterator->next;
 	}
 	return NULL;
@@ -39,7 +41,7 @@ u32 vfs_mount(struct device *dev, const char *path)
 	return 1;
 }
 
-void vfs_install()
+void vfs_install(void)
 {
 	mount_points = list_new();
 }
@@ -52,7 +54,7 @@ static struct list *devices = NULL;
 
 void device_add(struct device *dev)
 {
-	dev->id = rand();
+	dev->id = rand() + 1;
 	list_add(devices, dev);
 }
 
@@ -67,7 +69,7 @@ struct device *device_get(u32 id)
 	return NULL;
 }
 
-void device_install()
+void device_install(void)
 {
 	devices = list_new();
 

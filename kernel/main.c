@@ -27,6 +27,8 @@ void kernel_main(struct vid_info *vid_info)
 	cpu_print();
 
 	// Install drivers
+	vfs_install();
+	device_install();
 	pci_install();
 	interrupts_install();
 	timer_install();

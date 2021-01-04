@@ -18,13 +18,15 @@ struct device {
 	u8 (*write)(u8 *buf, u32 offset, u32 count, struct device *dev);
 };
 
+void device_install(void);
+
 /**
  * VFS
  */
 
 struct vfs {
 	const char *name;
-	u8 (*read)(char *, char *, struct device *, void *);
+	//u8 (*read)(char *, char *, struct device *, void *);
 	u8 (*mount)(struct device *, void *);
 };
 
@@ -32,6 +34,8 @@ struct mount_info {
 	const char *path;
 	struct device *dev;
 };
+
+void vfs_install(void);
 
 /**
  * EXT2

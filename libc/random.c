@@ -4,7 +4,7 @@
 #include <mem.h>
 #include <random.h>
 
-static u32 g_seed = 0;
+static u32 g_seed = 1;
 
 void srand(u32 seed)
 {
