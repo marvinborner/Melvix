@@ -30,6 +30,7 @@ void on_submit(struct gui_event_keyboard *event, struct element *elem)
 
 	u8 l = strlen(PATH) + strlen(inp) + 1;
 	char *final = malloc(l);
+	final[0] = '\0';
 	strcat(final, PATH);
 	strcat(final, inp);
 

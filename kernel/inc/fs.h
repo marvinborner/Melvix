@@ -27,7 +27,7 @@ void device_install(void);
 struct vfs {
 	const char *name;
 	//u8 (*read)(char *, char *, struct device *, void *);
-	u8 (*mount)(struct device *, void *);
+	//u8 (*mount)(struct device *, void *);
 };
 
 struct mount_info {

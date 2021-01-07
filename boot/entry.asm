@@ -238,7 +238,7 @@ video_map:
 disk_error_msg db "Disk error!", NEWLINE, RETURN, NULL
 lba_error_msg db "LBA error!", NEWLINE, RETURN, NULL
 video_error_msg db "Video error!", NEWLINE, RETURN, NULL
-found_msg db "FOUND!", NEWLINE, RETURN, NULL
+found_msg db "Found file!", NEWLINE, RETURN, NULL
 
 ; Filenames
 loader_name db "load.bin"
@@ -310,7 +310,7 @@ stage_two:
 .found:
 	mov si, found_msg
 	call print ; Print success message
-	mov ax, word [bx + EXT2_INODE_OFFSET] ; Get inode number from dirent
+	mov ax, [bx + EXT2_INODE_OFFSET] ; Get inode number from dirent
 	; Calculate address: (EXT2_INODE_TABLE_LOC + (inode - 1) * EXT2_INODE_SIZE)
 	dec ax ; (inode - 1)
 	mov cx, EXT2_INODE_SIZE ; Prepare for multiplication
@@ -320,6 +320,8 @@ stage_two:
 	mov cx, [bx + EXT2_COUNT_OFFSET] ; Number of blocks for inode
 	cmp cx, 0
 	je disk_error
+	cmp cx, 256 + 12 ; BLOCK_SIZE / sizeof(u32) = 256
+	jge disk_error
 	lea di, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
 	mov bx, 0x4000 ; Load to this address
 	mov [dest + 2], bx

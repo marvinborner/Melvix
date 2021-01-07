@@ -20,8 +20,7 @@ struct device *vfs_mounted(const char *path)
 	struct node *iterator = mount_points->head;
 	while (iterator) {
 		struct mount_info *m = iterator->data;
-		printf("Looping %s\n", m->path);
-		if (!strcmp(m->path, path))
+		if (!strncmp(m->path, path, strlen(m->path)))
 			return m->dev;
 		iterator = iterator->next;
 	}
@@ -39,6 +38,16 @@ u32 vfs_mount(struct device *dev, const char *path)
 	list_add(mount_points, m);
 
 	return 1;
+}
+
+void vfs_list_mounts()
+{
+	struct node *iterator = mount_points->head;
+	while (iterator) {
+		struct mount_info *m = iterator->data;
+		printf("%s on %s type: %s\n", m->dev->name, m->path, m->dev->vfs->name);
+		iterator = iterator->next;
+	}
 }
 
 void vfs_install(void)
@@ -80,6 +89,7 @@ void device_install(void)
 	dev->vfs = vfs;
 	device_add(dev);
 	vfs_mount(dev, "/dev/");
+	vfs_list_mounts();
 }
 
 /**
