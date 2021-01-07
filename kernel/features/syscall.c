@@ -34,11 +34,11 @@ void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_STAT: {
-		r->eax = (u32)file_stat((char *)r->ebx);
+		r->eax = (u32)vfs_stat((char *)r->ebx);
 		break;
 	}
 	case SYS_READ: {
-		r->eax = (u32)file_read((char *)r->ebx);
+		r->eax = (u32)vfs_read((char *)r->ebx);
 		break;
 	}
 	case SYS_WRITE: {

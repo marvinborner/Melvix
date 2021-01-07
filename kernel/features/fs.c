@@ -9,6 +9,8 @@
 #include <random.h>
 #include <str.h>
 
+#include <cpu.h> // TODO: Remove later
+
 /**
  * VFS
  */
@@ -40,14 +42,47 @@ u32 vfs_mount(struct device *dev, const char *path)
 	return 1;
 }
 
+const char *vfs_resolve_type(enum vfs_type type)
+{
+	switch (type) {
+	case VFS_DEVFS:
+		return "devfs";
+	case VFS_TMPFS:
+		return "tmpfs";
+	case VFS_PROCFS:
+		return "procfs";
+	case VFS_EXT2:
+		return "ext2";
+	default:
+		return "unknown";
+	}
+}
+
 void vfs_list_mounts()
 {
 	struct node *iterator = mount_points->head;
 	while (iterator) {
 		struct mount_info *m = iterator->data;
-		printf("%s on %s type: %s\n", m->dev->name, m->path, m->dev->vfs->name);
+		printf("%s on %s type %s\n", m->dev->name, m->path,
+		       vfs_resolve_type(m->dev->vfs->type));
 		iterator = iterator->next;
 	}
+}
+
+void *vfs_read(char *path)
+{
+	(void)path;
+	printf("NOT IMPLEMENTED!\n");
+	loop();
+	return NULL;
+}
+
+u32 vfs_stat(char *path)
+{
+	(void)path;
+	printf("NOT IMPLEMENTED!\n");
+	loop();
+	return 0;
 }
 
 void vfs_install(void)
@@ -83,12 +118,13 @@ void device_install(void)
 	devices = list_new();
 
 	struct vfs *vfs = malloc(sizeof(*vfs));
-	vfs->name = strdup("devfs");
+	vfs->type = VFS_DEVFS;
 	struct device *dev = malloc(sizeof(*dev));
 	dev->name = "dev";
 	dev->vfs = vfs;
 	device_add(dev);
 	vfs_mount(dev, "/dev/");
+	printf("%s\n", vfs_mounted("/dev/test")->name);
 	vfs_list_mounts();
 }
 
@@ -101,34 +137,35 @@ void *buffer_read(u32 block)
 	return ide_read(malloc(BLOCK_SIZE), block);
 }
 
-struct superblock *get_superblock(void)
+struct ext2_superblock *get_superblock(void)
 {
-	struct superblock *sb = buffer_read(EXT2_SUPER);
+	struct ext2_superblock *sb = buffer_read(EXT2_SUPER);
 	if (sb->magic != EXT2_MAGIC)
 		return NULL;
 	return sb;
 }
 
-struct bgd *get_bgd(void)
+struct ext2_bgd *get_bgd(void)
 {
 	return buffer_read(EXT2_SUPER + 1);
 }
 
-struct inode *get_inode(u32 i)
+struct ext2_inode *get_inode(u32 i)
 {
-	struct superblock *s = get_superblock();
+	struct ext2_superblock *s = get_superblock();
 	assert(s);
-	struct bgd *b = get_bgd();
+	struct ext2_bgd *b = get_bgd();
 	assert(b);
 
 	u32 block_group = (i - 1) / s->inodes_per_group;
 	u32 index = (i - 1) % s->inodes_per_group;
-	u32 block = (index * INODE_SIZE) / BLOCK_SIZE;
+	u32 block = (index * EXT2_INODE_SIZE) / BLOCK_SIZE;
 	b += block_group;
 
 	u32 *data = buffer_read(b->inode_table + block);
-	struct inode *in =
-		(struct inode *)((u32)data + (index % (BLOCK_SIZE / INODE_SIZE)) * INODE_SIZE);
+	struct ext2_inode *in =
+		(struct ext2_inode *)((u32)data +
+				      (index % (BLOCK_SIZE / EXT2_INODE_SIZE)) * EXT2_INODE_SIZE);
 	return in;
 }
 
@@ -138,7 +175,7 @@ u32 read_indirect(u32 indirect, u32 block_num)
 	return *(u32 *)((u32)data + block_num * sizeof(u32));
 }
 
-void *read_inode(struct inode *in)
+void *read_inode(struct ext2_inode *in)
 {
 	assert(in);
 	if (!in)
@@ -189,7 +226,7 @@ u32 find_inode(const char *name, u32 dir_inode)
 	if (!dir_inode)
 		return (unsigned)-1;
 
-	struct inode *i = get_inode(dir_inode);
+	struct ext2_inode *i = get_inode(dir_inode);
 
 	char *buf = malloc(BLOCK_SIZE * i->blocks / 2);
 	memset(buf, 0, BLOCK_SIZE * i->blocks / 2);
@@ -199,7 +236,7 @@ u32 find_inode(const char *name, u32 dir_inode)
 		memcpy((u32 *)((u32)buf + q * BLOCK_SIZE), data, BLOCK_SIZE);
 	}
 
-	struct dirent *d = (struct dirent *)buf;
+	struct ext2_dirent *d = (struct ext2_dirent *)buf;
 
 	u32 sum = 0;
 	do {
@@ -210,14 +247,14 @@ u32 find_inode(const char *name, u32 dir_inode)
 			free(buf);
 			return d->inode_num;
 		}
-		d = (struct dirent *)((u32)d + d->total_len);
+		d = (struct ext2_dirent *)((u32)d + d->total_len);
 
 	} while (sum < (1024 * i->blocks / 2));
 	free(buf);
 	return (unsigned)-1;
 }
 
-struct inode *find_inode_by_path(char *path)
+struct ext2_inode *find_inode_by_path(char *path)
 {
 	if (path[0] != '/')
 		return 0;
@@ -250,18 +287,18 @@ struct inode *find_inode_by_path(char *path)
 	return get_inode(inode);
 }
 
-void *file_read(char *path)
+void *ext2_read(char *path)
 {
-	struct inode *in = find_inode_by_path(path);
+	struct ext2_inode *in = find_inode_by_path(path);
 	if (in)
 		return read_inode(in);
 	else
 		return NULL;
 }
 
-u32 file_stat(char *path)
+u32 ext2_stat(char *path)
 {
-	struct inode *in = find_inode_by_path(path);
+	struct ext2_inode *in = find_inode_by_path(path);
 	if (!in)
 		return 0;
 

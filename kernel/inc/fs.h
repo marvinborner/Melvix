@@ -24,8 +24,11 @@ void device_install(void);
  * VFS
  */
 
+enum vfs_type { VFS_DEVFS, VFS_TMPFS, VFS_PROCFS, VFS_EXT2 };
+
 struct vfs {
-	const char *name;
+	enum vfs_type type;
+	int flags;
 	//u8 (*read)(char *, char *, struct device *, void *);
 	//u8 (*mount)(struct device *, void *);
 };
@@ -37,6 +40,9 @@ struct mount_info {
 
 void vfs_install(void);
 
+void *vfs_read(char *path);
+u32 vfs_stat(char *path);
+
 /**
  * EXT2
  */
@@ -46,7 +52,7 @@ void vfs_install(void);
 #define EXT2_ROOT 2
 #define EXT2_MAGIC 0x0000EF53
 
-struct superblock {
+struct ext2_superblock {
 	u32 total_inodes;
 	u32 total_blocks;
 	u32 su_res_blocks; // Superuser reserved
@@ -74,7 +80,7 @@ struct superblock {
 	u16 res_block_gid;
 };
 
-struct bgd {
+struct ext2_bgd {
 	u32 block_bitmap;
 	u32 inode_bitmap;
 	u32 inode_table;
@@ -85,7 +91,7 @@ struct bgd {
 	u8 bg_reserved[12];
 };
 
-struct inode {
+struct ext2_inode {
 	u16 mode;
 	u16 uid;
 	u32 size;
@@ -110,9 +116,9 @@ struct inode {
 	u8 os_specific_val2[12];
 };
 
-#define INODE_SIZE (sizeof(struct inode))
+#define EXT2_INODE_SIZE (sizeof(struct ext2_inode))
 
-struct dirent {
+struct ext2_dirent {
 	u32 inode_num;
 	u16 total_len;
 	u8 name_len;
@@ -120,15 +126,15 @@ struct dirent {
 	u8 name[];
 };
 
-struct file {
-	struct inode inode;
+struct ext2_file {
+	struct ext2_inode inode;
 	u32 pos;
 	u8 block_index;
 	u8 *buf;
 	u32 curr_block_pos;
 };
 
-void *file_read(char *path);
-u32 file_stat(char *path);
+void *ext2_read(char *path);
+u32 ext2_stat(char *path);
 
 #endif

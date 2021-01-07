@@ -11,7 +11,7 @@
 
 int bin_load(char *path, struct proc *proc)
 {
-	char *data = file_read(path);
+	char *data = vfs_read(path);
 
 	u32 stack = (u32)malloc(0x2000) + 0x1000;
 
@@ -33,7 +33,7 @@ int elf_verify(struct elf_header *h)
 // TODO: Fix elf loading
 void elf_load(char *path, struct proc *proc)
 {
-	char *data = file_read(path);
+	char *data = vfs_read(path);
 	struct elf_header *h = (struct elf_header *)data;
 
 	if (!elf_verify(h)) {
