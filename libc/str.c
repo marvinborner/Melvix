@@ -77,6 +77,18 @@ char *strchr(const char *s, int c)
 	return (char *)s;
 }
 
+char *strrchr(const char *s, int c)
+{
+	char *ret = 0;
+
+	do {
+		if (*s == c)
+			ret = (char *)s;
+	} while (*s++);
+
+	return ret;
+}
+
 char *strcat(char *dst, const char *src)
 {
 	strcpy(strchr(dst, '\0'), src);

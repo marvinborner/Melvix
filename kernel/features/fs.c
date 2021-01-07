@@ -17,25 +17,50 @@
 
 static struct list *mount_points = NULL;
 
-struct device *vfs_mounted(const char *path)
+char *vfs_normalize_path(const char *path)
+{
+	char *fixed = strdup(path);
+	int len = strlen(fixed);
+	if (fixed[len - 1] == '/' && len != 1)
+		fixed[len - 1] = '\0';
+	return fixed;
+}
+
+struct device *vfs_find_dev(char *path)
 {
 	struct node *iterator = mount_points->head;
+	char *fixed = vfs_normalize_path(path);
+	free(path); // Due to recursiveness
+
 	while (iterator) {
 		struct mount_info *m = iterator->data;
-		if (!strncmp(m->path, path, strlen(m->path)))
+		if (!strcmp(m->path, fixed)) {
+			printf("Found: %s\n", m->dev->name);
+			free(fixed);
 			return m->dev;
+		}
 		iterator = iterator->next;
 	}
-	return NULL;
+
+	if (strlen(fixed) == 1) {
+		free(fixed);
+		return NULL;
+	}
+
+	*(strrchr(fixed, '/') + 1) = '\0';
+	return vfs_find_dev(fixed);
 }
 
 u32 vfs_mount(struct device *dev, const char *path)
 {
-	if (!dev || !dev->id || vfs_mounted(path))
+	// TODO: Check if already mounted
+	if (!dev || !dev->id)
 		return 0;
 
+	char *fixed = vfs_normalize_path(path);
+
 	struct mount_info *m = malloc(sizeof(*m));
-	m->path = strdup(path);
+	m->path = fixed;
 	m->dev = dev;
 	list_add(mount_points, m);
 
@@ -117,14 +142,25 @@ void device_install(void)
 {
 	devices = list_new();
 
-	struct vfs *vfs = malloc(sizeof(*vfs));
+	struct vfs *vfs;
+	struct device *dev;
+
+	vfs = malloc(sizeof(*vfs));
 	vfs->type = VFS_DEVFS;
-	struct device *dev = malloc(sizeof(*dev));
+	dev = malloc(sizeof(*dev));
 	dev->name = "dev";
 	dev->vfs = vfs;
 	device_add(dev);
 	vfs_mount(dev, "/dev/");
-	printf("%s\n", vfs_mounted("/dev/test")->name);
+
+	vfs = malloc(sizeof(*vfs));
+	vfs->type = VFS_EXT2;
+	dev = malloc(sizeof(*dev));
+	dev->name = "/dev/hda"; // TODO: Use actual disk device
+	dev->vfs = vfs;
+	device_add(dev);
+	vfs_mount(dev, "/");
+
 	vfs_list_mounts();
 }
 
