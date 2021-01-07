@@ -4,6 +4,7 @@
 #include <conv.h>
 #include <def.h>
 #include <mem.h>
+#include <assert.h>
 #include <serial.h>
 #include <str.h>
 

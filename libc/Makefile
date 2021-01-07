@@ -30,7 +30,7 @@ libc: $(COBJS)
 	@mkdir -p ../build/
 	@$(AR) rcs ../build/libc.a crt0.o $+
 
-libk: CFLAGS += -Dkernel -ffreestanding $(CFLAGS_EXTRA)
+libk: CFLAGS += -Dkernel -ffreestanding -I../kernel/inc/ $(CFLAGS_EXTRA)
 libk: $(COBJS)
 	@mkdir -p ../build/
 	@$(AR) rcs ../build/libk.a $+
