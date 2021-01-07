@@ -38,7 +38,9 @@ void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_READ: {
-		r->eax = (u32)vfs_read((char *)r->ebx);
+		printf("NOT IMPLEMENTED!\n");
+		loop();
+		//r->eax = (u32)vfs_read((char *)r->ebx);
 		break;
 	}
 	case SYS_WRITE: {

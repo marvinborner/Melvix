@@ -14,8 +14,8 @@ struct device {
 	const char *name;
 	int type; // TODO: Block, char device
 	struct vfs *vfs;
-	u8 (*read)(u8 *buf, u32 offset, u32 count, struct device *dev);
-	u8 (*write)(u8 *buf, u32 offset, u32 count, struct device *dev);
+	u32 (*read)(void *buf, u32 offset, u32 count, struct device *dev);
+	u32 (*write)(void *buf, u32 offset, u32 count, struct device *dev);
 };
 
 void device_install(void);
@@ -29,8 +29,8 @@ enum vfs_type { VFS_DEVFS, VFS_TMPFS, VFS_PROCFS, VFS_EXT2 };
 struct vfs {
 	enum vfs_type type;
 	int flags;
-	//u8 (*read)(char *, char *, struct device *, void *);
-	//u8 (*mount)(struct device *, void *);
+	u32 (*read)(char *path, void *buf, u32 offset, u32 count, struct device *dev);
+	u32 (*write)(char *path, void *buf, u32 offset, u32 count, struct device *dev);
 };
 
 struct mount_info {
@@ -40,7 +40,7 @@ struct mount_info {
 
 void vfs_install(void);
 
-void *vfs_read(char *path);
+u32 vfs_read(char *path, void *buf, u32 offset, u32 count);
 u32 vfs_stat(char *path);
 
 /**
@@ -134,7 +134,7 @@ struct ext2_file {
 	u32 curr_block_pos;
 };
 
-void *ext2_read(char *path);
+u32 ext2_read(char *path, void *buf, u32 offset, u32 count, struct device *dev);
 u32 ext2_stat(char *path);
 
 #endif

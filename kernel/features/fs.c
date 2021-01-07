@@ -35,7 +35,6 @@ struct device *vfs_find_dev(char *path)
 	while (iterator) {
 		struct mount_info *m = iterator->data;
 		if (!strcmp(m->path, fixed)) {
-			printf("Found: %s\n", m->dev->name);
 			free(fixed);
 			return m->dev;
 		}
@@ -94,12 +93,11 @@ void vfs_list_mounts()
 	}
 }
 
-void *vfs_read(char *path)
+u32 vfs_read(char *path, void *buf, u32 offset, u32 count)
 {
-	(void)path;
-	printf("NOT IMPLEMENTED!\n");
-	loop();
-	return NULL;
+	struct device *dev = vfs_find_dev(path);
+	assert(dev && dev->vfs && dev->vfs->read);
+	return dev->vfs->read(path, buf, offset, count, dev);
 }
 
 u32 vfs_stat(char *path)
@@ -155,6 +153,7 @@ void device_install(void)
 
 	vfs = malloc(sizeof(*vfs));
 	vfs->type = VFS_EXT2;
+	vfs->read = ext2_read;
 	dev = malloc(sizeof(*dev));
 	dev->name = "/dev/hda"; // TODO: Use actual disk device
 	dev->vfs = vfs;
@@ -211,22 +210,28 @@ u32 read_indirect(u32 indirect, u32 block_num)
 	return *(u32 *)((u32)data + block_num * sizeof(u32));
 }
 
-void *read_inode(struct ext2_inode *in)
+u32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct device *dev)
 {
+	// TODO: Support all read parameters
+	(void)buf;
+	(void)offset;
+	(void)count;
+	(void)dev;
+
 	assert(in);
 	if (!in)
-		return NULL;
+		return 0;
 
 	u32 num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
 
 	assert(num_blocks != 0);
 	if (!num_blocks)
-		return NULL;
+		return 0;
 
 	/* u32 sz = BLOCK_SIZE * num_blocks; */
-	u32 sz = in->size;
-	void *buf = malloc(sz);
-	printf("Loading %dKiB\n", sz >> 10);
+	/* u32 sz = in->size; */
+	/* void *buf = malloc(sz); */
+	/* printf("Loading %dKiB\n", sz >> 10); */
 	assert(buf != NULL);
 
 	u32 indirect = 0;
@@ -254,7 +259,7 @@ void *read_inode(struct ext2_inode *in)
 		/* printf("Loaded %d of %d\n", i + 1, num_blocks); */
 	}
 
-	return buf;
+	return count;
 }
 
 u32 find_inode(const char *name, u32 dir_inode)
@@ -323,13 +328,13 @@ struct ext2_inode *find_inode_by_path(char *path)
 	return get_inode(inode);
 }
 
-void *ext2_read(char *path)
+u32 ext2_read(char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	struct ext2_inode *in = find_inode_by_path(path);
 	if (in)
-		return read_inode(in);
+		return read_inode(in, buf, offset, count, dev);
 	else
-		return NULL;
+		return 0;
 }
 
 u32 ext2_stat(char *path)
