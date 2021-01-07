@@ -36,6 +36,7 @@ int vsprintf(char *str, const char *format, va_list ap)
 			// TODO: Improve this repetitive code
 			if (buf == 's') {
 				char *string = va_arg(ap, char *);
+				assert(string);
 				append(str, string, i);
 				i = strlen(str);
 			} else if (buf == 'x') {
