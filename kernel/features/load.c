@@ -12,8 +12,10 @@
 int bin_load(char *path, struct proc *proc)
 {
 	// TODO: Remove hardcoded filesize
-	char *data = malloc(0xffff);
-	vfs_read(path, data, 0, 0xffff);
+	struct stat s = { 0 };
+	vfs_stat(path, &s);
+	char *data = malloc(s.size);
+	vfs_read(path, data, 0, s.size);
 
 	u32 stack = (u32)malloc(0x2000) + 0x1000;
 

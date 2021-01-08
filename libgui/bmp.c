@@ -8,7 +8,7 @@
 
 struct bmp *bmp_load(const char *path)
 {
-	void *buf = read(path);
+	void *buf = sread(path);
 	if (!buf)
 		return NULL;
 

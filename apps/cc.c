@@ -803,7 +803,7 @@ int main(int argc, char **argv)
 	}
 
 	void *file;
-	if (!(file = read(*argv))) {
+	if (!(file = sread(*argv))) {
 		printf("could not read file %s\n", *argv);
 		return -1;
 	}

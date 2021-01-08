@@ -1166,15 +1166,17 @@ struct bmp *png_load(const char *path)
 	if (!png)
 		return NULL;
 
-	void *buf = read(path);
+	void *buf = sread(path);
 	if (!png) {
 		SET_ERROR(png, PNG_ENOTFOUND);
 		png_free(png);
 		return NULL;
 	}
 
+	struct stat s = { 0 };
+	stat(path, &s);
 	png->source.buffer = buf;
-	png->source.size = stat(path);
+	png->source.size = s.size;
 	png->source.owning = 1;
 
 	png_decode(png);
@@ -1188,6 +1190,7 @@ struct bmp *png_load(const char *path)
 	bmp->pitch = png->width * (bmp->bpp >> 3);
 
 	png_free(png);
+	free(buf);
 
 	return bmp;
 }

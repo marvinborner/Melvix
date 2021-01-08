@@ -26,7 +26,7 @@ void map(struct keymap *keymap, int line, char ch, int index)
 // Very ugly code but it should work for now
 struct keymap *keymap_parse(const char *path)
 {
-	char *keymap_src = read(path);
+	char *keymap_src = sread(path);
 	if (!keymap_src)
 		return NULL;
 	struct keymap *keymap = malloc(sizeof(*keymap));

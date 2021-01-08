@@ -33,11 +33,17 @@ int main()
 
 		memset(buf, 0, 4096);
 
-		u32 len = 0;
-		if ((len = stat(path)))
-			len = http_response(HTTP_200, len, read(path), buf);
+		struct stat s_file = { 0 };
+		int res_file = stat(path, &s_file);
+
+		struct stat s_error = { 0 };
+		stat(path, &s_error);
+
+		int len;
+		if (res_file && s_file.size)
+			len = http_response(HTTP_200, s_file.size, sread(path), buf);
 		else
-			len = http_response(HTTP_404, stat(ERROR), read(ERROR), buf);
+			len = http_response(HTTP_404, s_error.size, sread(ERROR), buf);
 
 		net_send(socket, buf, len);
 		net_close(socket);

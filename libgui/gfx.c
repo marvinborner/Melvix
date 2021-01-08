@@ -51,10 +51,10 @@ static void load_font(enum font_type font_type)
 		path = FONT_64_PATH;
 		break;
 	default:
-		break;
+		return;
 	}
 
-	fonts[font_type] = psf_parse(read(path));
+	fonts[font_type] = psf_parse(sread(path));
 	assert(fonts[font_type]);
 }
 

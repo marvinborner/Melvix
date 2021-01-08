@@ -4,6 +4,8 @@
 #ifndef SYS_H
 #define SYS_H
 
+#include <def.h>
+
 #define KEYBOARD_MAGIC 0x555555
 #define MOUSE_MAGIC 0xaaaaaa
 
@@ -15,7 +17,7 @@ enum sys {
 	SYS_READ, // Read file
 	SYS_WRITE, // Write to file
 	SYS_EXEC, // Execute path
-	SYS_EXIT, // Exit current process
+	SYS_EXIT, // Exit current process // TODO: Free all memory of process
 	SYS_YIELD, // Switch to next process
 	SYS_TIME, // Get kernel time
 	SYS_REGISTER, // Register for event
@@ -53,6 +55,14 @@ struct event_mouse {
 	int but3;
 };
 
+struct stat {
+	u32 dev_id;
+	u32 mode;
+	u32 uid;
+	u32 gid;
+	u32 size;
+};
+
 #if defined(userspace)
 
 int sys0(enum sys num);
@@ -68,9 +78,11 @@ int sysv(enum sys num, ...);
  */
 
 #define loop() sys0(SYS_LOOP)
-#define stat(path) (u32) sys1(SYS_STAT, (int)(path))
-#define read(path) (void *)sys1(SYS_READ, (int)(path))
-#define write(path, buf) sys2(SYS_WRITE, (int)(path), (buf))
+#define stat(path, stat) (u32) sys2(SYS_STAT, (int)(path), (int)(stat))
+#define read(path, buf, offset, count)                                                             \
+	(u32) sys4(SYS_READ, (int)(path), (int)(buf), (int)(offset), (int)(count))
+#define write(path, buf, offset, count)                                                            \
+	(u32) sys4(SYS_WRITE, (int)(path), (int)(buf), (int)(offset), (int)(count))
 #define exec(path, ...) (int)sysv(SYS_EXEC, (int)(path), ##__VA_ARGS__)
 #define exit(status)                                                                               \
 	{                                                                                          \
@@ -94,6 +106,18 @@ static inline struct message *msg_receive_loop()
 	while (!(msg = msg_receive()))
 		yield();
 	return msg;
+}
+
+// Simple read wrapper
+#include <mem.h>
+static inline void *sread(const char *path)
+{
+	struct stat s = { 0 };
+	if (!stat(path, &s) || !s.size)
+		return NULL;
+	void *buf = malloc(s.size);
+	read(path, buf, 0, s.size);
+	return buf;
 }
 
 #endif

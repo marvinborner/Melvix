@@ -25,6 +25,9 @@ int psf_verify(char *data)
 
 struct font *psf_parse(char *data)
 {
+	if (!data)
+		return NULL;
+
 	int version = psf_verify(data);
 
 	char *chars;

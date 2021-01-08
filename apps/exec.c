@@ -34,7 +34,8 @@ void on_submit(struct gui_event_keyboard *event, struct element *elem)
 	strcat(final, PATH);
 	strcat(final, inp);
 
-	if (stat(final)) {
+	struct stat s = { 0 };
+	if (stat(final, &s) && s.size) {
 		inp_elem->color_bg = COLOR_WHITE;
 		exec(final, inp, arg, NULL);
 	} else {

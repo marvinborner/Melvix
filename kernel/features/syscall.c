@@ -34,17 +34,15 @@ void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_STAT: {
-		r->eax = (u32)vfs_stat((char *)r->ebx);
+		r->eax = (u32)vfs_stat((char *)r->ebx, (struct stat *)r->ecx);
 		break;
 	}
 	case SYS_READ: {
-		printf("NOT IMPLEMENTED!\n");
-		loop();
-		//r->eax = (u32)vfs_read((char *)r->ebx);
+		r->eax = (u32)vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		break;
 	}
 	case SYS_WRITE: {
-		// TODO: Write ext2 support
+		r->eax = (u32)vfs_write((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		break;
 	}
 	case SYS_EXEC: {

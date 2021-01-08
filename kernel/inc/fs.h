@@ -4,6 +4,7 @@
 #define FS_H
 
 #include <def.h>
+#include <sys.h>
 
 /**
  * Device
@@ -29,8 +30,9 @@ enum vfs_type { VFS_DEVFS, VFS_TMPFS, VFS_PROCFS, VFS_EXT2 };
 struct vfs {
 	enum vfs_type type;
 	int flags;
-	u32 (*read)(char *path, void *buf, u32 offset, u32 count, struct device *dev);
-	u32 (*write)(char *path, void *buf, u32 offset, u32 count, struct device *dev);
+	u32 (*read)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+	u32 (*write)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+	u32 (*stat)(const char *path, struct stat *buf, struct device *dev);
 };
 
 struct mount_info {
@@ -40,8 +42,9 @@ struct mount_info {
 
 void vfs_install(void);
 
-u32 vfs_read(char *path, void *buf, u32 offset, u32 count);
-u32 vfs_stat(char *path);
+u32 vfs_read(const char *path, void *buf, u32 offset, u32 count);
+u32 vfs_write(const char *path, void *buf, u32 offset, u32 count);
+u32 vfs_stat(const char *path, struct stat *buf);
 
 /**
  * EXT2
@@ -134,7 +137,7 @@ struct ext2_file {
 	u32 curr_block_pos;
 };
 
-u32 ext2_read(char *path, void *buf, u32 offset, u32 count, struct device *dev);
-u32 ext2_stat(char *path);
+u32 ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+u32 ext2_stat(const char *path, struct stat *buf, struct device *dev);
 
 #endif

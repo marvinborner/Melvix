@@ -26,7 +26,7 @@ char *vfs_normalize_path(const char *path)
 	return fixed;
 }
 
-struct device *vfs_find_dev(char *path)
+struct mount_info *vfs_recursive_find(char *path)
 {
 	struct node *iterator = mount_points->head;
 	char *fixed = vfs_normalize_path(path);
@@ -36,7 +36,7 @@ struct device *vfs_find_dev(char *path)
 		struct mount_info *m = iterator->data;
 		if (!strcmp(m->path, fixed)) {
 			free(fixed);
-			return m->dev;
+			return m;
 		}
 		iterator = iterator->next;
 	}
@@ -47,23 +47,20 @@ struct device *vfs_find_dev(char *path)
 	}
 
 	*(strrchr(fixed, '/') + 1) = '\0';
-	return vfs_find_dev(fixed);
+	return vfs_recursive_find(fixed);
 }
 
-u32 vfs_mount(struct device *dev, const char *path)
+struct mount_info *vfs_find_mount_info(const char *path)
 {
-	// TODO: Check if already mounted
-	if (!dev || !dev->id)
-		return 0;
+	assert(path[0] == '/');
+	return vfs_recursive_find(strdup(path));
+}
 
-	char *fixed = vfs_normalize_path(path);
-
-	struct mount_info *m = malloc(sizeof(*m));
-	m->path = fixed;
-	m->dev = dev;
-	list_add(mount_points, m);
-
-	return 1;
+struct device *vfs_find_dev(const char *path)
+{
+	assert(path[0] == '/');
+	struct mount_info *m = vfs_find_mount_info(path);
+	return m && m->dev ? m->dev : NULL;
 }
 
 const char *vfs_resolve_type(enum vfs_type type)
@@ -93,19 +90,50 @@ void vfs_list_mounts()
 	}
 }
 
-u32 vfs_read(char *path, void *buf, u32 offset, u32 count)
+u32 vfs_mount(struct device *dev, const char *path)
 {
-	struct device *dev = vfs_find_dev(path);
-	assert(dev && dev->vfs && dev->vfs->read);
+	// TODO: Check if already mounted
+	if (!dev || !dev->id)
+		return 0;
+
+	char *fixed = vfs_normalize_path(path);
+
+	struct mount_info *m = malloc(sizeof(*m));
+	m->path = fixed;
+	m->dev = dev;
+	list_add(mount_points, m);
+
+	return 1;
+}
+
+u32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
+{
+	if (count == 0 || offset > count)
+		return 0;
+
+	struct mount_info *m = vfs_find_mount_info(path);
+	assert(m && m->dev && m->dev->vfs && m->dev->vfs->read);
+
+	u32 len = strlen(m->path);
+	if (len > 1)
+		path += len;
+
+	struct device *dev = m->dev;
 	return dev->vfs->read(path, buf, offset, count, dev);
 }
 
-u32 vfs_stat(char *path)
+u32 vfs_write(const char *path, void *buf, u32 offset, u32 count)
 {
-	(void)path;
-	printf("NOT IMPLEMENTED!\n");
-	loop();
-	return 0;
+	struct device *dev = vfs_find_dev(path);
+	assert(dev && dev->vfs && dev->vfs->write);
+	return dev->vfs->write(path, buf, offset, count, dev);
+}
+
+u32 vfs_stat(const char *path, struct stat *buf)
+{
+	struct device *dev = vfs_find_dev(path);
+	assert(dev && dev->vfs && dev->vfs->stat);
+	return dev->vfs->stat(path, buf, dev);
 }
 
 void vfs_install(void)
@@ -136,6 +164,11 @@ struct device *device_get(u32 id)
 	return NULL;
 }
 
+u32 devfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+{
+	return printf("%s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
+}
+
 void device_install(void)
 {
 	devices = list_new();
@@ -145,6 +178,7 @@ void device_install(void)
 
 	vfs = malloc(sizeof(*vfs));
 	vfs->type = VFS_DEVFS;
+	vfs->read = devfs_read;
 	dev = malloc(sizeof(*dev));
 	dev->name = "dev";
 	dev->vfs = vfs;
@@ -154,13 +188,14 @@ void device_install(void)
 	vfs = malloc(sizeof(*vfs));
 	vfs->type = VFS_EXT2;
 	vfs->read = ext2_read;
+	vfs->stat = ext2_stat;
 	dev = malloc(sizeof(*dev));
 	dev->name = "/dev/hda"; // TODO: Use actual disk device
 	dev->vfs = vfs;
 	device_add(dev);
 	vfs_mount(dev, "/");
 
-	vfs_list_mounts();
+	/* vfs_list_mounts(); */
 }
 
 /**
@@ -213,9 +248,7 @@ u32 read_indirect(u32 indirect, u32 block_num)
 u32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	// TODO: Support all read parameters
-	(void)buf;
 	(void)offset;
-	(void)count;
 	(void)dev;
 
 	assert(in);
@@ -224,15 +257,19 @@ u32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct d
 
 	u32 num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
 
-	assert(num_blocks != 0);
+	assert(num_blocks);
 	if (!num_blocks)
 		return 0;
+
+	// TODO: memcpy block chunks until count is copied
+	while (BLOCK_SIZE * num_blocks > count)
+		num_blocks--;
 
 	/* u32 sz = BLOCK_SIZE * num_blocks; */
 	/* u32 sz = in->size; */
 	/* void *buf = malloc(sz); */
 	/* printf("Loading %dKiB\n", sz >> 10); */
-	assert(buf != NULL);
+	assert(buf);
 
 	u32 indirect = 0;
 	u32 blocknum = 0;
@@ -295,40 +332,46 @@ u32 find_inode(const char *name, u32 dir_inode)
 	return (unsigned)-1;
 }
 
-struct ext2_inode *find_inode_by_path(char *path)
+struct ext2_inode *find_inode_by_path(const char *path)
 {
 	if (path[0] != '/')
 		return 0;
 
-	path++;
+	char *path_cp = strdup(path);
+	char *init = path_cp; // For freeing
+
+	path_cp++;
 	u32 current_inode = EXT2_ROOT;
 
 	int i = 0;
 	while (1) {
-		for (i = 0; path[i] != '/' && path[i] != '\0'; i++)
+		for (i = 0; path_cp[i] != '/' && path_cp[i] != '\0'; i++)
 			;
 
-		if (path[i] == '\0')
+		if (path_cp[i] == '\0')
 			break;
 
-		path[i] = '\0';
-		current_inode = find_inode(path, current_inode);
-		path[i] = '/';
+		path_cp[i] = '\0';
+		current_inode = find_inode(path_cp, current_inode);
+		path_cp[i] = '/';
 
-		if (current_inode == 0)
+		if (current_inode == 0) {
+			free(init);
 			return 0;
+		}
 
-		path += i + 1;
+		path_cp += i + 1;
 	}
 
-	u32 inode = find_inode(path, current_inode);
+	u32 inode = find_inode(path_cp, current_inode);
+	free(init);
 	if ((signed)inode <= 0)
 		return 0;
 
 	return get_inode(inode);
 }
 
-u32 ext2_read(char *path, void *buf, u32 offset, u32 count, struct device *dev)
+u32 ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	struct ext2_inode *in = find_inode_by_path(path);
 	if (in)
@@ -337,11 +380,20 @@ u32 ext2_read(char *path, void *buf, u32 offset, u32 count, struct device *dev)
 		return 0;
 }
 
-u32 ext2_stat(char *path)
+u32 ext2_stat(const char *path, struct stat *buf, struct device *dev)
 {
+	if (!buf)
+		return 0;
+
 	struct ext2_inode *in = find_inode_by_path(path);
 	if (!in)
 		return 0;
 
-	return in->size;
+	u32 num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
+	u32 sz = BLOCK_SIZE * num_blocks;
+
+	buf->dev_id = dev->id;
+	buf->size = sz; // Actually in->size but ext2..
+
+	return 1;
 }

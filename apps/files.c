@@ -38,7 +38,7 @@ void render_list(const char *path)
 		gui_remove_element(list);
 	list = gui_add_container(root, 0, 0, 100, 100, COLOR_BLACK);
 
-	struct dirent *d = read(path);
+	struct dirent *d = sread(path);
 
 	int sum = 0;
 	int calc = 0;
