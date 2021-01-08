@@ -37,10 +37,10 @@ int main()
 		int res_file = stat(path, &s_file);
 
 		struct stat s_error = { 0 };
-		stat(path, &s_error);
+		stat(ERROR, &s_error);
 
 		int len;
-		if (res_file && s_file.size)
+		if (res_file == 0 && s_file.size)
 			len = http_response(HTTP_200, s_file.size, sread(path), buf);
 		else
 			len = http_response(HTTP_404, s_error.size, sread(ERROR), buf);

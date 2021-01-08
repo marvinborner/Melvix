@@ -113,7 +113,7 @@ static inline struct message *msg_receive_loop()
 static inline void *sread(const char *path)
 {
 	struct stat s = { 0 };
-	if (!stat(path, &s) || !s.size)
+	if (stat(path, &s) != 0 || !s.size)
 		return NULL;
 	void *buf = malloc(s.size);
 	read(path, buf, 0, s.size);

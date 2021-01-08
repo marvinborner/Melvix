@@ -10,16 +10,21 @@
  * Device
  */
 
+enum dev_type { DEV_BLOCK, DEV_CHAR };
+
 struct device {
 	u32 id;
 	const char *name;
-	int type; // TODO: Block, char device
+	enum dev_type type;
 	struct vfs *vfs;
+	void *data;
 	u32 (*read)(void *buf, u32 offset, u32 count, struct device *dev);
 	u32 (*write)(void *buf, u32 offset, u32 count, struct device *dev);
 };
 
 void device_install(void);
+
+void device_add(struct device *dev);
 
 /**
  * VFS
@@ -41,6 +46,9 @@ struct mount_info {
 };
 
 void vfs_install(void);
+
+u32 vfs_path_mounted(const char *path);
+u32 vfs_mount(struct device *dev, const char *path);
 
 u32 vfs_read(const char *path, void *buf, u32 offset, u32 count);
 u32 vfs_write(const char *path, void *buf, u32 offset, u32 count);

@@ -9,32 +9,66 @@
 #define BLOCK_COUNT 256 // BLOCK_SIZE / sizeof(u32)
 #define SECTOR_SIZE 512
 
-#define IDE_BUSY (1 << 7)
-#define IDE_READY (1 << 6)
-#define IDE_DRIVE_FAULT (1 << 5)
-#define IDE_ERROR (1 << 0)
+#define ATA_PRIMARY_IO 0x1f0
+#define ATA_SECONDARY_IO 0x170
 
-#define IDE_IO 0x1F0
-#define IDE_DATA 0x0
-#define IDE_FEATURES 0x1
-#define IDE_SECTOR_COUNT 0x2
-#define IDE_LOW 0x3
-#define IDE_MID 0x4
-#define IDE_HIGH 0x5
-#define IDE_SELECT 0x6
-#define IDE_CMD 0x7
-#define IDE_ALTERNATE 0x3F6
+// From spec
+#define ATA_PRIMARY 0x00
+#define ATA_SECONDARY 0x01
+#define ATA_READ 0x00
+#define ATA_WRITE 0x013
+#define ATA_MASTER 0x00
+#define ATA_SLAVE 0x01
+#define ATA_SR_BSY 0x80
+#define ATA_SR_DRDY 0x40
+#define ATA_SR_DF 0x20
+#define ATA_SR_DSC 0x10
+#define ATA_SR_DRQ 0x08
+#define ATA_SR_CORR 0x04
+#define ATA_SR_IDX 0x02
+#define ATA_SR_ERR 0x01
+#define ATA_REG_DATA 0x00
+#define ATA_REG_ERROR 0x01
+#define ATA_REG_FEATURES 0x01
+#define ATA_REG_SECCOUNT0 0x02
+#define ATA_REG_LBA0 0x03
+#define ATA_REG_LBA1 0x04
+#define ATA_REG_LBA2 0x05
+#define ATA_REG_HDDEVSEL 0x06
+#define ATA_REG_COMMAND 0x07
+#define ATA_REG_STATUS 0x07
+#define ATA_REG_SECCOUNT1 0x08
+#define ATA_REG_LBA3 0x09
+#define ATA_REG_LBA4 0x0a
+#define ATA_REG_LBA5 0x0b
+#define ATA_REG_CONTROL 0x0c
+#define ATA_REG_ALTSTATUS 0x0c
+#define ATA_REG_DEVADDRESS 0x0d
+#define ATA_CMD_READ_PIO 0x20
+#define ATA_CMD_READ_PIO_EXT 0x24
+#define ATA_CMD_READ_DMA 0xc8
+#define ATA_CMD_READ_DMA_EXT 0x25
+#define ATA_CMD_WRITE_PIO 0x30
+#define ATA_CMD_WRITE_PIO_EXT 0x34
+#define ATA_CMD_WRITE_DMA 0xca
+#define ATA_CMD_WRITE_DMA_EXT 0x35
+#define ATA_CMD_CACHE_FLUSH 0xe7
+#define ATA_CMD_CACHE_FLUSH_EXT 0xea
+#define ATA_CMD_PACKET 0xa0
+#define ATA_CMD_IDENTIFY_PACKET 0xa1
+#define ATA_CMD_IDENTIFY 0xec
+#define ATA_IDENT_DEVICETYPE 0
+#define ATA_IDENT_CYLINDERS 2
+#define ATA_IDENT_HEADS 6
+#define ATA_IDENT_SECTORS 12
+#define ATA_IDENT_SERIAL 20
+#define ATA_IDENT_MODEL 54
+#define ATA_IDENT_CAPABILITIES 98
+#define ATA_IDENT_FIELDVALID 106
+#define ATA_IDENT_MAX_LBA 120
+#define ATA_IDENT_COMMANDSETS 164
+#define ATA_IDENT_MAX_LBA_EXT 200
 
-#define LBA_LOW(c) ((u8)(c & 0xFF))
-#define LBA_MID(c) ((u8)(c >> 8) & 0xFF)
-#define LBA_HIGH(c) ((u8)(c >> 16) & 0xFF)
-#define LBA_LAST(c) ((u8)(c >> 24) & 0xF)
-
-#define IDE_CMD_READ (BLOCK_SIZE / SECTOR_SIZE == 1) ? 0x20 : 0xC4
-#define IDE_CMD_WRITE (BLOCK_SIZE / SECTOR_SIZE == 1) ? 0x30 : 0xC5
-#define IDE_CMD_READ_MUL 0xC4
-#define IDE_CMD_WRITE_MUL 0xC5
-
-void *ide_read(void *b, u32 block);
+void ata_install(void);
 
 #endif

@@ -9,8 +9,6 @@
 #include <random.h>
 #include <str.h>
 
-#include <cpu.h> // TODO: Remove later
-
 /**
  * VFS
  */
@@ -24,6 +22,17 @@ char *vfs_normalize_path(const char *path)
 	if (fixed[len - 1] == '/' && len != 1)
 		fixed[len - 1] = '\0';
 	return fixed;
+}
+
+u32 vfs_path_mounted(const char *path)
+{
+	struct node *iterator = mount_points->head;
+	while (iterator) {
+		if (!strcmp(((struct mount_info *)iterator->data)->path, path))
+			return 1;
+		iterator = iterator->next;
+	}
+	return 0;
 }
 
 struct mount_info *vfs_recursive_find(char *path)
@@ -166,7 +175,9 @@ struct device *device_get(u32 id)
 
 u32 devfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
-	return printf("%s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
+	assert(dev && dev->read);
+	printf("%s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
+	return dev->read(buf, offset, count, dev);
 }
 
 void device_install(void)
@@ -185,16 +196,6 @@ void device_install(void)
 	device_add(dev);
 	vfs_mount(dev, "/dev/");
 
-	vfs = malloc(sizeof(*vfs));
-	vfs->type = VFS_EXT2;
-	vfs->read = ext2_read;
-	vfs->stat = ext2_stat;
-	dev = malloc(sizeof(*dev));
-	dev->name = "/dev/hda"; // TODO: Use actual disk device
-	dev->vfs = vfs;
-	device_add(dev);
-	vfs_mount(dev, "/");
-
 	/* vfs_list_mounts(); */
 }
 
@@ -202,29 +203,32 @@ void device_install(void)
  * EXT2
  */
 
-void *buffer_read(u32 block)
+void *buffer_read(u32 block, struct device *dev)
 {
-	return ide_read(malloc(BLOCK_SIZE), block);
+	void *buf = malloc(BLOCK_SIZE);
+	dev->read(buf, block << 1, 2, dev);
+	return buf;
 }
 
-struct ext2_superblock *get_superblock(void)
+struct ext2_superblock *get_superblock(struct device *dev)
 {
-	struct ext2_superblock *sb = buffer_read(EXT2_SUPER);
+	struct ext2_superblock *sb = buffer_read(EXT2_SUPER, dev);
+
 	if (sb->magic != EXT2_MAGIC)
 		return NULL;
 	return sb;
 }
 
-struct ext2_bgd *get_bgd(void)
+struct ext2_bgd *get_bgd(struct device *dev)
 {
-	return buffer_read(EXT2_SUPER + 1);
+	return buffer_read(EXT2_SUPER + 1, dev);
 }
 
-struct ext2_inode *get_inode(u32 i)
+struct ext2_inode *get_inode(u32 i, struct device *dev)
 {
-	struct ext2_superblock *s = get_superblock();
+	struct ext2_superblock *s = get_superblock(dev);
 	assert(s);
-	struct ext2_bgd *b = get_bgd();
+	struct ext2_bgd *b = get_bgd(dev);
 	assert(b);
 
 	u32 block_group = (i - 1) / s->inodes_per_group;
@@ -232,16 +236,16 @@ struct ext2_inode *get_inode(u32 i)
 	u32 block = (index * EXT2_INODE_SIZE) / BLOCK_SIZE;
 	b += block_group;
 
-	u32 *data = buffer_read(b->inode_table + block);
+	u32 *data = buffer_read(b->inode_table + block, dev);
 	struct ext2_inode *in =
 		(struct ext2_inode *)((u32)data +
 				      (index % (BLOCK_SIZE / EXT2_INODE_SIZE)) * EXT2_INODE_SIZE);
 	return in;
 }
 
-u32 read_indirect(u32 indirect, u32 block_num)
+u32 read_indirect(u32 indirect, u32 block_num, struct device *dev)
 {
-	char *data = buffer_read(indirect);
+	char *data = buffer_read(indirect, dev);
 	return *(u32 *)((u32)data + block_num * sizeof(u32));
 }
 
@@ -249,7 +253,6 @@ u32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct d
 {
 	// TODO: Support all read parameters
 	(void)offset;
-	(void)dev;
 
 	assert(in);
 	if (!in)
@@ -279,18 +282,20 @@ u32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct d
 	for (u32 i = 0; i < num_blocks; i++) {
 		if (i < 12) {
 			blocknum = in->block[i];
-			data = buffer_read(blocknum);
+			data = buffer_read(blocknum, dev);
 			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
 		} else if (i < BLOCK_COUNT + 12) {
 			indirect = in->block[12];
-			blocknum = read_indirect(indirect, i - 12);
-			data = buffer_read(blocknum);
+			blocknum = read_indirect(indirect, i - 12, dev);
+			data = buffer_read(blocknum, dev);
 			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
 		} else {
 			indirect = in->block[13];
-			blocknum = read_indirect(indirect, (i - (BLOCK_COUNT + 12)) / BLOCK_COUNT);
-			blocknum = read_indirect(blocknum, (i - (BLOCK_COUNT + 12)) % BLOCK_COUNT);
-			data = buffer_read(blocknum);
+			blocknum = read_indirect(indirect, (i - (BLOCK_COUNT + 12)) / BLOCK_COUNT,
+						 dev);
+			blocknum = read_indirect(blocknum, (i - (BLOCK_COUNT + 12)) % BLOCK_COUNT,
+						 dev);
+			data = buffer_read(blocknum, dev);
 			memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
 		}
 		/* printf("Loaded %d of %d\n", i + 1, num_blocks); */
@@ -299,18 +304,18 @@ u32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct d
 	return count;
 }
 
-u32 find_inode(const char *name, u32 dir_inode)
+u32 find_inode(const char *name, u32 dir_inode, struct device *dev)
 {
 	if (!dir_inode)
 		return (unsigned)-1;
 
-	struct ext2_inode *i = get_inode(dir_inode);
+	struct ext2_inode *i = get_inode(dir_inode, dev);
 
 	char *buf = malloc(BLOCK_SIZE * i->blocks / 2);
 	memset(buf, 0, BLOCK_SIZE * i->blocks / 2);
 
 	for (u32 q = 0; q < i->blocks / 2; q++) {
-		char *data = buffer_read(i->block[q]);
+		char *data = buffer_read(i->block[q], dev);
 		memcpy((u32 *)((u32)buf + q * BLOCK_SIZE), data, BLOCK_SIZE);
 	}
 
@@ -332,7 +337,7 @@ u32 find_inode(const char *name, u32 dir_inode)
 	return (unsigned)-1;
 }
 
-struct ext2_inode *find_inode_by_path(const char *path)
+struct ext2_inode *find_inode_by_path(const char *path, struct device *dev)
 {
 	if (path[0] != '/')
 		return 0;
@@ -352,7 +357,7 @@ struct ext2_inode *find_inode_by_path(const char *path)
 			break;
 
 		path_cp[i] = '\0';
-		current_inode = find_inode(path_cp, current_inode);
+		current_inode = find_inode(path_cp, current_inode, dev);
 		path_cp[i] = '/';
 
 		if (current_inode == 0) {
@@ -363,17 +368,17 @@ struct ext2_inode *find_inode_by_path(const char *path)
 		path_cp += i + 1;
 	}
 
-	u32 inode = find_inode(path_cp, current_inode);
+	u32 inode = find_inode(path_cp, current_inode, dev);
 	free(init);
 	if ((signed)inode <= 0)
 		return 0;
 
-	return get_inode(inode);
+	return get_inode(inode, dev);
 }
 
 u32 ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
-	struct ext2_inode *in = find_inode_by_path(path);
+	struct ext2_inode *in = find_inode_by_path(path, dev);
 	if (in)
 		return read_inode(in, buf, offset, count, dev);
 	else
@@ -383,11 +388,11 @@ u32 ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device 
 u32 ext2_stat(const char *path, struct stat *buf, struct device *dev)
 {
 	if (!buf)
-		return 0;
+		return 1;
 
-	struct ext2_inode *in = find_inode_by_path(path);
+	struct ext2_inode *in = find_inode_by_path(path, dev);
 	if (!in)
-		return 0;
+		return 1;
 
 	u32 num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
 	u32 sz = BLOCK_SIZE * num_blocks;
@@ -395,5 +400,5 @@ u32 ext2_stat(const char *path, struct stat *buf, struct device *dev)
 	buf->dev_id = dev->id;
 	buf->size = sz; // Actually in->size but ext2..
 
-	return 1;
+	return 0;
 }

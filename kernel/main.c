@@ -3,6 +3,7 @@
 #include <boot.h>
 #include <cpu.h>
 #include <fs.h>
+#include <ide.h>
 #include <interrupts.h>
 #include <keyboard.h>
 #include <load.h>
@@ -29,6 +30,7 @@ void kernel_main(struct vid_info *vid_info)
 	// Install drivers
 	vfs_install();
 	device_install();
+	ata_install();
 	pci_install();
 	interrupts_install();
 	timer_install();
