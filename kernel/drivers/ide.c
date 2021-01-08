@@ -55,7 +55,7 @@ u8 ide_find(u8 bus, u8 drive)
 			return 0;
 	} while ((status & ATA_SR_DRQ) == 0);
 
-	for (int i = 0; i < 256; i++)
+	for (int i = 0; i < BLOCK_COUNT; i++)
 		*(u16 *)(ide_buf + i * 2) = inw(io + ATA_REG_DATA);
 
 	return 1;
@@ -98,7 +98,7 @@ u8 ata_read_one(u8 *buf, u32 lba, struct device *dev)
 	outb(io + ATA_REG_COMMAND, ATA_CMD_READ_PIO);
 	ide_poll(io);
 
-	for (int i = 0; i < 256; i++) {
+	for (int i = 0; i < BLOCK_COUNT; i++) {
 		u16 data = inw(io + ATA_REG_DATA);
 		*(u16 *)(buf + i * 2) = data;
 	}
@@ -106,14 +106,14 @@ u8 ata_read_one(u8 *buf, u32 lba, struct device *dev)
 	return 1;
 }
 
-u32 ata_read(void *buf, u32 lba, u32 numsects, struct device *dev)
+u32 ata_read(void *buf, u32 lba, u32 sector_count, struct device *dev)
 {
 	u8 *b = buf; // I love bytes, yk
-	for (u32 i = 0; i < numsects; i++) {
+	for (u32 i = 0; i < sector_count; i++) {
 		ata_read_one(b, lba + i, dev);
-		b += 512;
+		b += SECTOR_SIZE;
 	}
-	return numsects;
+	return sector_count;
 }
 
 int ata_pm = 0, ata_ps = 0, ata_sm = 0, ata_ss = 0;
@@ -140,7 +140,7 @@ void ata_probe(void)
 		dev->type = DEV_BLOCK;
 		dev->read = ata_read;
 		device_add(dev);
-		if (vfs_path_mounted("/"))
+		if (vfs_mounted(dev, "/"))
 			continue;
 
 		// TODO: Check if ext2 first
@@ -155,6 +155,6 @@ void ata_probe(void)
 
 void ata_install(void)
 {
-	ide_buf = malloc(512);
+	ide_buf = malloc(SECTOR_SIZE);
 	ata_probe();
 }

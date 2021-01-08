@@ -47,7 +47,7 @@ struct mount_info {
 
 void vfs_install(void);
 
-u32 vfs_path_mounted(const char *path);
+u32 vfs_mounted(struct device *dev, const char *path);
 u32 vfs_mount(struct device *dev, const char *path);
 
 u32 vfs_read(const char *path, void *buf, u32 offset, u32 count);

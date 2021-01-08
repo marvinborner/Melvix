@@ -24,11 +24,12 @@ char *vfs_normalize_path(const char *path)
 	return fixed;
 }
 
-u32 vfs_path_mounted(const char *path)
+u32 vfs_mounted(struct device *dev, const char *path)
 {
 	struct node *iterator = mount_points->head;
 	while (iterator) {
-		if (!strcmp(((struct mount_info *)iterator->data)->path, path))
+		if (((struct mount_info *)iterator->data)->dev->id == dev->id ||
+		    !strcmp(((struct mount_info *)iterator->data)->path, path))
 			return 1;
 		iterator = iterator->next;
 	}
@@ -102,7 +103,7 @@ void vfs_list_mounts()
 u32 vfs_mount(struct device *dev, const char *path)
 {
 	// TODO: Check if already mounted
-	if (!dev || !dev->id)
+	if (!dev || !dev->id || vfs_mounted(dev, path))
 		return 0;
 
 	char *fixed = vfs_normalize_path(path);
@@ -206,7 +207,7 @@ void device_install(void)
 void *buffer_read(u32 block, struct device *dev)
 {
 	void *buf = malloc(BLOCK_SIZE);
-	dev->read(buf, block << 1, 2, dev);
+	dev->read(buf, block * SECTOR_COUNT, SECTOR_COUNT, dev);
 	return buf;
 }
 
@@ -251,28 +252,20 @@ u32 read_indirect(u32 indirect, u32 block_num, struct device *dev)
 
 u32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct device *dev)
 {
-	// TODO: Support all read parameters
+	// TODO: Support read offset
 	(void)offset;
 
-	assert(in);
-	if (!in)
+	if (!in || !buf)
 		return 0;
 
 	u32 num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
 
-	assert(num_blocks);
 	if (!num_blocks)
 		return 0;
 
 	// TODO: memcpy block chunks until count is copied
 	while (BLOCK_SIZE * num_blocks > count)
 		num_blocks--;
-
-	/* u32 sz = BLOCK_SIZE * num_blocks; */
-	/* u32 sz = in->size; */
-	/* void *buf = malloc(sz); */
-	/* printf("Loading %dKiB\n", sz >> 10); */
-	assert(buf);
 
 	u32 indirect = 0;
 	u32 blocknum = 0;
