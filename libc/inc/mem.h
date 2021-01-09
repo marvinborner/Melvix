@@ -7,12 +7,11 @@
 
 // Huh
 #ifdef kernel
-#define HEAP_SIZE 0x10000
-#define HEAP_MAGIC 0x42
 void heap_init(u32 start);
 void *malloc(u32 size);
 void free(void *ptr);
 #elif defined(userspace)
+#include <print.h>
 void *malloc(u32 size);
 void free(void *ptr);
 #else

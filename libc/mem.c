@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <assert.h>
 #include <def.h>
 #include <mem.h>
 #include <sys.h>
@@ -68,126 +69,277 @@ int memcmp(const void *s1, const void *s2, u32 n)
 	return 0;
 }
 
-#define ALIGNMENT 16ul
-#define ALIGN_TYPE char
-#define ALIGN_INFO sizeof(ALIGN_TYPE) * 16
-
-#define ALIGN(ptr)                                                                                 \
-	if (ALIGNMENT > 1) {                                                                       \
-		u32 diff;                                                                          \
-		ptr = (void *)((u32)ptr + ALIGN_INFO);                                             \
-		diff = (u32)ptr & (ALIGNMENT - 1);                                                 \
-		if (diff != 0) {                                                                   \
-			diff = ALIGNMENT - diff;                                                   \
-			ptr = (void *)((u32)ptr + diff);                                           \
-		}                                                                                  \
-		*((ALIGN_TYPE *)((u32)ptr - ALIGN_INFO)) = diff + ALIGN_INFO;                      \
-	}
-
-#define UNALIGN(ptr)                                                                               \
-	if (ALIGNMENT > 1) {                                                                       \
-		u32 diff = *((ALIGN_TYPE *)((u32)ptr - ALIGN_INFO));                               \
-		if (diff < (ALIGNMENT + ALIGN_INFO)) {                                             \
-			ptr = (void *)((u32)ptr - diff);                                           \
-		}                                                                                  \
-	}
+/**
+ * Heap allocator
+ */
 
 #ifdef kernel
 
-static u32 *heap;
-static u32 index;
+#define HEAP_INIT_SIZE 0xff000000
+#define HEAP_MIN_SIZE HEAP_INIT_SIZE
+#define MIN_ALLOC_SZ 4
+#define BIN_COUNT 9
+#define BIN_MAX_IDX (BIN_COUNT - 1)
+#define OVERHEAD (sizeof(struct h_footer) + sizeof(struct h_node))
+/* #define MIN_WILDERNESS 0x2000 */
+/* #define MAX_WILDERNESS 0x1000000 */
 
-void heap_init(u32 start)
+struct h_node {
+	u32 hole;
+	u32 size;
+	struct h_node *next;
+	struct h_node *prev;
+};
+
+struct h_footer {
+	struct h_node *header;
+};
+
+struct h_bin {
+	struct h_node *head;
+};
+
+struct heap {
+	u32 start;
+	u32 end;
+	struct h_bin bins[BIN_COUNT];
+};
+
+void node_add(struct h_bin *bin, struct h_node *node)
 {
-	heap = (u32 *)start;
-	for (int i = 0; i < HEAP_SIZE; i++)
-		heap[i] = 0;
-	heap[0] = HEAP_MAGIC;
-	index = 1;
+	node->next = NULL;
+	node->prev = NULL;
+	if (!bin->head) {
+		bin->head = node;
+		return;
+	}
+	struct h_node *curr = bin->head;
+	struct h_node *prev = NULL;
+	while (curr && curr->size <= node->size) {
+		prev = curr;
+		curr = curr->next;
+	}
+	if (!curr) {
+		prev->next = node;
+		node->prev = prev;
+	} else if (prev) {
+		node->next = curr;
+		prev->next = node;
+		node->prev = prev;
+		curr->prev = node;
+	} else {
+		node->next = bin->head;
+		bin->head->prev = node;
+		bin->head = node;
+	}
 }
 
-int count()
+void node_remove(struct h_bin *bin, struct h_node *node)
 {
-	int i = 0;
-	u32 *iterator = heap + 1;
-	do {
-		iterator += iterator[0] + 1;
-		i++;
-	} while (iterator[0] != 0);
-	return i;
+	if (!bin->head)
+		return;
+	if (bin->head == node) {
+		bin->head = bin->head->next;
+		return;
+	}
+
+	struct h_node *temp = bin->head->next;
+	while (temp) {
+		if (temp == node) {
+			if (!temp->next) {
+				temp->prev->next = NULL;
+			} else {
+				temp->prev->next = temp->next;
+				temp->next->prev = temp->prev;
+			}
+			return;
+		}
+		temp = temp->next;
+	}
 }
 
-// TODO: Identify by pid (for freeing)
-void *malloc(u32 size)
+struct h_node *node_best_fit(struct h_bin *bin, u32 size)
 {
-	if (size < 1)
+	if (!bin->head)
 		return NULL;
 
-	size = size + ALIGNMENT + ALIGN_INFO;
-
-	heap[index] = size;
-	index += size + 1;
-
-	void *p = (void *)(heap + index - size);
-	ALIGN(p);
-
-	return p;
+	struct h_node *temp = bin->head;
+	while (temp) {
+		if (temp->size >= size)
+			return temp;
+		temp = temp->next;
+	}
+	return NULL;
 }
 
-// TODO: Implement free, realloc and find_smallest_hole
-void free(void *ptr)
+struct h_node *node_last(struct h_bin *bin)
 {
-	(void)ptr;
-	/* UNALIGN(ptr); */
+	struct h_node *temp = bin->head;
+	while (temp->next)
+		temp = temp->next;
+	return temp;
 }
 
-void *realloc(void *ptr, u32 size)
+struct h_footer *node_foot(struct h_node *node)
 {
-	(void)size;
-	return ptr;
+	return (struct h_footer *)((char *)node + sizeof(*node) + node->size);
+}
+
+void node_create_foot(struct h_node *head)
+{
+	struct h_footer *foot = node_foot(head);
+	foot->header = head;
+}
+
+u32 bin_index(u32 sz)
+{
+	u32 index = 0;
+	sz = sz < 4 ? 4 : sz;
+	while (sz >>= 1)
+		index++;
+	index -= 2;
+	if (index > BIN_MAX_IDX)
+		index = BIN_MAX_IDX;
+	return index;
+}
+
+/* struct h_node *wilderness_get(struct heap *heap) */
+/* { */
+/* 	struct h_footer *wild_foot = (struct h_footer *)((char *)heap->end - sizeof(*wild_foot)); */
+/* 	return wild_foot->header; */
+/* } */
+
+u32 expand(struct heap *heap, u32 sz)
+{
+	(void)heap;
+	(void)sz;
+	return 0;
+}
+
+u32 contract(struct heap *heap, u32 sz)
+{
+	(void)heap;
+	(void)sz;
+	return 0;
+}
+
+static struct heap heap = { 0 };
+void heap_init(u32 start)
+{
+	struct h_node *init_region = (struct h_node *)start;
+	init_region->hole = 1;
+	init_region->size = HEAP_INIT_SIZE - OVERHEAD;
+	node_create_foot(init_region);
+	node_add(&heap.bins[bin_index(init_region->size)], init_region);
+	heap.start = start;
+	heap.end = start + HEAP_INIT_SIZE;
+}
+
+void *malloc(u32 size)
+{
+	u32 index = bin_index(size);
+	struct h_bin *temp = (struct h_bin *)&heap.bins[index];
+	struct h_node *found = node_best_fit(temp, size);
+
+	while (!found) {
+		assert(index + 1 < BIN_COUNT);
+
+		temp = &heap.bins[++index];
+		found = node_best_fit(temp, size);
+	}
+
+	if ((found->size - size) > (OVERHEAD + MIN_ALLOC_SZ)) {
+		struct h_node *split = (struct h_node *)(((char *)found + OVERHEAD) + size);
+		split->size = found->size - size - OVERHEAD;
+		split->hole = 1;
+
+		node_create_foot(split);
+
+		u32 new_idx = bin_index(split->size);
+
+		node_add(&heap.bins[new_idx], split);
+
+		found->size = size;
+		node_create_foot(found);
+	}
+
+	found->hole = 0;
+	node_remove(&heap.bins[index], found);
+
+	// TODO: Implement expand/contract
+	/* struct h_node *wild = wilderness_get(&heap); */
+	/* if (wild->size < MIN_WILDERNESS) { */
+	/* 	assert(expand(&heap, 0x1000)); */
+	/* } else if (wild->size > MAX_WILDERNESS) { */
+	/* 	assert(contract(&heap, 0x1000)); */
+	/* } */
+
+	found->prev = NULL;
+	found->next = NULL;
+	return &found->next;
+}
+
+void free(void *p)
+{
+	struct h_bin *list;
+	struct h_footer *new_foot, *old_foot;
+
+	struct h_node *head = (struct h_node *)((char *)p - 8);
+	if (head == (struct h_node *)(u32 *)heap.start) {
+		head->hole = 1;
+		node_add(&heap.bins[bin_index(head->size)], head);
+		return;
+	}
+
+	struct h_node *next = (struct h_node *)((char *)node_foot(head) + sizeof(struct h_footer));
+	struct h_footer *f = (struct h_footer *)((char *)head - sizeof(struct h_footer));
+	struct h_node *prev = f->header;
+
+	if (prev->hole) {
+		list = &heap.bins[bin_index(prev->size)];
+		node_remove(list, prev);
+
+		prev->size += OVERHEAD + head->size;
+		new_foot = node_foot(head);
+		new_foot->header = prev;
+
+		head = prev;
+	}
+
+	if (next->hole) {
+		list = &heap.bins[bin_index(next->size)];
+		node_remove(list, next);
+
+		head->size += OVERHEAD + next->size;
+
+		old_foot = node_foot(next);
+		old_foot->header = 0;
+		next->size = 0;
+		next->hole = 0;
+
+		new_foot = node_foot(head);
+		new_foot->header = head;
+	}
+
+	head->hole = 1;
+	node_add(&heap.bins[bin_index(head->size)], head);
 }
 
 #elif defined(userspace)
 
-#define HEAP_SIZE 100000
-
 #define kmalloc(n) (void *)sys1(SYS_MALLOC, n)
 #define kfree(ptr) (void)(sys1(SYS_FREE, (int)ptr))
 
-/* static u32 *heap = NULL; */
-/* static u32 index = 0; */
-/* static u32 malloced = 0; */
-
-// TODO: Fix userspace malloc (for size > HEAP_SIZE)!
+static u32 total = 0;
 void *malloc(u32 size)
 {
+	total += size;
 	return kmalloc(size);
-
-	/* if (size < 1) */
-	/* 	return NULL; */
-
-	/* size = size + ALIGNMENT + ALIGN_INFO; */
-
-	/* if (!malloced || size > malloced) { */
-	/* 	heap = kmalloc(HEAP_SIZE); */
-	/* 	malloced = HEAP_SIZE; */
-	/* } */
-	/* malloced -= size; */
-
-	/* heap[index] = size; */
-	/* index += size + 1; */
-
-	/* void *p = (void *)(heap + index - size); */
-	/* ALIGN(p); */
-
-	/* return p; */
 }
 
-// TODO: Implement free, realloc and find_smallest_hole
 void free(void *ptr)
 {
-	(void)ptr;
-	/* UNALIGN(ptr); */
+	kfree(ptr);
 }
 
 #endif

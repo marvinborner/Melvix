@@ -11,6 +11,7 @@
 #include <mouse.h>
 #include <net.h>
 #include <pci.h>
+#include <print.h>
 #include <serial.h>
 #include <syscall.h>
 #include <timer.h>

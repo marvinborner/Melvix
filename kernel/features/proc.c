@@ -142,6 +142,8 @@ void proc_exit(struct proc *proc, int status)
 		printf("Process %s exited with status %d\n", proc->name, status);
 
 	quantum = 0; // TODO: Add quantum to each process struct?
+	sti();
+	hlt();
 }
 
 void proc_yield(struct regs *r)
