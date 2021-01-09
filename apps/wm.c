@@ -288,30 +288,30 @@ int main(int argc, char **argv)
 	event_register(EVENT_MOUSE);
 	event_register(EVENT_KEYBOARD);
 
-	struct message *msg;
+	struct message msg = { 0 };
 	while (1) {
-		if (!(msg = msg_receive())) {
+		if (!msg_receive(&msg)) {
 			yield();
 			continue;
 		}
 
-		switch (msg->type) {
+		switch (msg.type) {
 		case GFX_NEW_CONTEXT: {
-			struct context *ctx = msg->data;
+			struct context *ctx = msg.data;
 			int width = ctx->width;
 			int height = ctx->height;
 			int x = ctx->x;
 			int y = ctx->y;
-			ctx->pid = msg->src;
-			new_context(ctx, msg->src, x, y, width, height, ctx->flags);
+			ctx->pid = msg.src;
+			new_context(ctx, msg.src, x, y, width, height, ctx->flags);
 			list_add(contexts, ctx);
 			if (!(ctx->flags & WF_RELATIVE))
 				focused = ctx;
 			redraw_all();
-			msg_send(msg->src, GFX_NEW_CONTEXT, ctx);
+			msg_send(msg.src, GFX_NEW_CONTEXT, ctx);
 
 			// Send mouse position
-			struct gui_event_mouse *mouse = malloc(sizeof(*msg));
+			struct gui_event_mouse *mouse = malloc(sizeof(msg));
 			mouse->x = mouse_x - focused->x;
 			mouse->y = mouse_y - focused->y;
 			msg_send(focused->pid, GUI_MOUSE, mouse);
@@ -324,16 +324,14 @@ int main(int argc, char **argv)
 			redraw_focused();
 			break;
 		case EVENT_MOUSE:
-			handle_mouse(msg->data);
+			handle_mouse(msg.data);
 			break;
 		case EVENT_KEYBOARD:
-			handle_keyboard(msg->data);
+			handle_keyboard(msg.data);
 			break;
 		default:
 			break;
 		}
-
-		free(msg);
 	};
 
 	return 0;

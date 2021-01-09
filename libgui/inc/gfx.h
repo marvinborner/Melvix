@@ -64,6 +64,7 @@ struct context {
 	int flags;
 };
 
+struct context *gfx_new_ctx(struct context *ctx);
 struct font *gfx_resolve_font(enum font_type font_type);
 void gfx_write_char(struct context *ctx, int x, int y, enum font_type font_type, u32 c, char ch);
 void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 c,
@@ -83,8 +84,6 @@ int gfx_font_width(enum font_type);
  * Wrappers
  */
 
-#define gfx_new_ctx(ctx)                                                                           \
-	(msg_send(2, GFX_NEW_CONTEXT, (ctx)), (struct context *)msg_receive_loop()->data)
 #define gfx_redraw() (msg_send(2, GFX_REDRAW, NULL)) // TODO: Partial redraw (optimization)
 #define gfx_redraw_focused() (msg_send(2, GFX_REDRAW_FOCUSED, NULL))
 

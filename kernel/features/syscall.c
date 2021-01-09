@@ -88,8 +88,7 @@ void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_RECEIVE: {
-		struct proc_message *msg = proc_receive(proc_current());
-		r->eax = (u32)(msg ? msg->msg : NULL);
+		r->eax = proc_receive(proc_current(), (void *)r->ebx);
 		break;
 	}
 	case SYS_GETPID: {

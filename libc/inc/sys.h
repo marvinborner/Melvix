@@ -98,14 +98,13 @@ int sysv(enum sys num, ...);
 #define event_unregister(id) sys1(SYS_UNREGISTER, (int)(id))
 
 #define msg_send(pid, type, msg) sys3(SYS_SEND, (int)(pid), (int)(type), (int)(msg))
-#define msg_receive() (struct message *)sys0(SYS_RECEIVE)
+#define msg_receive(buf) (struct message *)sys1(SYS_RECEIVE, (int)(buf))
 #define getpid() (int)sys0(SYS_GETPID)
-static inline struct message *msg_receive_loop()
+static inline struct message *msg_receive_loop(struct message *buf)
 {
-	struct message *msg;
-	while (!(msg = msg_receive()))
+	while (!msg_receive(&buf))
 		yield();
-	return msg;
+	return buf;
 }
 
 // Simple read wrapper

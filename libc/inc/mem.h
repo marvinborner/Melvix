@@ -10,14 +10,14 @@ void free_debug(void *ptr, const char *file, int line, const char *func, const c
 #define malloc(size) malloc_debug(size, __FILE__, __LINE__, __func__, #size)
 #define free(ptr) free_debug(ptr, __FILE__, __LINE__, __func__, #ptr)
 
-// Huh
+/* void *_malloc(u32 size); */
+/* void _free(void *ptr); */
+/* #define malloc(size) _malloc(size) */
+/* #define free(ptr) _free(ptr) */
+
 #ifdef kernel
 void heap_init(u32 start);
-/* void *malloc(u32 size); */
-/* void free(void *ptr); */
 #elif defined(userspace)
-/* void *malloc(u32 size); */
-/* void free(void *ptr); */
 #else
 #error "No lib target specified. Please use -Dkernel or -Duserspace"
 #endif

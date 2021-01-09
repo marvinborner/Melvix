@@ -531,28 +531,28 @@ void gui_event_loop(struct element *container)
 	if (!container)
 		return;
 
-	struct message *msg;
+	struct message msg = { 0 };
 	struct element *focused = NULL;
 	while (1) {
-		if (!(msg = msg_receive())) {
+		if (!msg_receive(&msg)) {
 			yield();
 			continue;
 		}
 
-		switch (msg->type) {
+		switch (msg.type) {
 		case GUI_KILL: {
 			remove_all();
 			exit(0);
 		}
 		case GUI_MOUSE: {
-			struct gui_event_mouse *event = msg->data;
+			struct gui_event_mouse *event = msg.data;
 			focused = element_at(container, event->x, event->y);
 			if (focused && focused->event.on_click && event->but1)
 				focused->event.on_click(event, focused);
 			break;
 		}
 		case GUI_KEYBOARD: {
-			struct gui_event_keyboard *event = msg->data;
+			struct gui_event_keyboard *event = msg.data;
 
 			if (focused && focused->type == GUI_TYPE_TEXT_INPUT && event->press) {
 				char *s = ((struct element_text_input *)focused->data)->text;
@@ -584,15 +584,13 @@ void gui_event_loop(struct element *container)
 			break;
 		}
 		case GUI_RESIZE: {
-			struct gui_event_resize *event = msg->data;
+			struct gui_event_resize *event = msg.data;
 			struct element *root = get_root(container->window_id);
 			root->ctx = event->new_ctx;
 			gui_sync_window(container->window_id);
 			break;
 		}
 		}
-
-		free(msg);
 	}
 
 	exit(1);

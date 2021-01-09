@@ -41,7 +41,7 @@ void proc_init(void);
 void proc_print(void);
 struct proc *proc_current(void);
 void proc_send(struct proc *src, struct proc *dest, u32 type, void *data);
-struct proc_message *proc_receive(struct proc *proc);
+u32 proc_receive(struct proc *proc, struct message *buf);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
 void proc_yield(struct regs *r);

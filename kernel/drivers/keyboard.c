@@ -28,6 +28,8 @@ void keyboard_handler()
 	// TODO: "Merge" scancode to linux keycode?
 	/* printf("%x %x = %x\n", scancode, state ? 0xe0 : 0, merged); */
 
+	if (event)
+		free(event);
 	event = malloc(sizeof(*event));
 	event->magic = KEYBOARD_MAGIC;
 	event->press = (scancode & 0x80) == 0;

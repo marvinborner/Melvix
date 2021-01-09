@@ -98,14 +98,15 @@ void proc_send(struct proc *src, struct proc *dest, u32 type, void *data)
 	priority_proc = dest;
 }
 
-struct proc_message *proc_receive(struct proc *proc)
+u32 proc_receive(struct proc *proc, struct message *buf)
 {
 	if (proc->messages && proc->messages->head) {
 		struct proc_message *msg = proc->messages->head->data;
 		list_remove(proc->messages, proc->messages->head);
-		return msg;
+		memcpy(buf, msg->msg, sizeof(*buf));
+		return 1;
 	} else {
-		return NULL;
+		return 0;
 	}
 }
 

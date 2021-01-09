@@ -96,6 +96,14 @@ static void draw_rectangle(struct context *ctx, int x1, int y1, int x2, int y2, 
 	}
 }
 
+struct context *gfx_new_ctx(struct context *ctx)
+{
+	struct message msg = { 0 };
+	msg_send(2, GFX_NEW_CONTEXT, ctx);
+	memcpy(ctx, msg_receive_loop(&msg)->data, sizeof(*ctx));
+	return ctx;
+}
+
 // On-demand font loading
 struct font *gfx_resolve_font(enum font_type font_type)
 {
