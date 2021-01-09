@@ -4,7 +4,6 @@
 #define PROC_H
 
 #include <def.h>
-#include <event.h>
 #include <interrupts.h>
 #include <list.h>
 #include <sys.h>
@@ -25,13 +24,6 @@ struct proc {
 	struct regs regs;
 	struct regs regs_backup;
 	enum proc_state state;
-	struct list *messages;
-};
-
-struct proc_message {
-	struct proc *src;
-	struct proc *dest;
-	struct message *msg;
 };
 
 struct proc *kernel_proc;
@@ -40,8 +32,6 @@ void scheduler(struct regs *regs);
 void proc_init(void);
 void proc_print(void);
 struct proc *proc_current(void);
-void proc_send(struct proc *src, struct proc *dest, u32 type, void *data);
-u32 proc_receive(struct proc *proc, struct message *buf);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
 void proc_yield(struct regs *r);

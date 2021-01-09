@@ -20,10 +20,6 @@ enum sys {
 	SYS_EXIT, // Exit current process // TODO: Free all memory of process
 	SYS_YIELD, // Switch to next process
 	SYS_TIME, // Get kernel time
-	SYS_REGISTER, // Register for event
-	SYS_UNREGISTER, // Unregister event
-	SYS_SEND, // Send message to process
-	SYS_RECEIVE, // Receive message (non-blocking/sync)
 	SYS_GETPID, // Get the process ID
 	SYS_NET_OPEN, // Open network socket
 	SYS_NET_CLOSE, // Close network socket
@@ -94,18 +90,7 @@ int sysv(enum sys num, ...);
 #define yield() (int)sys0(SYS_YIELD)
 #define time() (u32) sys0(SYS_TIME)
 
-#define event_register(id) sys1(SYS_REGISTER, (int)(id))
-#define event_unregister(id) sys1(SYS_UNREGISTER, (int)(id))
-
-#define msg_send(pid, type, msg) sys3(SYS_SEND, (int)(pid), (int)(type), (int)(msg))
-#define msg_receive(buf) (struct message *)sys1(SYS_RECEIVE, (int)(buf))
 #define getpid() (int)sys0(SYS_GETPID)
-static inline struct message *msg_receive_loop(struct message *buf)
-{
-	while (!msg_receive(&buf))
-		yield();
-	return buf;
-}
 
 // Simple read wrapper
 #include <mem.h>

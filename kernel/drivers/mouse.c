@@ -2,7 +2,6 @@
 
 #include <boot.h>
 #include <cpu.h>
-#include <event.h>
 #include <interrupts.h>
 #include <mem.h>
 #include <print.h>
@@ -39,7 +38,7 @@ void mouse_handler()
 		event->but1 = mouse_byte[0] & 1;
 		event->but2 = (mouse_byte[0] >> 1) & 1;
 		event->but3 = (mouse_byte[0] >> 2) & 1;
-		event_trigger(EVENT_MOUSE, event);
+		//event_trigger(EVENT_MOUSE, event);
 
 		mouse_cycle = 0;
 		break;

@@ -82,34 +82,6 @@ struct proc *proc_current(void)
 	return current && current->data ? current->data : NULL;
 }
 
-void proc_send(struct proc *src, struct proc *dest, u32 type, void *data)
-{
-	// TODO: Use unique key instead of pid for IPC
-	if (!src || !dest)
-		return;
-	struct proc_message *msg = malloc(sizeof(*msg));
-	msg->src = src;
-	msg->dest = dest;
-	msg->msg = malloc(sizeof(*msg->msg));
-	msg->msg->src = (int)src->pid;
-	msg->msg->type = (int)type;
-	msg->msg->data = data;
-	list_add(dest->messages, msg);
-	priority_proc = dest;
-}
-
-u32 proc_receive(struct proc *proc, struct message *buf)
-{
-	if (proc->messages && proc->messages->head) {
-		struct proc_message *msg = proc->messages->head->data;
-		list_remove(proc->messages, proc->messages->head);
-		memcpy(buf, msg->msg, sizeof(*buf));
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
 struct proc *proc_from_pid(u32 pid)
 {
 	struct node *iterator = proc_list->head;
@@ -157,7 +129,6 @@ struct proc *proc_make(void)
 {
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = current_pid++;
-	proc->messages = list_new();
 	proc->state = PROC_RUNNING;
 
 	if (current)

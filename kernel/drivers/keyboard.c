@@ -2,7 +2,6 @@
 
 #include <cpu.h>
 #include <def.h>
-#include <event.h>
 #include <interrupts.h>
 #include <mem.h>
 #include <print.h>
@@ -34,7 +33,7 @@ void keyboard_handler()
 	event->magic = KEYBOARD_MAGIC;
 	event->press = (scancode & 0x80) == 0;
 	event->scancode = event->press ? scancode : scancode & ~0x80;
-	event_trigger(EVENT_KEYBOARD, event);
+	//event_trigger(EVENT_KEYBOARD, event);
 
 	state = 0;
 	merged = 0;

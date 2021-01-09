@@ -1,7 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <cpu.h>
-#include <event.h>
 #include <fs.h>
 #include <interrupts.h>
 #include <load.h>
@@ -72,23 +71,6 @@ void syscall_handler(struct regs *r)
 	}
 	case SYS_TIME: {
 		r->eax = timer_get();
-		break;
-	}
-	case SYS_REGISTER: {
-		event_register(r->ebx, proc_current());
-		break;
-	}
-	case SYS_UNREGISTER: {
-		event_unregister(r->ebx, proc_current());
-		break;
-	}
-	case SYS_SEND: {
-		proc_send(proc_current(), proc_from_pid(r->ebx), r->ecx, (void *)r->edx);
-		proc_yield(r);
-		break;
-	}
-	case SYS_RECEIVE: {
-		r->eax = proc_receive(proc_current(), (void *)r->ebx);
 		break;
 	}
 	case SYS_GETPID: {

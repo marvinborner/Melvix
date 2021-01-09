@@ -14,8 +14,7 @@ COBJS = main.o \
 	features/proc.o \
 	features/proc_asm.o \
 	features/syscall.o \
-	features/net.o \
-	features/event.o
+	features/net.o
 CC = ccache ../cross/opt/bin/i686-elf-gcc
 LD = ccache ../cross/opt/bin/i686-elf-ld
 OC = ccache ../cross/opt/bin/i686-elf-objcopy
