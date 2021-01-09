@@ -5,15 +5,19 @@
 
 #include <def.h>
 
+void *malloc_debug(u32 size, const char *file, int line, const char *func, const char *inp);
+void free_debug(void *ptr, const char *file, int line, const char *func, const char *inp);
+#define malloc(size) malloc_debug(size, __FILE__, __LINE__, __func__, #size)
+#define free(ptr) free_debug(ptr, __FILE__, __LINE__, __func__, #ptr)
+
 // Huh
 #ifdef kernel
 void heap_init(u32 start);
-void *malloc(u32 size);
-void free(void *ptr);
+/* void *malloc(u32 size); */
+/* void free(void *ptr); */
 #elif defined(userspace)
-#include <print.h>
-void *malloc(u32 size);
-void free(void *ptr);
+/* void *malloc(u32 size); */
+/* void free(void *ptr); */
 #else
 #error "No lib target specified. Please use -Dkernel or -Duserspace"
 #endif

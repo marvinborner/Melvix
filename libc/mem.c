@@ -235,7 +235,7 @@ void heap_init(u32 start)
 	heap.end = start + HEAP_INIT_SIZE;
 }
 
-void *malloc(u32 size)
+void *_malloc(u32 size)
 {
 	u32 index = bin_index(size);
 	struct h_bin *temp = (struct h_bin *)&heap.bins[index];
@@ -279,8 +279,11 @@ void *malloc(u32 size)
 	return &found->next;
 }
 
-void free(void *p)
+void _free(void *p)
 {
+	if (!p)
+		return;
+
 	struct h_bin *list;
 	struct h_footer *new_foot, *old_foot;
 
@@ -330,16 +333,27 @@ void free(void *p)
 #define kmalloc(n) (void *)sys1(SYS_MALLOC, n)
 #define kfree(ptr) (void)(sys1(SYS_FREE, (int)ptr))
 
-static u32 total = 0;
-void *malloc(u32 size)
+void *_malloc(u32 size)
 {
-	total += size;
 	return kmalloc(size);
 }
 
-void free(void *ptr)
+void _free(void *ptr)
 {
 	kfree(ptr);
 }
 
 #endif
+
+void *malloc_debug(u32 size, const char *file, int line, const char *func, const char *inp)
+{
+	printf("MALLOC:\t%s:%d: %s: %dB (%s)\n", file, line, func, size, inp);
+	return _malloc(size);
+}
+
+void free_debug(void *ptr, const char *file, int line, const char *func, const char *inp)
+{
+	printf("FREE:\t%s:%d: %s: 0x%x (%s)\n", file, line, func, ptr, inp);
+	if (ptr)
+		_free(ptr);
+}

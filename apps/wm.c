@@ -332,6 +332,8 @@ int main(int argc, char **argv)
 		default:
 			break;
 		}
+
+		free(msg);
 	};
 
 	return 0;

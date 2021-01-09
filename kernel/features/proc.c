@@ -90,7 +90,7 @@ void proc_send(struct proc *src, struct proc *dest, u32 type, void *data)
 	struct proc_message *msg = malloc(sizeof(*msg));
 	msg->src = src;
 	msg->dest = dest;
-	msg->msg = malloc(sizeof(struct message));
+	msg->msg = malloc(sizeof(*msg->msg));
 	msg->msg->src = (int)src->pid;
 	msg->msg->type = (int)type;
 	msg->msg->data = data;

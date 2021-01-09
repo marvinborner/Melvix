@@ -1125,9 +1125,8 @@ static struct png *png_new(void)
 void png_free(struct png *png)
 {
 	// Deallocate image buffer
-	/* if (png->buffer != NULL) { */
-	/* 	free(png->buffer); */
-	/* } */
+	if (png->buffer)
+		free(png->buffer);
 
 	// Deallocate source buffer, if necessary
 	png_free_source(png);
@@ -1167,7 +1166,7 @@ struct bmp *png_load(const char *path)
 		return NULL;
 
 	void *buf = sread(path);
-	if (!png) {
+	if (!buf) {
 		SET_ERROR(png, PNG_ENOTFOUND);
 		png_free(png);
 		return NULL;
@@ -1190,7 +1189,6 @@ struct bmp *png_load(const char *path)
 	bmp->pitch = png->width * (bmp->bpp >> 3);
 
 	png_free(png);
-	free(buf);
 
 	return bmp;
 }

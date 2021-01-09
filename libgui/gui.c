@@ -465,6 +465,7 @@ struct element *gui_add_text_input(struct element *container, int x, int y, u32 
 	((struct element_text_input *)text_input->data)->x = x;
 	((struct element_text_input *)text_input->data)->y = y;
 	((struct element_text_input *)text_input->data)->width = width;
+	((struct element_text_input *)text_input->data)->text[0] = '\0';
 	((struct element_text_input *)text_input->data)->color_fg = color_fg;
 	((struct element_text_input *)text_input->data)->color_bg = color_bg;
 	((struct element_text_input *)text_input->data)->font_type = font_type;
@@ -590,6 +591,7 @@ void gui_event_loop(struct element *container)
 			break;
 		}
 		}
+
 		free(msg);
 	}
 
