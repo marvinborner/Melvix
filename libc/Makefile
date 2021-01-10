@@ -10,6 +10,7 @@ COBJS = str.o \
 	cpu.o \
 	sys.o \
 	list.o \
+	stack.o \
 	random.o
 CC = ccache ../cross/opt/bin/i686-elf-gcc
 LD = ccache ../cross/opt/bin/i686-elf-ld
