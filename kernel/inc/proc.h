@@ -8,7 +8,7 @@
 #include <list.h>
 #include <sys.h>
 
-#define PROC_QUANTUM 100 // Milliseconds or something // TODO
+#define PROC_QUANTUM 42 // Milliseconds or something // TODO
 
 #define EFLAGS_ALWAYS 0x2 // Always one
 #define EFLAGS_INTERRUPTS 0x200 // Enable interrupts
@@ -24,6 +24,7 @@ struct proc {
 	struct regs regs;
 	struct regs regs_backup;
 	enum proc_state state;
+	struct list *messages;
 };
 
 struct proc *kernel_proc;

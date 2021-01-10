@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <boot.h>
 #include <cpu.h>
+#include <fs.h>
 #include <interrupts.h>
 #include <list.h>
 #include <load.h>
@@ -129,12 +130,38 @@ struct proc *proc_make(void)
 {
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = current_pid++;
+	proc->messages = list_new();
 	proc->state = PROC_RUNNING;
 
 	if (current)
 		list_add(proc_list, proc);
 
 	return proc;
+}
+
+u32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+{
+	while (*path == '/')
+		path++;
+
+	int pid = 0;
+	while (path[0] >= '0' && path[0] <= '9') {
+		pid = pid * 10 + (path[0] - '0');
+		path++;
+	}
+
+	if (pid) {
+		struct proc *p = proc_from_pid(pid);
+		if (!p)
+			return 0;
+
+		if (!memcmp(path, "/status", 8)) {
+			printf("STATUS!\n");
+		}
+	}
+
+	printf("%s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
+	return count;
 }
 
 extern void proc_jump_userspace(void);
@@ -148,6 +175,17 @@ void proc_init(void)
 	cli();
 	scheduler_enable();
 	proc_list = list_new();
+
+	// Procfs
+	struct vfs *vfs = malloc(sizeof(*vfs));
+	vfs->type = VFS_PROCFS;
+	vfs->read = procfs_read;
+	struct device *dev = malloc(sizeof(*dev));
+	dev->name = "proc";
+	dev->type = DEV_CHAR;
+	dev->vfs = vfs;
+	device_add(dev);
+	vfs_mount(dev, "/proc/");
 
 	kernel_proc = proc_make();
 

@@ -534,10 +534,10 @@ void gui_event_loop(struct element *container)
 	struct message msg = { 0 };
 	struct element *focused = NULL;
 	while (1) {
-		if (!msg_receive(&msg)) {
-			yield();
-			continue;
-		}
+		/* if (!msg_receive(&msg)) { */
+		yield();
+		continue;
+		/* } */
 
 		switch (msg.type) {
 		case GUI_KILL: {

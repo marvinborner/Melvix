@@ -84,7 +84,8 @@ int gfx_font_width(enum font_type);
  * Wrappers
  */
 
-#define gfx_redraw() (msg_send(2, GFX_REDRAW, NULL)) // TODO: Partial redraw (optimization)
-#define gfx_redraw_focused() (msg_send(2, GFX_REDRAW_FOCUSED, NULL))
+#define gfx_redraw()                                                                               \
+	(void)42 //(msg_send(2, GFX_REDRAW, NULL)) // TODO: Partial redraw (optimization)
+#define gfx_redraw_focused() (void)42 //(msg_send(2, GFX_REDRAW_FOCUSED, NULL))
 
 #endif

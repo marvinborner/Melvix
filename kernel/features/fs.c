@@ -185,14 +185,12 @@ void device_install(void)
 {
 	devices = list_new();
 
-	struct vfs *vfs;
-	struct device *dev;
-
-	vfs = malloc(sizeof(*vfs));
+	struct vfs *vfs = malloc(sizeof(*vfs));
 	vfs->type = VFS_DEVFS;
 	vfs->read = devfs_read;
-	dev = malloc(sizeof(*dev));
+	struct device *dev = malloc(sizeof(*dev));
 	dev->name = "dev";
+	dev->type = DEV_CHAR;
 	dev->vfs = vfs;
 	device_add(dev);
 	vfs_mount(dev, "/dev/");
