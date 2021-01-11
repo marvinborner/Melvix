@@ -121,6 +121,9 @@ u32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 	if (count == 0 || offset > count)
 		return 0;
 
+	while (*path == ' ')
+		path++;
+
 	struct mount_info *m = vfs_find_mount_info(path);
 	assert(m && m->dev && m->dev->vfs && m->dev->vfs->read);
 
@@ -128,15 +131,25 @@ u32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 	if (len > 1)
 		path += len;
 
-	struct device *dev = m->dev;
-	return dev->vfs->read(path, buf, offset, count, dev);
+	return m->dev->vfs->read(path, buf, offset, count, m->dev);
 }
 
 u32 vfs_write(const char *path, void *buf, u32 offset, u32 count)
 {
-	struct device *dev = vfs_find_dev(path);
-	assert(dev && dev->vfs && dev->vfs->write);
-	return dev->vfs->write(path, buf, offset, count, dev);
+	if (count == 0 || offset > count)
+		return 0;
+
+	while (*path == ' ')
+		path++;
+
+	struct mount_info *m = vfs_find_mount_info(path);
+	assert(m && m->dev && m->dev->vfs && m->dev->vfs->write);
+
+	u32 len = strlen(m->path);
+	if (len > 1)
+		path += len;
+
+	return m->dev->vfs->write(path, buf, offset, count, m->dev);
 }
 
 u32 vfs_stat(const char *path, struct stat *buf)

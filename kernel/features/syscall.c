@@ -73,10 +73,6 @@ void syscall_handler(struct regs *r)
 		r->eax = timer_get();
 		break;
 	}
-	case SYS_GETPID: {
-		r->eax = proc_current()->pid;
-		break;
-	}
 	case SYS_NET_OPEN: {
 		r->eax = (int)net_open(r->ebx);
 		break;

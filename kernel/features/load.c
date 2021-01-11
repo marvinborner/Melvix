@@ -22,7 +22,7 @@ int bin_load(char *path, struct proc *proc)
 	proc->regs.ebp = (u32)stack;
 	proc->regs.useresp = (u32)stack;
 	proc->regs.eip = (u32)data;
-	strcpy(proc->name, path + 1);
+	strcpy(proc->name, path);
 
 	return data ? 0 : 1;
 }

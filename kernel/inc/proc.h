@@ -6,6 +6,7 @@
 #include <def.h>
 #include <interrupts.h>
 #include <list.h>
+#include <stack.h>
 #include <sys.h>
 
 #define PROC_QUANTUM 42 // Milliseconds or something // TODO
@@ -24,7 +25,7 @@ struct proc {
 	struct regs regs;
 	struct regs regs_backup;
 	enum proc_state state;
-	struct list *messages;
+	struct stack *messages;
 };
 
 struct proc *kernel_proc;

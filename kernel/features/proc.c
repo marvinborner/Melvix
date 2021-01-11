@@ -4,12 +4,11 @@
 #include <boot.h>
 #include <cpu.h>
 #include <fs.h>
-#include <interrupts.h>
-#include <list.h>
 #include <load.h>
 #include <mem.h>
 #include <print.h>
 #include <proc.h>
+#include <stack.h>
 #include <str.h>
 #include <timer.h>
 
@@ -130,7 +129,7 @@ struct proc *proc_make(void)
 {
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = current_pid++;
-	proc->messages = list_new();
+	proc->messages = stack_new();
 	proc->state = PROC_RUNNING;
 
 	if (current)
@@ -139,7 +138,7 @@ struct proc *proc_make(void)
 	return proc;
 }
 
-u32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+u32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	while (*path == '/')
 		path++;
@@ -150,18 +149,74 @@ u32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 		path++;
 	}
 
+	if (!pid && !memcmp(path, "self/", 5)) {
+		pid = proc_current()->pid;
+		path += 4;
+	}
+
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
-		if (!p)
+		if (!p || path[0] != '/')
 			return 0;
 
-		if (!memcmp(path, "/status", 8)) {
-			printf("STATUS!\n");
+		path++;
+		if (!memcmp(path, "msg", 4)) {
+			stack_push_bot(p->messages, buf);
+			return count;
 		}
 	}
 
 	printf("%s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
-	return count;
+	return 0;
+}
+
+u32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+{
+	(void)dev;
+
+	while (*path == '/')
+		path++;
+
+	int pid = 0;
+	while (path[0] >= '0' && path[0] <= '9') {
+		pid = pid * 10 + (path[0] - '0');
+		path++;
+	}
+
+	if (!pid && !memcmp(path, "self/", 5)) {
+		pid = proc_current()->pid;
+		path += 4;
+	}
+
+	if (pid) {
+		struct proc *p = proc_from_pid(pid);
+		if (!p || path[0] != '/')
+			return 0;
+
+		path++;
+		if (!memcmp(path, "pid", 4)) {
+			//memcpy(buf, ((u8 *)p->pid) + offset, count);
+			*(u32 *)buf = p->pid;
+			return count;
+		} else if (!memcmp(path, "name", 5)) {
+			memcpy(buf, p->name + offset, count);
+			return count;
+		} else if (!memcmp(path, "status", 7)) {
+			const char *status = p->state == PROC_RUNNING ? "running" : "sleeping";
+			memcpy(buf, status + offset, count);
+			return count;
+		} else if (!memcmp(path, "msg", 4)) {
+			if (stack_empty(p->messages)) {
+				return 0;
+			} else {
+				u8 *msg = stack_pop(p->messages);
+				memcpy(buf, msg + offset, count);
+				return count;
+			}
+		}
+	}
+
+	return 0;
 }
 
 extern void proc_jump_userspace(void);
@@ -180,6 +235,7 @@ void proc_init(void)
 	struct vfs *vfs = malloc(sizeof(*vfs));
 	vfs->type = VFS_PROCFS;
 	vfs->read = procfs_read;
+	vfs->write = procfs_write;
 	struct device *dev = malloc(sizeof(*dev));
 	dev->name = "proc";
 	dev->type = DEV_CHAR;

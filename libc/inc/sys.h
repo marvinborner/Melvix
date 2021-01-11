@@ -20,7 +20,6 @@ enum sys {
 	SYS_EXIT, // Exit current process // TODO: Free all memory of process
 	SYS_YIELD, // Switch to next process
 	SYS_TIME, // Get kernel time
-	SYS_GETPID, // Get the process ID
 	SYS_NET_OPEN, // Open network socket
 	SYS_NET_CLOSE, // Close network socket
 	SYS_NET_CONNECT, // Connect to destination
@@ -90,10 +89,33 @@ int sysv(enum sys num, ...);
 #define yield() (int)sys0(SYS_YIELD)
 #define time() (u32) sys0(SYS_TIME)
 
-#define getpid() (int)sys0(SYS_GETPID)
+static inline u32 getpid()
+{
+	u32 buf = 0;
+	read("/proc/self/pid", &buf, 0, sizeof(buf));
+	return buf;
+}
+
+// Hacky, one-digit solution - TODO!
+#include <mem.h>
+#include <str.h>
+static inline u32 pidof(const char *name)
+{
+	u32 curr = 1;
+	char buf[32] = { 0 };
+	char *path = (char *)"/proc/1/name"; // AAH
+	while (read(path, buf, 0, 32)) {
+		if (!strcmp(name, buf))
+			return curr;
+
+		curr++;
+		path[7]++;
+	}
+
+	return 0;
+}
 
 // Simple read wrapper
-#include <mem.h>
 static inline void *sread(const char *path)
 {
 	struct stat s = { 0 };
