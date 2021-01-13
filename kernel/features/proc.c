@@ -44,8 +44,12 @@ void scheduler(struct regs *regs)
 	} else if (((struct proc *)proc_list->head->data)->state == PROC_RUNNING) {
 		current = proc_list->head;
 	} else {
-		print("TODO: All processes are sleeping!\n"); // TODO!
-		/* loop(); */
+		/* sti(); */
+		/* hlt(); */
+		/* cli(); */
+		//print("TODO: All processes are sleeping!\n"); // TODO!
+		//loop();
+		return;
 	}
 
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));

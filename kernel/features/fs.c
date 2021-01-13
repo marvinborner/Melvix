@@ -154,9 +154,32 @@ u32 vfs_write(const char *path, void *buf, u32 offset, u32 count)
 
 u32 vfs_stat(const char *path, struct stat *buf)
 {
-	struct device *dev = vfs_find_dev(path);
-	assert(dev && dev->vfs && dev->vfs->stat);
-	return dev->vfs->stat(path, buf, dev);
+	while (*path == ' ')
+		path++;
+
+	struct mount_info *m = vfs_find_mount_info(path);
+	assert(m && m->dev && m->dev->vfs && m->dev->vfs->stat);
+
+	u32 len = strlen(m->path);
+	if (len > 1)
+		path += len;
+
+	return m->dev->vfs->stat(path, buf, m->dev);
+}
+
+u32 vfs_ready(const char *path)
+{
+	while (*path == ' ')
+		path++;
+
+	struct mount_info *m = vfs_find_mount_info(path);
+	assert(m && m->dev && m->dev->vfs && m->dev->vfs->ready);
+
+	u32 len = strlen(m->path);
+	if (len > 1)
+		path += len;
+
+	return m->dev->vfs->ready(path, m->dev);
 }
 
 void vfs_install(void)
@@ -176,7 +199,7 @@ void device_add(struct device *dev)
 	list_add(devices, dev);
 }
 
-struct device *device_get(u32 id)
+struct device *device_get_by_id(u32 id)
 {
 	struct node *iterator = devices->head;
 	while (iterator) {
@@ -187,11 +210,33 @@ struct device *device_get(u32 id)
 	return NULL;
 }
 
+struct device *device_get_by_name(const char *name)
+{
+	struct node *iterator = devices->head;
+	while (iterator) {
+		if (!strcmp(((struct device *)iterator->data)->name, name))
+			return iterator->data;
+		iterator = iterator->next;
+	}
+	return NULL;
+}
+
 u32 devfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
-	assert(dev && dev->read);
-	printf("%s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
-	return dev->read(buf, offset, count, dev);
+	struct device *target = device_get_by_name(path + 1);
+	if (!target || !target->read)
+		return 0;
+	return target->read(buf, offset, count, dev);
+}
+
+u32 devfs_ready(const char *path, struct device *dev)
+{
+	(void)dev;
+
+	struct device *target = device_get_by_name(path + 1);
+	if (!target || !target->ready)
+		return 0;
+	return target->ready();
 }
 
 void device_install(void)
@@ -201,6 +246,7 @@ void device_install(void)
 	struct vfs *vfs = malloc(sizeof(*vfs));
 	vfs->type = VFS_DEVFS;
 	vfs->read = devfs_read;
+	vfs->ready = devfs_ready;
 	struct device *dev = malloc(sizeof(*dev));
 	dev->name = "dev";
 	dev->type = DEV_CHAR;
@@ -405,4 +451,11 @@ u32 ext2_stat(const char *path, struct stat *buf, struct device *dev)
 	buf->size = sz; // Actually in->size but ext2..
 
 	return 0;
+}
+
+u32 ext2_ready(const char *path, struct device *dev)
+{
+	(void)path;
+	(void)dev;
+	return 1;
 }

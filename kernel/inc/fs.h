@@ -20,6 +20,7 @@ struct device {
 	void *data;
 	u32 (*read)(void *buf, u32 offset, u32 count, struct device *dev);
 	u32 (*write)(void *buf, u32 offset, u32 count, struct device *dev);
+	u32 (*ready)();
 };
 
 void device_install(void);
@@ -38,6 +39,7 @@ struct vfs {
 	u32 (*read)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
 	u32 (*write)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
 	u32 (*stat)(const char *path, struct stat *buf, struct device *dev);
+	u32 (*ready)(const char *path, struct device *dev);
 };
 
 struct mount_info {
@@ -53,6 +55,7 @@ u32 vfs_mount(struct device *dev, const char *path);
 u32 vfs_read(const char *path, void *buf, u32 offset, u32 count);
 u32 vfs_write(const char *path, void *buf, u32 offset, u32 count);
 u32 vfs_stat(const char *path, struct stat *buf);
+u32 vfs_ready(const char *path);
 
 /**
  * EXT2
@@ -147,5 +150,6 @@ struct ext2_file {
 
 u32 ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
 u32 ext2_stat(const char *path, struct stat *buf, struct device *dev);
+u32 ext2_ready(const char *path, struct device *dev);
 
 #endif

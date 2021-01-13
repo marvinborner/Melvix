@@ -147,6 +147,7 @@ void ata_probe(void)
 		struct vfs *vfs = malloc(sizeof(*vfs));
 		vfs->type = VFS_EXT2;
 		vfs->read = ext2_read;
+		vfs->ready = ext2_ready;
 		vfs->stat = ext2_stat;
 		dev->vfs = vfs;
 		vfs_mount(dev, "/");

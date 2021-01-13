@@ -37,7 +37,12 @@ void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_READ: {
-		r->eax = (u32)vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
+		if (vfs_ready((char *)r->ebx)) {
+			r->eax = (u32)vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
+		} else {
+			proc_current()->state = PROC_SLEEPING;
+			scheduler(r);
+		}
 		break;
 	}
 	case SYS_WRITE: {

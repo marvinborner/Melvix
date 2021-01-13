@@ -96,7 +96,7 @@ static inline u32 getpid()
 	return buf;
 }
 
-// Hacky, one-digit solution - TODO!
+// Hacky one-digit solution - TODO!
 #include <mem.h>
 #include <str.h>
 static inline u32 pidof(const char *name)
