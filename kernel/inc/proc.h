@@ -28,8 +28,6 @@ struct proc {
 	struct stack *messages;
 };
 
-struct proc *kernel_proc;
-
 void scheduler(struct regs *regs);
 void proc_init(void);
 void proc_print(void);

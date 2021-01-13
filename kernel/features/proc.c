@@ -16,6 +16,7 @@ u32 current_pid = 0;
 u32 quantum = 0;
 struct proc *priority_proc;
 struct list *proc_list;
+struct node *idle_proc;
 struct node *current;
 
 // TODO: Use less memcpy and only copy relevant registers
@@ -44,12 +45,7 @@ void scheduler(struct regs *regs)
 	} else if (((struct proc *)proc_list->head->data)->state == PROC_RUNNING) {
 		current = proc_list->head;
 	} else {
-		/* sti(); */
-		/* hlt(); */
-		/* cli(); */
-		//print("TODO: All processes are sleeping!\n"); // TODO!
-		//loop();
-		return;
+		current = idle_proc;
 	}
 
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
@@ -65,6 +61,12 @@ void scheduler(struct regs *regs)
 	}
 
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
+}
+
+void kernel_idle()
+{
+	while (1)
+		;
 }
 
 void proc_print(void)
@@ -247,7 +249,13 @@ void proc_init(void)
 	device_add(dev);
 	vfs_mount(dev, "/proc/");
 
-	kernel_proc = proc_make();
+	// Idle proc
+	struct proc *kernel_proc = proc_make();
+	void (*func)() = kernel_idle;
+	proc_load(kernel_proc, *(void **)&func);
+	strcpy(kernel_proc->name, "idle");
+	kernel_proc->state = PROC_SLEEPING;
+	idle_proc = list_add(proc_list, kernel_proc);
 
 	struct node *new = list_add(proc_list, proc_make());
 	bin_load((char *)"/bin/init", new->data);
