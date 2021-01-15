@@ -25,6 +25,7 @@ struct proc {
 	struct regs regs;
 	struct regs regs_backup;
 	enum proc_state state;
+	u32 waits_for; // dev_id
 	struct stack *messages;
 };
 
@@ -35,6 +36,7 @@ struct proc *proc_current(void);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
 void proc_yield(struct regs *r);
+void proc_enable_waiting(u32 dev_id);
 struct proc *proc_make(void);
 
 #endif

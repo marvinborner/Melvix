@@ -13,6 +13,7 @@
 
 static struct event_keyboard *event = NULL;
 static struct stack *queue = NULL;
+static u32 dev_id = 0;
 
 static int state = 0;
 static int merged = 0;
@@ -43,8 +44,7 @@ void keyboard_handler()
 	state = 0;
 	merged = 0;
 
-	// TODO: Only enable waiting procs
-	proc_current()->state = PROC_RUNNING;
+	proc_enable_waiting(dev_id);
 }
 
 void keyboard_acknowledge(void)
@@ -88,4 +88,5 @@ void keyboard_install(void)
 	dev->read = keyboard_read;
 	dev->ready = keyboard_ready;
 	device_add(dev);
+	dev_id = dev->id;
 }

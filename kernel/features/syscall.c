@@ -40,8 +40,13 @@ void syscall_handler(struct regs *r)
 		if (vfs_ready((char *)r->ebx)) {
 			r->eax = (u32)vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		} else {
-			proc_current()->state = PROC_SLEEPING;
+			struct proc *p = proc_current();
+			p->state = PROC_SLEEPING;
+			p->waits_for = vfs_find_dev((char *)r->ebx)->id;
 			scheduler(r);
+			sti();
+			while (1)
+				hlt();
 		}
 		break;
 	}

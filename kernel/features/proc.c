@@ -105,7 +105,7 @@ void proc_exit(struct proc *proc, int status)
 
 	int res = 0;
 	struct node *iterator = proc_list->head;
-	while (iterator != NULL) {
+	while (iterator) {
 		if (iterator->data == proc) {
 			res = 1;
 			list_remove(proc_list, iterator);
@@ -129,6 +129,21 @@ void proc_yield(struct regs *r)
 {
 	quantum = 0;
 	scheduler(r);
+}
+
+void proc_enable_waiting(u32 dev_id)
+{
+	printf("ENABLING %d\n", dev_id);
+	struct node *iterator = proc_list->head;
+	while (iterator) {
+		struct proc *p = iterator->data;
+		printf("\t-> %s: %d\n", p->name, p->waits_for);
+		if (p && p->waits_for && p->waits_for == dev_id) {
+			//printf("WAKING %s\n", p->name);
+			p->state = PROC_RUNNING;
+		}
+		iterator = iterator->next;
+	}
 }
 
 struct proc *proc_make(void)
