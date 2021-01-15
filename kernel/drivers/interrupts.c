@@ -170,11 +170,7 @@ void isr_uninstall_handler(int isr)
 
 void isr_handler(struct regs *r)
 {
-	// Execute fault handler if exists
-	void (*handler)(struct regs * r) = isr_routines[r->int_no];
-	if (handler) {
-		handler(r);
-	} else if (r->int_no <= 32) {
+	if (r->int_no <= 32) {
 		printf("%s Exception, exiting!\n", isr_exceptions[r->int_no]);
 		struct proc *proc = proc_current();
 		if (proc)
@@ -182,6 +178,11 @@ void isr_handler(struct regs *r)
 		else
 			__asm__ volatile("cli\nhlt");
 		proc_yield(r);
+	} else {
+		// Execute fault handler if exists
+		void (*handler)(struct regs * r) = isr_routines[r->int_no];
+		if (handler)
+			handler(r);
 	}
 }
 
