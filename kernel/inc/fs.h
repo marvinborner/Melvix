@@ -59,6 +59,8 @@ u32 vfs_write(const char *path, void *buf, u32 offset, u32 count);
 u32 vfs_stat(const char *path, struct stat *buf);
 u32 vfs_ready(const char *path);
 
+struct device *device_get_by_name(const char *name);
+
 /**
  * EXT2
  */

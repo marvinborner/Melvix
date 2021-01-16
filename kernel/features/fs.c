@@ -70,6 +70,8 @@ struct device *vfs_find_dev(const char *path)
 {
 	assert(path[0] == '/');
 	struct mount_info *m = vfs_find_mount_info(path);
+	if (m->dev->vfs->type == VFS_DEVFS) // TODO: ?
+		return device_get_by_name(path + strlen(m->path) + 1);
 	return m && m->dev ? m->dev : NULL;
 }
 
