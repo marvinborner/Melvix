@@ -19,13 +19,18 @@
 
 enum proc_state { PROC_RUNNING, PROC_SLEEPING };
 
+struct proc_wait {
+	u32 id; // dev_id
+	u32 (*func)();
+};
+
 struct proc {
 	u32 pid;
 	char name[32];
 	struct regs regs;
 	struct regs regs_backup;
+	struct proc_wait wait; // dev_id
 	enum proc_state state;
-	u32 waits_for; // dev_id
 	struct stack *messages;
 };
 
@@ -36,6 +41,7 @@ struct proc *proc_current(void);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
 void proc_yield(struct regs *r);
+void proc_clear_quantum();
 void proc_enable_waiting(u32 dev_id);
 struct proc *proc_make(void);
 

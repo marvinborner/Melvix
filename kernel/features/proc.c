@@ -125,21 +125,26 @@ void proc_exit(struct proc *proc, int status)
 	hlt();
 }
 
-void proc_yield(struct regs *r)
+void proc_clear_quantum()
 {
 	quantum = 0;
+}
+
+void proc_yield(struct regs *r)
+{
+	proc_clear_quantum();
 	scheduler(r);
 }
 
 void proc_enable_waiting(u32 dev_id)
 {
-	printf("ENABLING %d\n", dev_id);
 	struct node *iterator = proc_list->head;
 	while (iterator) {
 		struct proc *p = iterator->data;
-		printf("\t-> %s: %d\n", p->name, p->waits_for);
-		if (p && p->waits_for && p->waits_for == dev_id) {
-			//printf("WAKING %s\n", p->name);
+		struct proc_wait *w = &p->wait;
+		if (p && w && w->id == dev_id) {
+			struct regs *r = &p->regs;
+			r->eax = (u32)w->func((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 			p->state = PROC_RUNNING;
 		}
 		iterator = iterator->next;

@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
+#include <cpu.h>
 #include <def.h>
 #include <fs.h>
 #include <ide.h>

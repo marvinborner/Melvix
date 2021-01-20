@@ -42,8 +42,9 @@ void syscall_handler(struct regs *r)
 		} else {
 			struct proc *p = proc_current();
 			p->state = PROC_SLEEPING;
-			p->waits_for = vfs_find_dev((char *)r->ebx)->id;
-			scheduler(r);
+			p->wait.id = vfs_find_dev((char *)r->ebx)->id;
+			p->wait.func = vfs_read;
+			proc_yield(r);
 			sti();
 			while (1)
 				hlt();
