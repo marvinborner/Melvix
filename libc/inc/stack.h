@@ -23,5 +23,6 @@ u32 stack_push_bot(struct stack *stack, void *data);
 u32 stack_push(struct stack *stack, void *data);
 void *stack_pop(struct stack *stack);
 void *stack_peek(struct stack *stack);
+void stack_clear(struct stack *stack);
 
 #endif

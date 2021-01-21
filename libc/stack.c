@@ -117,3 +117,9 @@ void *stack_peek(struct stack *stack)
 
 	return stack->tail;
 }
+
+void stack_clear(struct stack *stack)
+{
+	while (stack_pop(stack))
+		;
+}

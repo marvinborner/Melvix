@@ -76,6 +76,11 @@ u32 keyboard_ready()
 	return !stack_empty(queue);
 }
 
+void keyboard_reset()
+{
+	stack_clear(queue);
+}
+
 void keyboard_install(void)
 {
 	//keyboard_rate(); TODO: Fix keyboard rate?

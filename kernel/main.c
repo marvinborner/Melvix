@@ -40,6 +40,7 @@ void kernel_main(struct vid_info *vid_info)
 
 	// Enable drivers
 	sti();
+	keyboard_reset();
 
 	syscall_init();
 	proc_init();

@@ -4,5 +4,6 @@
 #define KEYBOARD_H
 
 void keyboard_install(void);
+void keyboard_reset();
 
 #endif
