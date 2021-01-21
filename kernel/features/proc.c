@@ -132,7 +132,7 @@ void proc_exit(struct proc *proc, int status)
 
 void proc_yield(struct regs *r)
 {
-	//proc_clear_quantum();
+	proc_clear_quantum();
 	scheduler(r);
 }
 
@@ -145,6 +145,7 @@ void proc_enable_waiting(u32 dev_id)
 		if (p && w && w->id == dev_id) {
 			struct regs *r = &p->regs;
 			r->eax = (u32)w->func((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
+			memset(&p->wait, 0, sizeof(p->wait));
 			p->state = PROC_RUNNING;
 		}
 		iterator = iterator->next;

@@ -285,11 +285,22 @@ int main(int argc, char **argv)
 	gfx_load_image(&cursor, "/res/cursor.png", 0, 0);
 	redraw_all();
 
-	/* event_register(EVENT_MOUSE); */
-	/* event_register(EVENT_KEYBOARD); */
-
 	struct message msg = { 0 };
+	struct event_keyboard kbd_event = { 0 };
+	struct event_mouse mouse_event = { 0 };
 	while (1) {
+		if (read("/dev/kbd", &kbd_event, 0, sizeof(struct event_keyboard)))
+			handle_keyboard(&kbd_event);
+		/* else if (read("/dev/mouse", &mouse_event, 0, sizeof(struct event_mouse))) */
+		/* 	handle_mouse(&mouse_event); */
+		/* else if (msg_receive(&msg)) { */
+		/* 	handle_message(&msg); */
+		/* } */
+		else {
+			yield();
+			continue;
+		}
+
 		//if (!msg_receive(&msg)) {
 		yield();
 		continue;
@@ -322,12 +333,6 @@ int main(int argc, char **argv)
 			break;
 		case GFX_REDRAW_FOCUSED:
 			redraw_focused();
-			break;
-		case EVENT_MOUSE:
-			handle_mouse(msg.data);
-			break;
-		case EVENT_KEYBOARD:
-			handle_keyboard(msg.data);
 			break;
 		default:
 			break;

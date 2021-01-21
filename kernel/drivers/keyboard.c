@@ -71,12 +71,12 @@ u32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
 	return count;
 }
 
-u32 keyboard_ready()
+u32 keyboard_ready(void)
 {
 	return !stack_empty(queue);
 }
 
-void keyboard_reset()
+void keyboard_reset(void)
 {
 	stack_clear(queue);
 }
