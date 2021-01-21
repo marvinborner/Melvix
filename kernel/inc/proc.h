@@ -28,7 +28,6 @@ struct proc {
 	u32 pid;
 	char name[32];
 	struct regs regs;
-	struct regs regs_backup;
 	struct proc_wait wait; // dev_id
 	enum proc_state state;
 	struct stack *messages;

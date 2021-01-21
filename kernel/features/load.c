@@ -21,10 +21,10 @@ int bin_load(char *path, struct proc *proc)
 	vfs_stat(path, &s);
 	char *data = malloc(s.size);
 	if (!vfs_read(path, data, 0, s.size))
-		return 0;
+		return 1;
 
 	strcpy(proc->name, path);
 	proc_load(proc, data);
 
-	return 1;
+	return 0;
 }

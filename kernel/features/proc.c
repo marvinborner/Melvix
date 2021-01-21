@@ -99,6 +99,11 @@ struct proc *proc_from_pid(u32 pid)
 	return NULL;
 }
 
+void proc_clear_quantum()
+{
+	quantum = 0;
+}
+
 void proc_exit(struct proc *proc, int status)
 {
 	assert(proc);
@@ -120,19 +125,14 @@ void proc_exit(struct proc *proc, int status)
 	if (res)
 		printf("Process %s exited with status %d\n", proc->name, status);
 
-	quantum = 0; // TODO: Add quantum to each process struct?
+	proc_clear_quantum(); // TODO: Add quantum to each process struct?
 	sti();
 	hlt();
 }
 
-void proc_clear_quantum()
-{
-	quantum = 0;
-}
-
 void proc_yield(struct regs *r)
 {
-	proc_clear_quantum();
+	//proc_clear_quantum();
 	scheduler(r);
 }
 
@@ -245,6 +245,13 @@ u32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 	return 0;
 }
 
+u32 procfs_ready(const char *path, struct device *dev)
+{
+	(void)path;
+	(void)dev;
+	return 1;
+}
+
 extern void proc_jump_userspace(void);
 
 u32 _esp, _eip;
@@ -262,6 +269,7 @@ void proc_init(void)
 	vfs->type = VFS_PROCFS;
 	vfs->read = procfs_read;
 	vfs->write = procfs_write;
+	vfs->ready = procfs_ready;
 	struct device *dev = malloc(sizeof(*dev));
 	dev->name = "proc";
 	dev->type = DEV_CHAR;
