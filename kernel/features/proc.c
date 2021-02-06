@@ -165,7 +165,7 @@ struct proc *proc_make(void)
 	return proc;
 }
 
-u32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	while (*path == '/')
 		path++;
@@ -184,7 +184,7 @@ u32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct devi
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
 		if (!p || path[0] != '/')
-			return 0;
+			return -1;
 
 		path++;
 		if (!memcmp(path, "msg", 4)) {
@@ -194,10 +194,10 @@ u32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct devi
 	}
 
 	printf("%s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
-	return 0;
+	return -1;
 }
 
-u32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	(void)dev;
 
@@ -218,7 +218,7 @@ u32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
 		if (!p || path[0] != '/')
-			return 0;
+			return -1;
 
 		path++;
 		if (!memcmp(path, "pid", 4)) {
@@ -243,10 +243,10 @@ u32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 		}
 	}
 
-	return 0;
+	return -1;
 }
 
-u32 procfs_ready(const char *path, struct device *dev)
+u8 procfs_ready(const char *path, struct device *dev)
 {
 	(void)path;
 	(void)dev;
@@ -271,6 +271,7 @@ void proc_init(void)
 	vfs->read = procfs_read;
 	vfs->write = procfs_write;
 	vfs->ready = procfs_ready;
+	vfs->data = NULL;
 	struct device *dev = malloc(sizeof(*dev));
 	dev->name = "proc";
 	dev->type = DEV_CHAR;

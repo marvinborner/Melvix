@@ -82,16 +82,16 @@ u8 mouse_serial_read(void)
 	return inb(0x60);
 }
 
-u32 mouse_ready(void)
+u8 mouse_ready(void)
 {
 	return !stack_empty(queue);
 }
 
-u32 mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
+s32 mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
 {
 	(void)dev;
 	if (stack_empty(queue))
-		return 0;
+		return -1;
 
 	struct event *e = stack_pop(queue);
 	memcpy(buf, (u8 *)e + offset, count);

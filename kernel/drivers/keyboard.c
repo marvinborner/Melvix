@@ -60,18 +60,18 @@ void keyboard_rate(void)
 	outb(0x60, 0x0); // Rate{00000} Delay{00} 0
 }
 
-u32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
+s32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
 {
 	(void)dev;
 	if (stack_empty(queue))
-		return 0;
+		return -1;
 
 	struct event *e = stack_pop(queue);
 	memcpy(buf, (u8 *)e + offset, count);
 	return count;
 }
 
-u32 keyboard_ready(void)
+u8 keyboard_ready(void)
 {
 	return !stack_empty(queue);
 }

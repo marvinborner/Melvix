@@ -21,7 +21,7 @@ enum proc_state { PROC_RUNNING, PROC_SLEEPING };
 
 struct proc_wait {
 	u32 id; // dev_id
-	u32 (*func)();
+	s32 (*func)();
 };
 
 struct proc {

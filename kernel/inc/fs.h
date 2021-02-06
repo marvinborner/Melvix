@@ -18,9 +18,9 @@ struct device {
 	enum dev_type type;
 	struct vfs *vfs;
 	void *data;
-	u32 (*read)(void *buf, u32 offset, u32 count, struct device *dev);
-	u32 (*write)(void *buf, u32 offset, u32 count, struct device *dev);
-	u32 (*ready)();
+	s32 (*read)(void *buf, u32 offset, u32 count, struct device *dev);
+	s32 (*write)(void *buf, u32 offset, u32 count, struct device *dev);
+	u8 (*ready)();
 };
 
 void device_install(void);
@@ -36,10 +36,11 @@ enum vfs_type { VFS_DEVFS, VFS_TMPFS, VFS_PROCFS, VFS_EXT2 };
 struct vfs {
 	enum vfs_type type;
 	int flags;
-	u32 (*read)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
-	u32 (*write)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
-	u32 (*stat)(const char *path, struct stat *buf, struct device *dev);
-	u32 (*ready)(const char *path, struct device *dev);
+	void *data;
+	s32 (*read)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+	s32 (*write)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+	s32 (*stat)(const char *path, struct stat *buf, struct device *dev);
+	u8 (*ready)(const char *path, struct device *dev);
 };
 
 struct mount_info {
@@ -49,15 +50,15 @@ struct mount_info {
 
 void vfs_install(void);
 
-u32 vfs_mounted(struct device *dev, const char *path);
-u32 vfs_mount(struct device *dev, const char *path);
+u8 vfs_mounted(struct device *dev, const char *path);
+s32 vfs_mount(struct device *dev, const char *path);
 
 struct device *vfs_find_dev(const char *path);
 
-u32 vfs_read(const char *path, void *buf, u32 offset, u32 count);
-u32 vfs_write(const char *path, void *buf, u32 offset, u32 count);
-u32 vfs_stat(const char *path, struct stat *buf);
-u32 vfs_ready(const char *path);
+s32 vfs_read(const char *path, void *buf, u32 offset, u32 count);
+s32 vfs_write(const char *path, void *buf, u32 offset, u32 count);
+s32 vfs_stat(const char *path, struct stat *buf);
+u8 vfs_ready(const char *path);
 
 struct device *device_get_by_name(const char *name);
 
@@ -152,8 +153,8 @@ struct ext2_file {
 	u32 curr_block_pos;
 };
 
-u32 ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
-u32 ext2_stat(const char *path, struct stat *buf, struct device *dev);
-u32 ext2_ready(const char *path, struct device *dev);
+s32 ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+s32 ext2_stat(const char *path, struct stat *buf, struct device *dev);
+u8 ext2_ready(const char *path, struct device *dev);
 
 #endif
