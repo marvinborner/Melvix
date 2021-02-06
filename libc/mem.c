@@ -69,12 +69,20 @@ int memcmp(const void *s1, const void *s2, u32 n)
 	return 0;
 }
 
+int mememp(const u8 *buf, u32 n)
+{
+	return buf[0] == 0 && !memcmp(buf, buf + 1, n - 1);
+}
+
 /**
  * Heap allocator
  */
 
 #ifdef kernel
 
+int malloc_allocated = 0;
+
+#define HEAP_MAGIC 0x42424242
 #define HEAP_INIT_SIZE 0xff000000
 #define HEAP_MIN_SIZE HEAP_INIT_SIZE
 #define MIN_ALLOC_SZ 4
@@ -85,6 +93,7 @@ int memcmp(const void *s1, const void *s2, u32 n)
 /* #define MAX_WILDERNESS 0x1000000 */
 
 struct h_node {
+	u32 magic;
 	u32 hole;
 	u32 size;
 	struct h_node *next;
@@ -107,6 +116,7 @@ struct heap {
 
 void node_add(struct h_bin *bin, struct h_node *node)
 {
+	node->magic = HEAP_MAGIC;
 	node->next = NULL;
 	node->prev = NULL;
 	if (!bin->head) {
@@ -237,6 +247,7 @@ void heap_init(u32 start)
 
 void *_malloc(u32 size)
 {
+	malloc_allocated += size;
 	u32 index = bin_index(size);
 	struct h_bin *temp = (struct h_bin *)&heap.bins[index];
 	struct h_node *found = node_best_fit(temp, size);
@@ -248,8 +259,11 @@ void *_malloc(u32 size)
 		found = node_best_fit(temp, size);
 	}
 
+	assert(found->magic == HEAP_MAGIC);
+
 	if ((found->size - size) > (OVERHEAD + MIN_ALLOC_SZ)) {
 		struct h_node *split = (struct h_node *)(((char *)found + OVERHEAD) + size);
+		split->magic = HEAP_MAGIC;
 		split->size = found->size - size - OVERHEAD;
 		split->hole = 1;
 
@@ -287,7 +301,9 @@ void _free(void *p)
 	struct h_bin *list;
 	struct h_footer *new_foot, *old_foot;
 
-	struct h_node *head = (struct h_node *)((char *)p - 8);
+	struct h_node *head = (struct h_node *)((char *)p - 12);
+	assert(head->magic == HEAP_MAGIC && head->hole == 0);
+	malloc_allocated -= head->size;
 	if (head == (struct h_node *)(u32 *)heap.start) {
 		head->hole = 1;
 		node_add(&heap.bins[bin_index(head->size)], head);
