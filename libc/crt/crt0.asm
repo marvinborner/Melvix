@@ -10,6 +10,6 @@ _start:
 	call main
 
 	push eax
-	push 7
+	push 8
 	call sys1
 	jmp $

@@ -12,6 +12,14 @@
 #include <sys.h>
 #include <timer.h>
 
+void syscall_yield(struct regs *r)
+{
+	proc_yield(r);
+	sti();
+	while (1)
+		hlt();
+}
+
 void syscall_handler(struct regs *r)
 {
 	enum sys num = r->eax;
@@ -40,19 +48,21 @@ void syscall_handler(struct regs *r)
 		if (vfs_ready((char *)r->ebx)) {
 			r->eax = (u32)vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		} else {
-			struct proc *p = proc_current();
-			p->state = PROC_SLEEPING;
-			p->wait.id = vfs_find_dev((char *)r->ebx)->id;
-			p->wait.func = vfs_read;
-			proc_yield(r);
-			sti();
-			while (1)
-				hlt();
+			proc_wait_for(vfs_find_dev((char *)r->ebx)->id, PROC_WAIT_DEV, vfs_read);
+			syscall_yield(r);
 		}
 		break;
 	}
 	case SYS_WRITE: {
 		r->eax = (u32)vfs_write((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
+		break;
+	}
+	case SYS_POLL: {
+		s32 ret = vfs_poll((const char **)r->ebx);
+		if (ret == PROC_MAX_WAIT_IDS + 1)
+			syscall_yield(r);
+		else
+			r->eax = ret;
 		break;
 	}
 	case SYS_EXEC: {

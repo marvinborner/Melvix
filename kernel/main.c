@@ -36,7 +36,7 @@ void kernel_main(struct vid_info *vid_info)
 	timer_install();
 	keyboard_install();
 	mouse_install();
-	net_install();
+	/* net_install(); */
 
 	// Enable drivers
 	sti();

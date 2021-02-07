@@ -6,6 +6,7 @@
 #include <interrupts.h>
 #include <mem.h>
 #include <print.h>
+#include <proc.h>
 #include <stack.h>
 #include <str.h>
 #include <sys.h>
@@ -44,8 +45,8 @@ void mouse_handler()
 		event->but2 = (mouse_byte[0] >> 1) & 1;
 		event->but3 = (mouse_byte[0] >> 2) & 1;
 		stack_push_bot(queue, event);
-
 		mouse_cycle = 0;
+		proc_enable_waiting(dev_id, PROC_WAIT_DEV);
 		break;
 	default:
 		break;

@@ -181,6 +181,21 @@ s32 vfs_stat(const char *path, struct stat *buf)
 	return m->dev->vfs->stat(path, buf, m->dev);
 }
 
+s32 vfs_poll(const char **files)
+{
+	if (!files)
+		return -1;
+
+	for (const char **p = files; *p && **p; p++)
+		if (vfs_ready(*p))
+			return p - files;
+
+	for (const char **p = files; *p && **p; p++)
+		proc_wait_for(vfs_find_dev(*p)->id, PROC_WAIT_DEV, vfs_poll);
+
+	return PROC_MAX_WAIT_IDS + 1;
+}
+
 u8 vfs_ready(const char *path)
 {
 	while (*path == ' ')
@@ -268,6 +283,7 @@ void device_install(void)
 	struct vfs *vfs = malloc(sizeof(*vfs));
 	vfs->type = VFS_DEVFS;
 	vfs->read = devfs_read;
+	vfs->perm = devfs_perm;
 	vfs->ready = devfs_ready;
 	struct device *dev = malloc(sizeof(*dev));
 	dev->name = "dev";

@@ -16,6 +16,7 @@ enum sys {
 	SYS_STAT, // Get file information
 	SYS_READ, // Read file
 	SYS_WRITE, // Write to file
+	SYS_POLL, // Wait for multiple files
 	SYS_EXEC, // Execute path
 	SYS_EXIT, // Exit current process // TODO: Free all memory of process
 	SYS_YIELD, // Switch to next process
@@ -73,12 +74,13 @@ int sysv(enum sys num, ...);
  */
 
 #define loop() sys0(SYS_LOOP)
-#define stat(path, stat) (u32) sys2(SYS_STAT, (int)(path), (int)(stat))
 #define read(path, buf, offset, count)                                                             \
-	(u32) sys4(SYS_READ, (int)(path), (int)(buf), (int)(offset), (int)(count))
+	(s32) sys4(SYS_READ, (int)(path), (int)(buf), (int)(offset), (int)(count))
 #define write(path, buf, offset, count)                                                            \
-	(u32) sys4(SYS_WRITE, (int)(path), (int)(buf), (int)(offset), (int)(count))
-#define exec(path, ...) (int)sysv(SYS_EXEC, (int)(path), ##__VA_ARGS__)
+	(s32) sys4(SYS_WRITE, (int)(path), (int)(buf), (int)(offset), (int)(count))
+#define stat(path, stat) (s32) sys2(SYS_STAT, (int)(path), (int)(stat))
+#define poll(files) (s32) sys1(SYS_POLL, (int)(files))
+#define exec(path, ...) (s32) sysv(SYS_EXEC, (int)(path), ##__VA_ARGS__)
 #define exit(status)                                                                               \
 	{                                                                                          \
 		sys1(SYS_EXIT, (int)status);                                                       \

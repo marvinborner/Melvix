@@ -147,20 +147,55 @@ void proc_yield(struct regs *r)
 	scheduler(r);
 }
 
-void proc_enable_waiting(u32 dev_id)
+void proc_enable_waiting(u32 id, enum proc_wait_type type)
 {
 	struct node *iterator = proc_list->head;
 	while (iterator) {
 		struct proc *p = iterator->data;
 		struct proc_wait *w = &p->wait;
-		if (p && w && w->id == dev_id) {
-			struct regs *r = &p->regs;
-			r->eax = (u32)w->func((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
-			memset(&p->wait, 0, sizeof(p->wait));
-			p->state = PROC_RUNNING;
+
+		if (!p || !w || w->id_cnt == 0 || w->type != type) {
+			iterator = iterator->next;
+			continue;
 		}
+
+		u8 dispatched = 0;
+
+		for (u32 i = 0; i < PROC_MAX_WAIT_IDS; i++) {
+			if (w->ids[i] == id) {
+				struct regs *r = &p->regs;
+				if (w->func)
+					r->eax = (u32)w->func((char *)r->ebx, (void *)r->ecx,
+							      r->edx, r->esi);
+				w->ids[i] = 0;
+				p->state = PROC_RUNNING;
+				dispatched = 1;
+				break;
+			}
+		}
+
+		if (dispatched)
+			memset(&p->wait, 0, sizeof(p->wait));
+
 		iterator = iterator->next;
 	}
+}
+
+void proc_wait_for(u32 id, enum proc_wait_type type, s32 (*func)())
+{
+	struct proc *p = proc_current();
+
+	if (p->wait.id_cnt > 0) {
+		p->wait.ids[p->wait.id_cnt++] = id;
+		assert(func == p->wait.func && type == p->wait.type);
+	} else {
+		p->wait.type = type;
+		p->wait.id_cnt = 1;
+		p->wait.ids[0] = id;
+		p->wait.func = func;
+	}
+
+	p->state = PROC_SLEEPING;
 }
 
 struct proc *proc_make(void)
@@ -170,6 +205,8 @@ struct proc *proc_make(void)
 	proc->super = 0;
 	proc->messages = stack_new();
 	proc->state = PROC_RUNNING;
+	proc->wait.id_cnt = 0;
+	proc->wait.func = NULL;
 
 	if (current)
 		list_add(proc_list, proc);
@@ -261,9 +298,12 @@ s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 u8 procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
 {
 	(void)path;
-	(void)perm;
 	(void)dev;
-	return 1;
+
+	if (perm == VFS_EXEC)
+		return 0;
+	else
+		return 1;
 }
 
 u8 procfs_ready(const char *path, struct device *dev)
@@ -290,6 +330,7 @@ void proc_init(void)
 	vfs->type = VFS_PROCFS;
 	vfs->read = procfs_read;
 	vfs->write = procfs_write;
+	vfs->perm = procfs_perm;
 	vfs->ready = procfs_ready;
 	vfs->data = NULL;
 	struct device *dev = malloc(sizeof(*dev));

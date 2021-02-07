@@ -17,10 +17,15 @@
 #define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
 #define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
 
+#define PROC_MAX_WAIT_IDS 16
+
 enum proc_state { PROC_RUNNING, PROC_SLEEPING };
+enum proc_wait_type { PROC_WAIT_DEV };
 
 struct proc_wait {
-	u32 id; // dev_id
+	enum proc_wait_type type;
+	u32 ids[PROC_MAX_WAIT_IDS]; // dev_id
+	u32 id_cnt;
 	s32 (*func)();
 };
 
@@ -43,7 +48,8 @@ struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
 void proc_yield(struct regs *r);
 void proc_clear_quantum();
-void proc_enable_waiting(u32 dev_id);
+void proc_enable_waiting(u32 id, enum proc_wait_type type);
+void proc_wait_for(u32 id, enum proc_wait_type type, s32 (*func)());
 struct proc *proc_make(void);
 
 #endif
