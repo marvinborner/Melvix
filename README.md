@@ -36,7 +36,7 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 ## Test
 
 -   Install the qemu i386 emulator
--   Download the `disk-img` artifact from the newest [GitHub Workflow build](https://github.com/marvinborner/Melvix/actions)
+-   Download the `disk-img` artifact from the newest stable [GitHub Workflow build](https://github.com/marvinborner/Melvix/actions?query=branch%3Amain)
 -   Unzip `disk-img.zip`
 -   Run `qemu-system-i386 -m 256M -vga std -drive file=path/to/disk.img,format=raw,index=1,media=disk -netdev user,id=net0 -device rtl8139,netdev=net0`
 -   Try entering `browser`, `files`, `mandelbrot` (or any other program in `apps/`) into the input field and press enter
@@ -68,6 +68,8 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 
 -   Clone this repository using `git clone https://github.com/marvinborner/Melvix.git`
 
+-   Switch to the stable `main` branch using `git checkout main`
+
 -   Run `./run` (pure magic!)
 
 -   If you need help: `./run to help`
@@ -89,5 +91,6 @@ Resources:
 -   [Spleen font](https://github.com/fcambus/spleen) - [MIT License](https://github.com/fcambus/spleen/blob/5759e9abb130b89ba192edc5324b12ef07b7dad3/LICENSE)
 
 Libraries:
+
 -   [upng (heavily modified lodepng)](https://github.com/elanthis/upng) - [ZLIB License](https://github.com/lvandeve/lodepng/blob/7fdcc96a5e5864eee72911c3ca79b1d9f0d12292/LICENSE)
 -   [sxml](https://github.com/capmar/sxml) - [Unlicense License](https://github.com/capmar/sxml/blob/91176b4c62ef7c6342804e02fc440b2e82326469/UNLICENSE)
