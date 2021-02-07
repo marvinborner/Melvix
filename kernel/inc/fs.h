@@ -32,6 +32,7 @@ void device_add(struct device *dev);
  */
 
 enum vfs_type { VFS_DEVFS, VFS_TMPFS, VFS_PROCFS, VFS_EXT2 };
+enum vfs_perm { VFS_EXEC, VFS_WRITE, VFS_READ };
 
 struct vfs {
 	enum vfs_type type;
@@ -40,6 +41,7 @@ struct vfs {
 	s32 (*read)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
 	s32 (*write)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
 	s32 (*stat)(const char *path, struct stat *buf, struct device *dev);
+	u8 (*perm)(const char *path, enum vfs_perm perm, struct device *dev);
 	u8 (*ready)(const char *path, struct device *dev);
 };
 
@@ -70,6 +72,17 @@ struct device *device_get_by_name(const char *name);
 #define EXT2_SUPER 1
 #define EXT2_ROOT 2
 #define EXT2_MAGIC 0x0000EF53
+
+// TODO: Support other and group permissions?
+#define EXT2_PERM_OEXEC 0x001
+#define EXT2_PERM_OWRITE 0x002
+#define EXT2_PERM_OREAD 0x004
+#define EXT2_PERM_GEXEC 0x008
+#define EXT2_PERM_GWRITE 0x010
+#define EXT2_PERM_GREAD 0x020
+#define EXT2_PERM_UEXEC 0x040
+#define EXT2_PERM_UWRITE 0x080
+#define EXT2_PERM_UREAD 0x100
 
 struct ext2_superblock {
 	u32 total_inodes;
@@ -155,6 +168,7 @@ struct ext2_file {
 
 s32 ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
 s32 ext2_stat(const char *path, struct stat *buf, struct device *dev);
+u8 ext2_perm(const char *path, enum vfs_perm perm, struct device *dev);
 u8 ext2_ready(const char *path, struct device *dev);
 
 #endif

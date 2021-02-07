@@ -14,10 +14,10 @@
 
 u32 current_pid = 0;
 u32 quantum = 0;
-struct proc *priority_proc;
-struct list *proc_list;
-struct node *idle_proc;
-struct node *current;
+struct proc *priority_proc = NULL;
+struct list *proc_list = NULL;
+struct node *idle_proc = NULL;
+struct node *current = NULL;
 
 // TODO: Use less memcpy and only copy relevant registers
 // TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
@@ -88,6 +88,17 @@ struct proc *proc_current(void)
 	return current && current->data ? current->data : NULL;
 }
 
+u8 proc_super(void)
+{
+	struct proc *proc = proc_current();
+	if (proc)
+		return proc->super;
+	else if (current_pid == 0)
+		return 1; // Kernel has super permissions
+	else
+		return 0; // Should never happen
+}
+
 struct proc *proc_from_pid(u32 pid)
 {
 	struct node *iterator = proc_list->head;
@@ -156,6 +167,7 @@ struct proc *proc_make(void)
 {
 	struct proc *proc = malloc(sizeof(*proc));
 	proc->pid = current_pid++;
+	proc->super = 0;
 	proc->messages = stack_new();
 	proc->state = PROC_RUNNING;
 
@@ -246,6 +258,14 @@ s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 	return -1;
 }
 
+u8 procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
+{
+	(void)path;
+	(void)perm;
+	(void)dev;
+	return 1;
+}
+
 u8 procfs_ready(const char *path, struct device *dev)
 {
 	(void)path;
@@ -293,6 +313,7 @@ void proc_init(void)
 
 	_eip = ((struct proc *)new->data)->regs.eip;
 	_esp = ((struct proc *)new->data)->regs.useresp;
+	((struct proc *)new->data)->super = 1;
 
 	u32 argc = 2;
 	char **argv = malloc(sizeof(*argv) * (argc + 1));

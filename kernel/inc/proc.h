@@ -26,6 +26,7 @@ struct proc_wait {
 
 struct proc {
 	u32 pid;
+	u8 super;
 	char name[32];
 	struct regs regs;
 	struct proc_wait wait; // dev_id
@@ -37,6 +38,7 @@ void scheduler(struct regs *regs);
 void proc_init(void);
 void proc_print(void);
 struct proc *proc_current(void);
+u8 proc_super(void);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
 void proc_yield(struct regs *r);

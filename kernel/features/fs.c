@@ -130,11 +130,14 @@ s32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 		path++;
 
 	struct mount_info *m = vfs_find_mount_info(path);
-	assert(m && m->dev && m->dev->vfs && m->dev->vfs->read);
+	assert(m && m->dev && m->dev->vfs && m->dev->vfs->read && m->dev->vfs->perm);
 
 	u32 len = strlen(m->path);
 	if (len > 1)
 		path += len;
+
+	if (!m->dev->vfs->perm(path, VFS_READ, m->dev) && !proc_super())
+		return -1;
 
 	return m->dev->vfs->read(path, buf, offset, count, m->dev);
 }
@@ -151,11 +154,14 @@ s32 vfs_write(const char *path, void *buf, u32 offset, u32 count)
 		path++;
 
 	struct mount_info *m = vfs_find_mount_info(path);
-	assert(m && m->dev && m->dev->vfs && m->dev->vfs->write);
+	assert(m && m->dev && m->dev->vfs && m->dev->vfs->write && m->dev->vfs->perm);
 
 	u32 len = strlen(m->path);
 	if (len > 1)
 		path += len;
+
+	if (!m->dev->vfs->perm(path, VFS_WRITE, m->dev) && !proc_super())
+		return -1;
 
 	return m->dev->vfs->write(path, buf, offset, count, m->dev);
 }
@@ -237,6 +243,14 @@ s32 devfs_read(const char *path, void *buf, u32 offset, u32 count, struct device
 	return target->read(buf, offset, count, dev);
 }
 
+u8 devfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
+{
+	(void)path;
+	(void)perm;
+	(void)dev;
+	return 1;
+}
+
 u8 devfs_ready(const char *path, struct device *dev)
 {
 	(void)dev;
@@ -307,7 +321,7 @@ struct ext2_inode *get_inode(u32 i, struct device *dev)
 		(struct ext2_inode *)((u32)buf +
 				      (index % (BLOCK_SIZE / EXT2_INODE_SIZE)) * EXT2_INODE_SIZE);
 
-	free(buf);
+	free(buf); // TODO: Fix use after free with *in
 	free(s);
 	free(b - block_group);
 
@@ -464,6 +478,22 @@ s32 ext2_stat(const char *path, struct stat *buf, struct device *dev)
 	buf->size = sz; // Actually in->size but ext2..
 
 	return 0;
+}
+
+u8 ext2_perm(const char *path, enum vfs_perm perm, struct device *dev)
+{
+	struct ext2_inode *in = find_inode_by_path(path, dev);
+
+	switch (perm) {
+	case VFS_EXEC:
+		return (in->mode & EXT2_PERM_UEXEC) != 0;
+	case VFS_WRITE:
+		return (in->mode & EXT2_PERM_UWRITE) != 0;
+	case VFS_READ:
+		return (in->mode & EXT2_PERM_UREAD) != 0;
+	default:
+		return 0;
+	}
 }
 
 u8 ext2_ready(const char *path, struct device *dev)
