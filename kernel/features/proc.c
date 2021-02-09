@@ -215,18 +215,20 @@ void proc_wait_for(u32 id, enum proc_wait_type type, s32 (*func)())
 struct proc *proc_make(void)
 {
 	struct proc *proc = malloc(sizeof(*proc));
+	memset(proc, 0, sizeof(*proc));
 	proc->pid = current_pid++;
 	proc->super = 0;
 	proc->messages = stack_new();
 	proc->state = PROC_RUNNING;
-	proc->wait.id_cnt = 0;
-	proc->wait.func = NULL;
 
 	if (current)
 		list_add(proc_list, proc);
 
 	return proc;
 }
+
+// TODO: Procfs needs a simpler interface structure (memcmp and everything sucks)
+// TODO: Handle stream overflows
 
 const char *procfs_parse_path(const char **path, u32 *pid)
 {
@@ -246,6 +248,21 @@ const char *procfs_parse_path(const char **path, u32 *pid)
 	return *path;
 }
 
+struct stream *procfs_get_stream(const char *path, struct proc *proc)
+{
+	struct stream *stream = NULL;
+	if (!memcmp(path, "in", 3)) {
+		stream = &proc->streams[STREAM_IN];
+	} else if (!memcmp(path, "out", 4)) {
+		stream = &proc->streams[STREAM_IN];
+	} else if (!memcmp(path, "err", 4)) {
+		stream = &proc->streams[STREAM_IN];
+	} else if (!memcmp(path, "log", 4)) {
+		stream = &proc->streams[STREAM_LOG];
+	}
+	return stream;
+}
+
 s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	u32 pid = 0;
@@ -260,6 +277,17 @@ s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct devi
 			stack_push_bot(p->messages, buf); // TODO: Use offset and count
 			proc_enable_waiting(dev->id, PROC_WAIT_DEV); // TODO: Better wakeup solution
 			return count;
+		} else if (!memcmp(path, "io/", 3)) {
+			path += 3;
+			struct stream *stream = procfs_get_stream(path, p);
+			if (stream) {
+				memcpy((char *)(stream->data + stream->pos), buf, count);
+				stream->pos += count;
+				proc_enable_waiting(dev->id, PROC_WAIT_DEV);
+				return count;
+			} else {
+				return -1;
+			}
 		}
 	}
 
@@ -299,6 +327,17 @@ s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 				memcpy(buf, msg + offset, count);
 				return count;
 			}
+		} else if (!memcmp(path, "io/", 3)) {
+			path += 3;
+			struct stream *stream = procfs_get_stream(path, p);
+
+			if (stream) {
+				memcpy(buf, stream->data + stream->offset, count);
+				stream->offset += count;
+				return count;
+			} else {
+				return -1;
+			}
 		}
 	}
 
@@ -329,8 +368,18 @@ u8 procfs_ready(const char *path, struct device *dev)
 			return -1;
 
 		path++;
-		if (!memcmp(path, "msg", 4))
+		if (!memcmp(path, "msg", 4)) {
 			return stack_empty(p->messages) == 0;
+		} else if (!memcmp(path, "io/", 3)) {
+			path += 3;
+			struct stream *stream = procfs_get_stream(path, p);
+
+			if (stream) {
+				return stream->data[stream->offset] != 0;
+			} else {
+				return -1;
+			}
+		}
 	}
 
 	return 1;

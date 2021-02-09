@@ -19,6 +19,11 @@
 
 #define PROC_MAX_WAIT_IDS 16
 
+#define STREAM_IN 0
+#define STREAM_OUT 1
+#define STREAM_ERR 2
+#define STREAM_LOG 3
+
 enum proc_state { PROC_RUNNING, PROC_SLEEPING };
 enum proc_wait_type { PROC_WAIT_DEV };
 
@@ -29,10 +34,17 @@ struct proc_wait {
 	s32 (*func)();
 };
 
+struct stream {
+	u32 offset;
+	u32 pos;
+	char data[4096];
+};
+
 struct proc {
 	u32 pid;
 	u8 super;
 	char name[32];
+	struct stream streams[4];
 	struct regs regs;
 	struct proc_wait wait; // dev_id
 	enum proc_state state;
