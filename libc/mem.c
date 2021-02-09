@@ -364,23 +364,23 @@ void _free(void *ptr)
 void *malloc_debug(u32 size, const char *file, int line, const char *func, const char *inp)
 {
 	void *ret = _malloc(size);
-#ifdef kernel
-	printf("K");
-#else
-	printf("U");
-#endif
-	printf("MALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp);
+	/* #ifdef kernel */
+	/* 	printf("K"); */
+	/* #else */
+	/* 	printf("U"); */
+	/* #endif */
+	/* 	printf("MALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp); */
 	return ret;
 }
 
 void free_debug(void *ptr, const char *file, int line, const char *func, const char *inp)
 {
-#ifdef kernel
-	printf("K");
-#else
-	printf("U");
-#endif
-	printf("FREE\t%s:%d: %s: 0x%x (%s)\n", file, line, func, ptr, inp);
+	/* #ifdef kernel */
+	/* 	printf("K"); */
+	/* #else */
+	/* 	printf("U"); */
+	/* #endif */
+	/* 	printf("FREE\t%s:%d: %s: 0x%x (%s)\n", file, line, func, ptr, inp); */
 	if (ptr)
 		_free(ptr);
 }

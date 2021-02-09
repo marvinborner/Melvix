@@ -281,30 +281,35 @@ int main(int argc, char **argv)
 	gfx_write(&direct, 0, 0, FONT_32, COLOR_FG, "Welcome to Melvix!");
 	gfx_write(&direct, 0, 32, FONT_32, COLOR_FG, "Loading resources...");
 	gfx_fill(&root, COLOR_FG);
-	gfx_load_wallpaper(&root, "/res/wall.png");
-	gfx_load_image(&cursor, "/res/cursor.png", 0, 0);
+	//gfx_load_wallpaper(&root, "/res/wall.png");
+	//gfx_load_image(&cursor, "/res/cursor.png", 0, 0);
+	gfx_fill(&cursor, COLOR_BG);
 	redraw_all();
 
 	struct message msg = { 0 };
 	struct event_keyboard kbd_event = { 0 };
 	struct event_mouse mouse_event = { 0 };
+	const char *listeners[] = { "/dev/kbd", "/dev/mouse", "/proc/self/msg" };
 	while (1) {
-		if (read("/dev/kbd", &kbd_event, 0, sizeof(struct event_keyboard)))
-			handle_keyboard(&kbd_event);
-		/* else if (read("/dev/mouse", &mouse_event, 0, sizeof(struct event_mouse))) */
-		/* 	handle_mouse(&mouse_event); */
-		/* else if (msg_receive(&msg)) { */
-		/* 	handle_message(&msg); */
-		/* } */
-		else {
-			yield();
-			continue;
+		int poll_ret = 0;
+		if ((poll_ret = poll(listeners)) >= 0) {
+			if (poll_ret == 0) {
+				if (read(listeners[poll_ret], &kbd_event, 0, sizeof(kbd_event)) > 0)
+					handle_keyboard(&kbd_event);
+				continue;
+			} else if (poll_ret == 1) {
+				if (read(listeners[poll_ret], &mouse_event, 0,
+					 sizeof(mouse_event)) > 0)
+					handle_mouse(&mouse_event);
+				continue;
+			} else if (poll_ret == 2) {
+				if (read(listeners[poll_ret], &msg, 0, sizeof(msg)) <= 0)
+					continue;
+			}
+		} else {
+			printf("POLL ERROR!\n");
+			return 1;
 		}
-
-		//if (!msg_receive(&msg)) {
-		yield();
-		continue;
-		//}
 
 		switch (msg.type) {
 		case GFX_NEW_CONTEXT: {

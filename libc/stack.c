@@ -115,7 +115,7 @@ void *stack_peek(struct stack *stack)
 	if (!stack || !stack->tail)
 		return NULL;
 
-	return stack->tail;
+	return stack->tail->data;
 }
 
 void stack_clear(struct stack *stack)

@@ -46,6 +46,14 @@ void scheduler(struct regs *regs)
 		current = proc_list->head;
 	} else {
 		current = idle_proc;
+		struct node *iterator = proc_list->head;
+		while (iterator) {
+			if (((struct proc *)iterator->data)->state == PROC_RUNNING) {
+				current = iterator;
+				break;
+			}
+			iterator = iterator->next;
+		}
 	}
 
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
@@ -149,6 +157,8 @@ void proc_yield(struct regs *r)
 
 void proc_enable_waiting(u32 id, enum proc_wait_type type)
 {
+	struct proc *proc_bak = proc_current();
+
 	struct node *iterator = proc_list->head;
 	while (iterator) {
 		struct proc *p = iterator->data;
@@ -161,6 +171,7 @@ void proc_enable_waiting(u32 id, enum proc_wait_type type)
 
 		u8 dispatched = 0;
 
+		current = list_first_data(proc_list, p);
 		for (u32 i = 0; i < PROC_MAX_WAIT_IDS; i++) {
 			if (w->ids[i] == id) {
 				struct regs *r = &p->regs;
@@ -179,6 +190,9 @@ void proc_enable_waiting(u32 id, enum proc_wait_type type)
 
 		iterator = iterator->next;
 	}
+
+	if (current->data != proc_bak)
+		current = list_first_data(proc_list, proc_bak);
 }
 
 void proc_wait_for(u32 id, enum proc_wait_type type, s32 (*func)())
@@ -214,22 +228,28 @@ struct proc *proc_make(void)
 	return proc;
 }
 
+const char *procfs_parse_path(const char **path, u32 *pid)
+{
+	while (**path == '/')
+		(*path)++;
+
+	while ((*path)[0] >= '0' && (*path)[0] <= '9') {
+		*pid = *pid * 10 + ((*path)[0] - '0');
+		(*path)++;
+	}
+
+	if (!*pid && !memcmp(*path, "self/", 5)) {
+		*pid = proc_current()->pid;
+		*path += 4;
+	}
+
+	return *path;
+}
+
 s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
-	while (*path == '/')
-		path++;
-
-	int pid = 0;
-	while (path[0] >= '0' && path[0] <= '9') {
-		pid = pid * 10 + (path[0] - '0');
-		path++;
-	}
-
-	if (!pid && !memcmp(path, "self/", 5)) {
-		pid = proc_current()->pid;
-		path += 4;
-	}
-
+	u32 pid = 0;
+	procfs_parse_path(&path, &pid);
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
 		if (!p || path[0] != '/')
@@ -237,7 +257,8 @@ s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct devi
 
 		path++;
 		if (!memcmp(path, "msg", 4)) {
-			stack_push_bot(p->messages, buf);
+			stack_push_bot(p->messages, buf); // TODO: Use offset and count
+			proc_enable_waiting(dev->id, PROC_WAIT_DEV); // TODO: Better wakeup solution
 			return count;
 		}
 	}
@@ -249,20 +270,8 @@ s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct devi
 s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	(void)dev;
-
-	while (*path == '/')
-		path++;
-
-	int pid = 0;
-	while (path[0] >= '0' && path[0] <= '9') {
-		pid = pid * 10 + (path[0] - '0');
-		path++;
-	}
-
-	if (!pid && !memcmp(path, "self/", 5)) {
-		pid = proc_current()->pid;
-		path += 4;
-	}
+	u32 pid = 0;
+	procfs_parse_path(&path, &pid);
 
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
@@ -286,6 +295,7 @@ s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 				return 0;
 			} else {
 				u8 *msg = stack_pop(p->messages);
+				printf("Pop: %s\n", msg);
 				memcpy(buf, msg + offset, count);
 				return count;
 			}
@@ -308,8 +318,21 @@ u8 procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
 
 u8 procfs_ready(const char *path, struct device *dev)
 {
-	(void)path;
 	(void)dev;
+
+	u32 pid = 0;
+	procfs_parse_path(&path, &pid);
+
+	if (pid) {
+		struct proc *p = proc_from_pid(pid);
+		if (!p || path[0] != '/')
+			return -1;
+
+		path++;
+		if (!memcmp(path, "msg", 4))
+			return stack_empty(p->messages) == 0;
+	}
+
 	return 1;
 }
 
