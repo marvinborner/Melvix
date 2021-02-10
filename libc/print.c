@@ -63,6 +63,8 @@ int vsprintf(char *str, const char *format, va_list ap)
 			} else if (buf == 'c') {
 				str[i] = (char)va_arg(ap, int);
 				i++;
+			} else {
+				assert(0);
 			}
 		} else {
 			if (*format == '%')
@@ -79,15 +81,35 @@ int vsprintf(char *str, const char *format, va_list ap)
 	return strlen(str);
 }
 
-int vprintf(const char *format, va_list ap)
+#ifdef userspace
+
+#include <sys.h>
+#define PATH_OUT "/proc/self/io/out"
+#define PATH_LOG "/proc/self/io/log"
+#define PATH_ERR "/proc/self/io/err"
+
+int vfprintf(const char *path, const char *format, va_list ap)
 {
 	char buf[1024] = { 0 };
 	int len = vsprintf(buf, format, ap);
-	serial_print(buf); // TODO: Remove temporary serial print
+	return write(path, buf, 0, len);
+}
+
+int vprintf(const char *format, va_list ap)
+{
+	return vfprintf(PATH_OUT, format, ap);
+}
+
+int fprintf(const char *path, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	int len = vfprintf(path, format, ap);
+	va_end(ap);
+
 	return len;
 }
 
-// TODO: Fix printf for *very* large strings (serial works)
 int printf(const char *format, ...)
 {
 	va_list ap;
@@ -98,8 +120,87 @@ int printf(const char *format, ...)
 	return len;
 }
 
+int log(const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	int len = vfprintf(PATH_LOG, format, ap);
+	va_end(ap);
+
+	return len;
+}
+
+int err(int code, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	vfprintf(PATH_ERR, format, ap);
+	va_end(ap);
+	exit(code);
+}
+
 int print(const char *str)
 {
+	return write(PATH_OUT, str, 0, strlen(str));
+}
+
+#else
+
+// The kernel prints everything into the serial console
+#include <proc.h>
+
+#define RED "\x1B[1;31m"
+#define GRN "\x1B[1;32m"
+#define YEL "\x1B[1;33m"
+#define BLU "\x1B[1;34m"
+#define MAG "\x1B[1;35m"
+#define CYN "\x1B[1;36m"
+#define WHT "\x1B[1;37m"
+#define RES "\x1B[0m"
+
+void print_kernel(const char *str)
+{
+	serial_print(RED);
+	serial_print("[KER] ");
 	serial_print(str);
+	serial_print(RES);
+}
+
+int vprintf(const char *format, va_list ap)
+{
+	char buf[1024] = { 0 };
+	int len = vsprintf(buf, format, ap);
+	print_kernel(buf);
+	return len;
+}
+
+int printf(const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	int len = vprintf(format, ap);
+	va_end(ap);
+
+	return len;
+}
+
+int print_app(enum stream_defaults id, const char *proc_name, const char *str)
+{
+	if (id == STREAM_LOG)
+		serial_print(CYN "[LOG] to ");
+	else if (id == STREAM_ERR)
+		serial_print(YEL "[ERR] to ");
+	serial_print(proc_name);
+	serial_print(": ");
+	serial_print(str);
+	serial_print(RES);
+	return 1;
+}
+
+int print(const char *str)
+{
+	print_kernel(str);
 	return strlen(str);
 }
+
+#endif

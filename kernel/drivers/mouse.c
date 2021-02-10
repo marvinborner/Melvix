@@ -136,8 +136,9 @@ void mouse_install(void)
 	mouse_serial_write(0xF2);
 	mouse_serial_read();
 	status = (u8)mouse_serial_read();
-	if (status == 3)
-		printf("Scrollwheel support!\n");
+	if (status == 3) {
+	};
+	/* printf("Scrollwheel support!\n"); */
 
 	// Activate 4th and 5th mouse buttons
 	mouse_serial_write(0xF2);
@@ -158,8 +159,9 @@ void mouse_install(void)
 	mouse_serial_write(0xF2);
 	mouse_serial_read();
 	status = (u8)mouse_serial_read();
-	if (status == 4)
-		printf("4th and 5th mouse button support!\n");
+	if (status == 4) {
+	};
+	/* printf("4th and 5th mouse button support!\n"); */
 
 	/* TODO: Fix mouse laggyness
 	mouse_serial_write(0xE8);

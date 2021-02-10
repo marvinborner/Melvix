@@ -24,8 +24,8 @@ void pass_or_fail(const char *file_name, int line_num, const char *func, const c
 		  const char *second, int success)
 {
 	failed += success ? 0 : 1;
-	printf("\x1B[%s\x1B[0m %s:%d: %s: %s == %s\n", success ? "32m[PASS]" : "31m[FAIL]",
-	       file_name, line_num, func, first, second);
+	log("\x1B[%s\x1B[0m %s:%d: %s: %s == %s\n", success ? "32m[PASS]" : "31m[FAIL]", file_name,
+	    line_num, func, first, second);
 }
 
 void test_malloc()

@@ -23,6 +23,7 @@ typedef unsigned long long u64;
  * Macros
  */
 
+#define EOF (-1)
 #define NULL ((void *)0)
 
 #define U8_MAX 255

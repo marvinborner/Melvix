@@ -42,7 +42,7 @@
 
 enum font_type { FONT_8, FONT_12, FONT_16, FONT_24, FONT_32, FONT_64 };
 
-enum message_type { GFX_NEW_CONTEXT = EVENT_MAX + 1, GFX_REDRAW, GFX_REDRAW_FOCUSED, GFX_MAX };
+enum message_type { GFX_NEW_CONTEXT, GFX_REDRAW, GFX_REDRAW_FOCUSED, GFX_MAX };
 
 // Generalized font struct
 struct font {

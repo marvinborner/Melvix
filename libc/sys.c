@@ -4,6 +4,8 @@
 #include <arg.h>
 #include <sys.h>
 
+#if defined(userspace)
+
 /**
  * Definitions
  */
@@ -69,3 +71,5 @@ int sysv(enum sys num, ...)
 
 	return sys5(num, args[0], args[1], args[2], args[3], args[4]);
 }
+
+#endif

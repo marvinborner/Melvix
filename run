@@ -85,7 +85,8 @@ make_cross() {
 }
 
 make_disk() {
-    rm -rf disk && mkdir -p disk/font/
+    rm -rf disk && mkdir -p disk/font/ && mkdir -p disk/conf/
+    echo "Hallo" > disk/conf/test
 
     cp -r res/ disk/
 
@@ -140,6 +141,7 @@ make_build() {
         $SUDO mount build/disk.img mnt/
     fi
     $SUDO cp -r disk/* mnt/
+    $SUDO chmod -R 0 mnt/conf/
     $SUDO cp -r build/apps/ mnt/bin/
     $SUDO cp build/load.bin mnt/
     $SUDO cp build/kernel.bin mnt/

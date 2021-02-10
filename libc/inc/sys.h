@@ -28,8 +28,6 @@ enum sys {
 	SYS_NET_RECEIVE, // Receive data from socket
 };
 
-enum event_type { EVENT_KEYBOARD, EVENT_MOUSE, EVENT_MAX };
-
 struct message {
 	int src;
 	int type;
@@ -70,7 +68,7 @@ int sys5(enum sys num, int d1, int d2, int d3, int d4, int d5);
 int sysv(enum sys num, ...);
 
 /**
- * Wrappers
+ * Syscall wrappers
  */
 
 #define loop() sys0(SYS_LOOP)

@@ -264,7 +264,7 @@ int main(int argc, char **argv)
 	(void)argc;
 	int pid = getpid();
 	vbe = *(struct vbe *)argv[1];
-	/* printf("VBE: %dx%d\n", vbe.width, vbe.height); */
+	log("WM loaded: %dx%d\n", vbe.width, vbe.height);
 
 	keymap = keymap_parse("/res/keymaps/en.keymap");
 
@@ -307,8 +307,7 @@ int main(int argc, char **argv)
 					continue;
 			}
 		} else {
-			printf("POLL ERROR!\n");
-			return 1;
+			err(1, "POLL ERROR!\n");
 		}
 
 		switch (msg.type) {
