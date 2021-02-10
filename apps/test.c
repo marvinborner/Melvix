@@ -93,9 +93,9 @@ int main()
 	test_mem();
 
 	if (failed)
-		printf("%d tests failed\n", failed);
+		log("%d tests failed\n", failed);
 	else
-		print("All tests passed\n");
+		log("All tests passed\n");
 
 	// Try emulator shutdown
 	outw(0xB004, 0x2000);
