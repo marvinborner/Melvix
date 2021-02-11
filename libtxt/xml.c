@@ -194,9 +194,9 @@ static enum xml_error parse_characters(struct xml *state, struct xml_args *args,
 static enum xml_error parse_attrvalue(struct xml *state, struct xml_args *args, const char *end)
 {
 	while (buffer_from_offset(args, state->buffer_pos) != end) {
-		enum xml_error err = parse_characters(state, args, end);
-		if (err != XML_SUCCESS)
-			return err;
+		enum xml_error error = parse_characters(state, args, end);
+		if (error != XML_SUCCESS)
+			return error;
 	}
 
 	return XML_SUCCESS;
@@ -213,7 +213,7 @@ static enum xml_error parse_attributes(struct xml *state, struct xml_args *args)
 
 	while (name != end && is_alpha(*name)) {
 		const char *eq, *space, *quot, *value;
-		enum xml_error err;
+		enum xml_error error;
 
 		eq = str_findchr(name, end, '=');
 		if (eq == end)
@@ -234,9 +234,9 @@ static enum xml_error parse_attributes(struct xml *state, struct xml_args *args)
 			return XML_ERROR_BUFFERDRY;
 
 		state_set_pos(state, args, value);
-		err = parse_attrvalue(state, args, quot);
-		if (err != XML_SUCCESS)
-			return err;
+		error = parse_attrvalue(state, args, quot);
+		if (error != XML_SUCCESS)
+			return error;
 
 		name = str_ltrim(quot + 1, end);
 	}
@@ -280,7 +280,7 @@ static enum xml_error parse_instruction(struct xml *state, struct xml_args *args
 	static const char START_TAG[] = "<?";
 	static const char END_TAG[] = "?>";
 
-	enum xml_error err;
+	enum xml_error error;
 	const char *quest, *space;
 	const char *start = buffer_from_offset(args, state->buffer_pos);
 	const char *end = buffer_getend(args);
@@ -297,9 +297,9 @@ static enum xml_error parse_instruction(struct xml *state, struct xml_args *args
 	state_push_token(state, args, XML_INSTRUCTION, start, space);
 
 	state_set_pos(state, args, space);
-	err = parse_attributes(state, args);
-	if (err != XML_SUCCESS)
-		return err;
+	error = parse_attributes(state, args);
+	if (error != XML_SUCCESS)
+		return error;
 
 	quest = buffer_from_offset(args, state->buffer_pos);
 	if (end - quest < (int)TAG_LEN(END_TAG))
@@ -336,7 +336,7 @@ static enum xml_error parse_doctype(struct xml *state, struct xml_args *args)
 
 static enum xml_error parse_start(struct xml *state, struct xml_args *args)
 {
-	enum xml_error err;
+	enum xml_error error;
 	const char *gt, *name, *space;
 	const char *start = buffer_from_offset(args, state->buffer_pos);
 	const char *end = buffer_getend(args);
@@ -353,9 +353,9 @@ static enum xml_error parse_start(struct xml *state, struct xml_args *args)
 	state_push_token(state, args, XML_START_TAG, name, space);
 
 	state_set_pos(state, args, space);
-	err = parse_attributes(state, args);
-	if (err != XML_SUCCESS)
-		return err;
+	error = parse_attributes(state, args);
+	if (error != XML_SUCCESS)
+		return error;
 
 	gt = buffer_from_offset(args, state->buffer_pos);
 
@@ -442,7 +442,7 @@ enum xml_error xml_parse(struct xml *state, const char *buffer, u32 buffer_lengt
 	args.num_tokens = num_tokens;
 
 	while (!ROOT_FOUND(&temp)) {
-		enum xml_error err;
+		enum xml_error error;
 		const char *start = buffer_from_offset(&args, temp.buffer_pos);
 		const char *lt = str_ltrim(start, end);
 		state_set_pos(&temp, &args, lt);
@@ -456,31 +456,31 @@ enum xml_error xml_parse(struct xml *state, const char *buffer, u32 buffer_lengt
 
 		switch (lt[1]) {
 		case '?':
-			err = parse_instruction(&temp, &args);
+			error = parse_instruction(&temp, &args);
 			break;
 		case '!':
-			err = (lt[2] == '-') ? parse_comment(&temp, &args) :
-						     parse_doctype(&temp, &args);
+			error = (lt[2] == '-') ? parse_comment(&temp, &args) :
+						       parse_doctype(&temp, &args);
 			break;
 		default:
-			err = parse_start(&temp, &args);
+			error = parse_start(&temp, &args);
 			break;
 		}
 
-		if (err != XML_SUCCESS)
-			return err;
+		if (error != XML_SUCCESS)
+			return error;
 
 		state_commit(state, &temp);
 	}
 
 	while (!ROOT_PARSED(&temp)) {
-		enum xml_error err;
+		enum xml_error error;
 		const char *start = buffer_from_offset(&args, temp.buffer_pos);
 		const char *lt = str_findchr(start, end, '<');
 		while (buffer_from_offset(&args, temp.buffer_pos) != lt) {
-			err = parse_characters(&temp, &args, lt);
-			if (err != XML_SUCCESS)
-				return err;
+			error = parse_characters(&temp, &args, lt);
+			if (error != XML_SUCCESS)
+				return error;
 
 			state_commit(state, &temp);
 		}
@@ -490,22 +490,22 @@ enum xml_error xml_parse(struct xml *state, const char *buffer, u32 buffer_lengt
 
 		switch (lt[1]) {
 		case '?':
-			err = parse_instruction(&temp, &args);
+			error = parse_instruction(&temp, &args);
 			break;
 		case '/':
-			err = parse_end(&temp, &args);
+			error = parse_end(&temp, &args);
 			break;
 		case '!':
-			err = (lt[2] == '-') ? parse_comment(&temp, &args) :
-						     parse_cdata(&temp, &args);
+			error = (lt[2] == '-') ? parse_comment(&temp, &args) :
+						       parse_cdata(&temp, &args);
 			break;
 		default:
-			err = parse_start(&temp, &args);
+			error = parse_start(&temp, &args);
 			break;
 		}
 
-		if (err != XML_SUCCESS)
-			return err;
+		if (error != XML_SUCCESS)
+			return error;
 
 		state_commit(state, &temp);
 	}

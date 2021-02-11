@@ -59,9 +59,9 @@ static struct dom *generate_dom(char *data, u32 length)
 	struct xml parser;
 	xml_init(&parser);
 	void *buffer = data;
-	enum xml_error err = xml_parse(&parser, buffer, length, tokens, 128);
+	enum xml_error error = xml_parse(&parser, buffer, length, tokens, 128);
 
-	if (err != XML_SUCCESS && err != XML_ERROR_BUFFERDRY) {
+	if (error != XML_SUCCESS && error != XML_ERROR_BUFFERDRY) {
 		printf("XML parse error: %d\n", err);
 		printf("DATA: '%s'\n", data);
 		return NULL;
