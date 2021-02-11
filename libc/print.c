@@ -81,6 +81,16 @@ int vsprintf(char *str, const char *format, va_list ap)
 	return strlen(str);
 }
 
+int sprintf(char *str, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	int len = vsprintf(str, format, ap);
+	va_end(ap);
+
+	return len;
+}
+
 #ifdef userspace
 
 #include <sys.h>
@@ -88,16 +98,16 @@ int vsprintf(char *str, const char *format, va_list ap)
 #define PATH_LOG "/proc/self/io/log"
 #define PATH_ERR "/proc/self/io/err"
 
+int vprintf(const char *format, va_list ap)
+{
+	return vfprintf(PATH_OUT, format, ap);
+}
+
 int vfprintf(const char *path, const char *format, va_list ap)
 {
 	char buf[1024] = { 0 };
 	int len = vsprintf(buf, format, ap);
 	return write(path, buf, 0, len);
-}
-
-int vprintf(const char *format, va_list ap)
-{
-	return vfprintf(PATH_OUT, format, ap);
 }
 
 int fprintf(const char *path, const char *format, ...)
@@ -147,8 +157,8 @@ int print(const char *str)
 #else
 
 // The kernel prints everything into the serial console
-#include <proc.h>
 
+#include <proc.h>
 #define RED "\x1B[1;31m"
 #define GRN "\x1B[1;32m"
 #define YEL "\x1B[1;33m"
