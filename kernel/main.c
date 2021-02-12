@@ -11,13 +11,14 @@
 #include <mouse.h>
 #include <net.h>
 #include <pci.h>
+#include <random.h>
 #include <serial.h>
 #include <syscall.h>
 #include <timer.h>
 
 void kernel_main(struct vid_info *vid_info)
 {
-	heap_init(0x00f00000);
+	heap_init(0x00f00000 + rand());
 
 	boot_passed = vid_info;
 
