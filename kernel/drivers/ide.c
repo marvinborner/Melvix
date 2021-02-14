@@ -126,7 +126,7 @@ void ata_probe(void)
 		if (!ide_find(bus, drive))
 			continue;
 
-		struct device *dev = malloc(sizeof(*dev));
+		struct device *dev = zalloc(sizeof(*dev));
 		struct ata_data *data = malloc(sizeof(*data));
 		data->drive = (bus << 1) | drive;
 
@@ -144,7 +144,7 @@ void ata_probe(void)
 			continue;
 
 		// TODO: Check if ext2 first
-		struct vfs *vfs = malloc(sizeof(*vfs));
+		struct vfs *vfs = zalloc(sizeof(*vfs));
 		vfs->type = VFS_EXT2;
 		vfs->read = ext2_read;
 		vfs->stat = ext2_stat;
@@ -158,6 +158,6 @@ void ata_probe(void)
 
 void ata_install(void)
 {
-	ide_buf = malloc(SECTOR_SIZE);
+	ide_buf = zalloc(SECTOR_SIZE);
 	ata_probe();
 }

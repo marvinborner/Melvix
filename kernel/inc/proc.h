@@ -17,19 +17,25 @@
 #define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
 #define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
 
-#define PROC_MAX_WAIT_IDS 16
+#define PROC_MAX_WAIT_IDS 128
+#define PROC_WAIT_MAGIC 0x00528491
 
 #define STREAM_MAX_SIZE 4096
 enum stream_defaults { STREAM_IN, STREAM_OUT, STREAM_ERR, STREAM_LOG, STREAM_UNKNOWN = -1 };
 
 enum proc_state { PROC_RUNNING, PROC_SLEEPING };
-enum proc_wait_type { PROC_WAIT_DEV };
+enum proc_wait_type { PROC_WAIT_DEV, PROC_WAIT_MSG };
+
+struct proc_wait_identifier {
+	u32 magic;
+	u32 id;
+	enum proc_wait_type type;
+	s32 (*func)();
+};
 
 struct proc_wait {
-	enum proc_wait_type type;
-	u32 ids[PROC_MAX_WAIT_IDS]; // dev_id
+	struct proc_wait_identifier ids[PROC_MAX_WAIT_IDS]; // dev_id
 	u32 id_cnt;
-	s32 (*func)();
 };
 
 struct stream {

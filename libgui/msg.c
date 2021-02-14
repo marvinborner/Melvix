@@ -17,7 +17,7 @@ int msg_send(u32 pid, enum message_type type, void *data)
 int msg_receive(struct message *msg)
 {
 	int ret = read("/proc/self/msg", msg, 0, sizeof(*msg));
-	assert(msg->magic == MSG_MAGIC);
+	assert(msg->magic == MSG_MAGIC); // TODO: Remove? (Many >0 checks are needed)
 	if (msg->magic == MSG_MAGIC && ret == sizeof(*msg))
 		return ret;
 	else

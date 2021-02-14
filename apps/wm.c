@@ -9,6 +9,7 @@
 #include <keymap.h>
 #include <list.h>
 #include <mem.h>
+#include <msg.h>
 #include <print.h>
 #include <random.h>
 #include <sys.h>
@@ -88,7 +89,7 @@ static void kill_focused()
 {
 	if (!focused)
 		return;
-	//msg_send(focused->pid, GUI_KILL, NULL);
+	msg_send(focused->pid, GUI_KILL, NULL);
 	remove_context(focused);
 	focused = context_at(mouse_x, mouse_y);
 }
@@ -162,7 +163,7 @@ static void handle_keyboard(struct event_keyboard *event)
 
 	msg->press = event->press;
 	msg->scancode = event->scancode;
-	//msg_send(focused->pid, GUI_KEYBOARD, msg);
+	msg_send(focused->pid, GUI_KEYBOARD, msg);
 }
 
 static int mouse_skip = 0;
@@ -237,7 +238,7 @@ static void handle_mouse(struct event_mouse *event)
 			focused = resized;
 			struct gui_event_resize *msg = malloc(sizeof(*msg));
 			msg->new_ctx = resized;
-			//msg_send(resized->pid, GUI_RESIZE, msg);
+			msg_send(resized->pid, GUI_RESIZE, msg);
 			redraw_all();
 		}
 	}
@@ -255,7 +256,7 @@ static void handle_mouse(struct event_mouse *event)
 	msg->but1 = event->but1;
 	msg->but2 = event->but2;
 	msg->but3 = event->but3;
-	//msg_send(focused->pid, GUI_MOUSE, msg);
+	msg_send(focused->pid, GUI_MOUSE, msg);
 }
 
 // TODO: Clean this god-function
@@ -323,13 +324,13 @@ int main(int argc, char **argv)
 			if (!(ctx->flags & WF_RELATIVE))
 				focused = ctx;
 			redraw_all();
-			//msg_send(msg.src, GFX_NEW_CONTEXT, ctx);
+			msg_send(msg.src, GFX_NEW_CONTEXT, ctx);
 
 			// Send mouse position
 			struct gui_event_mouse *mouse = malloc(sizeof(msg));
 			mouse->x = mouse_x - focused->x;
 			mouse->y = mouse_y - focused->y;
-			//msg_send(focused->pid, GUI_MOUSE, mouse);
+			msg_send(focused->pid, GUI_MOUSE, mouse);
 			break;
 		}
 		case GFX_REDRAW:

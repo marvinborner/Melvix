@@ -361,20 +361,31 @@ void _free(void *ptr)
 
 #endif
 
+#ifdef kernel
+#define PREFIX "K"
+#define FUNC printf
+#else
+#define PREFIX "U"
+#define FUNC log
+#endif
+
+void *zalloc(u32 size)
+{
+	void *ret = malloc(size);
+	memset(ret, 0, size);
+	return ret;
+}
+
 void *malloc_debug(u32 size, const char *file, int line, const char *func, const char *inp)
 {
+	assert(size < (100 << 20)); // Don't brag with memory pls
 	void *ret = _malloc(size);
 
 	(void)file;
 	(void)line;
 	(void)func;
 	(void)inp;
-	/* #ifdef kernel */
-	/* 	printf("K"); */
-	/* #else */
-	/* 	printf("U"); */
-	/* #endif */
-	/* 	printf("MALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp); */
+	/* FUNC(PREFIX "MALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp); */
 	return ret;
 }
 
@@ -387,10 +398,5 @@ void free_debug(void *ptr, const char *file, int line, const char *func, const c
 	(void)line;
 	(void)func;
 	(void)inp;
-	/* #ifdef kernel */
-	/* 	printf("K"); */
-	/* #else */
-	/* 	printf("U"); */
-	/* #endif */
-	/* 	printf("FREE\t%s:%d: %s: 0x%x (%s)\n", file, line, func, ptr, inp); */
+	/* FUNC(PREFIX "FREE\t%s:%d: %s: 0x%x (%s)\n", file, line, func, ptr, inp); */
 }

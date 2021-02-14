@@ -24,7 +24,8 @@ void kernel_main(struct vid_info *vid_info)
 
 	// Serial connection
 	serial_install();
-	serial_print("\nConnected.\n");
+	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
+	serial_print("Serial connected.\n");
 
 	cpu_print();
 

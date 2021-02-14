@@ -33,8 +33,6 @@ void keyboard_handler()
 	// TODO: "Merge" scancode to linux keycode?
 	/* printf("%x %x = %x\n", scancode, state ? 0xe0 : 0, merged); */
 
-	if (event)
-		free(event);
 	event = malloc(sizeof(*event));
 	event->magic = KEYBOARD_MAGIC;
 	event->press = (scancode & 0x80) == 0;
@@ -68,6 +66,7 @@ s32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
 
 	struct event *e = stack_pop(queue);
 	memcpy(buf, (u8 *)e + offset, count);
+	free(e);
 	return count;
 }
 
@@ -87,7 +86,7 @@ void keyboard_install(void)
 	irq_install_handler(1, keyboard_handler);
 
 	queue = stack_new();
-	struct device *dev = malloc(sizeof(*dev));
+	struct device *dev = zalloc(sizeof(*dev));
 	dev->name = strdup("kbd");
 	dev->type = DEV_CHAR;
 	dev->read = keyboard_read;

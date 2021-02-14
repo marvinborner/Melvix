@@ -35,8 +35,6 @@ void mouse_handler()
 	case 2:
 		mouse_byte[2] = (char)inb(0x60);
 
-		if (event)
-			free(event);
 		event = malloc(sizeof(*event));
 		event->magic = MOUSE_MAGIC;
 		event->diff_x = mouse_byte[1];
@@ -96,6 +94,7 @@ s32 mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
 
 	struct event *e = stack_pop(queue);
 	memcpy(buf, (u8 *)e + offset, count);
+	free(e);
 	return count;
 }
 
@@ -181,7 +180,7 @@ void mouse_install(void)
 	irq_install_handler(12, mouse_handler);
 
 	queue = stack_new();
-	struct device *dev = malloc(sizeof(*dev));
+	struct device *dev = zalloc(sizeof(*dev));
 	dev->name = strdup("mouse");
 	dev->type = DEV_CHAR;
 	dev->read = mouse_read;

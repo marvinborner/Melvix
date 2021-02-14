@@ -5,8 +5,11 @@
 #define GFX_H
 
 #include <def.h>
+#include <msg.h>
 #include <sys.h>
 #include <vesa.h>
+
+#define WM_PATH "/bin/wm"
 
 #define GET_ALPHA(color) ((color >> 24) & 0x000000FF)
 #define GET_RED(color) ((color >> 16) & 0x000000FF)
@@ -41,8 +44,6 @@
 #define WF_RELATIVE (1 << 3)
 
 enum font_type { FONT_8, FONT_12, FONT_16, FONT_24, FONT_32, FONT_64 };
-
-enum message_type { GFX_NEW_CONTEXT, GFX_REDRAW, GFX_REDRAW_FOCUSED, GFX_MAX };
 
 // Generalized font struct
 struct font {
@@ -85,7 +86,7 @@ int gfx_font_width(enum font_type);
  */
 
 #define gfx_redraw()                                                                               \
-	(void)42 //(msg_send(2, GFX_REDRAW, NULL)) // TODO: Partial redraw (optimization)
-#define gfx_redraw_focused() (void)42 //(msg_send(2, GFX_REDRAW_FOCUSED, NULL))
+	(msg_send(pidof(WM_PATH), GFX_REDRAW, NULL)) // TODO: Partial redraw (optimization)
+#define gfx_redraw_focused() (msg_send(pidof(WM_PATH), GFX_REDRAW_FOCUSED, NULL))
 
 #endif

@@ -120,10 +120,11 @@ s32 vfs_mount(struct device *dev, const char *path)
 
 s32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 {
+	/* printf("%s READ: %s\n", proc_current()->name, path); */
 	if (!count)
 		return 0;
 
-	if (offset > count)
+	if (offset > count || !buf)
 		return -1;
 
 	while (*path == ' ')
@@ -144,10 +145,11 @@ s32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 
 s32 vfs_write(const char *path, void *buf, u32 offset, u32 count)
 {
+	/* printf("%s WRITE: %s\n", proc_current()->name, path); */
 	if (!count)
 		return 0;
 
-	if (offset > count)
+	if (offset > count || !buf)
 		return -1;
 
 	while (*path == ' ')
@@ -171,6 +173,9 @@ s32 vfs_stat(const char *path, struct stat *buf)
 	while (*path == ' ')
 		path++;
 
+	if (!buf)
+		return -1;
+
 	struct mount_info *m = vfs_find_mount_info(path);
 	assert(m && m->dev && m->dev->vfs && m->dev->vfs->stat);
 
@@ -179,6 +184,27 @@ s32 vfs_stat(const char *path, struct stat *buf)
 		path += len;
 
 	return m->dev->vfs->stat(path, buf, m->dev);
+}
+
+s32 vfs_wait(const char *path, s32 (*func)())
+{
+	while (*path == ' ')
+		path++;
+
+	struct mount_info *m = vfs_find_mount_info(path);
+	assert(m && m->dev && m->dev->vfs);
+
+	// Default wait
+	if (!m->dev->vfs->wait) {
+		proc_wait_for(vfs_find_dev(path)->id, PROC_WAIT_DEV, func);
+		return 1;
+	}
+
+	u32 len = strlen(m->path);
+	if (len > 1)
+		path += len;
+
+	return m->dev->vfs->wait(path, func, m->dev);
 }
 
 s32 vfs_poll(const char **files)
@@ -191,7 +217,7 @@ s32 vfs_poll(const char **files)
 			return p - files;
 
 	for (const char **p = files; *p && **p; p++)
-		proc_wait_for(vfs_find_dev(*p)->id, PROC_WAIT_DEV, vfs_poll);
+		vfs_wait(*p, vfs_poll);
 
 	return PROC_MAX_WAIT_IDS + 1;
 }
@@ -280,12 +306,12 @@ void device_install(void)
 {
 	devices = list_new();
 
-	struct vfs *vfs = malloc(sizeof(*vfs));
+	struct vfs *vfs = zalloc(sizeof(*vfs));
 	vfs->type = VFS_DEVFS;
 	vfs->read = devfs_read;
 	vfs->perm = devfs_perm;
 	vfs->ready = devfs_ready;
-	struct device *dev = malloc(sizeof(*dev));
+	struct device *dev = zalloc(sizeof(*dev));
 	dev->name = "dev";
 	dev->type = DEV_CHAR;
 	dev->vfs = vfs;

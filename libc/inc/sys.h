@@ -28,12 +28,6 @@ enum sys {
 	SYS_NET_RECEIVE, // Receive data from socket
 };
 
-struct message {
-	int src;
-	int type;
-	void *data;
-};
-
 struct event_keyboard {
 	int magic;
 	int press;
@@ -96,23 +90,22 @@ static inline u32 getpid()
 	return buf;
 }
 
-// Hacky one-digit solution - TODO!
 #include <mem.h>
+#include <print.h>
 #include <str.h>
 static inline u32 pidof(const char *name)
 {
 	u32 curr = 1;
-	char buf[32] = { 0 };
-	char *path = (char *)"/proc/1/name"; // AAH
-	while (read(path, buf, 0, 32)) {
-		if (!strcmp(name, buf))
-			return curr;
+	char buf[32] = { 0 }, path[32] = { 0 };
+	while (curr < 1000) { // Max pid??
+		if (sprintf(path, "/proc/%d/name", curr) > 0 && read(path, buf, 0, 32) > 0)
+			if (!strcmp(name, buf))
+				return curr;
 
 		curr++;
-		path[7]++;
 	}
 
-	return 0;
+	return -1;
 }
 
 // Simple read wrapper

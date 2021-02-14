@@ -9,7 +9,7 @@
 #include <input.h>
 #include <list.h>
 #include <mem.h>
-#include <print.h>
+#include <msg.h>
 #include <str.h>
 #include <sys.h>
 
@@ -200,6 +200,7 @@ static int absolute_y_off(struct element *elem)
 
 struct context *gui_get_context(int x, int y, u32 width, u32 height)
 {
+	log("GET CONTEXT: %dx%d\n", width, height);
 	struct context *ctx = malloc(sizeof(*ctx));
 	ctx->pid = getpid();
 	ctx->x = x;

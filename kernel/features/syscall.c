@@ -40,8 +40,10 @@ void syscall_handler(struct regs *r)
 		if (vfs_ready((char *)r->ebx)) {
 			r->eax = (u32)vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		} else {
-			proc_wait_for(vfs_find_dev((char *)r->ebx)->id, PROC_WAIT_DEV, vfs_read);
-			proc_yield(r);
+			if (vfs_wait((char *)r->ebx, vfs_read) < 0)
+				r->eax = -1;
+			else
+				proc_yield(r);
 		}
 		break;
 	}

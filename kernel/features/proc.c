@@ -164,29 +164,26 @@ void proc_enable_waiting(u32 id, enum proc_wait_type type)
 		struct proc *p = iterator->data;
 		struct proc_wait *w = &p->wait;
 
-		if (!p || !w || w->id_cnt == 0 || w->type != type) {
+		if (!p || !w || w->id_cnt == 0) {
 			iterator = iterator->next;
 			continue;
 		}
 
-		u8 dispatched = 0;
-
 		current = list_first_data(proc_list, p);
-		for (u32 i = 0; i < PROC_MAX_WAIT_IDS; i++) {
-			if (w->ids[i] == id) {
+		assert(w->id_cnt < PROC_MAX_WAIT_IDS);
+		for (u32 i = 0; i < w->id_cnt; i++) {
+			if (w->ids[i].magic == PROC_WAIT_MAGIC && w->ids[i].id == id &&
+			    w->ids[i].type == type) {
 				struct regs *r = &p->regs;
-				if (w->func)
-					r->eax = (u32)w->func((char *)r->ebx, (void *)r->ecx,
-							      r->edx, r->esi);
-				w->ids[i] = 0;
+				if (w->ids[i].func)
+					r->eax = (u32)w->ids[i].func((char *)r->ebx, (void *)r->ecx,
+								     r->edx, r->esi);
+				memset(&w->ids[i], 0, sizeof(w->ids[i]));
+				p->wait.id_cnt--;
 				p->state = PROC_RUNNING;
-				dispatched = 1;
 				break;
 			}
 		}
-
-		if (dispatched)
-			memset(&p->wait, 0, sizeof(p->wait));
 
 		iterator = iterator->next;
 	}
@@ -197,25 +194,45 @@ void proc_enable_waiting(u32 id, enum proc_wait_type type)
 
 void proc_wait_for(u32 id, enum proc_wait_type type, s32 (*func)())
 {
+	u8 already_exists = 0;
 	struct proc *p = proc_current();
 
-	if (p->wait.id_cnt > 0) {
-		p->wait.ids[p->wait.id_cnt++] = id;
-		assert(func == p->wait.func && type == p->wait.type);
-	} else {
-		p->wait.type = type;
-		p->wait.id_cnt = 1;
-		p->wait.ids[0] = id;
-		p->wait.func = func;
+	// Check if already exists
+	for (u32 i = 0; i < p->wait.id_cnt; i++) {
+		if (p->wait.ids[i].id == id && p->wait.ids[i].type == type) {
+			assert(p->wait.ids[i].func == func);
+			already_exists = 1;
+		}
 	}
 
+	if (already_exists)
+		goto end;
+
+	assert(p->wait.id_cnt + 1 < PROC_MAX_WAIT_IDS);
+
+	// Find slot
+	struct proc_wait_identifier *slot = NULL;
+	for (u32 i = 0; i < PROC_MAX_WAIT_IDS; i++) {
+		if (p->wait.ids[i].magic != PROC_WAIT_MAGIC) {
+			slot = &p->wait.ids[i];
+			break;
+		}
+	}
+	assert(slot != NULL);
+
+	slot->magic = PROC_WAIT_MAGIC;
+	slot->id = id;
+	slot->type = type;
+	slot->func = func;
+	p->wait.id_cnt++;
+
+end:
 	p->state = PROC_SLEEPING;
 }
 
 struct proc *proc_make(void)
 {
-	struct proc *proc = malloc(sizeof(*proc));
-	memset(proc, 0, sizeof(*proc));
+	struct proc *proc = zalloc(sizeof(*proc));
 	proc->pid = current_pid++;
 	proc->super = 0;
 	proc->messages = stack_new();
@@ -274,7 +291,7 @@ s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct devi
 		path++;
 		if (!memcmp(path, "msg", 4)) {
 			stack_push_bot(p->messages, buf); // TODO: Use offset and count
-			proc_enable_waiting(dev->id, PROC_WAIT_DEV); // TODO: Better wakeup solution
+			proc_enable_waiting(pid, PROC_WAIT_MSG);
 			return count;
 		} else if (!memcmp(path, "io/", 3)) {
 			path += 3;
@@ -324,10 +341,11 @@ s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 			return count;
 		} else if (!memcmp(path, "msg", 4)) {
 			if (stack_empty(p->messages)) {
-				return 0;
+				return 0; // This shouldn't happen
 			} else {
 				u8 *msg = stack_pop(p->messages);
-				printf("Pop: %s\n", msg);
+				if (!msg)
+					return -1;
 				memcpy(buf, msg + offset, count);
 				return count;
 			}
@@ -340,6 +358,29 @@ s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 			memcpy(buf, stream->data + stream->offset_read, count);
 			stream->offset_read += count;
 			return count;
+		}
+	}
+
+	return -1;
+}
+
+s32 procfs_wait(const char *path, s32 (*func)(), struct device *dev)
+{
+	u32 pid = 0;
+	procfs_parse_path(&path, &pid);
+
+	if (pid) {
+		struct proc *p = proc_from_pid(pid);
+		if (!p || path[0] != '/')
+			return -1;
+
+		path++;
+		if (!memcmp(path, "msg", 4)) {
+			proc_wait_for(pid, PROC_WAIT_MSG, func);
+			return 1;
+		} else {
+			proc_wait_for(dev->id, PROC_WAIT_DEV, func);
+			return 1;
 		}
 	}
 
@@ -398,14 +439,15 @@ void proc_init(void)
 	proc_list = list_new();
 
 	// Procfs
-	struct vfs *vfs = malloc(sizeof(*vfs));
+	struct vfs *vfs = zalloc(sizeof(*vfs));
 	vfs->type = VFS_PROCFS;
 	vfs->read = procfs_read;
 	vfs->write = procfs_write;
+	vfs->wait = procfs_wait;
 	vfs->perm = procfs_perm;
 	vfs->ready = procfs_ready;
 	vfs->data = NULL;
-	struct device *dev = malloc(sizeof(*dev));
+	struct device *dev = zalloc(sizeof(*dev));
 	dev->name = "proc";
 	dev->type = DEV_CHAR;
 	dev->vfs = vfs;
