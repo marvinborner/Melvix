@@ -46,6 +46,7 @@ void on_submit(struct gui_event_keyboard *event, struct element *elem)
 
 int main()
 {
+	log("exec loaded\n");
 	struct element *root = gui_init("Exec", WIDTH, HEIGHT, COLOR_BLACK);
 	struct element *input =
 		gui_add_text_input(root, 0, 0, 100, FONT_32, COLOR_WHITE, COLOR_BLACK);

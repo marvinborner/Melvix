@@ -23,8 +23,7 @@ static struct window windows[MAX_WINDOWS] = { 0 };
 
 static struct window *new_window(const char *title, int x, int y, u32 width, u32 height, int flags)
 {
-	if (window_count + 1 >= MAX_WINDOWS)
-		return NULL;
+	assert(window_count + 1 <= MAX_WINDOWS);
 
 	struct window *win = &windows[window_count + 1];
 	win->ctx = malloc(sizeof(*win->ctx));
@@ -200,7 +199,6 @@ static int absolute_y_off(struct element *elem)
 
 struct context *gui_get_context(int x, int y, u32 width, u32 height)
 {
-	log("GET CONTEXT: %dx%d\n", width, height);
 	struct context *ctx = malloc(sizeof(*ctx));
 	ctx->pid = getpid();
 	ctx->x = x;
@@ -535,10 +533,7 @@ void gui_event_loop(struct element *container)
 	struct message msg = { 0 };
 	struct element *focused = NULL;
 	while (1) {
-		/* if (!msg_receive(&msg)) { */
-		yield();
-		continue;
-		/* } */
+		assert(msg_receive(&msg) > 0);
 
 		switch (msg.type) {
 		case GUI_KILL: {
@@ -590,6 +585,9 @@ void gui_event_loop(struct element *container)
 			root->ctx = event->new_ctx;
 			gui_sync_window(container->window_id);
 			break;
+		}
+		default: {
+			log("Unknown GUI request %d\n", msg.type);
 		}
 		}
 	}

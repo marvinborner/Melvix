@@ -90,7 +90,6 @@ static inline u32 getpid()
 	return buf;
 }
 
-#include <mem.h>
 #include <print.h>
 #include <str.h>
 static inline u32 pidof(const char *name)
@@ -109,6 +108,7 @@ static inline u32 pidof(const char *name)
 }
 
 // Simple read wrapper
+#include <mem.h>
 static inline void *sread(const char *path)
 {
 	struct stat s = { 0 };

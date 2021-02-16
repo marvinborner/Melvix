@@ -341,7 +341,7 @@ s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 			return count;
 		} else if (!memcmp(path, "msg", 4)) {
 			if (stack_empty(p->messages)) {
-				return 0; // This shouldn't happen
+				return -1; // This shouldn't happen
 			} else {
 				u8 *msg = stack_pop(p->messages);
 				if (!msg)

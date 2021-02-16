@@ -17,7 +17,7 @@
 #define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
 #define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
 
-#define PROC_MAX_WAIT_IDS 128
+#define PROC_MAX_WAIT_IDS 16
 #define PROC_WAIT_MAGIC 0x00528491
 
 #define STREAM_MAX_SIZE 4096
@@ -34,7 +34,7 @@ struct proc_wait_identifier {
 };
 
 struct proc_wait {
-	struct proc_wait_identifier ids[PROC_MAX_WAIT_IDS]; // dev_id
+	struct proc_wait_identifier ids[PROC_MAX_WAIT_IDS];
 	u32 id_cnt;
 };
 

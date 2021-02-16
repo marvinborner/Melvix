@@ -311,6 +311,8 @@ int main(int argc, char **argv)
 			err(1, "POLL ERROR!\n");
 		}
 
+		assert(msg.magic == MSG_MAGIC);
+
 		switch (msg.type) {
 		case GFX_NEW_CONTEXT: {
 			struct context *ctx = msg.data;
@@ -340,6 +342,7 @@ int main(int argc, char **argv)
 			redraw_focused();
 			break;
 		default:
+			log("Unknown WM request %d\n", msg.type);
 			break;
 		}
 	};

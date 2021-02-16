@@ -100,8 +100,8 @@ static void draw_rectangle(struct context *ctx, int x1, int y1, int x2, int y2, 
 struct context *gfx_new_ctx(struct context *ctx)
 {
 	struct message msg = { 0 };
-	msg_send(pidof(WM_PATH), GFX_NEW_CONTEXT, ctx);
-	msg_receive(&msg);
+	assert(msg_send(pidof(WM_PATH), GFX_NEW_CONTEXT, ctx) > 0);
+	assert(msg_receive(&msg) > 0);
 	memcpy(ctx, msg.data, sizeof(*ctx));
 	return ctx;
 }
