@@ -169,33 +169,35 @@ static struct html_element *render_object(struct html_element *container, struct
 			gui_add_label(container->obj, container->x_offset, container->y_offset,
 				      FONT_32, dom->content, COLOR_WHITE, COLOR_BLACK);
 		container->x_offset = 0;
-		container->y_offset += obj->ctx->height;
+		container->y_offset += obj->ctx->size.y;
 		return new_html_element(obj, dom);
 	} else if (CMP(tag, "h2")) {
 		struct element *obj =
 			gui_add_label(container->obj, container->x_offset, container->y_offset,
 				      FONT_24, dom->content, COLOR_WHITE, COLOR_BLACK);
 		container->x_offset = 0;
-		container->y_offset += obj->ctx->height;
+		container->y_offset += obj->ctx->size.y;
 		return new_html_element(obj, dom);
 	} else if (CMP(tag, "h3")) {
 		struct element *obj =
 			gui_add_label(container->obj, container->x_offset, container->y_offset,
 				      FONT_16, dom->content, COLOR_WHITE, COLOR_BLACK);
 		container->x_offset = 0;
-		container->y_offset += obj->ctx->height;
+		container->y_offset += obj->ctx->size.y;
 		return new_html_element(obj, dom);
 	} else if (CMP(tag, "p")) {
 		struct element *obj =
 			gui_add_label(container->obj, container->x_offset, container->y_offset,
 				      FONT_16, dom->content, COLOR_WHITE, COLOR_BLACK);
 		container->x_offset = 0;
-		container->y_offset += obj->ctx->height;
+		container->y_offset += obj->ctx->size.y;
 		return new_html_element(obj, dom);
 	} else if (CMP(tag, "hr")) {
-		gfx_draw_rectangle(container->obj->ctx, container->x_offset, container->y_offset,
-				   container->obj->ctx->width - container->x_offset,
-				   container->y_offset + 2, COLOR_BLACK);
+		gfx_draw_rectangle(container->obj->ctx,
+				   vec2(container->x_offset, container->y_offset),
+				   vec2(container->obj->ctx->size.x - container->x_offset,
+					container->y_offset + 2),
+				   COLOR_BLACK);
 		container->x_offset = 0;
 		container->y_offset += 2;
 		return container;
@@ -208,7 +210,7 @@ static struct html_element *render_object(struct html_element *container, struct
 							    container->y_offset, FONT_16,
 							    dom->content, COLOR_WHITE, COLOR_BLACK);
 			container->x_offset = 0;
-			container->y_offset += obj->ctx->height;
+			container->y_offset += obj->ctx->size.y;
 			return new_html_element(obj, dom);
 		}
 		return container;

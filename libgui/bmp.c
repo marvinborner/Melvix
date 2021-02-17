@@ -19,11 +19,11 @@ struct bmp *bmp_load(const char *path)
 	// TODO: Support padding with odd widths
 	struct bmp_info *info = (struct bmp_info *)((u32)buf + sizeof(*h));
 	struct bmp *bmp = malloc(sizeof(*bmp));
-	bmp->width = info->width;
-	bmp->height = info->height;
+	bmp->size.x = info->width;
+	bmp->size.y = info->height;
 	bmp->data = (u8 *)((u32)buf + h->offset);
 	bmp->bpp = info->bpp;
-	bmp->pitch = bmp->width * (bmp->bpp >> 3);
+	bmp->pitch = bmp->size.x * (bmp->bpp >> 3);
 
 	return bmp;
 }

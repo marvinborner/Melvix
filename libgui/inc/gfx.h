@@ -7,6 +7,7 @@
 #include <def.h>
 #include <msg.h>
 #include <sys.h>
+#include <vec.h>
 #include <vesa.h>
 
 #define WM_PATH "/bin/wm"
@@ -41,40 +42,34 @@
 #define WF_NO_FOCUS (1 << 0)
 #define WF_NO_DRAG (1 << 1)
 #define WF_NO_RESIZE (1 << 2)
-#define WF_RELATIVE (1 << 3)
+#define WF_NO_FB (1 << 3)
+/* #define WF_RELATIVE (1 << 4) */
 
 enum font_type { FONT_8, FONT_12, FONT_16, FONT_24, FONT_32, FONT_64 };
 
 // Generalized font struct
 struct font {
 	char *chars;
-	int height;
-	int width;
+	vec2 size;
 	int char_size;
 };
 
 struct context {
-	u32 pid;
-	int x;
-	int y;
-	u32 width;
-	u32 height;
+	vec2 size;
 	u8 *fb;
 	u32 bpp;
 	u32 pitch;
-	int flags;
 };
 
 struct context *gfx_new_ctx(struct context *ctx);
 struct font *gfx_resolve_font(enum font_type font_type);
-void gfx_write_char(struct context *ctx, int x, int y, enum font_type font_type, u32 c, char ch);
-void gfx_write(struct context *ctx, int x, int y, enum font_type font_type, u32 c,
-	       const char *text);
-void gfx_load_image(struct context *ctx, const char *path, int x, int y);
+void gfx_write_char(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, char ch);
+void gfx_write(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, const char *text);
+void gfx_load_image(struct context *ctx, vec2 pos, const char *path);
 void gfx_load_wallpaper(struct context *ctx, const char *path);
-void gfx_copy(struct context *dest, struct context *src, int x, int y, u32 width, u32 height);
-void gfx_ctx_on_ctx(struct context *dest, struct context *src, int x, int y);
-void gfx_draw_rectangle(struct context *ctx, int x1, int y1, int x2, int y2, u32 c);
+void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size);
+void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos);
+void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c);
 void gfx_fill(struct context *ctx, u32 c);
 void gfx_border(struct context *ctx, u32 c, u32 width);
 

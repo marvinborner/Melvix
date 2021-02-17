@@ -29,13 +29,13 @@ enum sys {
 };
 
 struct event_keyboard {
-	int magic;
+	u32 magic;
 	int press;
 	int scancode;
 };
 
 struct event_mouse {
-	int magic;
+	u32 magic;
 	int diff_x;
 	int diff_y;
 	int but1;

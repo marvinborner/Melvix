@@ -4,6 +4,7 @@
 #define BMP_H
 
 #include <def.h>
+#include <vec.h>
 
 struct bmp_header {
 	u8 signature[2];
@@ -27,8 +28,7 @@ struct bmp_info {
 };
 
 struct bmp {
-	u32 width;
-	u32 height;
+	vec2 size;
 	u8 *data;
 	u32 bpp;
 	u32 pitch;

@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 	log("%s loaded\n", argv[0]);
 
 	int wm = exec("/bin/wm", "wm", argv[1], NULL);
-	int exec = exec("/bin/exec", "test", NULL);
+	/* int exec = exec("/bin/exec", "test", NULL); */
 
-	return wm + exec;
+	return wm; //+ exec;
 }

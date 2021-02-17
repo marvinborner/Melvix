@@ -1,307 +1,174 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
-#include <cpu.h>
 #include <def.h>
 #include <gfx.h>
-#include <gui.h>
 #include <input.h>
 #include <keymap.h>
 #include <list.h>
-#include <mem.h>
-#include <msg.h>
-#include <print.h>
 #include <random.h>
-#include <sys.h>
 #include <vesa.h>
 
-static int MOUSE_SKIP = 0; // => Every move % n != 0 gets skipped
-static int context_count;
+struct client {
+	u32 pid;
+};
 
-static struct vbe vbe;
-static struct context direct; // Direct video memory context
-static struct context root; // Root context (wallpaper etc.)
-static struct context exchange; // Exchange buffer
-static struct context cursor; // Cursor bitmap context
-static struct context *focused; // The focused context
-static struct list *contexts; // List of all contexts
+struct window {
+	u32 id;
+	const char *name;
+	struct context ctx;
+	struct client client;
+	u32 flags;
+	vec3 pos;
+};
 
-static struct keymap *keymap;
+static struct vbe screen = { 0 };
+static struct list *windows = NULL;
+static struct window *root = NULL;
+static struct window *cursor = NULL;
+static struct keymap *keymap = NULL;
+static struct {
+	u8 shift : 1;
+	u8 alt : 1;
+	u8 ctrl : 1;
+} special_keys = { 0 };
+static struct {
+	vec2 pos;
+	u8 left : 1;
+	u8 mid : 1;
+	u8 right : 1;
+} mouse = { 0 };
 
-static int mouse_x = 0;
-static int mouse_y = 0;
-
-static struct context *new_context(struct context *ctx, u32 pid, int x, int y, u16 width,
-				   u16 height, int flags)
+static struct window *window_create(struct client client, const char *name, struct vec3 pos,
+				    struct vec2 size, u32 flags)
 {
-	ctx->pid = pid;
-	ctx->x = x;
-	ctx->y = y;
-	ctx->width = width;
-	ctx->height = height;
-	ctx->bpp = vbe.bpp;
-	ctx->pitch = ctx->width * (ctx->bpp >> 3);
-	ctx->fb = malloc(height * ctx->pitch);
-	memset(ctx->fb, 0, height * ctx->pitch);
-	ctx->flags = flags;
-	if (!(flags & WF_RELATIVE)) {
-		context_count++;
-		if (context_count % 2 == 1)
-			MOUSE_SKIP++;
-	}
-	return ctx;
+	struct window *win = malloc(sizeof(*win));
+	win->id = rand();
+	win->name = name;
+	win->ctx.size = size;
+	win->ctx.bpp = screen.bpp;
+	win->ctx.pitch = size.x * (win->ctx.bpp >> 3);
+	if ((flags & WF_NO_FB) == 0)
+		win->ctx.fb = malloc(size.y * win->ctx.pitch);
+	win->client = client;
+	win->flags = flags;
+	win->pos = pos;
+	list_add(windows, win);
+	return win;
 }
 
-static void remove_context(struct context *ctx)
+static struct window *window_find(u32 id)
 {
-	assert(list_remove(contexts, list_first_data(contexts, ctx)));
-
-	if (!(ctx->flags & WF_RELATIVE)) {
-		if (context_count % 2 == 1)
-			MOUSE_SKIP--;
-		context_count--;
-	}
-
-	free(ctx->fb);
-	ctx->fb = NULL;
-	free(ctx);
-	ctx = NULL;
-}
-
-static struct context *context_at(int x, int y)
-{
-	if (!contexts->head || !contexts->head->data)
-		return NULL;
-
-	struct context *ret = NULL;
-	struct node *iterator = contexts->head;
-	while (iterator != NULL) {
-		struct context *ctx = iterator->data;
-		if (ctx != &root && !(ctx->flags & WF_RELATIVE) && x >= ctx->x &&
-		    x <= ctx->x + (int)ctx->width && y >= ctx->y && y <= ctx->y + (int)ctx->height)
-			ret = ctx;
+	struct node *iterator = windows->head;
+	while (iterator) {
+		struct window *win = iterator->data;
+		if (win->id == id)
+			return win;
 		iterator = iterator->next;
 	}
-	return ret;
+	return NULL;
 }
 
-static void kill_focused()
+static void window_destroy(struct window *win)
 {
-	if (!focused)
+	free(win->ctx.fb);
+	free(win);
+}
+
+static void handle_event_keyboard(struct event_keyboard *event)
+{
+	if (event->magic != KEYBOARD_MAGIC) {
+		log("Keyboard magic doesn't match!\n");
 		return;
-	msg_send(focused->pid, GUI_KILL, NULL);
-	remove_context(focused);
-	focused = context_at(mouse_x, mouse_y);
-}
-
-// This only works if window hasn't moved - TODO!
-static void redraw_focused()
-{
-	gfx_ctx_on_ctx(&exchange, focused, focused->x, focused->y);
-	memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
-}
-
-// TODO: Add dirty bitmap redraw (and clipping?): https://github.com/JMarlin/wsbe
-static void redraw_all()
-{
-	if (!contexts->head || !contexts->head->data)
-		return;
-
-	struct node *iterator = contexts->head;
-	while (iterator != NULL) {
-		struct context *ctx = iterator->data;
-		if (ctx != focused && !(ctx->flags & WF_RELATIVE))
-			gfx_ctx_on_ctx(&exchange, ctx, ctx->x, ctx->y);
-		iterator = iterator->next;
 	}
-
-	if (focused)
-		gfx_ctx_on_ctx(&exchange, focused, focused->x, focused->y);
-
-	memcpy(direct.fb, exchange.fb, exchange.pitch * exchange.height);
-}
-
-#define SHIFT_PRESSED 1 << 0
-#define ALT_PRESSED 1 << 1
-#define CTRL_PRESSED 1 << 2
-static u32 special_keys_pressed;
-static void handle_keyboard(struct event_keyboard *event)
-{
-	if (event->magic != KEYBOARD_MAGIC)
-		return;
 
 	if (event->scancode == KEY_LEFTSHIFT || event->scancode == KEY_RIGHTSHIFT)
-		special_keys_pressed ^= SHIFT_PRESSED;
+		special_keys.shift ^= 1;
 	else if (event->scancode == KEY_LEFTALT || event->scancode == KEY_RIGHTALT)
-		special_keys_pressed ^= ALT_PRESSED;
+		special_keys.alt ^= 1;
 	else if (event->scancode == KEY_LEFTCTRL || event->scancode == KEY_RIGHTCTRL)
-		special_keys_pressed ^= CTRL_PRESSED;
+		special_keys.ctrl ^= 1;
 
-	// Special key combos
-	char ch = keymap->map[event->scancode];
-	int mod = event->press && special_keys_pressed & ALT_PRESSED;
-	if (mod && focused && ch == 'q') {
-		kill_focused();
-		redraw_all();
-		return;
-	} else if (mod && ch == 'p') {
-		exec("/bin/exec", NULL);
-		return;
-	}
-
-	if (!focused)
-		return;
-
-	// Key maps
-	struct gui_event_keyboard *msg = malloc(sizeof(*msg));
-	if (special_keys_pressed & SHIFT_PRESSED)
-		msg->ch = keymap->shift_map[event->scancode];
-	else if (special_keys_pressed & ALT_PRESSED)
-		msg->ch = keymap->alt_map[event->scancode];
+	char ch;
+	if (special_keys.shift)
+		ch = keymap->shift_map[event->scancode];
+	else if (special_keys.alt)
+		ch = keymap->alt_map[event->scancode];
 	else
-		msg->ch = ch;
+		ch = keymap->map[event->scancode];
 
-	msg->press = event->press;
-	msg->scancode = event->scancode;
-	msg_send(focused->pid, GUI_KEYBOARD, msg);
+	(void)ch;
 }
 
-static int mouse_skip = 0;
-static int mouse_pressed[3] = { 0 };
-static void handle_mouse(struct event_mouse *event)
+static void handle_event_mouse(struct event_mouse *event)
 {
-	if (event->magic != MOUSE_MAGIC)
+	if (event->magic != MOUSE_MAGIC) {
+		log("Mouse magic doesn't match!\n");
 		return;
-
-	// Cursor movement
-	mouse_x += event->diff_x;
-	mouse_y -= event->diff_y;
-
-	if (mouse_x < 0)
-		mouse_x = 0;
-	else if ((int)(mouse_x + cursor.width) > vbe.width - 1)
-		mouse_x = vbe.width - cursor.width - 1;
-
-	if (mouse_y < 0)
-		mouse_y = 0;
-	else if ((int)(mouse_y + cursor.height) > vbe.height - 1)
-		mouse_y = vbe.height - cursor.height - 1;
-
-	// Restore cursor buffer backup
-	gfx_copy(&direct, &exchange, cursor.x, cursor.y, cursor.width, cursor.height);
-
-	int mod_pressed = special_keys_pressed & ALT_PRESSED;
-
-	// Context focus
-	if (!mouse_pressed[0] && !mouse_pressed[1])
-		focused = context_at(mouse_x, mouse_y);
-
-	// Context position
-	if (mod_pressed && event->but1 && !mouse_pressed[1]) {
-		mouse_pressed[0] = 1;
-		if (focused && !(focused->flags & WF_NO_DRAG)) {
-			focused->x = mouse_x;
-			focused->y = mouse_y;
-			if (mouse_skip % MOUSE_SKIP == 0) {
-				mouse_skip = 0;
-				redraw_all(); // TODO: Function to redraw one context
-			}
-		}
-	} else if (mod_pressed && mouse_pressed[0]) {
-		mouse_pressed[0] = 0;
-		redraw_all();
 	}
 
-	// Context size
-	if (mod_pressed && event->but2 && !mouse_pressed[0]) {
-		if (focused && !mouse_pressed[1]) {
-			mouse_x = focused->x + focused->width;
-			mouse_y = focused->y + focused->height;
-		} else if (focused && !(focused->flags & WF_NO_RESIZE) &&
-			   mouse_skip % MOUSE_SKIP == 0) {
-			mouse_skip = 0;
-			if (mouse_x - focused->x > 0)
-				focused->width = mouse_x - focused->x;
-			if (mouse_y - focused->y > 0) {
-				focused->height = mouse_y - focused->y;
-			}
-		}
-		mouse_pressed[1] = 1;
-	} else if (mod_pressed && mouse_pressed[1]) {
-		mouse_pressed[1] = 0;
-		if (focused) {
-			struct context *resized = malloc(sizeof(*resized));
-			new_context(resized, focused->pid, focused->x, focused->y, focused->width,
-				    focused->height, focused->flags);
-			remove_context(focused);
-			list_add(contexts, resized);
-			focused = resized;
-			struct gui_event_resize *msg = malloc(sizeof(*msg));
-			msg->new_ctx = resized;
-			msg_send(resized->pid, GUI_RESIZE, msg);
-			redraw_all();
-		}
+	mouse.pos.x += event->diff_x;
+	mouse.pos.y -= event->diff_y;
+
+	// Fix x overflow
+	if ((signed)mouse.pos.x < 0)
+		mouse.pos.x = 0;
+	else if (mouse.pos.x + cursor->ctx.size.x > (unsigned)screen.width - 1)
+		mouse.pos.x = screen.width - cursor->ctx.size.x - 1;
+
+	// Fix y overflow
+	if ((signed)mouse.pos.y < 0)
+		mouse.pos.y = 0;
+	else if (mouse.pos.y + cursor->ctx.size.y > (unsigned)screen.height - 1)
+		mouse.pos.y = screen.height - cursor->ctx.size.y - 1;
+
+	//log("%d %d\n", mouse.pos.x, mouse.pos.y);
+	cursor->pos = vec2to3(mouse.pos, U32_MAX);
+
+	gfx_fill(&cursor->ctx, COLOR_RED);
+	if (event->but1) {
+		/* TODO: Fix gfx_copy! */
+		/* gfx_copy(&root->ctx, &cursor->ctx, vec3to2(cursor->pos), cursor->ctx.size); */
+		gfx_draw_rectangle(&root->ctx, vec3to2(cursor->pos),
+				   vec2_add(cursor->pos, cursor->ctx.size), COLOR_RED);
 	}
-
-	cursor.x = mouse_x;
-	cursor.y = mouse_y;
-	gfx_ctx_on_ctx(&direct, &cursor, cursor.x, cursor.y);
-	mouse_skip++;
-
-	if (!focused)
-		return;
-	struct gui_event_mouse *msg = malloc(sizeof(*msg));
-	msg->x = mouse_x - focused->x;
-	msg->y = mouse_y - focused->y;
-	msg->but1 = event->but1;
-	msg->but2 = event->but2;
-	msg->but3 = event->but3;
-	msg_send(focused->pid, GUI_MOUSE, msg);
 }
 
-// TODO: Clean this god-function
 int main(int argc, char **argv)
 {
 	(void)argc;
 	int pid = getpid();
-	vbe = *(struct vbe *)argv[1];
-	log("WM loaded: %dx%d\n", vbe.width, vbe.height);
+	screen = *(struct vbe *)argv[1];
+	log("WM loaded: %dx%d\n", screen.width, screen.height);
 
+	windows = list_new();
 	keymap = keymap_parse("/res/keymaps/en.keymap");
 
-	contexts = list_new();
-	new_context(&root, pid, 0, 0, vbe.width, vbe.height,
-		    WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
-	new_context(&exchange, pid, 0, 0, vbe.width, vbe.height,
-		    WF_NO_FOCUS | WF_NO_DRAG | WF_NO_RESIZE);
-	new_context(&cursor, pid, 0, 0, 32, 32, WF_NO_FOCUS | WF_NO_RESIZE);
-	memcpy(&direct, &root, sizeof(direct));
-	direct.fb = vbe.fb;
-	list_add(contexts, &root);
+	root = window_create((struct client){ pid }, "root", vec3(0, 0, 0),
+			     vec2(screen.width, screen.height), WF_NO_FB);
+	root->ctx.fb = screen.fb;
+	root->flags ^= WF_NO_FB;
+	cursor = window_create((struct client){ pid }, "cursor", vec3(0, 0, 0), vec2(20, 20),
+			       WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 
-	gfx_write(&direct, 0, 0, FONT_32, COLOR_FG, "Welcome to Melvix!");
-	gfx_write(&direct, 0, 32, FONT_32, COLOR_FG, "Loading resources...");
-	gfx_fill(&root, COLOR_FG);
-	//gfx_load_wallpaper(&root, "/res/wall.png");
-	//gfx_load_image(&cursor, "/res/cursor.png", 0, 0);
-	gfx_fill(&cursor, COLOR_BG);
-	redraw_all();
+	gfx_fill(&root->ctx, COLOR_WHITE);
 
 	struct message msg = { 0 };
-	struct event_keyboard kbd_event = { 0 };
-	struct event_mouse mouse_event = { 0 };
+	struct event_keyboard event_keyboard = { 0 };
+	struct event_mouse event_mouse = { 0 };
 	const char *listeners[] = { "/dev/kbd", "/dev/mouse", "/proc/self/msg" };
 	while (1) {
 		int poll_ret = 0;
 		if ((poll_ret = poll(listeners)) >= 0) {
 			if (poll_ret == 0) {
-				if (read(listeners[poll_ret], &kbd_event, 0, sizeof(kbd_event)) > 0)
-					handle_keyboard(&kbd_event);
+				if (read(listeners[poll_ret], &event_keyboard, 0,
+					 sizeof(event_keyboard)) > 0)
+					handle_event_keyboard(&event_keyboard);
 				continue;
 			} else if (poll_ret == 1) {
-				if (read(listeners[poll_ret], &mouse_event, 0,
-					 sizeof(mouse_event)) > 0)
-					handle_mouse(&mouse_event);
+				if (read(listeners[poll_ret], &event_mouse, 0,
+					 sizeof(event_mouse)) > 0)
+					handle_event_mouse(&event_mouse);
 				continue;
 			} else if (poll_ret == 2) {
 				if (read(listeners[poll_ret], &msg, 0, sizeof(msg)) <= 0)
@@ -311,41 +178,17 @@ int main(int argc, char **argv)
 			err(1, "POLL ERROR!\n");
 		}
 
-		assert(msg.magic == MSG_MAGIC);
-
-		switch (msg.type) {
-		case GFX_NEW_CONTEXT: {
-			struct context *ctx = msg.data;
-			int width = ctx->width;
-			int height = ctx->height;
-			int x = ctx->x;
-			int y = ctx->y;
-			ctx->pid = msg.src;
-			new_context(ctx, msg.src, x, y, width, height, ctx->flags);
-			list_add(contexts, ctx);
-			if (!(ctx->flags & WF_RELATIVE))
-				focused = ctx;
-			redraw_all();
-			msg_send(msg.src, GFX_NEW_CONTEXT, ctx);
-
-			// Send mouse position
-			struct gui_event_mouse *mouse = malloc(sizeof(msg));
-			mouse->x = mouse_x - focused->x;
-			mouse->y = mouse_y - focused->y;
-			msg_send(focused->pid, GUI_MOUSE, mouse);
-			break;
+		if (msg.magic != MSG_MAGIC) {
+			log("Message magic doesn't match!\n");
+			continue;
 		}
-		case GFX_REDRAW:
-			redraw_all();
-			break;
-		case GFX_REDRAW_FOCUSED:
-			redraw_focused();
-			break;
-		default:
-			log("Unknown WM request %d\n", msg.type);
-			break;
-		}
+
+		log("not implemented!\n");
 	};
+
+	// TODO: Execute?
+	free(keymap);
+	list_destroy(windows);
 
 	return 0;
 }

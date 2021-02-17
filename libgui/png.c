@@ -1182,8 +1182,8 @@ struct bmp *png_load(const char *path)
 	assert(png->error == PNG_EOK);
 
 	struct bmp *bmp = malloc(sizeof(*bmp));
-	bmp->width = png->width;
-	bmp->height = png->height;
+	bmp->size.x = png->width;
+	bmp->size.y = png->height;
 	bmp->data = png->buffer;
 	bmp->bpp = png_get_bpp(png);
 	bmp->pitch = png->width * (bmp->bpp >> 3);

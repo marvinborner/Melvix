@@ -290,6 +290,7 @@ s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct devi
 
 		path++;
 		if (!memcmp(path, "msg", 4)) {
+			// TODO: Messages should be copied by value not by reference
 			stack_push_bot(p->messages, buf); // TODO: Use offset and count
 			proc_enable_waiting(pid, PROC_WAIT_MSG);
 			return count;
