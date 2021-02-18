@@ -146,7 +146,7 @@ int main(int argc, char **argv)
 	cursor = window_create(wm_client, "cursor", vec3(0, 0, 0), vec2(32, 32),
 			       WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 
-	//gfx_fill(&root->ctx, COLOR_WHITE);
+	gfx_write(&root->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix...");
 	gfx_load_wallpaper(&root->ctx, "/res/wall.png");
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
 

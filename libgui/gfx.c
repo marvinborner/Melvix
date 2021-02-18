@@ -23,7 +23,7 @@
 #define FONT_32_PATH "/font/spleen-16x32.psfu"
 #define FONT_64_PATH "/font/spleen-32x64.psfu"
 
-struct font *fonts[FONT_COUNT];
+struct font *fonts[FONT_COUNT] = { 0 };
 
 static void load_font(enum font_type font_type)
 {
