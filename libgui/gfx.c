@@ -150,23 +150,29 @@ void gfx_load_image(struct context *ctx, vec2 pos, const char *path)
 {
 	// TODO: Support x, y
 	// TODO: Detect image type
-	// struct bmp *bmp = bmp_load(path);
-	struct bmp *bmp = png_load(path);
-	assert(bmp && bmp->size.x + pos.x <= ctx->size.x);
-	assert(bmp && bmp->size.y + pos.y <= ctx->size.y);
+	struct bmp bmp = { 0 };
+
+	u32 error = png_decode32_file(&bmp.data, &bmp.size.x, &bmp.size.y, path);
+	if (error)
+		err(1, "error %u: %s\n", error, png_error_text(error));
+
+	assert(bmp.size.x + pos.x <= ctx->size.x);
+	assert(bmp.size.y + pos.y <= ctx->size.y);
+
+	bmp.bpp = 32;
+	bmp.pitch = bmp.size.x * (bmp.bpp >> 3);
 
 	// TODO: Fix reversed png in decoder
-	int bypp = bmp->bpp >> 3;
+	int bypp = bmp.bpp >> 3;
 	// u8 *srcfb = &bmp->data[bypp + (bmp->size.y - 1) * bmp->pitch];
-	u8 *srcfb = bmp->data;
+	u8 *srcfb = bmp.data;
 	u8 *destfb = &ctx->fb[bypp];
-	for (u32 cy = 0; cy < bmp->size.y; cy++) {
-		memcpy(destfb, srcfb, bmp->pitch);
+	for (u32 cy = 0; cy < bmp.size.y; cy++) {
+		memcpy(destfb, srcfb, bmp.pitch);
 		// srcfb -= bmp->pitch;
-		srcfb += bmp->pitch;
+		srcfb += bmp.pitch;
 		destfb += ctx->pitch;
 	}
-	/* gfx_redraw(); */
 }
 
 void gfx_load_wallpaper(struct context *ctx, const char *path)

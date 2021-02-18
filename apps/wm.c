@@ -27,6 +27,7 @@ static struct list *windows = NULL;
 static struct window *root = NULL;
 static struct window *cursor = NULL;
 static struct keymap *keymap = NULL;
+static struct client wm_client = { 0 };
 static struct {
 	u8 shift : 1;
 	u8 alt : 1;
@@ -125,33 +126,29 @@ static void handle_event_mouse(struct event_mouse *event)
 	//log("%d %d\n", mouse.pos.x, mouse.pos.y);
 	cursor->pos = vec2to3(mouse.pos, U32_MAX);
 
-	gfx_fill(&cursor->ctx, COLOR_RED);
-	if (event->but1) {
-		/* TODO: Fix gfx_copy! */
-		/* gfx_copy(&root->ctx, &cursor->ctx, vec3to2(cursor->pos), cursor->ctx.size); */
-		gfx_draw_rectangle(&root->ctx, vec3to2(cursor->pos),
-				   vec2_add(cursor->pos, cursor->ctx.size), COLOR_RED);
-	}
+	gfx_ctx_on_ctx(&root->ctx, &cursor->ctx, vec3to2(cursor->pos));
 }
 
 int main(int argc, char **argv)
 {
 	(void)argc;
-	int pid = getpid();
 	screen = *(struct vbe *)argv[1];
+	wm_client = (struct client){ .pid = getpid() };
 	log("WM loaded: %dx%d\n", screen.width, screen.height);
 
 	windows = list_new();
 	keymap = keymap_parse("/res/keymaps/en.keymap");
 
-	root = window_create((struct client){ pid }, "root", vec3(0, 0, 0),
-			     vec2(screen.width, screen.height), WF_NO_FB);
+	root = window_create(wm_client, "root", vec3(0, 0, 0), vec2(screen.width, screen.height),
+			     WF_NO_FB);
 	root->ctx.fb = screen.fb;
 	root->flags ^= WF_NO_FB;
-	cursor = window_create((struct client){ pid }, "cursor", vec3(0, 0, 0), vec2(20, 20),
+	cursor = window_create(wm_client, "cursor", vec3(0, 0, 0), vec2(32, 32),
 			       WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 
-	gfx_fill(&root->ctx, COLOR_WHITE);
+	//gfx_fill(&root->ctx, COLOR_WHITE);
+	gfx_load_wallpaper(&root->ctx, "/res/wall.png");
+	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
 
 	struct message msg = { 0 };
 	struct event_keyboard event_keyboard = { 0 };

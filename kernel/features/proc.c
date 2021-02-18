@@ -142,7 +142,8 @@ void proc_exit(struct proc *proc, int status)
 		current = NULL;
 
 	if (res)
-		printf("Process %s exited with status %d\n", proc->name, status);
+		printf("Process %s exited with status %d (%s)\n", proc->name, status,
+		       status == 0 ? "success" : "error");
 
 	proc_clear_quantum(); // TODO: Add quantum to each process struct?
 	sti();

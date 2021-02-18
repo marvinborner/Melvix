@@ -11,6 +11,7 @@ void *malloc_debug(u32 size, const char *file, int line, const char *func, const
 void free_debug(void *ptr, const char *file, int line, const char *func, const char *inp);
 #define malloc(size) malloc_debug(size, __FILE__, __LINE__, __func__, #size)
 #define free(ptr) free_debug(ptr, __FILE__, __LINE__, __func__, #ptr)
+void *realloc(void *ptr, u32 size);
 void *zalloc(u32 size);
 
 #ifdef kernel

@@ -376,6 +376,26 @@ void *zalloc(u32 size)
 	return ret;
 }
 
+// Naive realloc implementation - TODO!
+void *realloc(void *ptr, u32 size)
+{
+	if (!ptr)
+		return malloc(size);
+
+	FUNC("Realloc not implemented!\n");
+	return NULL;
+	/* // This could work; untested
+	struct h_node *node = (struct h_node *)((char *)ptr - 12);
+	u32 old_size = node->size;
+
+	void *new = malloc(size);
+	memcpy(new, ptr, old_size);
+
+	free(ptr);
+	return new;
+	*/
+}
+
 void *malloc_debug(u32 size, const char *file, int line, const char *func, const char *inp)
 {
 	assert(size < (100 << 20)); // Don't brag with memory pls

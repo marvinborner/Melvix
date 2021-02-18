@@ -36,6 +36,9 @@ typedef unsigned long long u64;
 #define S32_MAX 2147483647
 #define S32_MIN -2147483648
 
+#define LONG_MAX S32_MAX
+#define LONG_MIN S32_MIN
+
 #define MILLION 1000000
 #define BILLION 1000000000
 #define TRILLION 1000000000000
