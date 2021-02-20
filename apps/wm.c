@@ -20,11 +20,18 @@ struct window {
 	struct client client;
 	u32 flags;
 	vec3 pos;
+	vec3 pos_prev;
+};
+
+struct rectangle {
+	vec2 pos1; // Upper left
+	vec2 pos2; // Lower right
 };
 
 static struct vbe screen = { 0 };
 static struct list *windows = NULL;
 static struct window *root = NULL;
+static struct window *direct = NULL;
 static struct window *cursor = NULL;
 static struct keymap *keymap = NULL;
 static struct client wm_client = { 0 };
@@ -49,8 +56,9 @@ static struct window *window_create(struct client client, const char *name, stru
 	win->ctx.size = size;
 	win->ctx.bpp = screen.bpp;
 	win->ctx.pitch = size.x * (win->ctx.bpp >> 3);
-	if ((flags & WF_NO_FB) == 0)
-		win->ctx.fb = malloc(size.y * win->ctx.pitch);
+	win->ctx.bytes = win->ctx.pitch * win->ctx.size.y;
+	if (flags && (flags & WF_NO_FB) == 0)
+		win->ctx.fb = zalloc(size.y * win->ctx.pitch);
 	win->client = client;
 	win->flags = flags;
 	win->pos = pos;
@@ -74,6 +82,25 @@ static void window_destroy(struct window *win)
 {
 	free(win->ctx.fb);
 	free(win);
+}
+
+static void buffer_flush()
+{
+	memcpy(direct->ctx.fb, root->ctx.fb, root->ctx.bytes);
+}
+
+static void redraw_window(struct window *win)
+{
+	if (win->ctx.size.x == win->ctx.size.y) {
+		// TODO: Evaluate rectangle at pos for redraw
+		gfx_draw_rectangle(&root->ctx, vec3to2(win->pos_prev),
+				   vec2_add(win->pos_prev, win->ctx.size), 0);
+	} else {
+		err(1, "Rectangle splitting isn't supported yet!\n");
+	}
+
+	gfx_ctx_on_ctx(&root->ctx, &win->ctx, vec3to2(win->pos));
+	buffer_flush();
 }
 
 static void handle_event_keyboard(struct event_keyboard *event)
@@ -108,6 +135,8 @@ static void handle_event_mouse(struct event_mouse *event)
 		return;
 	}
 
+	cursor->pos_prev = vec2to3(mouse.pos, U32_MAX);
+
 	mouse.pos.x += event->diff_x;
 	mouse.pos.y -= event->diff_y;
 
@@ -126,7 +155,7 @@ static void handle_event_mouse(struct event_mouse *event)
 	//log("%d %d\n", mouse.pos.x, mouse.pos.y);
 	cursor->pos = vec2to3(mouse.pos, U32_MAX);
 
-	gfx_ctx_on_ctx(&root->ctx, &cursor->ctx, vec3to2(cursor->pos));
+	redraw_window(cursor);
 }
 
 int main(int argc, char **argv)
@@ -139,15 +168,18 @@ int main(int argc, char **argv)
 	windows = list_new();
 	keymap = keymap_parse("/res/keymaps/en.keymap");
 
+	direct =
+		window_create(wm_client, "direct", vec3(0, 0, 0), vec2(screen.width, screen.height),
+			      WF_NO_FB | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+	direct->ctx.fb = screen.fb;
+	direct->flags ^= WF_NO_FB;
 	root = window_create(wm_client, "root", vec3(0, 0, 0), vec2(screen.width, screen.height),
-			     WF_NO_FB);
-	root->ctx.fb = screen.fb;
-	root->flags ^= WF_NO_FB;
+			     WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	cursor = window_create(wm_client, "cursor", vec3(0, 0, 0), vec2(32, 32),
 			       WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 
-	gfx_write(&root->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix...");
-	gfx_load_wallpaper(&root->ctx, "/res/wall.png");
+	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */
+	/* gfx_load_wallpaper(&direct->ctx, "/res/wall.png"); */
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
 
 	struct message msg = { 0 };

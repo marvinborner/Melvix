@@ -59,6 +59,7 @@ struct context {
 	u8 *fb;
 	u32 bpp;
 	u32 pitch;
+	u32 bytes;
 };
 
 struct context *gfx_new_ctx(struct context *ctx);
