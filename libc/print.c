@@ -213,4 +213,14 @@ int print(const char *str)
 	return strlen(str);
 }
 
+void panic(const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	vprintf(format, ap);
+	va_end(ap);
+
+	assert(0);
+}
+
 #endif

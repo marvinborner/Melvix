@@ -68,6 +68,9 @@ void scheduler(struct regs *regs)
 		regs->eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
 	}
 
+	if (current == idle_proc)
+		quantum = 0;
+
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
 }
 
@@ -481,6 +484,7 @@ void proc_init(void)
 	((u32 *)_esp)[0] = argc; // First argument (argc)
 	((u32 *)_esp)[1] = (u32)argv; // Second argument (argv)
 
+	printf("Jumping to userspace!\n");
 	proc_jump_userspace();
 	while (1) {
 	};

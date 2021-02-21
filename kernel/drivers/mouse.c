@@ -116,6 +116,10 @@ void mouse_install(void)
 	mouse_serial_wait(1);
 	outb(0x60, status);
 
+	// Use default settings
+	mouse_serial_write(0xF6);
+	mouse_serial_read();
+
 	// Enable mousewheel
 	mouse_serial_write(0xF2);
 	mouse_serial_read();

@@ -5,24 +5,61 @@
 #include <mem.h>
 #include <sys.h>
 
-// Taken from jgraef at osdev
 void *memcpy(void *dest, const void *src, u32 n)
 {
+#ifdef userspace
+	// Inspired by Jeko at osdev
+	for (u32 i = 0; i < n / 16; i++) {
+		__asm__ __volatile__("movups (%0), %%xmm0\n"
+				     "movntdq %%xmm0, (%1)\n" ::"r"(src),
+				     "r"(dest)
+				     : "memory");
+
+		src = ((u8 *)src) + 16;
+		dest = ((u8 *)dest) + 16;
+	}
+
+	if (n & 7) {
+		n = n & 7;
+
+		int d0, d1, d2;
+		__asm__ __volatile__("rep ; movsl\n\t"
+				     "testb $2,%b4\n\t"
+				     "je 1f\n\t"
+				     "movsw\n"
+				     "1:\ttestb $1,%b4\n\t"
+				     "je 2f\n\t"
+				     "movsb\n"
+				     "2:"
+				     : "=&c"(d0), "=&D"(d1), "=&S"(d2)
+				     : "0"(n / 4), "q"(n), "1"((long)dest), "2"((long)src)
+				     : "memory");
+	}
+	return dest;
+#else
+	// Inspired by jgraef at osdev
 	u32 num_dwords = n / 4;
 	u32 num_bytes = n % 4;
 	u32 *dest32 = (u32 *)dest;
 	u32 *src32 = (u32 *)src;
 	u8 *dest8 = ((u8 *)dest) + num_dwords * 4;
 	u8 *src8 = ((u8 *)src) + num_dwords * 4;
-	u32 i;
 
-	for (i = 0; i < num_dwords; i++) {
-		dest32[i] = src32[i];
-	}
-	for (i = 0; i < num_bytes; i++) {
+	// TODO: What's faster?
+	__asm__ volatile("rep movsl\n"
+			 : "=S"(src32), "=D"(dest32), "=c"(num_dwords)
+			 : "S"(src32), "D"(dest32), "c"(num_dwords)
+			 : "memory");
+
+	/* for (u32 i = 0; i < num_dwords; i++) { */
+	/* 	dest32[i] = src32[i]; */
+	/* } */
+
+	for (u32 i = 0; i < num_bytes; i++) {
 		dest8[i] = src8[i];
 	}
 	return dest;
+#endif
 }
 
 void *memset(void *dest, int val, u32 n)
@@ -33,12 +70,18 @@ void *memset(void *dest, int val, u32 n)
 	u8 *dest8 = ((u8 *)dest) + num_dwords * 4;
 	u8 val8 = (u8)val;
 	u32 val32 = val | (val << 8) | (val << 16) | (val << 24);
-	u32 i;
 
-	for (i = 0; i < num_dwords; i++) {
-		dest32[i] = val32;
-	}
-	for (i = 0; i < num_bytes; i++) {
+	// TODO: What's faster?
+	__asm__ volatile("rep stosl\n"
+			 : "=D"(dest32), "=c"(num_dwords)
+			 : "D"(dest32), "c"(num_dwords), "a"(val32)
+			 : "memory");
+
+	/* for (u32 i = 0; i < num_dwords; i++) { */
+	/* 	dest32[i] = val32; */
+	/* } */
+
+	for (u32 i = 0; i < num_bytes; i++) {
 		dest8[i] = val8;
 	}
 	return dest;

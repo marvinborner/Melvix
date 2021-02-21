@@ -9,7 +9,7 @@
 #include <stack.h>
 #include <sys.h>
 
-#define PROC_QUANTUM 42 // Milliseconds or something // TODO
+#define PROC_QUANTUM 10 // Milliseconds or something // TODO
 
 #define EFLAGS_ALWAYS 0x2 // Always one
 #define EFLAGS_INTERRUPTS 0x200 // Enable interrupts

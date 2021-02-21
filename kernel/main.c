@@ -27,6 +27,7 @@ void kernel_main(struct vid_info *vid_info)
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
 	serial_print("Serial connected.\n");
 
+	cpu_enable_features();
 	cpu_print();
 
 	// Install drivers
