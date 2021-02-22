@@ -10,10 +10,10 @@ void *memcpy(void *dest, const void *src, u32 n)
 #ifdef userspace
 	// Inspired by Jeko at osdev
 	for (u32 i = 0; i < n / 16; i++) {
-		__asm__ __volatile__("movups (%0), %%xmm0\n"
-				     "movntdq %%xmm0, (%1)\n" ::"r"(src),
-				     "r"(dest)
-				     : "memory");
+		__asm__ volatile("movups (%0), %%xmm0\n"
+				 "movntdq %%xmm0, (%1)\n" ::"r"(src),
+				 "r"(dest)
+				 : "memory");
 
 		src = ((u8 *)src) + 16;
 		dest = ((u8 *)dest) + 16;
@@ -23,17 +23,17 @@ void *memcpy(void *dest, const void *src, u32 n)
 		n = n & 7;
 
 		int d0, d1, d2;
-		__asm__ __volatile__("rep ; movsl\n\t"
-				     "testb $2,%b4\n\t"
-				     "je 1f\n\t"
-				     "movsw\n"
-				     "1:\ttestb $1,%b4\n\t"
-				     "je 2f\n\t"
-				     "movsb\n"
-				     "2:"
-				     : "=&c"(d0), "=&D"(d1), "=&S"(d2)
-				     : "0"(n / 4), "q"(n), "1"((long)dest), "2"((long)src)
-				     : "memory");
+		__asm__ volatile("rep ; movsl\n\t"
+				 "testb $2,%b4\n\t"
+				 "je 1f\n\t"
+				 "movsw\n"
+				 "1:\ttestb $1,%b4\n\t"
+				 "je 2f\n\t"
+				 "movsb\n"
+				 "2:"
+				 : "=&c"(d0), "=&D"(d1), "=&S"(d2)
+				 : "0"(n / 4), "q"(n), "1"((long)dest), "2"((long)src)
+				 : "memory");
 	}
 	return dest;
 #else

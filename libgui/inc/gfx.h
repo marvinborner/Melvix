@@ -43,6 +43,7 @@
 #define WF_NO_DRAG (1 << 1)
 #define WF_NO_RESIZE (1 << 2)
 #define WF_NO_FB (1 << 3)
+#define WF_NO_WINDOW (1 << 4)
 /* #define WF_RELATIVE (1 << 4) */
 
 enum font_type { FONT_8, FONT_12, FONT_16, FONT_24, FONT_32, FONT_64 };

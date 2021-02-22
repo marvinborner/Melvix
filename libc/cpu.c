@@ -113,7 +113,7 @@ void fpu_restore(void)
 
 void cpu_enable_features(void)
 {
-	u32 a = 0, b = 0, c = 0, d = 0;
+	u32 a, b, c, d;
 	cpuid(CPUID_FEATURES, &a, &b, &c, &d);
 	cpu_features = d;
 	if (cpu_has_feature(CPUID_FEAT_EDX_SSE)) {

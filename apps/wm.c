@@ -10,6 +10,7 @@
 #include <vesa.h>
 
 //#define FLUSH_TIMEOUT 6
+#define bypp (screen.bpp >> 3)
 
 struct client {
 	u32 pid;
@@ -33,8 +34,9 @@ struct rectangle {
 
 static struct vbe screen = { 0 };
 static struct list *windows = NULL; // THIS LIST SHALL BE SORTED BY Z-INDEX!
-static struct window *root = NULL;
 static struct window *direct = NULL;
+static struct window *root = NULL;
+static struct window *wallpaper = NULL;
 static struct window *cursor = NULL;
 static struct keymap *keymap = NULL;
 static struct client wm_client = { 0 };
@@ -58,7 +60,7 @@ static struct window *window_create(struct client client, const char *name, stru
 	win->name = name;
 	win->ctx.size = size;
 	win->ctx.bpp = screen.bpp;
-	win->ctx.pitch = size.x * (win->ctx.bpp >> 3);
+	win->ctx.pitch = size.x * bypp;
 	win->ctx.bytes = win->ctx.pitch * win->ctx.size.y;
 	if (flags && (flags & WF_NO_FB) == 0)
 		win->ctx.fb = zalloc(size.y * win->ctx.pitch);
@@ -107,7 +109,7 @@ static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 	struct node *iterator = windows->head;
 	while (iterator) {
 		struct window *win = iterator->data;
-		if ((win->flags & WF_NO_FB) != 0)
+		if ((win->flags & WF_NO_WINDOW) != 0)
 			goto next;
 
 		vec2 corners[] = {
@@ -154,7 +156,7 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 {
 	u32 width = pos2.x - pos1.x;
 	u32 height = pos2.y - pos1.y;
-	void *data = malloc(width * height * 4);
+	void *data = zalloc(width * height * bypp);
 
 	struct list *windows_at = list_new();
 	windows_at_rec(pos1, pos2, windows_at);
@@ -166,17 +168,15 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 		if (win == excluded)
 			continue;
 
-		// This won't work correctly
-		int bypp = win->ctx.bpp >> 3;
+		// This will only work for background windows - TODO
+		u32 pitch = width * bypp;
 		u8 *srcfb = &win->ctx.fb[pos1.x * bypp + pos1.y * win->ctx.pitch];
 		u8 *destfb = data;
 		for (u32 cy = 0; cy < height; cy++) {
-			memcpy(destfb, srcfb, width * bypp);
+			memcpy(destfb, srcfb, pitch);
 			srcfb += win->ctx.pitch;
-			destfb += win->ctx.pitch;
+			destfb += pitch;
 		}
-
-		/* log("Window found: %s\n", win->name); */
 	}
 	list_destroy(windows_at);
 
@@ -186,25 +186,20 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 static void redraw_window(struct window *win)
 {
 	if (win->ctx.size.x == win->ctx.size.y) {
-		// TODO: Redraw rectangle
 		struct rectangle rec =
 			rectangle_at(win->pos_prev, vec2_add(win->pos_prev, win->ctx.size), win);
-		u32 width = rec.pos2.x - rec.pos1.x;
-		u32 height = rec.pos2.y - rec.pos1.y;
 
-		int bypp = root->ctx.bpp >> 3;
 		u8 *srcfb = rec.data;
 		u8 *destfb = &root->ctx.fb[rec.pos1.x * bypp + rec.pos1.y * root->ctx.pitch];
-		for (u32 cy = 0; cy < height; cy++) {
-			memcpy(destfb, srcfb, width * bypp);
+		for (u32 cy = 0; cy < win->ctx.size.y; cy++) {
+			memcpy(destfb, srcfb, win->ctx.size.x * bypp);
 			srcfb += win->ctx.pitch;
 			destfb += root->ctx.pitch;
 		}
 
-		/* gfx_draw_rectangle(&root->ctx, win->pos_prev, */
-		/* 		   vec2_add(win->pos_prev, win->ctx.size), 0); */
+		free(rec.data);
 	} else {
-		err(1, "Rectangle splitting isn't supported yet!\n");
+		log("Rectangle splitting isn't supported yet!\n");
 	}
 
 	gfx_ctx_on_ctx(&root->ctx, &win->ctx, win->pos);
@@ -263,7 +258,8 @@ static void handle_event_mouse(struct event_mouse *event)
 	/* log("%d %d\n", mouse.pos.x, mouse.pos.y); */
 	cursor->pos = mouse.pos;
 
-	redraw_window(cursor);
+	if (!vec2_eq(cursor->pos, cursor->pos_prev))
+		redraw_window(cursor);
 }
 
 int main(int argc, char **argv)
@@ -277,16 +273,21 @@ int main(int argc, char **argv)
 	keymap = keymap_parse("/res/keymaps/en.keymap");
 
 	direct = window_create(wm_client, "direct", vec2(0, 0), vec2(screen.width, screen.height),
-			       WF_NO_FB | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+			       WF_NO_WINDOW | WF_NO_FB | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	direct->ctx.fb = screen.fb;
+	direct->flags ^= WF_NO_FB;
 	root = window_create(wm_client, "root", vec2(0, 0), vec2(screen.width, screen.height),
-			     WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+			     WF_NO_WINDOW | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+	wallpaper =
+		window_create(wm_client, "wallpaper", vec2(0, 0), vec2(screen.width, screen.height),
+			      WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	cursor = window_create(wm_client, "cursor", vec2(0, 0), vec2(32, 32),
 			       WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 
 	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */
-	gfx_load_wallpaper(&root->ctx, "/res/wall.png");
+	gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png");
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
+	redraw_window(wallpaper);
 
 	struct message msg = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
