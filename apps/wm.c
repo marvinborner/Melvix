@@ -101,15 +101,51 @@ static void buffer_flush()
 #endif
 }
 
+// Beautiful
 static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 {
 	struct node *iterator = windows->head;
 	while (iterator) {
 		struct window *win = iterator->data;
-		u8 starts_in = (win->pos.x > pos1.x && win->pos.x < pos2.x) &&
-			       (win->pos.y > pos1.y && win->pos.y < pos2.y);
-		if (starts_in)
-			list_add(list, win);
+		if ((win->flags & WF_NO_FB) != 0)
+			goto next;
+
+		vec2 corners[] = {
+			win->pos,
+			vec2_add(win->pos, vec2(win->ctx.size.x, 0)),
+			vec2_add(win->pos, vec2(win->ctx.size.x, win->ctx.size.y)),
+			vec2_add(win->pos, vec2(0, win->ctx.size.y)),
+		};
+
+		for (int i = 0; i < 4; i++) {
+			vec2 corner = corners[i];
+			if (pos1.x < corner.x && pos1.y < corner.y && pos2.x > corner.x &&
+			    pos2.y > corner.y) {
+				list_add(list, win);
+				goto next;
+			}
+		}
+
+		u32 width = pos2.x - pos1.x;
+		u32 height = pos2.y - pos1.y;
+		vec2 rec_corners[] = {
+			pos1,
+			vec2_add(pos1, vec2(width, 0)),
+			pos2,
+			vec2_add(pos1, vec2(0, height)),
+		};
+		vec2 win_pos1 = win->pos;
+		vec2 win_pos2 = vec2_add(win->pos, win->ctx.size);
+		for (int i = 0; i < 4; i++) {
+			vec2 corner = rec_corners[i];
+			if (win_pos1.x < corner.x && win_pos1.y < corner.y &&
+			    win_pos2.x > corner.x && win_pos2.y > corner.y) {
+				list_add(list, win);
+				goto next;
+			}
+		}
+
+	next:
 		iterator = iterator->next;
 	}
 }
@@ -125,24 +161,22 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 	struct node *iterator = windows_at->head;
 	while (iterator) {
 		struct window *win = iterator->data;
-
-		/* int bypp = win->ctx.bpp >> 3; */
-		/* u8 *srcfb = &win->ctx.fb[pos1.x * bypp + pos1.y * win->ctx.pitch]; */
-		/* u8 *destfb = data; */
-		/* u32 cnt = 0; */
-		/* for (u32 cy = 0; cy < height; cy++) { */
-		/* 	memcpy(destfb, srcfb, width * bypp); */
-		/* 	srcfb += win->ctx.pitch; */
-		/* 	destfb += win->ctx.pitch; */
-		/* 	cnt += win->ctx.pitch; */
-		/* } */
-
 		iterator = iterator->next;
 
 		if (win == excluded)
 			continue;
 
-		log("Window found: %s\n", win->name);
+		// This won't work correctly
+		int bypp = win->ctx.bpp >> 3;
+		u8 *srcfb = &win->ctx.fb[pos1.x * bypp + pos1.y * win->ctx.pitch];
+		u8 *destfb = data;
+		for (u32 cy = 0; cy < height; cy++) {
+			memcpy(destfb, srcfb, width * bypp);
+			srcfb += win->ctx.pitch;
+			destfb += win->ctx.pitch;
+		}
+
+		/* log("Window found: %s\n", win->name); */
 	}
 	list_destroy(windows_at);
 
@@ -153,9 +187,22 @@ static void redraw_window(struct window *win)
 {
 	if (win->ctx.size.x == win->ctx.size.y) {
 		// TODO: Redraw rectangle
-		rectangle_at(win->pos_prev, vec2_add(win->pos_prev, win->ctx.size), win);
-		gfx_draw_rectangle(&root->ctx, win->pos_prev,
-				   vec2_add(win->pos_prev, win->ctx.size), 0);
+		struct rectangle rec =
+			rectangle_at(win->pos_prev, vec2_add(win->pos_prev, win->ctx.size), win);
+		u32 width = rec.pos2.x - rec.pos1.x;
+		u32 height = rec.pos2.y - rec.pos1.y;
+
+		int bypp = root->ctx.bpp >> 3;
+		u8 *srcfb = rec.data;
+		u8 *destfb = &root->ctx.fb[rec.pos1.x * bypp + rec.pos1.y * root->ctx.pitch];
+		for (u32 cy = 0; cy < height; cy++) {
+			memcpy(destfb, srcfb, width * bypp);
+			srcfb += win->ctx.pitch;
+			destfb += root->ctx.pitch;
+		}
+
+		/* gfx_draw_rectangle(&root->ctx, win->pos_prev, */
+		/* 		   vec2_add(win->pos_prev, win->ctx.size), 0); */
 	} else {
 		err(1, "Rectangle splitting isn't supported yet!\n");
 	}
@@ -232,7 +279,6 @@ int main(int argc, char **argv)
 	direct = window_create(wm_client, "direct", vec2(0, 0), vec2(screen.width, screen.height),
 			       WF_NO_FB | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	direct->ctx.fb = screen.fb;
-	direct->flags ^= WF_NO_FB;
 	root = window_create(wm_client, "root", vec2(0, 0), vec2(screen.width, screen.height),
 			     WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	cursor = window_create(wm_client, "cursor", vec2(0, 0), vec2(32, 32),
