@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <def.h>
 #include <gfx.h>
+#include <gui.h>
 #include <input.h>
 #include <keymap.h>
 #include <list.h>
@@ -52,8 +53,22 @@ static struct {
 	u8 right : 1;
 } mouse = { 0 };
 
-static struct window *window_create(struct client client, const char *name, struct vec2 pos,
-				    struct vec2 size, u32 flags)
+static void buffer_flush()
+{
+#ifdef FLUSH_TIMEOUT
+	static u32 time_flush = 0;
+	u32 time_now = time();
+	if (time_now - time_flush > FLUSH_TIMEOUT) {
+		memcpy(direct->ctx.fb, root->ctx.fb, root->ctx.bytes);
+		time_flush = time_now;
+	}
+#else
+	memcpy(direct->ctx.fb, root->ctx.fb, root->ctx.bytes);
+#endif
+}
+
+static struct window *window_new(struct client client, const char *name, struct vec2 pos,
+				 struct vec2 size, u32 flags)
 {
 	struct window *win = malloc(sizeof(*win));
 	win->id = rand();
@@ -67,6 +82,7 @@ static struct window *window_create(struct client client, const char *name, stru
 	win->client = client;
 	win->flags = flags;
 	win->pos = pos;
+	win->pos_prev = pos;
 	list_add(windows, win);
 	return win;
 }
@@ -87,20 +103,6 @@ static void window_destroy(struct window *win)
 {
 	free(win->ctx.fb);
 	free(win);
-}
-
-static void buffer_flush()
-{
-#ifdef FLUSH_TIMEOUT
-	static u32 time_flush = 0;
-	u32 time_now = time();
-	if (time_now - time_flush > FLUSH_TIMEOUT) {
-		memcpy(direct->ctx.fb, root->ctx.fb, root->ctx.bytes);
-		time_flush = time_now;
-	}
-#else
-	memcpy(direct->ctx.fb, root->ctx.fb, root->ctx.bytes);
-#endif
 }
 
 // Beautiful
@@ -183,24 +185,20 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 	return (struct rectangle){ .pos1 = pos1, .pos2 = pos2, .data = data };
 }
 
-static void redraw_window(struct window *win)
+static void window_redraw(struct window *win)
 {
-	if (win->ctx.size.x == win->ctx.size.y) {
-		struct rectangle rec =
-			rectangle_at(win->pos_prev, vec2_add(win->pos_prev, win->ctx.size), win);
+	struct rectangle rec =
+		rectangle_at(win->pos_prev, vec2_add(win->pos_prev, win->ctx.size), win);
 
-		u8 *srcfb = rec.data;
-		u8 *destfb = &root->ctx.fb[rec.pos1.x * bypp + rec.pos1.y * root->ctx.pitch];
-		for (u32 cy = 0; cy < win->ctx.size.y; cy++) {
-			memcpy(destfb, srcfb, win->ctx.size.x * bypp);
-			srcfb += win->ctx.pitch;
-			destfb += root->ctx.pitch;
-		}
-
-		free(rec.data);
-	} else {
-		log("Rectangle splitting isn't supported yet!\n");
+	u8 *srcfb = rec.data;
+	u8 *destfb = &root->ctx.fb[rec.pos1.x * bypp + rec.pos1.y * root->ctx.pitch];
+	for (u32 cy = 0; cy < win->ctx.size.y; cy++) {
+		memcpy(destfb, srcfb, win->ctx.size.x * bypp);
+		srcfb += win->ctx.pitch;
+		destfb += root->ctx.pitch;
 	}
+
+	free(rec.data);
 
 	gfx_ctx_on_ctx(&root->ctx, &win->ctx, win->pos);
 	buffer_flush();
@@ -259,7 +257,59 @@ static void handle_event_mouse(struct event_mouse *event)
 	cursor->pos = mouse.pos;
 
 	if (!vec2_eq(cursor->pos, cursor->pos_prev))
-		redraw_window(cursor);
+		window_redraw(cursor);
+}
+
+static void handle_message_new_window(struct message *msg)
+{
+	if (!msg->data) {
+		msg_send(msg->src, GUI_NEW_WINDOW | MSG_FAILURE, NULL);
+		return;
+	}
+	struct gui_window *buf = msg->data;
+	struct window *win = window_new((struct client){ .pid = msg->src }, "idk", vec2(100, 100),
+					vec2(600, 400), 0);
+	buf->id = win->id;
+	buf->ctx = &win->ctx;
+	buf->pos = &win->pos;
+	msg_send(msg->src, GUI_NEW_WINDOW | MSG_SUCCESS, NULL);
+	window_redraw(win);
+}
+
+static void handle_message_redraw_window(struct message *msg)
+{
+	if (!msg->data) {
+		msg_send(msg->src, GUI_REDRAW_WINDOW | MSG_FAILURE, NULL);
+		return;
+	}
+	u32 id = *(u32 *)msg->data;
+	struct window *win = window_find(id);
+	if (!win) {
+		msg_send(msg->src, GUI_REDRAW_WINDOW | MSG_FAILURE, NULL);
+		return;
+	}
+	msg_send(msg->src, GUI_REDRAW_WINDOW | MSG_SUCCESS, NULL);
+	window_redraw(win);
+}
+
+static void handle_message(struct message *msg)
+{
+	if (msg->magic != MSG_MAGIC) {
+		log("Message magic doesn't match!\n");
+		return;
+	}
+
+	switch (msg->type) {
+	case GUI_NEW_WINDOW:
+		handle_message_new_window(msg);
+		break;
+	case GUI_REDRAW_WINDOW:
+		handle_message_redraw_window(msg);
+		break;
+	default:
+		log("Message type %d not implemented!\n", msg->type);
+		msg_send(msg->src, MSG_FAILURE, NULL);
+	}
 }
 
 int main(int argc, char **argv)
@@ -272,22 +322,22 @@ int main(int argc, char **argv)
 	windows = list_new();
 	keymap = keymap_parse("/res/keymaps/en.keymap");
 
-	direct = window_create(wm_client, "direct", vec2(0, 0), vec2(screen.width, screen.height),
-			       WF_NO_WINDOW | WF_NO_FB | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+	direct = window_new(wm_client, "direct", vec2(0, 0), vec2(screen.width, screen.height),
+			    WF_NO_WINDOW | WF_NO_FB | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	direct->ctx.fb = screen.fb;
 	direct->flags ^= WF_NO_FB;
-	root = window_create(wm_client, "root", vec2(0, 0), vec2(screen.width, screen.height),
-			     WF_NO_WINDOW | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+	root = window_new(wm_client, "root", vec2(0, 0), vec2(screen.width, screen.height),
+			  WF_NO_WINDOW | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	wallpaper =
-		window_create(wm_client, "wallpaper", vec2(0, 0), vec2(screen.width, screen.height),
-			      WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
-	cursor = window_create(wm_client, "cursor", vec2(0, 0), vec2(32, 32),
-			       WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+		window_new(wm_client, "wallpaper", vec2(0, 0), vec2(screen.width, screen.height),
+			   WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+	cursor = window_new(wm_client, "cursor", vec2(0, 0), vec2(32, 32),
+			    WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 
 	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */
 	gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png");
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
-	redraw_window(wallpaper);
+	window_redraw(wallpaper);
 
 	struct message msg = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
@@ -307,19 +357,13 @@ int main(int argc, char **argv)
 					handle_event_mouse(&event_mouse);
 				continue;
 			} else if (poll_ret == 2) {
-				if (read(listeners[poll_ret], &msg, 0, sizeof(msg)) <= 0)
-					continue;
+				if (read(listeners[poll_ret], &msg, 0, sizeof(msg)) > 0)
+					handle_message(&msg);
+				continue;
 			}
 		} else {
 			err(1, "POLL ERROR!\n");
 		}
-
-		if (msg.magic != MSG_MAGIC) {
-			log("Message magic doesn't match!\n");
-			continue;
-		}
-
-		log("not implemented!\n");
 	};
 
 	// TODO: Execute?

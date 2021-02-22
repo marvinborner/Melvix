@@ -1,6 +1,6 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
-COBJS = init.o wm.o test.o#mandelbrot.o window.o exec.o files.o test.o cc.o browser.o server.o
+COBJS = init.o wm.o test.o window.o #mandelbrot.o window.o exec.o files.o test.o cc.o browser.o server.o
 CC = ccache ../cross/opt/bin/i686-elf-gcc
 LD = ccache ../cross/opt/bin/i686-elf-ld
 OC = ccache ../cross/opt/bin/i686-elf-objcopy

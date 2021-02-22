@@ -6,6 +6,8 @@
 #include <def.h>
 
 #define MSG_MAGIC 0x42042069
+#define MSG_SUCCESS (1 << 29)
+#define MSG_FAILURE (1 << 30)
 
 struct message {
 	u32 magic;
@@ -15,12 +17,14 @@ struct message {
 };
 
 enum message_type {
-	// GFX
+	// GFX // TODO: Remove
 	GFX_NEW_CONTEXT,
 	GFX_REDRAW,
 	GFX_REDRAW_FOCUSED,
 
 	// GUI
+	GUI_NEW_WINDOW,
+	GUI_REDRAW_WINDOW,
 	GUI_KILL,
 	GUI_KEYBOARD,
 	GUI_MOUSE,
