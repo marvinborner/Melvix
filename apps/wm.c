@@ -19,7 +19,7 @@ struct client {
 
 struct window {
 	u32 id;
-	const char *name;
+	char *name;
 	struct context ctx;
 	struct client client;
 	u32 flags;
@@ -72,13 +72,17 @@ static struct window *window_new(struct client client, const char *name, struct 
 {
 	struct window *win = malloc(sizeof(*win));
 	win->id = rand();
-	win->name = name;
+	win->name = strdup(name);
 	win->ctx.size = size;
 	win->ctx.bpp = screen.bpp;
 	win->ctx.pitch = size.x * bypp;
+	log("%s: %d %d\n", name, size.x, win->ctx.pitch);
 	win->ctx.bytes = win->ctx.pitch * win->ctx.size.y;
-	if (flags && (flags & WF_NO_FB) == 0)
+	if ((flags & WF_NO_FB) != 0) {
+		win->ctx.fb = NULL;
+	} else {
 		win->ctx.fb = zalloc(size.y * win->ctx.pitch);
+	}
 	win->client = client;
 	win->flags = flags;
 	win->pos = pos;
@@ -101,6 +105,7 @@ static struct window *window_find(u32 id)
 
 static void window_destroy(struct window *win)
 {
+	free(win->name);
 	free(win->ctx.fb);
 	free(win);
 }
@@ -108,6 +113,15 @@ static void window_destroy(struct window *win)
 // Beautiful
 static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 {
+	u32 width = pos2.x - pos1.x;
+	u32 height = pos2.y - pos1.y;
+	vec2 rec_corners[] = {
+		pos1,
+		vec2_add(pos1, vec2(width, 0)),
+		pos2,
+		vec2_add(pos1, vec2(0, height)),
+	};
+
 	struct node *iterator = windows->head;
 	while (iterator) {
 		struct window *win = iterator->data;
@@ -123,27 +137,19 @@ static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 
 		for (int i = 0; i < 4; i++) {
 			vec2 corner = corners[i];
-			if (pos1.x < corner.x && pos1.y < corner.y && pos2.x > corner.x &&
-			    pos2.y > corner.y) {
+			if ((pos1.x < corner.x && pos1.y < corner.y) &&
+			    (pos2.x > corner.x && pos2.y > corner.y)) {
 				list_add(list, win);
 				goto next;
 			}
 		}
 
-		u32 width = pos2.x - pos1.x;
-		u32 height = pos2.y - pos1.y;
-		vec2 rec_corners[] = {
-			pos1,
-			vec2_add(pos1, vec2(width, 0)),
-			pos2,
-			vec2_add(pos1, vec2(0, height)),
-		};
 		vec2 win_pos1 = win->pos;
 		vec2 win_pos2 = vec2_add(win->pos, win->ctx.size);
 		for (int i = 0; i < 4; i++) {
 			vec2 corner = rec_corners[i];
-			if (win_pos1.x < corner.x && win_pos1.y < corner.y &&
-			    win_pos2.x > corner.x && win_pos2.y > corner.y) {
+			if ((win_pos1.x < corner.x && win_pos1.y < corner.y) &&
+			    (win_pos2.x > corner.x && win_pos2.y > corner.y)) {
 				list_add(list, win);
 				goto next;
 			}
@@ -201,6 +207,8 @@ static void window_redraw(struct window *win)
 	free(rec.data);
 
 	gfx_ctx_on_ctx(&root->ctx, &win->ctx, win->pos);
+	if (win != cursor)
+		window_redraw(cursor);
 	buffer_flush();
 }
 
@@ -273,7 +281,7 @@ static void handle_message_new_window(struct message *msg)
 	buf->ctx = &win->ctx;
 	buf->pos = &win->pos;
 	msg_send(msg->src, GUI_NEW_WINDOW | MSG_SUCCESS, NULL);
-	window_redraw(win);
+	/* window_redraw(win); */
 }
 
 static void handle_message_redraw_window(struct message *msg)
@@ -332,7 +340,7 @@ int main(int argc, char **argv)
 		window_new(wm_client, "wallpaper", vec2(0, 0), vec2(screen.width, screen.height),
 			   WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	cursor = window_new(wm_client, "cursor", vec2(0, 0), vec2(32, 32),
-			    WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+			    WF_NO_WINDOW | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 
 	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */
 	gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png");
