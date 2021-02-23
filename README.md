@@ -74,6 +74,11 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 
 -   If you need help: `./run to help`
 
+## Contributors :heart:
+
+-   [Marvin Borner](https://github.com/marvinborner/) - Project initiator and main contributor
+-   [LarsVomMars](https://github.com/LarsVomMars/) - General help and fixes
+
 ## Licenses
 
 Melvix is released under the MIT License and uses parts of the following 3rd party projects:
