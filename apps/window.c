@@ -9,6 +9,11 @@ int main()
 	struct gui_window win = { 0 };
 	assert(gui_new_window(&win) > 0);
 	gfx_fill(win.ctx, COLOR_GREEN);
+	// Professional testing
+	for (int i = 0; i < 12; i++) {
+		gfx_write(win.ctx, vec2(0, i * gfx_font_height(FONT_32)), FONT_32, COLOR_BLACK,
+			  "Hallo, wie geht es Ihnen denn heute?");
+	}
 	assert(gui_redraw_window(win.id) > 0);
 	log("%d\n", win.ctx->size.x);
 	return 0;

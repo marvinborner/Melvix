@@ -211,12 +211,8 @@ void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos)
 	for (u32 cy = 0; cy < src->size.y && cy + pos.y < dest->size.y; cy++) {
 		int diff = 0;
 		for (u32 cx = 0; cx < src->size.x && cx + pos.x < dest->size.x; cx++) {
-			if (srcfb[3]) {
-				destfb[0] = srcfb[0];
-				destfb[1] = srcfb[1];
-				destfb[2] = srcfb[2];
-				destfb[3] = srcfb[3];
-			}
+			if (srcfb[bypp - 1])
+				memcpy(destfb, srcfb, bypp);
 
 			srcfb += bypp;
 			destfb += bypp;

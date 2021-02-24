@@ -19,7 +19,7 @@ struct client {
 
 struct window {
 	u32 id;
-	char *name;
+	const char *name;
 	struct context ctx;
 	struct client client;
 	u32 flags;
@@ -72,11 +72,10 @@ static struct window *window_new(struct client client, const char *name, struct 
 {
 	struct window *win = malloc(sizeof(*win));
 	win->id = rand();
-	win->name = strdup(name);
+	win->name = name; // strdup?
 	win->ctx.size = size;
 	win->ctx.bpp = screen.bpp;
 	win->ctx.pitch = size.x * bypp;
-	log("%s: %d %d\n", name, size.x, win->ctx.pitch);
 	win->ctx.bytes = win->ctx.pitch * win->ctx.size.y;
 	if ((flags & WF_NO_FB) != 0) {
 		win->ctx.fb = NULL;
@@ -105,7 +104,7 @@ static struct window *window_find(u32 id)
 
 static void window_destroy(struct window *win)
 {
-	free(win->name);
+	/* free(win->name); */
 	free(win->ctx.fb);
 	free(win);
 }
@@ -164,6 +163,7 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 {
 	u32 width = pos2.x - pos1.x;
 	u32 height = pos2.y - pos1.y;
+	u32 pitch = width * bypp;
 	void *data = zalloc(width * height * bypp);
 
 	struct list *windows_at = list_new();
@@ -176,14 +176,21 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 		if (win == excluded)
 			continue;
 
-		// This will only work for background windows - TODO
-		u32 pitch = width * bypp;
-		u8 *srcfb = &win->ctx.fb[pos1.x * bypp + pos1.y * win->ctx.pitch];
+		vec2 pos = vec2_sub(pos1, win->pos);
+		u8 *srcfb = &win->ctx.fb[pos.x * bypp + pos.y * win->ctx.pitch];
 		u8 *destfb = data;
 		for (u32 cy = 0; cy < height; cy++) {
-			memcpy(destfb, srcfb, pitch);
-			srcfb += win->ctx.pitch;
-			destfb += pitch;
+			int diff = 0;
+			for (u32 cx = 0; cx < width; cx++) {
+				if (srcfb[bypp - 1])
+					memcpy(destfb, srcfb, bypp);
+
+				srcfb += bypp;
+				destfb += bypp;
+				diff += bypp;
+			}
+			srcfb += win->ctx.pitch - diff;
+			destfb += pitch - diff;
 		}
 	}
 	list_destroy(windows_at);
@@ -261,7 +268,6 @@ static void handle_event_mouse(struct event_mouse *event)
 	else if (mouse.pos.y + cursor->ctx.size.y > (unsigned)screen.height - 1)
 		mouse.pos.y = screen.height - cursor->ctx.size.y - 1;
 
-	/* log("%d %d\n", mouse.pos.x, mouse.pos.y); */
 	cursor->pos = mouse.pos;
 
 	if (!vec2_eq(cursor->pos, cursor->pos_prev))
