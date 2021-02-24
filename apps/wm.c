@@ -11,7 +11,6 @@
 #include <vesa.h>
 
 //#define FLUSH_TIMEOUT 6
-#define bypp (screen.bpp >> 3)
 
 struct client {
 	u32 pid;
@@ -33,6 +32,7 @@ struct rectangle {
 	void *data;
 };
 
+static u8 bypp = 4;
 static struct vbe screen = { 0 };
 static struct list *windows = NULL; // THIS LIST SHALL BE SORTED BY Z-INDEX!
 static struct window *direct = NULL;
@@ -164,7 +164,7 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 	u32 width = pos2.x - pos1.x;
 	u32 height = pos2.y - pos1.y;
 	u32 pitch = width * bypp;
-	void *data = zalloc(width * height * bypp);
+	u8 *data = zalloc(width * height * bypp);
 
 	struct list *windows_at = list_new();
 	windows_at_rec(pos1, pos2, windows_at);
@@ -177,11 +177,27 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 			continue;
 
 		vec2 pos = vec2_sub(pos1, win->pos);
-		u8 *srcfb = &win->ctx.fb[pos.x * bypp + pos.y * win->ctx.pitch];
-		u8 *destfb = data;
-		for (u32 cy = 0; cy < height; cy++) {
+
+		s32 start_x = win->pos.x - pos1.x;
+		u32 end_x = width;
+		if (start_x <= 0) { // Either right side or background
+			u32 right = start_x + win->ctx.size.x;
+			if (right <= width) { // Right side
+				end_x = 0;
+				start_x = 0;
+			} else { // Background
+				start_x = 0;
+			}
+		}
+		u32 start_y = 0;
+
+		u8 *srcfb = &win->ctx.fb[(pos.x + start_x) * bypp + pos.y * win->ctx.pitch];
+		u8 *destfb = &data[start_x * bypp];
+
+		// Copy window data to rectangle buffer
+		for (u32 cy = start_y; cy < height; cy++) {
 			int diff = 0;
-			for (u32 cx = 0; cx < width; cx++) {
+			for (u32 cx = start_x; cx < end_x; cx++) {
 				if (srcfb[bypp - 1])
 					memcpy(destfb, srcfb, bypp);
 
@@ -281,7 +297,7 @@ static void handle_message_new_window(struct message *msg)
 		return;
 	}
 	struct gui_window *buf = msg->data;
-	struct window *win = window_new((struct client){ .pid = msg->src }, "idk", vec2(100, 100),
+	struct window *win = window_new((struct client){ .pid = msg->src }, "idk", vec2(500, 600),
 					vec2(600, 400), 0);
 	buf->id = win->id;
 	buf->ctx = &win->ctx;
@@ -331,6 +347,7 @@ int main(int argc, char **argv)
 	(void)argc;
 	screen = *(struct vbe *)argv[1];
 	wm_client = (struct client){ .pid = getpid() };
+	bypp = (screen.bpp >> 3);
 	log("WM loaded: %dx%d\n", screen.width, screen.height);
 
 	windows = list_new();
