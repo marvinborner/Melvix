@@ -14,7 +14,7 @@ all: $(COBJS)
 	@$(CC) -c $(CFLAGS) $< -o $@
 	@$(LD) -o $(@:.o=.elf) -Tlink.ld -L../build/ $@ -lgui -ltxt -lnet -lc
 	@$(OC) -O binary $(@:.o=.elf) ../build/apps/$(@:.o=)
-# @cp $(@:.o=.elf) ../build/apps/$(@:.o=.dbg)
+	@cp $(@:.o=.elf) ../build/apps/$(@:.o=.elf)
 
 # %.o: %.c
 # 	@mkdir -p ../build/apps/

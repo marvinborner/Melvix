@@ -21,14 +21,14 @@ struct vid_info *boot_passed;
 void kernel_main(struct vid_info *vid_info); // Decl
 void kernel_main(struct vid_info *vid_info)
 {
-	heap_init(0x00f00000 + rand());
-
-	boot_passed = vid_info;
-
 	// Serial connection
 	serial_install();
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
 	serial_print("Serial connected.\n");
+
+	heap_init(0x00f00000 + rand());
+
+	boot_passed = vid_info;
 
 	cpu_enable_features();
 	cpu_print();

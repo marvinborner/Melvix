@@ -22,10 +22,11 @@ fi
 mode="${1}"
 no_ask="${2}"
 
-# TODO: Support q35 chipset ('-machine q35') - loops in ide_wait
+# TODO: Support q35 chipset ('-machine q35')
+# TODO: Support -enable-kvm: GPF due to some malloc bug?!
 qemu_with_flags() {
     network="rtl8139"
-    qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -smp 4 -netdev user,id=net0,hostfwd=tcp:127.0.0.1:8000-10.0.2.15:8000 -device $network,netdev=net0 -object filter-dump,id=dump,netdev=net0,file=dump.pcap "$@"
+    qemu-system-i386 -d guest_errors -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -netdev user,id=net0,hostfwd=tcp:127.0.0.1:8000-10.0.2.15:8000 -device $network,netdev=net0 -object filter-dump,id=dump,netdev=net0,file=dump.pcap "$@"
 }
 
 make_cross() {
@@ -110,7 +111,7 @@ make_build() {
     rm -rf build/*
 
     printf "\nBuilding...\n"
-    if [ "$mode" = "debug" ]; then
+    if [ "$mode" = "debug" ] || [ "$MELVIX_DEBUG" = "1" ]; then
         $MAKE -j $($NPROC) debug
     else
         $MAKE -j $($NPROC)
@@ -171,8 +172,21 @@ make_debug() {
 }
 
 make_disasm() {
-    objdump -drwC -Mintel build/kernel.elf | less -R
+    if [ -z "$1" ]; then
+        echo "Usage: './run disasm {kernel, apps/wm, ...} [-S]'"
+        exit 1
+    fi
+    objdump -drwC "$2" -Mintel build/"$1".elf | less -R
     #hexdump -C build/kernel.bin | less -R
+}
+
+make_addr() {
+    printf "Info: Make sure that you've turned the debug build on (e.g. with MELVIX_DEBUG=1)\n\n"
+    if [ -z "$2" ]; then
+        echo "Usage: './run addr kernel 0x50042'"
+        exit 1
+    fi
+    addr2line -e build/"$1".elf "$2"
 }
 
 make_append_commands() {
@@ -207,7 +221,7 @@ make_sync() {
 }
 
 make_clean() {
-    rm -rf build/
+    #rm -rf build/
     $MAKE clean
 }
 
@@ -222,11 +236,9 @@ elif [ "${mode}" = "clean" ]; then
 elif [ "${mode}" = "again" ]; then
     make_test
 elif [ "${mode}" = "disasm" ]; then
-    make_cross
-    make_clean
-    make_build
-    make_disasm
-    make_clean
+    make_disasm "$2" "$3"
+elif [ "${mode}" = "addr" ]; then
+    make_addr "$2" "$3"
 elif [ "${mode}" = "sync" ]; then
     make_sync
 elif [ "${mode}" = "disk" ]; then
@@ -245,7 +257,7 @@ elif [ "${mode}" = "test" ] || [ "${mode}" = "" ]; then
     make_test
     make_clean
 else
-    echo "Usage: ./run {cross | clean | build | test | debug | again | disasm | sync | disk} [-y]"
+    echo "Usage: ./run {cross | clean | build | test | debug | again | disasm | addr | sync | disk} [-y]"
     printf "\nDescription of options:\n"
     printf "cross\t\tBuilds the cross compiler\n"
     printf "clean\t\tRemoves the compiled files\n"
@@ -253,9 +265,11 @@ else
     printf "test\t\tRuns the Melvix unit tests with QEMU (cross+clean+build)\n"
     printf "debug\t\tEmulates Melvix with QEMU and debug options (cross+clean+build)\n"
     printf "again\t\tOpens QEMU again using the previous build\n"
-    printf "disasm\t\tDisassembles the main kernel binary\n"
+    printf "disasm\t\tDisassembles a given part of Melvix\n"
+    printf "addr\t\tResolves an address to a line of code\n"
     printf "sync\t\tSyncs the 'tags' and 'compile_commands.json' file\n"
     printf "disk\t\tPrepares the userspace disk (e.g. fonts)\n"
-    printf "nothing\t\tWhen no option is set, Melvix gets built and emulated using QEMU (cross+clean+build)\n"
-    printf "*\t\tAnything else prints this help\n\n"
+    printf "*\t\tAnything else prints this help\n"
+    printf "\t\tWhen no option is set, Melvix gets built and emulated using QEMU (cross+clean+build)\n\n"
+    echo "Set the environment variable 'MELVIX_DEBUG=1' for persistent debug builds"
 fi

@@ -173,12 +173,15 @@ void isr_handler(struct regs *r);
 void isr_handler(struct regs *r)
 {
 	if (r->int_no <= 32) {
-		printf("%s Exception, exiting!\n", isr_exceptions[r->int_no]);
 		struct proc *proc = proc_current();
-		if (proc)
+		printf("%s Exception at 0x%x, exiting!\n", isr_exceptions[r->int_no], r->eip);
+		if (proc) {
+			printf("\t-> Exception occurred in %s at addr 0x%x\n", proc->name,
+			       r->eip - proc->entry);
 			proc_exit(proc, 1);
-		else
+		} else {
 			__asm__ volatile("cli\nhlt");
+		}
 		proc_yield(r);
 	} else {
 		// Execute fault handler if exists

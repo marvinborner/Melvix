@@ -121,14 +121,15 @@ int mememp(const u8 *buf, u32 n)
 
 /**
  * Heap allocator
+ * Inspired by SHMALL (MIT License)
+ * Copyright (c) 2017 Chris Careaga
+ * Copyright (c) 2021 Marvin Borner
  */
 
 #ifdef kernel
 
-int malloc_allocated = 0;
-
-#define HEAP_MAGIC 0x42424242
-#define HEAP_INIT_SIZE 0xff000000
+#define HEAP_MAGIC 0x424242
+#define HEAP_INIT_SIZE 0xf000000
 #define HEAP_MIN_SIZE HEAP_INIT_SIZE
 #define MIN_ALLOC_SZ 4
 #define BIN_COUNT 9
@@ -292,7 +293,6 @@ void heap_init(u32 start)
 
 static void *_malloc(u32 size)
 {
-	malloc_allocated += size;
 	u32 index = bin_index(size);
 	struct h_bin *temp = (struct h_bin *)&heap.bins[index];
 	struct h_node *found = node_best_fit(temp, size);
@@ -348,7 +348,6 @@ static void _free(void *p)
 
 	struct h_node *head = (struct h_node *)((char *)p - 12);
 	assert(head->magic == HEAP_MAGIC && head->hole == 0);
-	malloc_allocated -= head->size;
 	if (head == (struct h_node *)(u32 *)heap.start) {
 		head->hole = 1;
 		node_add(&heap.bins[bin_index(head->size)], head);

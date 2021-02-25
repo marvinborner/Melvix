@@ -6,7 +6,7 @@ CFLAGS_DEFAULT = $(CFLAGS_WARNINGS) $(CFLAGS_OPTIMIZATION) -std=c99 -m32 -nostdl
 
 all: compile
 
-debug: DEBUG = -ggdb3 -s
+debug: CFLAGS_DEFAULT += -ggdb3 -s
 debug: compile
 
 export

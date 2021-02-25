@@ -46,6 +46,7 @@ struct stream {
 
 struct proc {
 	u32 pid;
+	u32 entry;
 	u8 super;
 	char name[32];
 	struct stream streams[4];

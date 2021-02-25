@@ -162,6 +162,8 @@ void proc_yield(struct regs *r)
 void proc_enable_waiting(u32 id, enum proc_wait_type type)
 {
 	struct proc *proc_bak = proc_current();
+	if (!proc_bak)
+		return;
 
 	struct node *iterator = proc_list->head;
 	while (iterator) {

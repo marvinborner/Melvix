@@ -20,7 +20,7 @@ LD = ccache ../cross/opt/bin/i686-elf-ld
 OC = ccache ../cross/opt/bin/i686-elf-objcopy
 AS = ccache nasm
 
-CFLAGS = $(CFLAGS_DEFAULT) -Wno-address-of-packed-member -ffreestanding -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel $(DEBUG)
+CFLAGS = $(CFLAGS_DEFAULT) -Wno-address-of-packed-member -ffreestanding -Wl,-ekernel_main -I../libc/inc/ -Iinc/ -Dkernel
 ASFLAGS = -f elf32
 
 all: compile
