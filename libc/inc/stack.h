@@ -16,7 +16,7 @@ struct stack {
 	struct stack_node *tail;
 };
 
-struct stack *stack_new();
+struct stack *stack_new(void);
 void stack_destroy(struct stack *stack);
 u32 stack_empty(struct stack *stack);
 u32 stack_push_bot(struct stack *stack, void *data);

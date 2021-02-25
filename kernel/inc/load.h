@@ -6,6 +6,6 @@
 #include <proc.h>
 
 void proc_load(struct proc *proc, void *data);
-int bin_load(char *path, struct proc *proc);
+int bin_load(const char *path, struct proc *proc);
 
 #endif

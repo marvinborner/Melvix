@@ -53,7 +53,7 @@ static struct {
 	u8 right : 1;
 } mouse = { 0 };
 
-static void buffer_flush()
+static void buffer_flush(void)
 {
 #ifdef FLUSH_TIMEOUT
 	static u32 time_flush = 0;

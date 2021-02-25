@@ -1,8 +1,8 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
 CFLAGS_OPTIMIZATION = -finline -finline-functions -Ofast
-CFLAGS_WARNINGS = -Wall -Wextra -pedantic -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wformat=2 #-Wmissing-declarations # TODO: Make more methods static
-CFLAGS_DEFAULT = $(CFLAGS_WARNINGS) $(CFLAGS_OPTIMIZATION) -std=c99 -m32 -nostdlib -nostdinc -fno-builtin -fno-profile-generate -mno-red-zone
+CFLAGS_WARNINGS = -Wall -Wextra -Werror -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wformat=2 -Wmissing-declarations -Wstrict-prototypes -Wmissing-prototypes -Wcast-qual -Wswitch-default -Wswitch-enum -Wlogical-op -Wunreachable-code -Wundef -Wold-style-definition -pedantic-errors
+CFLAGS_DEFAULT = $(CFLAGS_WARNINGS) $(CFLAGS_OPTIMIZATION) -std=c99 -m32 -nostdlib -nostdinc -fno-builtin -fno-profile-generate -fno-omit-frame-pointer -fno-common -mno-red-zone
 
 all: compile
 

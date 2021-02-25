@@ -14,7 +14,7 @@ void proc_load(struct proc *proc, void *data)
 	proc->regs.eip = (u32)data;
 }
 
-int bin_load(char *path, struct proc *proc)
+int bin_load(const char *path, struct proc *proc)
 {
 	// TODO: Remove hardcoded filesize
 	struct stat s = { 0 };

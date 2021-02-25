@@ -67,7 +67,7 @@ int strncmp(const char *s1, const char *s2, u32 n)
 	return d;
 }
 
-char *strchr(const char *s, int c)
+char *strchr(char *s, int c)
 {
 	while (*s != (char)c) {
 		if (!*s)
@@ -75,16 +75,16 @@ char *strchr(const char *s, int c)
 		s++;
 	}
 
-	return (char *)s;
+	return s;
 }
 
-char *strrchr(const char *s, int c)
+char *strrchr(char *s, int c)
 {
 	char *ret = 0;
 
 	do {
 		if (*s == c)
-			ret = (char *)s;
+			ret = s;
 	} while (*s++);
 
 	return ret;

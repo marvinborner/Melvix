@@ -186,7 +186,7 @@ s32 vfs_stat(const char *path, struct stat *buf)
 	return m->dev->vfs->stat(path, buf, m->dev);
 }
 
-s32 vfs_wait(const char *path, s32 (*func)())
+s32 vfs_wait(const char *path, u32 func_ptr)
 {
 	while (*path == ' ')
 		path++;
@@ -196,7 +196,7 @@ s32 vfs_wait(const char *path, s32 (*func)())
 
 	// Default wait
 	if (!m->dev->vfs->wait) {
-		proc_wait_for(vfs_find_dev(path)->id, PROC_WAIT_DEV, func);
+		proc_wait_for(vfs_find_dev(path)->id, PROC_WAIT_DEV, func_ptr);
 		return 1;
 	}
 
@@ -204,7 +204,7 @@ s32 vfs_wait(const char *path, s32 (*func)())
 	if (len > 1)
 		path += len;
 
-	return m->dev->vfs->wait(path, func, m->dev);
+	return m->dev->vfs->wait(path, func_ptr, m->dev);
 }
 
 s32 vfs_poll(const char **files)
@@ -217,7 +217,7 @@ s32 vfs_poll(const char **files)
 			return p - files;
 
 	for (const char **p = files; *p && **p; p++)
-		vfs_wait(*p, vfs_poll);
+		vfs_wait(*p, (u32)vfs_poll);
 
 	return PROC_MAX_WAIT_IDS + 1;
 }

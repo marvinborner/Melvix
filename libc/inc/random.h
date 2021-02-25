@@ -6,7 +6,7 @@
 #include <def.h>
 
 void srand(u32 seed);
-u32 rand();
+u32 rand(void);
 char *randstr(u32 size);
 
 #endif

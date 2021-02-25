@@ -19,8 +19,9 @@ static u32 dev_id = 0;
 
 static struct event_mouse *event = NULL;
 
-static void mouse_handler()
+static void mouse_handler(struct regs *r)
 {
+	UNUSED(r);
 	switch (mouse_cycle) {
 	case 0:
 		mouse_byte[0] = (char)inb(0x60);

@@ -817,7 +817,7 @@ int net_receive(struct socket *socket, void *buf, u32 len)
  * Install
  */
 
-int net_installed()
+int net_installed(void)
 {
 	return rtl8139_installed() != 0;
 }

@@ -65,7 +65,7 @@ int sysv(enum sys num, ...);
  * Syscall wrappers
  */
 
-#define loop() sys0(SYS_LOOP)
+#define loop(void) sys0(SYS_LOOP)
 #define read(path, buf, offset, count)                                                             \
 	(s32) sys4(SYS_READ, (int)(path), (int)(buf), (int)(offset), (int)(count))
 #define write(path, buf, offset, count)                                                            \
@@ -80,10 +80,10 @@ int sysv(enum sys num, ...);
 			yield();                                                                   \
 		}                                                                                  \
 	}
-#define yield() (int)sys0(SYS_YIELD)
-#define time() (u32) sys0(SYS_TIME)
+#define yield(void) (int)sys0(SYS_YIELD)
+#define time(void) (u32) sys0(SYS_TIME)
 
-static inline u32 getpid()
+static inline u32 getpid(void)
 {
 	u32 buf = 0;
 	read("/proc/self/pid", &buf, 0, sizeof(buf));

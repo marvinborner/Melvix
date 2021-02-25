@@ -130,14 +130,14 @@ static u32 heap;
 void *read_inode(struct inode *in);
 struct inode *get_inode(int i);
 int find_inode(const char *name, int dir_inode);
-void serial_install();
+void serial_install(void);
 void serial_print(const char *data);
 
 int main(void *data)
 {
 	serial_install();
 	heap = 0xf000;
-	void (*entry)();
+	void (*entry)(void *);
 	*(void **)(&entry) = read_inode(get_inode(find_inode("kernel.bin", 2)));
 	if (entry) {
 		serial_print("Loaded kernel!\n");
@@ -211,7 +211,7 @@ static u32 strlen(const char *s)
 	return ss - s;
 }
 
-void serial_install()
+void serial_install(void)
 {
 	outb(0x3f8 + 1, 0x00);
 	outb(0x3f8 + 3, 0x80);
@@ -222,7 +222,7 @@ void serial_install()
 	outb(0x3f8 + 4, 0x0B);
 }
 
-static int is_transmit_empty()
+static int is_transmit_empty(void)
 {
 	return inb(0x3f8 + 5) & 0x20;
 }
@@ -286,7 +286,7 @@ static void *buffer_read(int block)
 	return ide_read(malloc(BLOCK_SIZE), block);
 }
 
-static struct superblock *get_superblock()
+static struct superblock *get_superblock(void)
 {
 	struct superblock *sb = buffer_read(EXT2_SUPER);
 	if (sb->magic != EXT2_MAGIC)
@@ -294,7 +294,7 @@ static struct superblock *get_superblock()
 	return sb;
 }
 
-static struct bgd *get_bgd()
+static struct bgd *get_bgd(void)
 {
 	return buffer_read(EXT2_SUPER + 1);
 }

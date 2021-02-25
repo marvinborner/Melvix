@@ -18,8 +18,9 @@ static u32 dev_id = 0;
 
 static int state = 0;
 static int merged = 0;
-static void keyboard_handler()
+static void keyboard_handler(struct regs *r)
 {
+	UNUSED(r);
 	int scancode = inb(0x60);
 
 	// TODO: Support more than two-byte scancodes

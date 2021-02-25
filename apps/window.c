@@ -4,7 +4,7 @@
 #include <gui.h>
 #include <print.h>
 
-int main()
+int main(void)
 {
 	struct gui_window win = { 0 };
 	assert(gui_new_window(&win) > 0);

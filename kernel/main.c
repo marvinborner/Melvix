@@ -16,6 +16,8 @@
 #include <syscall.h>
 #include <timer.h>
 
+struct vid_info *boot_passed;
+
 void kernel_main(struct vid_info *vid_info); // Decl
 void kernel_main(struct vid_info *vid_info)
 {

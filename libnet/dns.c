@@ -34,7 +34,7 @@ static u32 part_count(const char *name)
 
 static u32 part_len(const char *name, u32 index)
 {
-	char *data = (char *)name;
+	const char *data = name;
 
 	u32 cnt = 0;
 	for (u32 i = 0; i < strlen(name); i++) {

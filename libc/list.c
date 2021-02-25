@@ -6,7 +6,7 @@
 
 static int nonce = 0;
 
-struct list *list_new()
+struct list *list_new(void)
 {
 	struct list *list = malloc(sizeof(*list));
 	list->head = NULL;
@@ -29,7 +29,7 @@ void list_destroy(struct list *list)
 	list = NULL;
 }
 
-static struct node *list_new_node()
+static struct node *list_new_node(void)
 {
 	struct node *node = malloc(sizeof(*node));
 	node->data = NULL;

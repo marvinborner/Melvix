@@ -16,7 +16,7 @@ struct node {
 	struct node *prev;
 };
 
-struct list *list_new();
+struct list *list_new(void);
 void list_destroy(struct list *list);
 /* struct node *list_new_node(); */ // TODO: Make node-specific things static/private?
 /* void list_add_node(struct list *list, struct node *node); */

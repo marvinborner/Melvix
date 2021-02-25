@@ -27,7 +27,7 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 -   Fast boot time (< 1s)
 -   TCP/IP stack and rtl8139 driver
 -   Small size (< 100KiB)
--   Compiles with `-Wall -Wextra -pedantic-errors -std=c99 -Ofast`
+-   Compiles with `-Wall -Wextra -Werror -pedantic-errors -std=c99 -Ofast`
 
 ## Screenshot
 

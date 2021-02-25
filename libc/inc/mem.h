@@ -5,8 +5,6 @@
 
 #include <def.h>
 
-int malloc_allocated;
-
 void *malloc_debug(u32 size, const char *file, int line, const char *func, const char *inp);
 void free_debug(void *ptr, const char *file, int line, const char *func, const char *inp);
 #define malloc(size) malloc_debug((u32)(size), __FILE__, __LINE__, __func__, #size)

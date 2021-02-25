@@ -100,8 +100,9 @@ static u8 cpu_has_feature(u32 feature)
 	return (cpu_features & feature) != 0;
 }
 
-static void fpu_handler()
+static void fpu_handler(struct regs *r)
 {
+	UNUSED(r);
 	__asm__ volatile("clts");
 }
 

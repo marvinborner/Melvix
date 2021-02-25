@@ -6,7 +6,7 @@
 
 static int nonce = 0;
 
-struct stack *stack_new()
+struct stack *stack_new(void)
 {
 	struct stack *stack = malloc(sizeof(*stack));
 	stack->tail = NULL;
@@ -29,7 +29,7 @@ void stack_destroy(struct stack *stack)
 	stack = NULL;
 }
 
-static struct stack_node *stack_new_node()
+static struct stack_node *stack_new_node(void)
 {
 	struct stack_node *node = malloc(sizeof(*node));
 	node->data = NULL;

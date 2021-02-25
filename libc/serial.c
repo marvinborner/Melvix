@@ -5,7 +5,7 @@
 #include <serial.h>
 #include <str.h>
 
-void serial_install()
+void serial_install(void)
 {
 	outb(0x3f8 + 1, 0x00);
 	outb(0x3f8 + 3, 0x80);
@@ -16,7 +16,7 @@ void serial_install()
 	outb(0x3f8 + 4, 0x0B);
 }
 
-static int is_transmit_empty()
+static int is_transmit_empty(void)
 {
 	return inb(0x3f8 + 5) & 0x20;
 }

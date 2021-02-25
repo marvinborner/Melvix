@@ -29,7 +29,7 @@ void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags)
 }
 
 // Install IDT
-static void idt_install()
+static void idt_install(void)
 {
 	// Set IDT pointer and limit
 	idt_ptr.limit = (sizeof(struct idt_entry) * 256) - 1;
@@ -60,7 +60,7 @@ void irq_uninstall_handler(int irq)
 }
 
 // Remap the IRQ table
-static void irq_remap()
+static void irq_remap(void)
 {
 	outb(0x20, 0x11);
 	outb(0xA0, 0x11);

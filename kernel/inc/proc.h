@@ -30,7 +30,7 @@ struct proc_wait_identifier {
 	u32 magic;
 	u32 id;
 	enum proc_wait_type type;
-	s32 (*func)();
+	u32 func_ptr;
 };
 
 struct proc_wait {
@@ -63,9 +63,9 @@ u8 proc_super(void);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, int status);
 void proc_yield(struct regs *r);
-void proc_clear_quantum();
+void proc_clear_quantum(void);
 void proc_enable_waiting(u32 id, enum proc_wait_type type);
-void proc_wait_for(u32 id, enum proc_wait_type type, s32 (*func)());
+void proc_wait_for(u32 id, enum proc_wait_type type, u32 func_ptr);
 struct proc *proc_make(void);
 
 #endif

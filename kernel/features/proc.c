@@ -74,7 +74,7 @@ void scheduler(struct regs *regs)
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
 }
 
-static void kernel_idle()
+static void kernel_idle(void)
 {
 	while (1)
 		;
@@ -121,7 +121,7 @@ struct proc *proc_from_pid(u32 pid)
 	return NULL;
 }
 
-void proc_clear_quantum()
+void proc_clear_quantum(void)
 {
 	quantum = 0;
 }
@@ -179,9 +179,10 @@ void proc_enable_waiting(u32 id, enum proc_wait_type type)
 			if (w->ids[i].magic == PROC_WAIT_MAGIC && w->ids[i].id == id &&
 			    w->ids[i].type == type) {
 				struct regs *r = &p->regs;
-				if (w->ids[i].func)
-					r->eax = (u32)w->ids[i].func((char *)r->ebx, (void *)r->ecx,
-								     r->edx, r->esi);
+				u32 (*func)(u32, u32, u32, u32) =
+					(u32(*)(u32, u32, u32, u32))w->ids[i].func_ptr;
+				if (w->ids[i].func_ptr)
+					r->eax = func(r->ebx, r->ecx, r->edx, r->esi);
 				memset(&w->ids[i], 0, sizeof(w->ids[i]));
 				p->wait.id_cnt--;
 				p->state = PROC_RUNNING;
@@ -196,7 +197,7 @@ void proc_enable_waiting(u32 id, enum proc_wait_type type)
 		current = list_first_data(proc_list, proc_bak);
 }
 
-void proc_wait_for(u32 id, enum proc_wait_type type, s32 (*func)())
+void proc_wait_for(u32 id, enum proc_wait_type type, u32 func_ptr)
 {
 	u8 already_exists = 0;
 	struct proc *p = proc_current();
@@ -204,7 +205,7 @@ void proc_wait_for(u32 id, enum proc_wait_type type, s32 (*func)())
 	// Check if already exists
 	for (u32 i = 0; i < p->wait.id_cnt; i++) {
 		if (p->wait.ids[i].id == id && p->wait.ids[i].type == type) {
-			assert(p->wait.ids[i].func == func);
+			assert(p->wait.ids[i].func_ptr == func_ptr);
 			already_exists = 1;
 		}
 	}
@@ -227,7 +228,7 @@ void proc_wait_for(u32 id, enum proc_wait_type type, s32 (*func)())
 	slot->magic = PROC_WAIT_MAGIC;
 	slot->id = id;
 	slot->type = type;
-	slot->func = func;
+	slot->func_ptr = func_ptr;
 	p->wait.id_cnt++;
 
 end:
@@ -369,7 +370,7 @@ static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 	return -1;
 }
 
-static s32 procfs_wait(const char *path, s32 (*func)(), struct device *dev)
+static s32 procfs_wait(const char *path, u32 func_ptr, struct device *dev)
 {
 	u32 pid = 0;
 	procfs_parse_path(&path, &pid);
@@ -381,10 +382,10 @@ static s32 procfs_wait(const char *path, s32 (*func)(), struct device *dev)
 
 		path++;
 		if (!memcmp(path, "msg", 4)) {
-			proc_wait_for(pid, PROC_WAIT_MSG, func);
+			proc_wait_for(pid, PROC_WAIT_MSG, func_ptr);
 			return 1;
 		} else {
-			proc_wait_for(dev->id, PROC_WAIT_DEV, func);
+			proc_wait_for(dev->id, PROC_WAIT_DEV, func_ptr);
 			return 1;
 		}
 	}
@@ -461,14 +462,14 @@ void proc_init(void)
 
 	// Idle proc
 	struct proc *kernel_proc = proc_make();
-	void (*func)() = kernel_idle;
+	void (*func)(void) = kernel_idle;
 	proc_load(kernel_proc, *(void **)&func);
 	strcpy(kernel_proc->name, "idle");
 	kernel_proc->state = PROC_SLEEPING;
 	idle_proc = list_add(proc_list, kernel_proc);
 
 	struct node *new = list_add(proc_list, proc_make());
-	bin_load((char *)"/bin/init", new->data);
+	bin_load("/bin/init", new->data);
 	current = new;
 
 	_eip = ((struct proc *)new->data)->regs.eip;

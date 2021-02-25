@@ -5228,7 +5228,7 @@ static u32 readChunk_iTXt(pngInfo *info, const pngDecoderSettings *decoder, cons
 			png_free(str);
 		} else {
 			error = png_add_itext_sized(info, key, langtag, transkey,
-						    (char *)(data + begin), length);
+						    (const char *)(data + begin), length);
 		}
 
 		break;
@@ -7253,8 +7253,9 @@ const char *png_error_text(u32 code)
     unreasonable memory consumption when decoding due to impossibly large ICC profile*/
 	case 113:
 		return "ICC profile unreasonably large";
+	default:
+		return "unknown error code";
 	}
-	return "unknown error code";
 }
 #endif /*PNG_COMPILE_ERROR_TEXT*/
 

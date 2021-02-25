@@ -23,6 +23,8 @@ typedef unsigned long long u64;
  * Macros
  */
 
+#define UNUSED(a) ((void)(a))
+
 #define EOF (-1)
 #define NULL ((void *)0)
 

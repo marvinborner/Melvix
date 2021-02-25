@@ -82,8 +82,9 @@ static void rtl8139_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
 	}
 }
 
-static void rtl8139_irq_handler()
+static void rtl8139_irq_handler(struct regs *r)
 {
+	UNUSED(r);
 	u16 status = inw(rtl_iobase + RTL_PORT_ISR);
 	if (!status)
 		return;

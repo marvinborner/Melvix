@@ -9,14 +9,16 @@ void *memcpy(void *dest, const void *src, u32 n)
 {
 #ifdef userspace
 	// Inspired by Jeko at osdev
+	u8 *dest_byte = dest;
+	const u8 *src_byte = src;
 	for (u32 i = 0; i < n / 16; i++) {
 		__asm__ volatile("movups (%0), %%xmm0\n"
-				 "movntdq %%xmm0, (%1)\n" ::"r"(src),
-				 "r"(dest)
+				 "movntdq %%xmm0, (%1)\n" ::"r"(src_byte),
+				 "r"(dest_byte)
 				 : "memory");
 
-		src = ((u8 *)src) + 16;
-		dest = ((u8 *)dest) + 16;
+		src_byte += 16;
+		dest_byte += 16;
 	}
 
 	if (n & 7) {
@@ -32,18 +34,18 @@ void *memcpy(void *dest, const void *src, u32 n)
 				 "movsb\n"
 				 "2:"
 				 : "=&c"(d0), "=&D"(d1), "=&S"(d2)
-				 : "0"(n / 4), "q"(n), "1"((long)dest), "2"((long)src)
+				 : "0"(n / 4), "q"(n), "1"((long)dest_byte), "2"((long)src_byte)
 				 : "memory");
 	}
-	return dest;
+	return dest_byte;
 #else
 	// Inspired by jgraef at osdev
 	u32 num_dwords = n / 4;
 	u32 num_bytes = n % 4;
 	u32 *dest32 = (u32 *)dest;
-	u32 *src32 = (u32 *)src;
+	const u32 *src32 = (const u32 *)src;
 	u8 *dest8 = ((u8 *)dest) + num_dwords * 4;
-	u8 *src8 = ((u8 *)src) + num_dwords * 4;
+	const u8 *src8 = ((const u8 *)src) + num_dwords * 4;
 
 	// TODO: What's faster?
 	__asm__ volatile("rep movsl\n"
@@ -89,11 +91,11 @@ void *memset(void *dest, int val, u32 n)
 
 void *memchr(void *src, int c, u32 n)
 {
-	const u8 *s = (const u8 *)src;
+	u8 *s = (u8 *)src;
 
 	while (n-- > 0) {
 		if (*s == c)
-			return (void *)s;
+			return s;
 		s++;
 	}
 	return NULL;
