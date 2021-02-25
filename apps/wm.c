@@ -183,8 +183,8 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 		if (start_x <= 0) { // Either right side or background
 			u32 right = start_x + win->ctx.size.x;
 			if (right <= width) { // Right side
-				end_x = 0;
 				start_x = 0;
+				end_x = right;
 			} else { // Background
 				start_x = 0;
 			}
