@@ -5,7 +5,7 @@ LD = ccache ../cross/opt/bin/i686-elf-ld
 OC = ccache ../cross/opt/bin/i686-elf-objcopy
 AS = ccache nasm
 
-CFLAGS = -Wall -Wextra -nostdlib -nostdinc -ffreestanding -fno-builtin -std=c99 -m32 -pedantic-errors -Ofast
+CFLAGS = $(CFLAGS_DEFAULT) -ffreestanding
 
 ASFLAGS = -f elf32
 

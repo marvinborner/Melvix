@@ -17,8 +17,7 @@ LD = ccache ../cross/opt/bin/i686-elf-ld
 AR = ccache ../cross/opt/bin/i686-elf-ar
 AS = ccache nasm
 
-WARNINGS = -Wall -Wextra -pedantic-errors -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wno-long-long
-CFLAGS = $(WARNINGS) -nostdlib -nostdinc -fno-builtin -mgeneral-regs-only -std=c99 -m32 -Iinc/ -Ofast
+CFLAGS = $(CFLAGS_DEFAULT) -Iinc/
 
 ASFLAGS = -f elf32
 

@@ -5,8 +5,7 @@ CC = ccache ../cross/opt/bin/i686-elf-gcc
 LD = ccache ../cross/opt/bin/i686-elf-ld
 OC = ccache ../cross/opt/bin/i686-elf-objcopy
 
-WARNINGS = -Wall -Wextra -pedantic-errors -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wno-long-long
-CFLAGS = $(WARNINGS) -nostdlib -nostdinc -fno-builtin -std=c99 -m32 -I../libc/inc/ -I../libgui/inc/ -I../libtxt/inc/ -I../libnet/inc/ -fPIE -Duserspace -Ofast
+CFLAGS = $(CFLAGS_DEFAULT) -I../libc/inc/ -I../libgui/inc/ -I../libtxt/inc/ -I../libnet/inc/ -fPIE -Duserspace
 
 all: $(COBJS)
 

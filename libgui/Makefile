@@ -10,8 +10,7 @@ CC = ccache ../cross/opt/bin/i686-elf-gcc
 LD = ccache ../cross/opt/bin/i686-elf-ld
 AR = ccache ../cross/opt/bin/i686-elf-ar
 
-WARNINGS = -Wall -Wextra -pedantic-errors -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wno-long-long
-CFLAGS = $(WARNINGS) -nostdlib -nostdinc -fno-builtin -std=c99 -m32 -Iinc/ -I../libc/inc/ -fPIE -Duserspace -Ofast
+CFLAGS = $(CFLAGS_DEFAULT) -Iinc/ -I../libc/inc/ -fPIE -Duserspace
 
 all: libgui
 
