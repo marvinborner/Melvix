@@ -21,8 +21,8 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 ## Features
 
 -   From scratch (no POSIX/UNIX compatibility at all)
--   Efficient Multitasking
--   EXT2 filesystem
+-   Multitasking
+-   VFS with EXT2, DEVFS and PROCFS
 -   Minimal GUI
 -   Fast boot time (< 1s)
 -   TCP/IP stack and rtl8139 driver
@@ -83,13 +83,14 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 
 Melvix is released under the MIT License and uses parts of the following 3rd party projects:
 
-Knowledge:
+Inspiration/usage:
 
 -   [OSDev wiki](https://wiki.osdev.org) - Very helpful!
 -   [James Molloy's tutorials](http://jamesmolloy.co.uk/tutorial_html/)
 -   [virtix - tasking inspiration](https://github.com/16Bitt/virtix/) - [MIT License](https://github.com/16Bitt/virtix/blob/85a3c58f3d3b8932354e85a996a79c377139c201/LICENSE)
 -   [studix - FS inspiration](https://github.com/orodley/studix) - [MIT License](https://github.com/orodley/studix/blob/d1b1d006010120551df58ff3faaf97484dfa9806/LICENSE)
 -   [ToAruOS - PCI and network driver inspiration](https://github.com/klange/toaruos) - [NCSA License](https://github.com/klange/toaruos/blob/351d5d38f22b570459931475d36468bf4e37f45a/LICENSE)
+-   [SHMALL - Heap allocator inspiration](https://github.com/CCareaga/heap_allocator) - [MIT License](https://github.com/CCareaga/heap_allocator/blob/fc423c6113df598ac8d10bc1f2954d51248e6443/LICENSE)
 
 Resources:
 
