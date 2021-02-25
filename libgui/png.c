@@ -631,7 +631,7 @@ static u32 readBits(pngBitReader *reader, u32 nbits)
 }
 
 /* Public for testing only. steps and result must have numsteps values. */
-u32 lode_png_test_bitreader(const u8 *data, u32 size, u32 numsteps, const u32 *steps, u32 *result)
+/*static u32 png_test_bitreader(const u8 *data, u32 size, u32 numsteps, const u32 *steps, u32 *result)
 {
 	u32 i;
 	pngBitReader reader;
@@ -654,7 +654,7 @@ u32 lode_png_test_bitreader(const u8 *data, u32 size, u32 numsteps, const u32 *s
 		result[i] = readBits(&reader, step);
 	}
 	return 1;
-}
+}*/
 #endif /*PNG_COMPILE_DECODER*/
 
 static u32 reverseBits(u32 bits, u32 num)
@@ -4089,14 +4089,16 @@ u32 png_convert(u8 *out, const u8 *in, const pngColorMode *mode_out, const pngCo
 	return error;
 }
 
+#ifdef PNG_COMPILE_ENCODER
+
 /* Converts a single rgb color without alpha from one type to another, color bits truncated to
 their bitdepth. In case of single channel (gray or palette), only the r channel is used. Slow
 function, do not use to process all pixels of an image. Alpha channel not supported on purpose:
 this is for bKGD, supporting alpha may prevent it from finding a color in the palette, from the
 specification it looks like bKGD should ignore the alpha values of the palette since it can use
 any palette index but doesn't have an alpha channel. Idem with ignoring color key. */
-u32 png_convert_rgb(u32 *r_out, u32 *g_out, u32 *b_out, u32 r_in, u32 g_in, u32 b_in,
-		    const pngColorMode *mode_out, const pngColorMode *mode_in)
+static u32 png_convert_rgb(u32 *r_out, u32 *g_out, u32 *b_out, u32 r_in, u32 g_in, u32 b_in,
+			   const pngColorMode *mode_out, const pngColorMode *mode_in)
 {
 	u32 r = 0, g = 0, b = 0;
 	u32 mul = 65535 / ((1u << mode_in->bitdepth) - 1u); /*65535, 21845, 4369, 257, 1*/
@@ -4146,8 +4148,6 @@ u32 png_convert_rgb(u32 *r_out, u32 *g_out, u32 *b_out, u32 r_in, u32 g_in, u32 
 
 	return 0;
 }
-
-#ifdef PNG_COMPILE_ENCODER
 
 void png_color_stats_init(pngColorStats *stats)
 {

@@ -1,5 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <math.h>
+
 int pow(int base, int exp)
 {
 	if (exp < 0)

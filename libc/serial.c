@@ -2,6 +2,7 @@
 
 #include <cpu.h>
 #include <def.h>
+#include <serial.h>
 #include <str.h>
 
 void serial_install()
@@ -15,12 +16,12 @@ void serial_install()
 	outb(0x3f8 + 4, 0x0B);
 }
 
-int is_transmit_empty()
+static int is_transmit_empty()
 {
 	return inb(0x3f8 + 5) & 0x20;
 }
 
-void serial_put(char ch)
+static void serial_put(char ch)
 {
 	while (is_transmit_empty() == 0)
 		;

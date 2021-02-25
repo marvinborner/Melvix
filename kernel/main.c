@@ -16,6 +16,7 @@
 #include <syscall.h>
 #include <timer.h>
 
+void kernel_main(struct vid_info *vid_info); // Decl
 void kernel_main(struct vid_info *vid_info)
 {
 	heap_init(0x00f00000 + rand());

@@ -95,12 +95,12 @@ static void cr4_set(u32 cr4)
 }
 
 static u32 cpu_features = 0;
-u8 cpu_has_feature(u32 feature)
+static u8 cpu_has_feature(u32 feature)
 {
 	return (cpu_features & feature) != 0;
 }
 
-void fpu_handler()
+static void fpu_handler()
 {
 	__asm__ volatile("clts");
 }

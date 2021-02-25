@@ -102,12 +102,12 @@ static struct window *window_find(u32 id)
 	return NULL;
 }
 
-static void window_destroy(struct window *win)
+/*static void window_destroy(struct window *win)
 {
-	/* free(win->name); */
+	//free(win->name);
 	free(win->ctx.fb);
 	free(win);
-}
+}*/
 
 // Beautiful
 static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
@@ -189,13 +189,15 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 				start_x = 0;
 			}
 		}
+
 		u32 start_y = 0;
+		u32 end_y = height;
 
 		u8 *srcfb = &win->ctx.fb[(pos.x + start_x) * bypp + pos.y * win->ctx.pitch];
 		u8 *destfb = &data[start_x * bypp];
 
 		// Copy window data to rectangle buffer
-		for (u32 cy = start_y; cy < height; cy++) {
+		for (u32 cy = start_y; cy < end_y; cy++) {
 			int diff = 0;
 			for (u32 cx = start_x; cx < end_x; cx++) {
 				if (srcfb[bypp - 1])

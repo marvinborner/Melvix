@@ -168,7 +168,7 @@ int print(const char *str)
 #define WHT "\x1B[1;37m"
 #define RES "\x1B[0m"
 
-void print_kernel(const char *str)
+static void print_kernel(const char *str)
 {
 	serial_print(RED);
 	serial_print("[KER] ");

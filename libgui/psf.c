@@ -9,7 +9,7 @@
 
 // Verifies the PSF magics
 // Returns the PSF version or 0
-int psf_verify(char *data)
+static int psf_verify(char *data)
 {
 	struct psf1_header *header1 = (struct psf1_header *)data;
 	struct psf2_header *header2 = (struct psf2_header *)data;

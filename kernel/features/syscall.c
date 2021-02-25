@@ -10,9 +10,10 @@
 #include <proc.h>
 #include <str.h>
 #include <sys.h>
+#include <syscall.h>
 #include <timer.h>
 
-void syscall_handler(struct regs *r)
+static void syscall_handler(struct regs *r)
 {
 	enum sys num = r->eax;
 	r->eax = 0;

@@ -27,6 +27,9 @@ freely, subject to the following restrictions:
 #ifndef PNG_H
 #define PNG_H
 
+/* For now! TODO: Use PNG encoding */
+#define PNG_NO_COMPILE_ENCODER
+
 #include <def.h>
 extern const char *PNG_VERSION_STRING;
 

@@ -29,7 +29,7 @@ void list_destroy(struct list *list)
 	list = NULL;
 }
 
-struct node *list_new_node()
+static struct node *list_new_node()
 {
 	struct node *node = malloc(sizeof(*node));
 	node->data = NULL;
@@ -39,7 +39,7 @@ struct node *list_new_node()
 	return node;
 }
 
-struct node *list_add_node(struct list *list, struct node *node)
+static struct node *list_add_node(struct list *list, struct node *node)
 {
 	if (!list || !node)
 		return NULL;

@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <conv.h>
 #include <def.h>
+#include <http.h>
 #include <mem.h>
 #include <net.h>
 #include <print.h>

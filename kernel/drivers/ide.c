@@ -14,7 +14,7 @@ struct ata_data {
 	u8 drive;
 };
 
-void ide_select_drive(u8 bus, u8 drive)
+static void ide_select_drive(u8 bus, u8 drive)
 {
 	if (bus == ATA_PRIMARY) {
 		if (drive == ATA_MASTER)
@@ -29,7 +29,7 @@ void ide_select_drive(u8 bus, u8 drive)
 	}
 }
 
-u8 ide_find(u8 bus, u8 drive)
+static u8 ide_find(u8 bus, u8 drive)
 {
 	u16 io = bus == ATA_PRIMARY ? ATA_PRIMARY_IO : ATA_SECONDARY_IO;
 	ide_select_drive(bus, drive);
@@ -61,13 +61,13 @@ u8 ide_find(u8 bus, u8 drive)
 	return 1;
 }
 
-void ide_delay(u16 io) // 400ns
+static void ide_delay(u16 io) // 400ns
 {
 	for (int i = 0; i < 4; i++)
 		inb(io + ATA_REG_ALTSTATUS);
 }
 
-void ide_poll(u16 io)
+static void ide_poll(u16 io)
 {
 	for (int i = 0; i < 4; i++)
 		inb(io + ATA_REG_ALTSTATUS);
@@ -83,7 +83,7 @@ void ide_poll(u16 io)
 	} while (!(status & ATA_SR_DRQ));
 }
 
-u8 ata_read_one(u8 *buf, u32 lba, struct device *dev)
+static u8 ata_read_one(u8 *buf, u32 lba, struct device *dev)
 {
 	u8 drive = ((struct ata_data *)dev->data)->drive;
 	u16 io = (drive & ATA_PRIMARY << 1) == ATA_PRIMARY ? ATA_PRIMARY_IO : ATA_SECONDARY_IO;
@@ -106,7 +106,7 @@ u8 ata_read_one(u8 *buf, u32 lba, struct device *dev)
 	return 1;
 }
 
-s32 ata_read(void *buf, u32 lba, u32 sector_count, struct device *dev)
+static s32 ata_read(void *buf, u32 lba, u32 sector_count, struct device *dev)
 {
 	u8 *b = buf; // I love bytes, yk
 	for (u32 i = 0; i < sector_count; i++) {
@@ -117,7 +117,7 @@ s32 ata_read(void *buf, u32 lba, u32 sector_count, struct device *dev)
 }
 
 int ata_pm = 0, ata_ps = 0, ata_sm = 0, ata_ss = 0;
-void ata_probe(void)
+static void ata_probe(void)
 {
 	for (int i = 0; i < 4; i++) {
 		int bus = i < 2 ? ATA_PRIMARY : ATA_SECONDARY;

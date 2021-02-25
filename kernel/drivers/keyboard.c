@@ -4,6 +4,7 @@
 #include <def.h>
 #include <fs.h>
 #include <interrupts.h>
+#include <keyboard.h>
 #include <mem.h>
 #include <print.h>
 #include <proc.h>
@@ -17,7 +18,7 @@ static u32 dev_id = 0;
 
 static int state = 0;
 static int merged = 0;
-void keyboard_handler()
+static void keyboard_handler()
 {
 	int scancode = inb(0x60);
 
@@ -45,20 +46,20 @@ void keyboard_handler()
 	proc_enable_waiting(dev_id, PROC_WAIT_DEV);
 }
 
-void keyboard_acknowledge(void)
+/*static void keyboard_acknowledge(void)
 {
 	while (inb(0x60) != 0xfa)
 		;
 }
 
-void keyboard_rate(void)
+static void keyboard_rate(void)
 {
 	outb(0x60, 0xF3);
 	keyboard_acknowledge();
 	outb(0x60, 0x0); // Rate{00000} Delay{00} 0
-}
+}*/
 
-s32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
+static s32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
 {
 	(void)dev;
 	if (stack_empty(queue))
@@ -70,7 +71,7 @@ s32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
 	return count;
 }
 
-u8 keyboard_ready(void)
+static u8 keyboard_ready(void)
 {
 	return !stack_empty(queue);
 }

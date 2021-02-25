@@ -5,6 +5,7 @@
 #include <fs.h>
 #include <interrupts.h>
 #include <mem.h>
+#include <mouse.h>
 #include <print.h>
 #include <proc.h>
 #include <stack.h>
@@ -18,7 +19,7 @@ static u32 dev_id = 0;
 
 static struct event_mouse *event = NULL;
 
-void mouse_handler()
+static void mouse_handler()
 {
 	switch (mouse_cycle) {
 	case 0:
@@ -51,7 +52,7 @@ void mouse_handler()
 	}
 }
 
-void mouse_serial_wait(u8 a_type)
+static void mouse_serial_wait(u8 a_type)
 {
 	u32 time_out = 100000;
 	if (a_type == 0) {
@@ -67,7 +68,7 @@ void mouse_serial_wait(u8 a_type)
 	}
 }
 
-void mouse_serial_write(u8 a_write)
+static void mouse_serial_write(u8 a_write)
 {
 	mouse_serial_wait(1);
 	outb(0x64, 0xD4);
@@ -75,18 +76,18 @@ void mouse_serial_write(u8 a_write)
 	outb(0x60, a_write);
 }
 
-u8 mouse_serial_read(void)
+static u8 mouse_serial_read(void)
 {
 	mouse_serial_wait(0);
 	return inb(0x60);
 }
 
-u8 mouse_ready(void)
+static u8 mouse_ready(void)
 {
 	return !stack_empty(queue);
 }
 
-s32 mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
+static s32 mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
 {
 	(void)dev;
 	if (stack_empty(queue))

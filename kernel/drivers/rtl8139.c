@@ -27,7 +27,7 @@ u8 *rtl8139_get_mac(void)
 	return mac;
 }
 
-void rtl8139_receive_packet(void)
+static void rtl8139_receive_packet(void)
 {
 	while ((inb(rtl_iobase + RTL_PORT_CMD) & 0x01) == 0) {
 		int offset = cur_rx % 0x2000;
@@ -75,14 +75,14 @@ void rtl8139_send_packet(void *data, u32 len)
 		tx_current = 0;
 }
 
-void rtl8139_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
+static void rtl8139_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
 {
 	if ((vendor_id == 0x10ec) && (device_id == 0x8139)) {
 		*((u32 *)extra) = device;
 	}
 }
 
-void rtl8139_irq_handler()
+static void rtl8139_irq_handler()
 {
 	u16 status = inw(rtl_iobase + RTL_PORT_ISR);
 	if (!status)
@@ -93,7 +93,7 @@ void rtl8139_irq_handler()
 		rtl8139_receive_packet();
 }
 
-void rtl8139_init(void)
+static void rtl8139_init(void)
 {
 	if (!rtl_device_pci)
 		return;

@@ -15,7 +15,7 @@
 
 static struct list *mount_points = NULL;
 
-char *vfs_normalize_path(const char *path)
+static char *vfs_normalize_path(const char *path)
 {
 	char *fixed = strdup(path);
 	int len = strlen(fixed);
@@ -36,7 +36,7 @@ u8 vfs_mounted(struct device *dev, const char *path)
 	return 0;
 }
 
-struct mount_info *vfs_recursive_find(char *path)
+static struct mount_info *vfs_recursive_find(char *path)
 {
 	struct node *iterator = mount_points->head;
 	char *fixed = vfs_normalize_path(path);
@@ -60,7 +60,7 @@ struct mount_info *vfs_recursive_find(char *path)
 	return vfs_recursive_find(fixed);
 }
 
-struct mount_info *vfs_find_mount_info(const char *path)
+static struct mount_info *vfs_find_mount_info(const char *path)
 {
 	assert(path[0] == '/');
 	return vfs_recursive_find(strdup(path));
@@ -75,7 +75,7 @@ struct device *vfs_find_dev(const char *path)
 	return m && m->dev ? m->dev : NULL;
 }
 
-const char *vfs_resolve_type(enum vfs_type type)
+/*static const char *vfs_resolve_type(enum vfs_type type)
 {
 	switch (type) {
 	case VFS_DEVFS:
@@ -91,7 +91,7 @@ const char *vfs_resolve_type(enum vfs_type type)
 	}
 }
 
-void vfs_list_mounts()
+static void vfs_list_mounts()
 {
 	struct node *iterator = mount_points->head;
 	while (iterator) {
@@ -100,7 +100,7 @@ void vfs_list_mounts()
 		       vfs_resolve_type(m->dev->vfs->type));
 		iterator = iterator->next;
 	}
-}
+}*/
 
 s32 vfs_mount(struct device *dev, const char *path)
 {
@@ -276,7 +276,7 @@ struct device *device_get_by_name(const char *name)
 	return NULL;
 }
 
-s32 devfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+static s32 devfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	struct device *target = device_get_by_name(path + 1);
 	if (!target || !target->read)
@@ -284,7 +284,7 @@ s32 devfs_read(const char *path, void *buf, u32 offset, u32 count, struct device
 	return target->read(buf, offset, count, dev);
 }
 
-u8 devfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
+static u8 devfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
 {
 	(void)path;
 	(void)perm;
@@ -292,7 +292,7 @@ u8 devfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
 	return 1;
 }
 
-u8 devfs_ready(const char *path, struct device *dev)
+static u8 devfs_ready(const char *path, struct device *dev)
 {
 	(void)dev;
 
@@ -326,14 +326,14 @@ void device_install(void)
  */
 
 // TODO: Remove malloc from buffer_read (attempt in #56cd63f199)
-void *buffer_read(u32 block, struct device *dev)
+static void *buffer_read(u32 block, struct device *dev)
 {
 	void *buf = malloc(BLOCK_SIZE);
 	dev->read(buf, block * SECTOR_COUNT, SECTOR_COUNT, dev);
 	return buf;
 }
 
-struct ext2_superblock *get_superblock(struct device *dev)
+static struct ext2_superblock *get_superblock(struct device *dev)
 {
 	struct ext2_superblock *sb = buffer_read(EXT2_SUPER, dev);
 
@@ -341,12 +341,12 @@ struct ext2_superblock *get_superblock(struct device *dev)
 	return sb;
 }
 
-struct ext2_bgd *get_bgd(struct device *dev)
+static struct ext2_bgd *get_bgd(struct device *dev)
 {
 	return buffer_read(EXT2_SUPER + 1, dev);
 }
 
-struct ext2_inode *get_inode(u32 i, struct device *dev)
+static struct ext2_inode *get_inode(u32 i, struct device *dev)
 {
 	struct ext2_superblock *s = get_superblock(dev);
 	assert(s);
@@ -370,7 +370,7 @@ struct ext2_inode *get_inode(u32 i, struct device *dev)
 	return in;
 }
 
-u32 read_indirect(u32 indirect, u32 block_num, struct device *dev)
+static u32 read_indirect(u32 indirect, u32 block_num, struct device *dev)
 {
 	char *data = buffer_read(indirect, dev);
 	u32 ind = *(u32 *)((u32)data + block_num * sizeof(u32));
@@ -378,7 +378,7 @@ u32 read_indirect(u32 indirect, u32 block_num, struct device *dev)
 	return ind;
 }
 
-s32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct device *dev)
+static s32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	// TODO: Support read offset
 	(void)offset;
@@ -422,7 +422,7 @@ s32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct d
 	return count;
 }
 
-u32 find_inode(const char *name, u32 dir_inode, struct device *dev)
+static u32 find_inode(const char *name, u32 dir_inode, struct device *dev)
 {
 	if (!dir_inode)
 		return (unsigned)-1;
@@ -456,7 +456,7 @@ u32 find_inode(const char *name, u32 dir_inode, struct device *dev)
 	return (unsigned)-1;
 }
 
-struct ext2_inode *find_inode_by_path(const char *path, struct device *dev)
+static struct ext2_inode *find_inode_by_path(const char *path, struct device *dev)
 {
 	if (path[0] != '/')
 		return 0;

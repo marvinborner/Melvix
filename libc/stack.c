@@ -29,7 +29,7 @@ void stack_destroy(struct stack *stack)
 	stack = NULL;
 }
 
-struct stack_node *stack_new_node()
+static struct stack_node *stack_new_node()
 {
 	struct stack_node *node = malloc(sizeof(*node));
 	node->data = NULL;
@@ -39,7 +39,7 @@ struct stack_node *stack_new_node()
 	return node;
 }
 
-u32 stack_push_bot_node(struct stack *stack, struct stack_node *node)
+static u32 stack_push_bot_node(struct stack *stack, struct stack_node *node)
 {
 	if (!stack || !node)
 		return 0;
@@ -60,7 +60,7 @@ u32 stack_push_bot_node(struct stack *stack, struct stack_node *node)
 	return 1;
 }
 
-u32 stack_push_node(struct stack *stack, struct stack_node *node)
+static u32 stack_push_node(struct stack *stack, struct stack_node *node)
 {
 	if (!stack || !node)
 		return 0;

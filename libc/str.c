@@ -2,6 +2,7 @@
 
 #include <def.h>
 #include <mem.h>
+#include <str.h>
 
 u32 strlen(const char *s)
 {

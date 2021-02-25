@@ -150,14 +150,14 @@ int main(void *data)
 	return 0;
 }
 
-u8 inb(u16 port)
+static u8 inb(u16 port)
 {
 	u8 value;
 	__asm__ volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
 	return value;
 }
 
-void insl(u16 port, void *addr, int n)
+static void insl(u16 port, void *addr, int n)
 {
 	__asm__ volatile("cld; rep insl"
 			 : "=D"(addr), "=c"(n)
@@ -165,12 +165,12 @@ void insl(u16 port, void *addr, int n)
 			 : "memory", "cc");
 }
 
-void outb(u16 port, u8 data)
+static void outb(u16 port, u8 data)
 {
 	__asm__ volatile("outb %0, %1" ::"a"(data), "Nd"(port));
 }
 
-void *memcpy(void *dst, const void *src, u32 n)
+static void *memcpy(void *dst, const void *src, u32 n)
 {
 	const char *sp = (const char *)src;
 	char *dp = (char *)dst;
@@ -179,7 +179,7 @@ void *memcpy(void *dst, const void *src, u32 n)
 	return dst;
 }
 
-void *memset(void *dst, char val, u32 n)
+static void *memset(void *dst, char val, u32 n)
 {
 	char *temp = (char *)dst;
 	for (; n != 0; n--)
@@ -187,7 +187,7 @@ void *memset(void *dst, char val, u32 n)
 	return dst;
 }
 
-int strncmp(const char *s1, const char *s2, u32 n)
+static int strncmp(const char *s1, const char *s2, u32 n)
 {
 	const u8 *c1 = (const u8 *)s1;
 	const u8 *c2 = (const u8 *)s2;
@@ -203,7 +203,7 @@ int strncmp(const char *s1, const char *s2, u32 n)
 	return d;
 }
 
-u32 strlen(const char *s)
+static u32 strlen(const char *s)
 {
 	const char *ss = s;
 	while (*ss)
@@ -222,12 +222,12 @@ void serial_install()
 	outb(0x3f8 + 4, 0x0B);
 }
 
-int is_transmit_empty()
+static int is_transmit_empty()
 {
 	return inb(0x3f8 + 5) & 0x20;
 }
 
-void serial_put(char ch)
+static void serial_put(char ch)
 {
 	while (is_transmit_empty() == 0)
 		;
@@ -240,12 +240,12 @@ void serial_print(const char *data)
 		serial_put(data[i]);
 }
 
-void *malloc(u32 size)
+static void *malloc(u32 size)
 {
 	return (u32 *)(heap += size);
 }
 
-int ide_wait(int check)
+static int ide_wait(int check)
 {
 	char r;
 
@@ -259,7 +259,7 @@ int ide_wait(int check)
 	return 0;
 }
 
-void *ide_read(void *b, u32 block)
+static void *ide_read(void *b, u32 block)
 {
 	int sector_per_block = BLOCK_SIZE / SECTOR_SIZE; // 2
 	int sector = block * sector_per_block;
@@ -281,12 +281,12 @@ void *ide_read(void *b, u32 block)
 	return b;
 }
 
-void *buffer_read(int block)
+static void *buffer_read(int block)
 {
 	return ide_read(malloc(BLOCK_SIZE), block);
 }
 
-struct superblock *get_superblock()
+static struct superblock *get_superblock()
 {
 	struct superblock *sb = buffer_read(EXT2_SUPER);
 	if (sb->magic != EXT2_MAGIC)
@@ -294,7 +294,7 @@ struct superblock *get_superblock()
 	return sb;
 }
 
-struct bgd *get_bgd()
+static struct bgd *get_bgd()
 {
 	return buffer_read(EXT2_SUPER + 1);
 }
@@ -317,7 +317,7 @@ struct inode *get_inode(int i)
 	return in;
 }
 
-u32 read_indirect(u32 indirect, u32 block_num)
+static u32 read_indirect(u32 indirect, u32 block_num)
 {
 	char *data = buffer_read(indirect);
 	return *(u32 *)((u32)data + block_num * sizeof(u32));

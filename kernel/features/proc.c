@@ -74,7 +74,7 @@ void scheduler(struct regs *regs)
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
 }
 
-void kernel_idle()
+static void kernel_idle()
 {
 	while (1)
 		;
@@ -250,7 +250,7 @@ struct proc *proc_make(void)
 
 // TODO: Procfs needs a simpler interface structure (memcmp and everything sucks)
 
-const char *procfs_parse_path(const char **path, u32 *pid)
+static const char *procfs_parse_path(const char **path, u32 *pid)
 {
 	while (**path == '/')
 		(*path)++;
@@ -268,7 +268,7 @@ const char *procfs_parse_path(const char **path, u32 *pid)
 	return *path;
 }
 
-enum stream_defaults procfs_stream(const char *path)
+static enum stream_defaults procfs_stream(const char *path)
 {
 	if (!memcmp(path, "in", 3)) {
 		return STREAM_IN;
@@ -283,7 +283,7 @@ enum stream_defaults procfs_stream(const char *path)
 	}
 }
 
-s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	u32 pid = 0;
 	procfs_parse_path(&path, &pid);
@@ -321,7 +321,7 @@ s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct devi
 	return -1;
 }
 
-s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	(void)dev;
 	u32 pid = 0;
@@ -369,7 +369,7 @@ s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct devic
 	return -1;
 }
 
-s32 procfs_wait(const char *path, s32 (*func)(), struct device *dev)
+static s32 procfs_wait(const char *path, s32 (*func)(), struct device *dev)
 {
 	u32 pid = 0;
 	procfs_parse_path(&path, &pid);
@@ -392,7 +392,7 @@ s32 procfs_wait(const char *path, s32 (*func)(), struct device *dev)
 	return -1;
 }
 
-u8 procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
+static u8 procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
 {
 	(void)path;
 	(void)dev;
@@ -403,7 +403,7 @@ u8 procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
 		return 1;
 }
 
-u8 procfs_ready(const char *path, struct device *dev)
+static u8 procfs_ready(const char *path, struct device *dev)
 {
 	(void)dev;
 

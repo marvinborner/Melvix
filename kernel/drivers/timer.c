@@ -4,11 +4,12 @@
 #include <def.h>
 #include <interrupts.h>
 #include <proc.h>
+#include <timer.h>
 
 static u32 timer_ticks = 0;
 static u8 call_scheduler = 0;
 
-void timer_phase(int hz)
+static void timer_phase(int hz)
 {
 	int divisor = 3579545 / 3 / hz;
 	outb(0x43, 0x36); // 01 10 11 0b // CTR, RW, MODE, BCD

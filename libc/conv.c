@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <conv.h>
 #include <def.h>
 #include <math.h>
 #include <mem.h>

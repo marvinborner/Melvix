@@ -20,15 +20,15 @@
 
 static u32 failed;
 
-void pass_or_fail(const char *file_name, int line_num, const char *func, const char *first,
-		  const char *second, int success)
+static void pass_or_fail(const char *file_name, int line_num, const char *func, const char *first,
+			 const char *second, int success)
 {
 	failed += success ? 0 : 1;
 	log("\x1B[%s\x1B[0m %s:%d: %s: %s == %s\n", success ? "32m[PASS]" : "31m[FAIL]", file_name,
 	    line_num, func, first, second);
 }
 
-void test_malloc()
+static void test_malloc()
 {
 	// TODO: More tests!
 	/* u32 *a = malloc(a_mag); */
@@ -38,14 +38,14 @@ void test_malloc()
 	/* equals(b[-1], b_mag); */
 }
 
-void test_math()
+static void test_math()
 {
 	equals(pow(2, 3), 8);
 	equals(pow(0, 3), 0);
 	equals(pow(0, 0), 1);
 }
 
-void test_conv()
+static void test_conv()
 {
 	char buf1[1] = { 0 };
 	char buf2[7] = { 0 };
@@ -61,7 +61,7 @@ void test_conv()
 	equals_str(conv_base(0xffffffff, buf4, 10, 1), "-1");
 }
 
-void test_mem()
+static void test_mem()
 {
 	const char *str0 = "";
 	const char *str1 = "";
@@ -74,10 +74,10 @@ void test_mem()
 	equals(memcmp(str0, str1, strlen(str0)), 0);
 	equals(memcmp(NULL, NULL, 0), 0);
 
-	char buf[6];
+	char buf[6] = { 0 };
 	equals_str(memcpy(buf, "hallo", 6), "hallo");
 
-	char buf2[6];
+	char buf2[6] = { 0 };
 	equals_str(memset(buf2, 'x', 5), "xxxxx");
 }
 

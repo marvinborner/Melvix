@@ -157,7 +157,7 @@ struct heap {
 	struct h_bin bins[BIN_COUNT];
 };
 
-void node_add(struct h_bin *bin, struct h_node *node)
+static void node_add(struct h_bin *bin, struct h_node *node)
 {
 	node->magic = HEAP_MAGIC;
 	node->next = NULL;
@@ -187,7 +187,7 @@ void node_add(struct h_bin *bin, struct h_node *node)
 	}
 }
 
-void node_remove(struct h_bin *bin, struct h_node *node)
+static void node_remove(struct h_bin *bin, struct h_node *node)
 {
 	if (!bin->head)
 		return;
@@ -211,7 +211,7 @@ void node_remove(struct h_bin *bin, struct h_node *node)
 	}
 }
 
-struct h_node *node_best_fit(struct h_bin *bin, u32 size)
+static struct h_node *node_best_fit(struct h_bin *bin, u32 size)
 {
 	if (!bin->head)
 		return NULL;
@@ -225,26 +225,26 @@ struct h_node *node_best_fit(struct h_bin *bin, u32 size)
 	return NULL;
 }
 
-struct h_node *node_last(struct h_bin *bin)
-{
-	struct h_node *temp = bin->head;
-	while (temp->next)
-		temp = temp->next;
-	return temp;
-}
+/* static struct h_node *node_last(struct h_bin *bin) */
+/* { */
+/* 	struct h_node *temp = bin->head; */
+/* 	while (temp->next) */
+/* 		temp = temp->next; */
+/* 	return temp; */
+/* } */
 
-struct h_footer *node_foot(struct h_node *node)
+static struct h_footer *node_foot(struct h_node *node)
 {
 	return (struct h_footer *)((char *)node + sizeof(*node) + node->size);
 }
 
-void node_create_foot(struct h_node *head)
+static void node_create_foot(struct h_node *head)
 {
 	struct h_footer *foot = node_foot(head);
 	foot->header = head;
 }
 
-u32 bin_index(u32 sz)
+static u32 bin_index(u32 sz)
 {
 	u32 index = 0;
 	sz = sz < 4 ? 4 : sz;
@@ -262,19 +262,19 @@ u32 bin_index(u32 sz)
 /* 	return wild_foot->header; */
 /* } */
 
-u32 expand(struct heap *heap, u32 sz)
-{
-	(void)heap;
-	(void)sz;
-	return 0;
-}
+/* static u32 expand(struct heap *heap, u32 sz) */
+/* { */
+/* 	(void)heap; */
+/* 	(void)sz; */
+/* 	return 0; */
+/* } */
 
-u32 contract(struct heap *heap, u32 sz)
-{
-	(void)heap;
-	(void)sz;
-	return 0;
-}
+/* static u32 contract(struct heap *heap, u32 sz) */
+/* { */
+/* 	(void)heap; */
+/* 	(void)sz; */
+/* 	return 0; */
+/* } */
 
 static struct heap heap = { 0 };
 void heap_init(u32 start)
@@ -288,7 +288,7 @@ void heap_init(u32 start)
 	heap.end = start + HEAP_INIT_SIZE;
 }
 
-void *_malloc(u32 size)
+static void *_malloc(u32 size)
 {
 	malloc_allocated += size;
 	u32 index = bin_index(size);
@@ -336,7 +336,7 @@ void *_malloc(u32 size)
 	return &found->next;
 }
 
-void _free(void *p)
+static void _free(void *p)
 {
 	if (!p)
 		return;
@@ -392,12 +392,12 @@ void _free(void *p)
 #define kmalloc(n) (void *)sys1(SYS_MALLOC, n)
 #define kfree(ptr) (void)(sys1(SYS_FREE, (int)ptr))
 
-void *_malloc(u32 size)
+static void *_malloc(u32 size)
 {
 	return kmalloc(size);
 }
 
-void _free(void *ptr)
+static void _free(void *ptr)
 {
 	kfree(ptr);
 }

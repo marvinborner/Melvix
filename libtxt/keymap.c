@@ -6,7 +6,7 @@
 #include <print.h>
 #include <sys.h>
 
-void map(struct keymap *keymap, int line, char ch, int index)
+static void map(struct keymap *keymap, int line, char ch, int index)
 {
 	switch (line) {
 	case 0:
