@@ -27,5 +27,7 @@ jobs:
         with:
           name: disk-img
           path: build/disk.img
-      - name: Test everything
-        run: sh run test -y
+      - name: Test without debug mode
+        run: MELVIX_DEBUG=0 sh run test -y
+      - name: Test with debug mode
+        run: MELVIX_DEBUG=1 sh run test -y
