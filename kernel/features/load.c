@@ -17,7 +17,6 @@ void proc_load(struct proc *proc, void *data)
 
 int bin_load(const char *path, struct proc *proc)
 {
-	// TODO: Remove hardcoded filesize
 	struct stat s = { 0 };
 	vfs_stat(path, &s);
 	char *data = malloc(s.size);

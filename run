@@ -23,7 +23,7 @@ mode="${1}"
 no_ask="${2}"
 
 # TODO: Support q35 chipset ('-machine q35')
-# TODO: Support -enable-kvm: GPF due to some malloc bug?!
+# TODO: Support -enable-kvm: GPF?!
 qemu_with_flags() {
     network="rtl8139"
     qemu-system-i386 -d guest_errors -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -netdev user,id=net0,hostfwd=tcp:127.0.0.1:8000-10.0.2.15:8000 -device $network,netdev=net0 -object filter-dump,id=dump,netdev=net0,file=dump.pcap "$@"

@@ -8,26 +8,23 @@ SECTIONS
 	. = 0x00000000;
 
 	.text : {
+		code = .;
 		*(.text)
-	}
-
-	.rodata : {
 		*(.rodata)
+		. = ALIGN(4096);
 	}
-
-	. = ALIGN(4096);
 
 	.data : {
+		data = .;
 		*(.data)
+		. = ALIGN(4096);
 	}
-
-	. = ALIGN(4096);
 
 	.bss : {
+		bss = .;
 		*(.bss)
+		. = ALIGN(4096);
 	}
-
-	. = ALIGN(4096);
 
 	_GLOBAL_OFFSET_TABLE_ = .;
 

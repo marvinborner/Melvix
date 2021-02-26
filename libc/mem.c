@@ -291,8 +291,10 @@ void heap_init(u32 start)
 	heap.end = (u32)start + HEAP_INIT_SIZE;
 }
 
+#define ALIGN sizeof(long)
 static void *_malloc(u32 size)
 {
+	size = ((size + ALIGN - 1) / ALIGN) * ALIGN; // Alignment
 	u32 index = bin_index(size);
 	struct h_bin *temp = (struct h_bin *)&heap.bins[index];
 	struct h_node *found = node_best_fit(temp, size);

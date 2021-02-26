@@ -3,6 +3,7 @@
 #include <arg.h>
 #include <assert.h>
 #include <conv.h>
+#include <cpu.h>
 #include <def.h>
 #include <mem.h>
 #include <serial.h>
@@ -217,14 +218,17 @@ int print(const char *str)
 
 void panic(const char *format, ...)
 {
+	char buf[1024] = { 0 };
 	va_list ap;
 	va_start(ap, format);
-#ifdef kernel
-	vprintf(format, ap);
-#else
-	vfprintf(PATH_ERR, format, ap);
-#endif
+	vsprintf(buf, format, ap);
 	va_end(ap);
-
-	assert(0);
+#ifdef kernel
+	print(buf);
+	loop();
+#else
+	err(1, buf);
+#endif
+	while (1)
+		;
 }

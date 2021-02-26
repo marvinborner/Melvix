@@ -26,6 +26,7 @@ void __stack_chk_fail_local(void)
 
 /**
  * UBSan
+ * TODO: Fix san-paths for userspace (maybe due to -fPIE?)
  */
 
 #define is_aligned(value, alignment) !(value & (alignment - 1))
@@ -45,7 +46,7 @@ struct type_descriptor {
 struct type_mismatch {
 	struct source_location location;
 	struct type_descriptor *type;
-	u32 alignment;
+	u8 alignment;
 	u8 type_check_kind;
 };
 
@@ -132,7 +133,8 @@ void __ubsan_handle_divrem_overflow(struct overflow *data, void *left, void *rig
 	UNUSED(left);
 	UNUSED(right);
 	struct source_location *loc = &data->location;
-	panic("%s:%d: UBSAN: divrem-overflow\n", loc->file, loc->line);
+	panic("%s:%d: UBSAN: divrem-overflow (probably div-by-zero) [type: %s]\n", loc->file,
+	      loc->line, data->type->name);
 }
 
 void __ubsan_handle_out_of_bounds(struct out_of_bounds *data, void *value);
@@ -146,16 +148,31 @@ void __ubsan_handle_out_of_bounds(struct out_of_bounds *data, void *value)
 void __ubsan_handle_type_mismatch_v1(struct type_mismatch *data, u32 ptr);
 void __ubsan_handle_type_mismatch_v1(struct type_mismatch *data, u32 ptr)
 {
+	static const char *kinds[] = {
+		"Load of",
+		"Store to",
+		"Reference binding to",
+		"Member access within",
+		"Member call on",
+		"Constructor call on",
+		"Downcast of",
+		"Downcast of",
+		"Upcast of",
+		"Cast to virtual base of",
+		"Nonnull binding to",
+		"Dynamic operation on",
+	};
+
 	struct source_location *loc = &data->location;
 	const char *msg = "";
 	if (ptr == 0) {
-		msg = "Null pointer access";
+		msg = "null pointer";
 	} else if (data->alignment != 0 && is_aligned(ptr, data->alignment))
-		msg = "Misaligned memory access";
+		msg = "misaligned memory address";
 	else
-		msg = "Insufficient space";
-	panic("%s:%d: UBSAN: type-mismatch-v1: %s [type: %s]\n", loc->file, loc->line, msg,
-	      data->type->name);
+		msg = "address with insufficient space";
+	panic("%s:%d: UBSAN: %s %s [type: %s; addr: 0x%x; align: %d]\n", loc->file, loc->line,
+	      kinds[data->type_check_kind], msg, data->type->name, ptr, data->alignment);
 }
 
 void __ubsan_handle_alignment_assumption(void);

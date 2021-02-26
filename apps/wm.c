@@ -251,6 +251,9 @@ static void handle_event_keyboard(struct event_keyboard *event)
 	else if (event->scancode == KEY_LEFTCTRL || event->scancode == KEY_RIGHTCTRL)
 		special_keys.ctrl ^= 1;
 
+	if (event->scancode > KEYMAP_LENGTH)
+		return;
+
 	char ch;
 	if (special_keys.shift)
 		ch = keymap->shift_map[event->scancode];

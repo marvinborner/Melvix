@@ -26,7 +26,7 @@ void kernel_main(struct vid_info *vid_info)
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
 	serial_print("Serial connected.\n");
 
-	heap_init(0x00f00000 + rand());
+	heap_init(0x00f00000);
 
 	boot_passed = vid_info;
 

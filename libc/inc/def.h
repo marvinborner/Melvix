@@ -25,6 +25,8 @@ typedef unsigned long long u64;
 
 #define UNUSED(a) ((void)(a))
 
+#define NO_SANITIZE __attribute__((no_sanitize("undefined")))
+
 #define EOF (-1)
 #define NULL ((void *)0)
 
