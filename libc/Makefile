@@ -1,7 +1,8 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
 # TODO: Remove serial and cpu from libc?
-COBJS = str.o \
+COBJS = sanitize.o \
+	str.o \
 	mem.o \
 	math.o \
 	conv.o \

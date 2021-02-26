@@ -5,18 +5,17 @@
 #include <print.h>
 #include <sys.h>
 
-static struct message msg_buf = { 0 };
-
 int msg_send(u32 pid, enum message_type type, void *data)
 {
+	struct message msg = { 0 };
 	assert((signed)pid != -1);
 	char path[32] = { 0 };
 	sprintf(path, "/proc/%d/msg", pid);
-	msg_buf.magic = MSG_MAGIC;
-	msg_buf.src = getpid();
-	msg_buf.type = type;
-	msg_buf.data = data;
-	return write(path, &msg_buf, 0, sizeof(msg_buf));
+	msg.magic = MSG_MAGIC;
+	msg.src = getpid();
+	msg.type = type;
+	msg.data = data;
+	return write(path, &msg, 0, sizeof(msg));
 }
 
 int msg_receive(struct message *msg)

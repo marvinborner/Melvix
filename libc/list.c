@@ -130,6 +130,7 @@ struct list *list_remove(struct list *list, struct node *node)
 	}
 
 	iterator->prev->next = iterator->next;
-	iterator->next->prev = iterator->prev;
+	if (iterator->next)
+		iterator->next->prev = iterator->prev;
 	return list;
 }

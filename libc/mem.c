@@ -287,8 +287,8 @@ void heap_init(u32 start)
 	init_region->size = HEAP_INIT_SIZE - OVERHEAD;
 	node_create_foot(init_region);
 	node_add(&heap.bins[bin_index(init_region->size)], init_region);
-	heap.start = start;
-	heap.end = start + HEAP_INIT_SIZE;
+	heap.start = (u32)start;
+	heap.end = (u32)start + HEAP_INIT_SIZE;
 }
 
 static void *_malloc(u32 size)

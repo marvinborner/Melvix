@@ -213,14 +213,18 @@ int print(const char *str)
 	return strlen(str);
 }
 
+#endif
+
 void panic(const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
+#ifdef kernel
 	vprintf(format, ap);
+#else
+	vfprintf(PATH_ERR, format, ap);
+#endif
 	va_end(ap);
 
 	assert(0);
 }
-
-#endif

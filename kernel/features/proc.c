@@ -297,8 +297,9 @@ static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 
 		path++;
 		if (!memcmp(path, "msg", 4)) {
-			// TODO: Messages should be copied by value not by reference
-			stack_push_bot(p->messages, buf); // TODO: Use offset and count
+			void *msg_data = malloc(count);
+			memcpy(msg_data, buf, count);
+			stack_push_bot(p->messages, msg_data); // TODO: Use offset
 			proc_enable_waiting(pid, PROC_WAIT_MSG);
 			return count;
 		} else if (!memcmp(path, "io/", 3)) {
@@ -355,6 +356,7 @@ static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 				if (!msg)
 					return -1;
 				memcpy(buf, msg + offset, count);
+				free(msg);
 				return count;
 			}
 		} else if (!memcmp(path, "io/", 3)) {

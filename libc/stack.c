@@ -102,7 +102,8 @@ void *stack_pop(struct stack *stack)
 
 	struct stack_node *prev = stack->tail;
 
-	stack->tail->prev->next = NULL;
+	if (stack->tail->prev)
+		stack->tail->prev->next = NULL;
 	stack->tail = stack->tail->prev;
 
 	void *data = prev->data;
