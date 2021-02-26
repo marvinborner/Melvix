@@ -26,7 +26,7 @@ no_ask="${2}"
 # TODO: Support -enable-kvm: GPF?!
 qemu_with_flags() {
     network="rtl8139"
-    qemu-system-i386 -d guest_errors -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -netdev user,id=net0,hostfwd=tcp:127.0.0.1:8000-10.0.2.15:8000 -device $network,netdev=net0 -object filter-dump,id=dump,netdev=net0,file=dump.pcap "$@"
+    qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -netdev user,id=net0,hostfwd=tcp:127.0.0.1:8000-10.0.2.15:8000 -device $network,netdev=net0 -object filter-dump,id=dump,netdev=net0,file=dump.pcap "$@"
 }
 
 make_cross() {
