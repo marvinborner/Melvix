@@ -3,7 +3,7 @@
 <p align="center">
     <i>„A lightweight unix-unlike operating system“</i>
     <br><br>
-    <a href="https://github.com/marvinborner/Melvix/actions?query=workflow%3A%22Project+build%22" target="_blank">
+    <a href="https://github.com/marvinborner/Melvix/actions?query=workflow%3A%22Project+build+and+test%22" target="_blank">
         <img src="https://img.shields.io/github/workflow/status/marvinborner/Melvix/Project%20build?style=for-the-badge" />
     </a>
     <a href="https://app.codacy.com/manual/marvin-borner/Melvix/dashboard" target="_blank">
