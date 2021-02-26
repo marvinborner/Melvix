@@ -176,8 +176,6 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 		if (win == excluded)
 			continue;
 
-		vec2 pos = vec2_sub(pos1, win->pos);
-
 		s32 start_x = win->pos.x - pos1.x;
 		u32 end_x = width;
 		if (start_x <= 0) { // Either right side or background
@@ -190,11 +188,23 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 			}
 		}
 
-		u32 start_y = 0;
+		s32 start_y = win->pos.y - pos1.y;
 		u32 end_y = height;
+		if (start_y <= 0) { // Either bottom side or background
+			u32 bot = start_y + win->ctx.size.y;
+			if (bot <= height) { // Bottom side
+				start_y = 0;
+				end_y = bot;
+			} else { // Background
+				start_y = 0;
+			}
+		}
 
-		u8 *srcfb = &win->ctx.fb[(pos.x + start_x) * bypp + pos.y * win->ctx.pitch];
-		u8 *destfb = &data[start_x * bypp];
+		vec2 pos = vec2_sub(pos1, win->pos);
+
+		u8 *srcfb =
+			&win->ctx.fb[(pos.x + start_x) * bypp + (pos.y + start_y) * win->ctx.pitch];
+		u8 *destfb = &data[start_x * bypp + start_y * pitch];
 
 		// Copy window data to rectangle buffer
 		for (u32 cy = start_y; cy < end_y; cy++) {
@@ -218,8 +228,10 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 
 static void window_redraw(struct window *win)
 {
-	struct rectangle rec =
-		rectangle_at(win->pos_prev, vec2_add(win->pos_prev, win->ctx.size), win);
+	// TODO: Only redraw difference of prev/curr (difficult with negative directions)
+	vec2 pos1 = win->pos_prev;
+	vec2 pos2 = vec2(pos1.x + win->ctx.size.x, pos1.y + win->ctx.size.y);
+	struct rectangle rec = rectangle_at(pos1, pos2, win);
 
 	u8 *srcfb = rec.data;
 	u8 *destfb = &root->ctx.fb[rec.pos1.x * bypp + rec.pos1.y * root->ctx.pitch];
