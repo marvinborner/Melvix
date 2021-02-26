@@ -5,7 +5,6 @@
 #include <math.h>
 #include <mem.h>
 #include <print.h>
-#include <serial.h>
 #include <str.h>
 #include <sys.h>
 
@@ -74,10 +73,6 @@ TEST(mem)
 
 int main(void)
 {
-	// Serial connection
-	serial_install();
-	serial_print("\nConnected testing.\n");
-
 	test_math();
 	test_conv();
 	test_mem();

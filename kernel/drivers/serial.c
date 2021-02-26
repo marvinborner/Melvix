@@ -21,7 +21,7 @@ static int is_transmit_empty(void)
 	return inb(0x3f8 + 5) & 0x20;
 }
 
-static void serial_put(char ch)
+void serial_put(char ch)
 {
 	while (is_transmit_empty() == 0)
 		;

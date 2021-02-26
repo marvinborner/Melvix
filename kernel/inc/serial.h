@@ -5,5 +5,6 @@
 
 void serial_install(void);
 void serial_print(const char *data);
+void serial_put(char ch);
 
 #endif

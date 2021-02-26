@@ -6,7 +6,6 @@
 #include <cpu.h>
 #include <def.h>
 #include <mem.h>
-#include <serial.h>
 #include <str.h>
 
 static void append(char *dest, char *src, int index)
@@ -160,6 +159,7 @@ int print(const char *str)
 // The kernel prints everything into the serial console
 
 #include <proc.h>
+#include <serial.h>
 #define RED "\x1B[1;31m"
 #define GRN "\x1B[1;32m"
 #define YEL "\x1B[1;33m"
