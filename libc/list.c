@@ -15,6 +15,8 @@ struct list *list_new(void)
 
 void list_destroy(struct list *list)
 {
+	if (!list)
+		return;
 	struct node *iterator = list->head;
 	while (iterator != NULL) {
 		if (iterator->next == NULL) {
