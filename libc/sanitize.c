@@ -133,10 +133,14 @@ void __ubsan_handle_mul_overflow(struct overflow *data, void *left, void *right)
 	panic("%s:%d: UBSAN: mul-overflow [type: %s]\n", loc->file, loc->line, data->type->name);
 }
 
-void __ubsan_handle_shift_out_of_bounds(void);
-void __ubsan_handle_shift_out_of_bounds(void)
+void __ubsan_handle_shift_out_of_bounds(struct overflow *data, void *left, void *right);
+void __ubsan_handle_shift_out_of_bounds(struct overflow *data, void *left, void *right)
 {
-	panic("UBSAN: shift-out-of-bounds\n");
+	UNUSED(left);
+	UNUSED(right);
+	struct source_location *loc = &data->location;
+	panic("%s:%d: UBSAN: shift-out-of-bounds [type: %s]\n", loc->file, loc->line,
+	      data->type->name);
 }
 
 void __ubsan_handle_divrem_overflow(struct overflow *data, void *left, void *right);
