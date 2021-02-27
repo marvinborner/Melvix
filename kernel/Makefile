@@ -10,6 +10,7 @@ COBJS = main.o \
 	drivers/ide.o \
 	drivers/timer.o \
 	drivers/rtl8139.o \
+	features/memory.o \
 	features/fs.o \
 	features/load.o \
 	features/proc.o \

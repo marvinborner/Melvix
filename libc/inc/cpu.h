@@ -27,6 +27,12 @@ void cpu_print(void);
 void cpu_enable_features(void);
 void fpu_restore(void);
 
+u32 cr0_get(void);
+void cr0_set(u32 cr0);
+void cr3_set(u32 cr3);
+u32 cr4_get(void);
+void cr4_set(u32 cr4);
+
 void cli(void);
 void sti(void);
 void hlt(void);

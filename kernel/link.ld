@@ -5,6 +5,8 @@ phys = 0x00050000;
 
 SECTIONS
 {
+	kernel_start = .;
+
 	.text phys : AT(phys) {
 		code = .;
 		*(.text)
@@ -26,5 +28,5 @@ SECTIONS
 		. = ALIGN(4096);
 	}
 
-	end = .;
+	kernel_end = .;
 }

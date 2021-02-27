@@ -7,7 +7,7 @@
 #include <interrupts.h>
 #include <keyboard.h>
 #include <load.h>
-#include <mem.h>
+#include <memory.h>
 #include <mouse.h>
 #include <net.h>
 #include <pci.h>
@@ -26,7 +26,7 @@ void kernel_main(struct vid_info *vid_info)
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
 	serial_print("Serial connected.\n");
 
-	heap_init(0x00f00000);
+	paging_install();
 
 	boot_passed = vid_info;
 

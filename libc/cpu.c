@@ -70,26 +70,31 @@ void cpu_print(void)
 	printf("CPU vendor: %s\n", cpu_string(buf));
 }
 
-static u32 cr0_get(void)
+u32 cr0_get(void)
 {
 	u32 cr0;
 	__asm__ volatile("movl %%cr0, %%eax" : "=a"(cr0));
 	return cr0;
 }
 
-static void cr0_set(u32 cr0)
+void cr0_set(u32 cr0)
 {
 	__asm__ volatile("movl %%eax, %%cr0" ::"a"(cr0));
 }
 
-static u32 cr4_get(void)
+void cr3_set(u32 cr3)
+{
+	__asm__ volatile("movl %%eax, %%cr3" ::"a"(cr3));
+}
+
+u32 cr4_get(void)
 {
 	u32 cr4;
 	__asm__ volatile("movl %%cr4, %%eax" : "=a"(cr4));
 	return cr4;
 }
 
-static void cr4_set(u32 cr4)
+void cr4_set(u32 cr4)
 {
 	__asm__ volatile("movl %%eax, %%cr4" ::"a"(cr4));
 }
