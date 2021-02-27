@@ -70,6 +70,12 @@
 %define VESA_FRAMEBUFFER_OFFSET 0x2a ; Framebuffer offset in mode info
 %define VESA_LFB_FLAG 0x4000 ; Enable LFB flag
 
+; MMAP constants
+%define MMAP_START 0x400 ; Starts at 0x400, ends at 0x500
+%define MMAP_SIZE 0x18 ; Struct size
+%define MMAP_SIG 0x0534d4150 ; Signature ("SMAP")
+%define MMAP_BIOS_MAGIC 0xe820 ; BIOS int 15h code to get address map
+
 ; A20 constants
 %define A20_GATE 0x92 ; Fast A20 gate
 %define A20_ENABLED 0b10 ; Bit 1 defines whether A20 is enabled
@@ -234,6 +240,54 @@ video_map:
 .bpp dw VIDEO_BPP
 .framebuffer dd 0
 
+; Tries to load a memory map using BIOS INT 15h and e820h
+memory_map:
+	xor ebx, ebx ; Must be 0 by spec
+	xor bp, bp
+	mov edx, MMAP_SIG ; "SMAP" in hex
+	mov eax, MMAP_BIOS_MAGIC ; Specify MMAP information
+	mov [es:di + 20], dword 1 ; Force a valid ACPI entry
+	mov ecx, MMAP_SIZE ; Request struct size
+	int MISC_INT ; BIOS interrupt
+	jc .fail ; Carry means "unsupported function"
+	mov edx, MMAP_SIG ; Mov for verification
+	cmp eax, edx ; Verification: Must be "SMAP"
+	jne .fail ; Result wasn't correct signature
+	test ebx, ebx ; Is size >1
+	je .fail ; Nope, worthless :(
+	jmp .loop
+.next:
+	mov eax, MMAP_BIOS_MAGIC ; Re-move because 0x15 clears or sth
+	mov [es:di + 20], dword 1 ; Force a valid ACPI entry
+	mov ecx, MMAP_SIZE ; Request struct size
+	int MISC_INT ; BIOS interrupt
+	jc .done ; Carry means "end of list already reached"
+	mov edx, MMAP_SIG ; Repair register (safety first!)
+.loop:
+	jcxz .skip ; Skip 0-length entries
+	cmp cl, 20 ; Is the response correct ACPI spec (24 byte)?
+	jbe .notext ; Nope? Jump!
+	test byte [es:di + 20], 1 ; Is the "ignore this data" bit clear?
+	je .skip ; Yep? Skip!
+.notext:
+	mov ecx, [es:di + 8] ; Get lower 32 bits of region
+	or ecx, [es:di + 12] ; "Or" with upper 32 bits to test for zero
+	jz .skip ; It's zero, skip!
+	inc bp
+	add di, MMAP_SIZE ; Else, next!
+.skip:
+	test ebx, ebx ; If ebx is 0, list is complete
+	jne .next ; Else, next!
+.done:
+	mov [mmap_cnt], bp
+	clc ; Clear carry
+	ret ; Finished!
+.fail:
+	stc ; Set "unsupported function"
+	ret ; Finished!
+
+mmap_cnt: dd 0
+
 ; Variables
 disk_error_msg db "Disk error!", NEWLINE, RETURN, NULL
 lba_error_msg db "LBA error!", NEWLINE, RETURN, NULL
@@ -329,6 +383,14 @@ stage_two:
 	mov [dest], bx
 	call inode_load
 
+	; Load mmap
+	xor eax, eax
+	mov es, eax
+	mov edi, MMAP_START
+	push edi
+	call memory_map
+	push edi
+
 	; Set video mode
 	call video_map
 
@@ -373,6 +435,13 @@ protected_mode_enter:
 
 bits 32 ; Woah, so big!
 protected_mode:
+	mov ecx, [mmap_cnt] ; Get mmap entry count
+	mov [mem_info + 8], ecx ; Count of maps
+	pop ecx ; End of memory map
+	mov [mem_info + 4], ecx ; Ending boundary of struct
+	pop ecx ; Start of memory map
+	mov [mem_info], ecx ; Starting boundary of struct
+
 	mov ax, GDT_DATA_OFFSET ; Data segment offset of GDT
 	mov ds, ax
 	mov es, ax
@@ -388,9 +457,19 @@ protected_mode:
 	mov eax, vid_info ; Pass VBE struct to kernel
 	push eax ; Push as second kernel parameter
 
+	mov eax, mem_info ; Pass meminfo to kernel
+	push eax ; Push as first kernel parameter
+
 	mov edx, KERNEL_POSITION
 	lea eax, [edx]
 	call eax
+
+; Memory map
+align 16
+mem_info:
+	dd 0 ; Start address
+	dd 0 ; End address
+	dd 0 ; Count
 
 ; GDT
 align 32
