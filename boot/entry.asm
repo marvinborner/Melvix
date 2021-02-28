@@ -94,7 +94,7 @@
 %define GDT_DATA_OFFSET 0x10 ; Offset to GDT data segment
 
 ; Kernel constants
-%define STACK_POINTER 0x00900000 ; The initial stack pointer in kernel mode
+%define STACK_POINTER 0x00500000 ; The initial stack pointer in kernel mode
 %define KERNEL_POSITION 0x00040000 ; Loaded kernel position in protected mode (* 0x10)
 
 ; ENOUGH, let's go!

@@ -28,10 +28,7 @@ void paging_switch_dir(u32 dir)
 	cr3_set(dir);
 }
 
-void paging_invalidate_tlb(void)
-{
-	/* __asm__ volatile("invlpg"); */
-}
+extern void paging_invalidate_tlb(void);
 
 /**
  * Physical
@@ -390,8 +387,9 @@ void memory_initialize(struct mem_info *mem_info)
 
 		u32 size = p->lsize;
 		if (p->hsize)
-			size = U32_MAX;
+			size = U32_MAX - p->lbase;
 
+		/* printf("Memory region: %x-%x\n", p->lbase, p->lbase + size); */
 		if (p->type == MEMORY_AVAILABLE) {
 			physical_set_free(p->lbase, size / PAGE_SIZE);
 			memory_total += size;
@@ -403,22 +401,30 @@ void memory_initialize(struct mem_info *mem_info)
 	memory_used = 0;
 	printf("Detected memory: %dKiB (%dMiB)\n", memory_total >> 10, memory_total >> 20);
 
+	// Map kernel
 	memory_map_identity(&kernel_dir, kernel_memory_range(), MEMORY_NONE);
+
+	// Map kernel stack
+	memory_map_identity(&kernel_dir, memory_range_around_address(STACK_START, 0x1000),
+			    MEMORY_NONE);
+
+	// Map kernel heap
+	memory_map_identity(&kernel_dir, memory_range_around_address(HEAP_START, HEAP_INIT_SIZE),
+			    MEMORY_NONE);
+
+	// Map stack guard?
+	/* memory_map_identity(&kernel_dir, memory_range_around_address(0xdeadbeef, 0x1), MEMORY_NONE); */
 
 	// Unmap NULL byte/page
 	virtual_free(&kernel_dir, memory_range(0, PAGE_SIZE));
 	physical_set_used(0, 1);
 
 	memory_dir_switch(&kernel_dir);
-	printf("Enabling...\n");
 	paging_enable();
-	printf("Enabled!\n");
 }
 
-#define HEAP_START 0x00f00000
 void paging_install(struct mem_info *mem_info)
 {
-	heap_init(HEAP_START);
 	memory_initialize(mem_info);
-	printf("OK!\n");
+	heap_init(HEAP_START);
 }

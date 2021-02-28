@@ -16,7 +16,6 @@
 #ifdef kernel
 
 #define HEAP_MAGIC 0x424242
-#define HEAP_INIT_SIZE 0xf000000
 #define HEAP_MIN_SIZE HEAP_INIT_SIZE
 #define MIN_ALLOC_SZ 4
 #define BIN_COUNT 9

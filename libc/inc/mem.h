@@ -13,6 +13,9 @@ void *realloc(void *ptr, u32 size);
 void *zalloc(u32 size);
 
 #ifdef kernel
+#define STACK_START (0x00500000 - 1) // Defined it bootloader
+#define HEAP_START 0x00f00000
+#define HEAP_INIT_SIZE 0x0f00000
 void heap_init(u32 start);
 #elif defined(userspace)
 #else
