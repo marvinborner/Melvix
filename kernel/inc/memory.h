@@ -3,6 +3,7 @@
 #ifndef PAGING_H
 #define PAGING_H
 
+#include <boot.h>
 #include <def.h>
 
 /**
@@ -60,7 +61,7 @@ struct page_dir {
 	union page_dir_entry entries[PAGE_COUNT];
 } PACKED;
 
-void paging_install(void);
+void paging_install(struct mem_info *mem_info);
 
 /**
  * Memory wrappers

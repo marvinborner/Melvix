@@ -5,9 +5,8 @@ phys = 0x00050000;
 
 SECTIONS
 {
-	kernel_start = .;
-
 	.text phys : AT(phys) {
+		kernel_start = .;
 		code = .;
 		*(.text)
 		*(.rodata)

@@ -104,8 +104,8 @@ void physical_free(u32 addr, u32 n)
 #define PDI(vaddr) ((vaddr) >> 22)
 #define PTI(vaddr) (((vaddr) >> 12) & 0x03ff)
 
-struct page_dir kernel_dir ALIGNED(PAGE_SIZE) = { 0 };
-struct page_table kernel_tables[256] ALIGNED(PAGE_SIZE) = { 0 };
+static struct page_dir kernel_dir ALIGNED(PAGE_SIZE) = { 0 };
+static struct page_table kernel_tables[256] ALIGNED(PAGE_SIZE) = { 0 };
 
 u8 virtual_present(struct page_dir *dir, u32 vaddr)
 {
@@ -217,11 +217,8 @@ void virtual_free(struct page_dir *dir, struct memory_range virtual_range)
  * Memory wrapper
  */
 
-/* extern u32 kernel_start; */
-/* extern u32 kernel_end; */
-// TODO!
-u32 kernel_start = 0x50000;
-u32 kernel_end = 0xa0000;
+extern u32 kernel_start;
+extern u32 kernel_end;
 
 struct memory_range memory_range_from_address(u32 base, u32 size)
 {
@@ -353,12 +350,12 @@ struct page_dir *memory_dir_create(void)
 
 void memory_dir_destroy(struct page_dir *dir)
 {
-	for (u32 i = 256; i < 1024; i++) {
+	for (u32 i = 256; i < PAGE_COUNT; i++) {
 		union page_dir_entry *dir_entry = &dir->entries[i];
 		if (dir_entry->bits.present) {
 			struct page_table *table =
 				(struct page_table *)(dir_entry->bits.address * PAGE_SIZE);
-			for (u32 j = 0; j < 1024; j++) {
+			for (u32 j = 0; j < PAGE_COUNT; j++) {
 				union page_table_entry *table_entry = &table->entries[j];
 				if (table_entry->bits.present)
 					physical_free(table_entry->bits.address * PAGE_SIZE, 1);
@@ -375,9 +372,8 @@ void memory_dir_switch(struct page_dir *dir)
 	paging_switch_dir(virtual_to_physical(&kernel_dir, (u32)dir));
 }
 
-void memory_initialize(void)
+void memory_initialize(struct mem_info *mem_info)
 {
-	memset(memory, 0xff, PAGE_COUNT * PAGE_COUNT / 8);
 	for (u32 i = 0; i < 256; i++) {
 		union page_dir_entry *entry = &kernel_dir.entries[i];
 		entry->bits.present = 1;
@@ -386,23 +382,43 @@ void memory_initialize(void)
 		entry->bits.address = (u32)&kernel_tables[i] / PAGE_SIZE;
 	}
 
-	// TODO: Loop over mmap and set free
+	// Detect memory using E820 memory map
+	for (struct mmap_boot *p = mem_info->start; (u32)(p - mem_info->start) < mem_info->size;
+	     p++) {
+		if (p->hbase || !p->acpi || !p->type)
+			continue;
+
+		u32 size = p->lsize;
+		if (p->hsize)
+			size = U32_MAX;
+
+		if (p->type == MEMORY_AVAILABLE) {
+			physical_set_free(p->lbase, size / PAGE_SIZE);
+			memory_total += size;
+		} else if (p->type == MEMORY_DEFECT) {
+			printf("Defect memory at 0x%x-0x%x!\n", p->lbase, p->lbase + size);
+		}
+	}
 
 	memory_used = 0;
-	memory_total = 100 << 20; // 100Megs?
+	printf("Detected memory: %dKiB (%dMiB)\n", memory_total >> 10, memory_total >> 20);
 
 	memory_map_identity(&kernel_dir, kernel_memory_range(), MEMORY_NONE);
+
+	// Unmap NULL byte/page
 	virtual_free(&kernel_dir, memory_range(0, PAGE_SIZE));
 	physical_set_used(0, 1);
+
 	memory_dir_switch(&kernel_dir);
-	printf("OK!\n");
+	printf("Enabling...\n");
 	paging_enable();
+	printf("Enabled!\n");
 }
 
 #define HEAP_START 0x00f00000
-void paging_install(void)
+void paging_install(struct mem_info *mem_info)
 {
 	heap_init(HEAP_START);
-	memory_initialize();
+	memory_initialize(mem_info);
 	printf("OK!\n");
 }

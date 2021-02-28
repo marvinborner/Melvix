@@ -71,7 +71,7 @@
 %define VESA_LFB_FLAG 0x4000 ; Enable LFB flag
 
 ; MMAP constants
-%define MMAP_START 0x400 ; Starts at 0x400, ends at 0x500
+%define MMAP_START 0x500 ; Starts at 0x500, ends at 0x600
 %define MMAP_SIZE 0x18 ; Struct size
 %define MMAP_SIG 0x0534d4150 ; Signature ("SMAP")
 %define MMAP_BIOS_MAGIC 0xe820 ; BIOS int 15h code to get address map
