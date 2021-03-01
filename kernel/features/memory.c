@@ -405,15 +405,13 @@ void memory_initialize(struct mem_info *mem_info)
 	memory_map_identity(&kernel_dir, kernel_memory_range(), MEMORY_NONE);
 
 	// Map kernel stack
-	memory_map_identity(&kernel_dir, memory_range_around_address(STACK_START, 0x1000),
+	memory_map_identity(&kernel_dir,
+			    memory_range_around_address(STACK_START - STACK_SIZE, STACK_SIZE),
 			    MEMORY_NONE);
 
 	// Map kernel heap
 	memory_map_identity(&kernel_dir, memory_range_around_address(HEAP_START, HEAP_INIT_SIZE),
 			    MEMORY_NONE);
-
-	// Map stack guard?
-	/* memory_map_identity(&kernel_dir, memory_range_around_address(0xdeadbeef, 0x1), MEMORY_NONE); */
 
 	// Unmap NULL byte/page
 	virtual_free(&kernel_dir, memory_range(0, PAGE_SIZE));
