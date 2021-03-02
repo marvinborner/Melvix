@@ -62,7 +62,7 @@ static void syscall_handler(struct regs *r)
 	}
 	case SYS_EXEC: {
 		char *path = (char *)r->ebx;
-		struct proc *proc = proc_make();
+		struct proc *proc = proc_make(PROC_PRIV_NONE);
 		r->eax = (u32)bin_load(path, proc);
 		u32 argc = 3; // TODO: Add argc evaluator
 		char **argv = malloc(sizeof(*argv) * (argc + 1));

@@ -5,7 +5,7 @@
 #include <cpu.h>
 #include <def.h>
 #include <mem.h>
-#include <memory.h>
+#include <mm.h>
 
 #include <print.h>
 
@@ -369,6 +369,11 @@ void memory_dir_switch(struct page_dir *dir)
 	paging_switch_dir(virtual_to_physical(&kernel_dir, (u32)dir));
 }
 
+struct page_dir *memory_kernel_dir(void)
+{
+	return &kernel_dir;
+}
+
 void memory_initialize(struct mem_info *mem_info)
 {
 	for (u32 i = 0; i < 256; i++) {
@@ -412,6 +417,9 @@ void memory_initialize(struct mem_info *mem_info)
 	// Map kernel heap
 	memory_map_identity(&kernel_dir, memory_range_around_address(HEAP_START, HEAP_INIT_SIZE),
 			    MEMORY_NONE);
+
+	// TODO: Map something, idk? Triple fault prevention?
+	memory_map_identity(&kernel_dir, memory_range_around_address(0x7000, 0x1000), MEMORY_NONE);
 
 	// Unmap NULL byte/page
 	virtual_free(&kernel_dir, memory_range(0, PAGE_SIZE));

@@ -18,6 +18,8 @@
 #define PAGE_COUNT 1024
 #define PAGE_ALIGN(x) ((x) + PAGE_SIZE - ((x) % PAGE_SIZE))
 #define PAGE_ALIGNED(x) ((x) % PAGE_SIZE == 0)
+#define PAGE_ALIGN_UP(x) (((x) % PAGE_SIZE == 0) ? (x) : (x) + PAGE_SIZE - ((x) % PAGE_SIZE))
+#define PAGE_ALIGN_DOWN(x) ((x) - ((x) % PAGE_SIZE))
 
 union page_table_entry {
 	struct PACKED {
@@ -76,5 +78,10 @@ struct memory_range {
 	u32 base;
 	u32 size;
 };
+
+struct page_dir *memory_dir_create(void);
+void memory_dir_switch(struct page_dir *dir);
+void memory_alloc(struct page_dir *dir, u32 size, u32 flags, u32 *out);
+struct page_dir *memory_kernel_dir(void);
 
 #endif

@@ -6,6 +6,7 @@
 #include <fs.h>
 #include <load.h>
 #include <mem.h>
+#include <mm.h>
 #include <print.h>
 #include <proc.h>
 #include <stack.h>
@@ -57,6 +58,7 @@ void scheduler(struct regs *regs)
 	}
 
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
+	memory_dir_switch(((struct proc *)current->data)->page_dir);
 
 	if (regs->cs != GDT_USER_CODE_OFFSET) {
 		regs->gs = GDT_USER_DATA_OFFSET;
@@ -103,7 +105,7 @@ u8 proc_super(void)
 {
 	struct proc *proc = proc_current();
 	if (proc)
-		return proc->super;
+		return proc->priv == PROC_PRIV_ROOT || proc->priv == PROC_PRIV_KERNEL;
 	else if (current_pid == 0)
 		return 1; // Kernel has super permissions
 	else
@@ -237,13 +239,18 @@ end:
 	p->state = PROC_SLEEPING;
 }
 
-struct proc *proc_make(void)
+struct proc *proc_make(enum proc_priv priv)
 {
 	struct proc *proc = zalloc(sizeof(*proc));
 	proc->pid = current_pid++;
-	proc->super = 0;
+	proc->priv = priv;
 	proc->messages = stack_new();
 	proc->state = PROC_RUNNING;
+
+	if (priv == PROC_PRIV_KERNEL)
+		proc->page_dir = memory_kernel_dir();
+	else
+		proc->page_dir = memory_dir_create();
 
 	if (current)
 		list_add(proc_list, proc);
@@ -465,20 +472,20 @@ void proc_init(void)
 	vfs_mount(dev, "/proc/");
 
 	// Idle proc
-	struct proc *kernel_proc = proc_make();
+	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
 	void (*func)(void) = kernel_idle;
 	proc_load(kernel_proc, *(void **)&func);
 	strcpy(kernel_proc->name, "idle");
 	kernel_proc->state = PROC_SLEEPING;
 	idle_proc = list_add(proc_list, kernel_proc);
 
-	struct node *new = list_add(proc_list, proc_make());
+	// Init proc (root)
+	struct node *new = list_add(proc_list, proc_make(PROC_PRIV_ROOT));
 	bin_load("/bin/init", new->data);
 	current = new;
 
 	_eip = ((struct proc *)new->data)->regs.eip;
 	_esp = ((struct proc *)new->data)->regs.useresp;
-	((struct proc *)new->data)->super = 1;
 
 	u32 argc = 2;
 	char **argv = malloc(sizeof(*argv) * (argc + 1));
@@ -491,6 +498,7 @@ void proc_init(void)
 
 	printf("Jumping to userspace!\n");
 	proc_jump_userspace();
+	memory_dir_switch(((struct proc *)new->data)->page_dir);
 	while (1) {
 	};
 }

@@ -7,7 +7,7 @@
 #include <interrupts.h>
 #include <keyboard.h>
 #include <load.h>
-#include <memory.h>
+#include <mm.h>
 #include <mouse.h>
 #include <net.h>
 #include <pci.h>
