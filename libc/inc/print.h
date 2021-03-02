@@ -20,6 +20,7 @@ int err(int code, const char *format, ...);
 #else
 #include <proc.h>
 int print_app(enum stream_defaults id, const char *proc_name, const char *str);
+void print_trace(u32 count);
 #endif
 
 #endif
