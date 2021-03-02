@@ -20,7 +20,7 @@ struct list *proc_list = NULL;
 struct node *idle_proc = NULL;
 struct node *current = NULL;
 
-// TODO: Use less memcpy and only copy relevant registers
+// TODO: Use less memcpy and only copy relevant registers (rewrite for efficiency argh)
 // TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
 void scheduler(struct regs *regs)
 {
@@ -57,8 +57,8 @@ void scheduler(struct regs *regs)
 		}
 	}
 
-	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 	memory_dir_switch(((struct proc *)current->data)->page_dir);
+	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 
 	if (regs->cs != GDT_USER_CODE_OFFSET) {
 		regs->gs = GDT_USER_DATA_OFFSET;
@@ -473,8 +473,7 @@ void proc_init(void)
 
 	// Idle proc
 	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
-	void (*func)(void) = kernel_idle;
-	proc_load(kernel_proc, *(void **)&func);
+	proc_load(kernel_proc, (u32)kernel_idle);
 	strcpy(kernel_proc->name, "idle");
 	kernel_proc->state = PROC_SLEEPING;
 	idle_proc = list_add(proc_list, kernel_proc);
@@ -494,11 +493,11 @@ void proc_init(void)
 	argv[2] = NULL;
 
 	((u32 *)_esp)[0] = argc; // First argument (argc)
-	((u32 *)_esp)[1] = (u32)argv; // Second argument (argv)
+	((u32 *)_esp)[-1] = (u32)argv; // Second argument (argv)
 
 	printf("Jumping to userspace!\n");
-	proc_jump_userspace();
 	memory_dir_switch(((struct proc *)new->data)->page_dir);
+	proc_jump_userspace();
 	while (1) {
 	};
 }

@@ -169,26 +169,30 @@ void isr_uninstall_handler(int isr)
 	isr_routines[isr] = 0;
 }
 
+void isr_panic(struct regs *r)
+{
+	struct proc *proc = proc_current();
+	printf("%s Exception (%x) at 0x%x, exiting!\n", isr_exceptions[r->int_no], r->err_code,
+	       r->eip);
+	if (proc) {
+		printf("\t-> Exception occurred in %s at addr 0x%x\n", proc->name,
+		       r->eip - proc->entry);
+		proc_exit(proc, 1);
+	} else {
+		__asm__ volatile("cli\nhlt");
+	}
+	proc_yield(r);
+}
+
 void isr_handler(struct regs *r);
 void isr_handler(struct regs *r)
 {
-	if (r->int_no <= 32) {
-		struct proc *proc = proc_current();
-		printf("%s Exception at 0x%x, exiting!\n", isr_exceptions[r->int_no], r->eip);
-		if (proc) {
-			printf("\t-> Exception occurred in %s at addr 0x%x\n", proc->name,
-			       r->eip - proc->entry);
-			proc_exit(proc, 1);
-		} else {
-			__asm__ volatile("cli\nhlt");
-		}
-		proc_yield(r);
-	} else {
-		// Execute fault handler if exists
-		void (*handler)(struct regs * r) = isr_routines[r->int_no];
-		if (handler)
-			handler(r);
-	}
+	// Execute fault handler if exists
+	void (*handler)(struct regs * r) = isr_routines[r->int_no];
+	if (handler)
+		handler(r);
+	else
+		isr_panic(r);
 }
 
 static void isr_install(void)

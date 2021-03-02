@@ -8,16 +8,15 @@
 
 #define PROC_STACK_SIZE 0x4000
 
-void proc_load(struct proc *proc, void *data)
+void proc_load(struct proc *proc, u32 entry)
 {
 	u32 stack;
 	memory_alloc(proc->page_dir, PROC_STACK_SIZE, MEMORY_CLEAR, &stack);
-	u32 ptr = stack + PROC_STACK_SIZE - 1;
 
-	proc->regs.ebp = (u32)ptr;
-	proc->regs.useresp = (u32)ptr;
-	proc->regs.eip = (u32)data;
-	proc->entry = (u32)data;
+	proc->regs.ebp = stack;
+	proc->regs.useresp = stack;
+	proc->regs.eip = entry;
+	proc->entry = entry;
 }
 
 int bin_load(const char *path, struct proc *proc)
@@ -30,7 +29,7 @@ int bin_load(const char *path, struct proc *proc)
 		return 1;
 
 	strcpy(proc->name, path);
-	proc_load(proc, (void *)data);
+	proc_load(proc, data);
 
 	return 0;
 }

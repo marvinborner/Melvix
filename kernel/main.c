@@ -7,6 +7,7 @@
 #include <interrupts.h>
 #include <keyboard.h>
 #include <load.h>
+#include <mem.h>
 #include <mm.h>
 #include <mouse.h>
 #include <net.h>
@@ -21,6 +22,10 @@ struct vid_info *boot_passed;
 void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info); // Decl
 void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 {
+	// Clear stack
+	for (u32 i = 0; i < STACK_SIZE; i++)
+		((u8 *)STACK_START)[-i] = 0;
+
 	// Serial connection
 	serial_install();
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");

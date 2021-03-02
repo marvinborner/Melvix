@@ -25,6 +25,7 @@ void paging_enable(void)
 
 void paging_switch_dir(u32 dir)
 {
+	assert(dir);
 	cr3_set(dir);
 }
 
@@ -418,7 +419,7 @@ void memory_initialize(struct mem_info *mem_info)
 	memory_map_identity(&kernel_dir, memory_range_around_address(HEAP_START, HEAP_INIT_SIZE),
 			    MEMORY_NONE);
 
-	// TODO: Map something, idk? Triple fault prevention?
+	// TODO: Triple fault prevention? Probably bootloader stuff or something
 	memory_map_identity(&kernel_dir, memory_range_around_address(0x7000, 0x1000), MEMORY_NONE);
 
 	// Unmap NULL byte/page
@@ -429,8 +430,37 @@ void memory_initialize(struct mem_info *mem_info)
 	paging_enable();
 }
 
+static void page_fault(struct regs *r)
+{
+	// Check error code
+	const char *type = (r->err_code & 4) ? "present" : "non-present";
+	const char *operation = (r->err_code & 2) ? "write" : "read";
+	const char *super = (r->err_code & 1) ? "User" : "Super";
+
+	// Check cr2 address
+	u32 vaddr;
+	__asm__ volatile("movl %%cr2, %%eax" : "=a"(vaddr));
+	struct proc *proc = proc_current();
+	struct page_dir *dir = NULL;
+	if (proc && proc->page_dir) {
+		dir = proc->page_dir;
+		printf("Stack is at %x, entry at %x\n", virtual_to_physical(dir, proc->regs.ebp),
+		       virtual_to_physical(dir, proc->entry));
+	} else {
+		dir = &kernel_dir;
+	}
+	u32 paddr = virtual_to_physical(dir, vaddr);
+
+	// Print!
+	printf("%s process tried to %s a %s page at [vaddr=%x; paddr=%x]\n", super, operation, type,
+	       vaddr, paddr);
+
+	isr_panic(r);
+}
+
 void paging_install(struct mem_info *mem_info)
 {
 	memory_initialize(mem_info);
 	heap_init(HEAP_START);
+	isr_install_handler(14, page_fault);
 }
