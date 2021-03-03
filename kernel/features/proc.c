@@ -486,14 +486,14 @@ void proc_init(void)
 	_eip = ((struct proc *)new->data)->regs.eip;
 	_esp = ((struct proc *)new->data)->regs.useresp;
 
-	u32 argc = 2;
-	char **argv = malloc(sizeof(*argv) * (argc + 1));
-	argv[0] = strdup("init");
-	argv[1] = (char *)boot_passed->vbe;
-	argv[2] = NULL;
+	/* u32 argc = 2; */
+	/* char **argv = malloc(sizeof(*argv) * (argc + 1)); */
+	/* argv[0] = strdup("init"); */
+	/* argv[1] = (char *)boot_passed->vbe; */
+	/* argv[2] = NULL; */
 
-	((u32 *)_esp)[0] = argc; // First argument (argc)
-	((u32 *)_esp)[-1] = (u32)argv; // Second argument (argv)
+	/* ((u32 *)_esp)[0] = argc; // First argument (argc) */
+	/* ((u32 *)_esp)[-1] = (u32)argv; // Second argument (argv) */
 
 	printf("Jumping to userspace!\n");
 	memory_dir_switch(((struct proc *)new->data)->page_dir);
