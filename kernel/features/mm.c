@@ -128,8 +128,13 @@ u32 virtual_to_physical(struct page_dir *dir, u32 vaddr)
 	u32 pti = PTI(vaddr);
 
 	union page_dir_entry *dir_entry = &dir->entries[pdi];
+	if (!dir_entry->bits.present)
+		return 0;
+
 	struct page_table *table = (struct page_table *)(dir_entry->bits.address * PAGE_SIZE);
 	union page_table_entry *table_entry = &table->entries[pti];
+	if (!table_entry->bits.present)
+		return 0;
 
 	return (table_entry->bits.address * PAGE_SIZE) + (vaddr & (PAGE_SIZE - 1));
 }
