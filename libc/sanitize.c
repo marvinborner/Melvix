@@ -97,28 +97,40 @@ void __ubsan_handle_vla_bound_not_positive(void)
 	panic("UBSAN: vla-bound-not-positive\n");
 }
 
-void __ubsan_handle_add_overflow(void);
-void __ubsan_handle_add_overflow(void)
+void __ubsan_handle_add_overflow(struct overflow *data, void *left, void *right);
+void __ubsan_handle_add_overflow(struct overflow *data, void *left, void *right)
 {
-	panic("UBSAN: add-overflow\n");
+	UNUSED(left);
+	UNUSED(right);
+	struct source_location *loc = &data->location;
+	panic("%s:%d: UBSAN: add-overflow [type: %s]\n", loc->file, loc->line, data->type->name);
 }
 
-void __ubsan_handle_sub_overflow(void);
-void __ubsan_handle_sub_overflow(void)
+void __ubsan_handle_sub_overflow(struct overflow *data, void *left, void *right);
+void __ubsan_handle_sub_overflow(struct overflow *data, void *left, void *right)
 {
-	panic("UBSAN: sub-overflow\n");
+	UNUSED(left);
+	UNUSED(right);
+	struct source_location *loc = &data->location;
+	panic("%s:%d: UBSAN: sub-overflow [type: %s]\n", loc->file, loc->line, data->type->name);
 }
 
-void __ubsan_handle_negate_overflow(void);
-void __ubsan_handle_negate_overflow(void)
+void __ubsan_handle_negate_overflow(struct overflow *data, void *left, void *right);
+void __ubsan_handle_negate_overflow(struct overflow *data, void *left, void *right)
 {
-	panic("UBSAN: negate-overflow\n");
+	UNUSED(left);
+	UNUSED(right);
+	struct source_location *loc = &data->location;
+	panic("%s:%d: UBSAN: negate-overflow [type: %s]\n", loc->file, loc->line, data->type->name);
 }
 
-void __ubsan_handle_mul_overflow(void);
-void __ubsan_handle_mul_overflow(void)
+void __ubsan_handle_mul_overflow(struct overflow *data, void *left, void *right);
+void __ubsan_handle_mul_overflow(struct overflow *data, void *left, void *right)
 {
-	panic("UBSAN: mul-overflow\n");
+	UNUSED(left);
+	UNUSED(right);
+	struct source_location *loc = &data->location;
+	panic("%s:%d: UBSAN: mul-overflow [type: %s]\n", loc->file, loc->line, data->type->name);
 }
 
 void __ubsan_handle_shift_out_of_bounds(void);
