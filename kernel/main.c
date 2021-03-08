@@ -37,6 +37,7 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	cpu_enable_features();
 	cpu_print();
+	srand(rdseed());
 
 	// Install drivers
 	vfs_install();

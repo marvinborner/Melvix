@@ -99,10 +99,16 @@ void cr4_set(u32 cr4)
 	__asm__ volatile("movl %%eax, %%cr4" ::"a"(cr4));
 }
 
-static u32 cpu_features = 0;
-static u8 cpu_has_feature(u32 feature)
+static u32 cpu_cfeatures = 0;
+u8 cpu_has_cfeature(enum cpuid_features feature)
 {
-	return (cpu_features & feature) != 0;
+	return (cpu_cfeatures & feature) != 0;
+}
+
+static u32 cpu_dfeatures = 0;
+u8 cpu_has_dfeature(enum cpuid_features feature)
+{
+	return (cpu_dfeatures & feature) != 0;
 }
 
 static void fpu_handler(struct regs *r)
@@ -121,8 +127,9 @@ void cpu_enable_features(void)
 {
 	u32 a, b, c, d;
 	cpuid(CPUID_FEATURES, &a, &b, &c, &d);
-	cpu_features = d;
-	if (cpu_has_feature(CPUID_FEAT_EDX_SSE)) {
+	cpu_cfeatures = c;
+	cpu_dfeatures = d;
+	if (cpu_has_dfeature(CPUID_FEAT_EDX_SSE)) {
 		cr0_set(cr0_get() & ~(1 << 2));
 		cr0_set(cr0_get() | (1 << 1));
 		cr4_set(cr4_get() | (3 << 9));
@@ -130,7 +137,7 @@ void cpu_enable_features(void)
 		panic("No SSE support!\n");
 	}
 
-	if (cpu_has_feature(CPUID_FEAT_EDX_FPU)) {
+	if (cpu_has_dfeature(CPUID_FEAT_EDX_FPU)) {
 		__asm__ volatile("fninit");
 		__asm__ volatile("fxsave %0" : "=m"(fpu_state));
 		irq_install_handler(7, fpu_handler);
