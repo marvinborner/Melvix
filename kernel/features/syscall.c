@@ -5,6 +5,7 @@
 #include <interrupts.h>
 #include <load.h>
 #include <mem.h>
+#include <mm.h>
 #include <net.h>
 #include <print.h>
 #include <proc.h>
@@ -25,12 +26,13 @@ static void syscall_handler(struct regs *r)
 		loop();
 		break;
 	}
-	case SYS_MALLOC: {
-		r->eax = (u32)malloc(r->ebx);
+	case SYS_ALLOC: {
+		r->eax = (u32)memory_alloc(proc_current()->page_dir, r->ebx,
+					   MEMORY_CLEAR | MEMORY_USER);
 		break;
 	}
 	case SYS_FREE: {
-		free((void *)r->ebx);
+		memory_free(proc_current()->page_dir, memory_range(r->ebx, r->ecx));
 		break;
 	}
 	case SYS_STAT: {

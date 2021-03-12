@@ -8,7 +8,8 @@
 
 int main(int argc, char **argv)
 {
-	log("%s loaded\n", argv[0]);
+	UNUSED(argc);
+	UNUSED(argv);
 	while (1) {
 	};
 

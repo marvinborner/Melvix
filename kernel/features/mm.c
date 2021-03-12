@@ -448,8 +448,6 @@ static struct memory_range kernel_memory_range(void)
 
 void memory_install(struct mem_info *mem_info)
 {
-	heap_init(HEAP_START);
-
 	for (struct mmap_boot *p = mem_info->start; (u32)(p - mem_info->start) < mem_info->size;
 	     p++) {
 		if (p->hbase || !p->acpi || !p->type)
@@ -484,10 +482,6 @@ void memory_install(struct mem_info *mem_info)
 
 	// Map kernel stack
 	memory_map_identity(&kernel_dir, memory_range_around(STACK_START - STACK_SIZE, STACK_SIZE),
-			    MEMORY_NONE);
-
-	// Map kernel heap
-	memory_map_identity(&kernel_dir, memory_range_around(HEAP_START, HEAP_INIT_SIZE),
 			    MEMORY_NONE);
 
 	// TODO: Triple fault prevention? Probably bootloader stuff or something

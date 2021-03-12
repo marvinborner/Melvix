@@ -487,6 +487,7 @@ void proc_init(void)
 	struct node *new = list_add(proc_list, proc_make(PROC_PRIV_ROOT));
 	bin_load("/bin/init", new->data);
 	current = new;
+	proc_stack_push(new->data, 0);
 
 	_eip = ((struct proc *)new->data)->regs.eip;
 	_esp = ((struct proc *)new->data)->regs.useresp;

@@ -1,297 +1,383 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
+// Mostly by Durand Miller, released into public domain
 
 #include <assert.h>
-#include <def.h>
+#include <cpu.h>
 #include <mem.h>
-#include <print.h>
-#include <sys.h>
-
-/**
- * Kernel heap allocator
- * Inspired by SHMALL (MIT License)
- * Copyright (c) 2017 Chris Careaga
- * Copyright (c) 2021 Marvin Borner
- */
 
 #ifdef kernel
 
-#define HEAP_MAGIC 0x424242
-#define HEAP_MIN_SIZE HEAP_INIT_SIZE
-#define MIN_ALLOC_SZ 4
-#define BIN_COUNT 9
-#define BIN_MAX_IDX (BIN_COUNT - 1)
-#define OVERHEAD (sizeof(struct h_footer) + sizeof(struct h_node))
-/* #define MIN_WILDERNESS 0x2000 */
-/* #define MAX_WILDERNESS 0x1000000 */
+#include <mm.h>
 
-struct h_node {
-	u32 magic;
-	u32 hole;
+static void *liballoc_alloc(u32 p)
+{
+	return memory_alloc(virtual_kernel_dir(), p, MEMORY_CLEAR);
+}
+
+static int liballoc_free(void *ptr, u32 p)
+{
+	memory_free(virtual_kernel_dir(), memory_range((u32)ptr, (u32)p));
+	return 0;
+}
+
+#else
+
+#include <sys.h>
+
+#define sys_alloc(size) (void *)sys1(SYS_ALLOC, size)
+#define sys_free(ptr, size) (u32) sys2(SYS_FREE, ptr, size)
+
+static void *liballoc_alloc(u32 p)
+{
+	return sys_alloc((u32)p);
+}
+
+static int liballoc_free(void *ptr, u32 p)
+{
+	sys_free((u32)ptr, (u32)p);
+	return 0;
+}
+
+#endif
+
+static int locked = 0;
+
+static int liballoc_lock(void)
+{
+	spinlock(&locked);
+	return 0;
+}
+
+static int liballoc_unlock(void)
+{
+	locked = 0;
+	return 0;
+}
+
+#define ALIGNMENT 16
+#define ALIGN_UP(__addr, __align) (((__addr) + (__align)-1) & ~((__align)-1))
+#define ALIGN_DOWN(__addr, __align) ((__addr) & ~((__align)-1))
+
+#define USE_CASE1
+#define USE_CASE2
+#define USE_CASE3
+#define USE_CASE4
+#define USE_CASE5
+#define LIBALLOC_MAGIC 0x900df00d
+#define LIBALLOC_DEAD 0xbaadf00d
+
+struct liballoc_major {
+	struct liballoc_major *prev;
+	struct liballoc_major *next;
+	u32 pages;
 	u32 size;
-	struct h_node *next;
-	struct h_node *prev;
+	u32 usage;
+	struct liballoc_minor *first;
 };
 
-struct h_footer {
-	struct h_node *header;
+struct liballoc_minor {
+	struct liballoc_minor *prev;
+	struct liballoc_minor *next;
+	struct liballoc_major *block;
+	u32 magic;
+	u32 size;
+	u32 req_size;
 };
 
-struct h_bin {
-	struct h_node *head;
-};
+#define MAJOR_SIZE (ALIGN_UP(sizeof(struct liballoc_major), 16))
+#define MINOR_SIZE (ALIGN_UP(sizeof(struct liballoc_minor), 16))
+#define MIN(__x, __y) ((__x) < (__y) ? (__x) : (__y))
+#define MAX(__x, __y) ((__x) > (__y) ? (__x) : (__y))
 
-struct heap {
-	u32 start;
-	u32 end;
-	struct h_bin bins[BIN_COUNT];
-};
+static struct liballoc_major *l_mem_root = NULL;
+static struct liballoc_major *l_best_bet = NULL;
 
-static void node_add(struct h_bin *bin, struct h_node *node)
+static u32 l_page_size = 4096;
+static u32 l_page_count = 16;
+
+static struct liballoc_major *allocate_new_page(u32 size)
 {
-	node->magic = HEAP_MAGIC;
-	node->next = NULL;
-	node->prev = NULL;
-	if (!bin->head) {
-		bin->head = node;
-		return;
-	}
-	struct h_node *curr = bin->head;
-	struct h_node *prev = NULL;
-	while (curr && curr->size <= node->size) {
-		prev = curr;
-		curr = curr->next;
-	}
-	if (!curr) {
-		prev->next = node;
-		node->prev = prev;
-	} else if (prev) {
-		node->next = curr;
-		prev->next = node;
-		node->prev = prev;
-		curr->prev = node;
-	} else {
-		node->next = bin->head;
-		bin->head->prev = node;
-		bin->head = node;
-	}
-}
+	u32 st = size + MAJOR_SIZE + MINOR_SIZE;
 
-static void node_remove(struct h_bin *bin, struct h_node *node)
-{
-	if (!bin->head)
-		return;
-	if (bin->head == node) {
-		bin->head = bin->head->next;
-		return;
-	}
+	if ((st % l_page_size) == 0)
+		st = st / (l_page_size);
+	else
+		st = st / (l_page_size) + 1;
 
-	struct h_node *temp = bin->head->next;
-	while (temp) {
-		if (temp == node) {
-			if (!temp->next) {
-				temp->prev->next = NULL;
-			} else {
-				temp->prev->next = temp->next;
-				temp->next->prev = temp->prev;
-			}
-			return;
-		}
-		temp = temp->next;
-	}
-}
+	st = MAX(st, l_page_count);
 
-static struct h_node *node_best_fit(struct h_bin *bin, u32 size)
-{
-	if (!bin->head)
+	struct liballoc_major *maj = (struct liballoc_major *)liballoc_alloc(st * l_page_size);
+
+	if (maj == NULL)
 		return NULL;
 
-	struct h_node *temp = bin->head;
-	while (temp) {
-		if (temp->size >= size)
-			return temp;
-		temp = temp->next;
+	maj->prev = NULL;
+	maj->next = NULL;
+	maj->pages = st;
+	maj->size = st * l_page_size;
+	maj->usage = MAJOR_SIZE;
+	maj->first = NULL;
+
+	return maj;
+}
+
+static void *_malloc(u32 req_size)
+{
+	req_size = ALIGN_UP(req_size, 16);
+
+	u32 best_size = 0;
+	u32 size = req_size;
+
+	liballoc_lock();
+
+	if (size == 0) {
+		liballoc_unlock();
+		return malloc(1);
 	}
+
+	if (l_mem_root == NULL) {
+		l_mem_root = allocate_new_page(size);
+		if (l_mem_root == NULL) {
+			liballoc_unlock();
+			return NULL;
+		}
+	}
+
+	struct liballoc_major *maj = l_mem_root;
+	u8 started_bet = 0;
+
+	if (l_best_bet != NULL) {
+		best_size = l_best_bet->size - l_best_bet->usage;
+
+		if (best_size > (size + MINOR_SIZE)) {
+			maj = l_best_bet;
+			started_bet = 1;
+		}
+	}
+
+	while (maj != NULL) {
+		u32 diff = maj->size - maj->usage;
+		if (best_size < diff) {
+			l_best_bet = maj;
+			best_size = diff;
+		}
+
+#ifdef USE_CASE1
+		if (diff < (size + MINOR_SIZE)) {
+			if (maj->next != NULL) {
+				maj = maj->next;
+				continue;
+			}
+
+			if (started_bet == 1) {
+				maj = l_mem_root;
+				started_bet = 0;
+				continue;
+			}
+
+			maj->next = allocate_new_page(size);
+			if (maj->next == NULL)
+				break;
+			maj->next->prev = maj;
+			maj = maj->next;
+		}
+#endif
+
+#ifdef USE_CASE2
+		if (maj->first == NULL) {
+			maj->first = (struct liballoc_minor *)((u32)maj + MAJOR_SIZE);
+
+			maj->first->magic = LIBALLOC_MAGIC;
+			maj->first->prev = NULL;
+			maj->first->next = NULL;
+			maj->first->block = maj;
+			maj->first->size = size;
+			maj->first->req_size = req_size;
+			maj->usage += size + MINOR_SIZE;
+			void *p = (void *)((u32)(maj->first) + MINOR_SIZE);
+			liballoc_unlock();
+			return p;
+		}
+#endif
+
+#ifdef USE_CASE3
+		diff = (u32)(maj->first);
+		diff -= (u32)maj;
+		diff -= MAJOR_SIZE;
+
+		if (diff >= (size + MINOR_SIZE)) {
+			maj->first->prev = (struct liballoc_minor *)((u32)maj + MAJOR_SIZE);
+			maj->first->prev->next = maj->first;
+			maj->first = maj->first->prev;
+			maj->first->magic = LIBALLOC_MAGIC;
+			maj->first->prev = NULL;
+			maj->first->block = maj;
+			maj->first->size = size;
+			maj->first->req_size = req_size;
+			maj->usage += size + MINOR_SIZE;
+			void *p = (void *)((u32)(maj->first) + MINOR_SIZE);
+			liballoc_unlock();
+			return p;
+		}
+#endif
+
+#ifdef USE_CASE4
+		struct liballoc_minor *min = maj->first;
+
+		while (min != NULL) {
+			if (min->next == NULL) {
+				diff = (u32)(maj) + maj->size;
+				diff -= (u32)min;
+				diff -= MINOR_SIZE;
+				diff -= min->size;
+				if (diff >= (size + MINOR_SIZE)) {
+					min->next =
+						(struct liballoc_minor *)((u32)min + MINOR_SIZE +
+									  min->size);
+					min->next->prev = min;
+					min = min->next;
+					min->next = NULL;
+					min->magic = LIBALLOC_MAGIC;
+					min->block = maj;
+					min->size = size;
+					min->req_size = req_size;
+					maj->usage += size + MINOR_SIZE;
+					void *p = (void *)((u32)min + MINOR_SIZE);
+					liballoc_unlock();
+					return p;
+				}
+			}
+
+			if (min->next != NULL) {
+				diff = (u32)(min->next);
+				diff -= (u32)min;
+				diff -= MINOR_SIZE;
+				diff -= min->size;
+
+				if (diff >= (size + MINOR_SIZE)) {
+					struct liballoc_minor *new_min =
+						(struct liballoc_minor *)((u32)min + MINOR_SIZE +
+									  min->size);
+					new_min->magic = LIBALLOC_MAGIC;
+					new_min->next = min->next;
+					new_min->prev = min;
+					new_min->size = size;
+					new_min->req_size = req_size;
+					new_min->block = maj;
+					min->next->prev = new_min;
+					min->next = new_min;
+					maj->usage += size + MINOR_SIZE;
+					void *p = (void *)((u32)new_min + MINOR_SIZE);
+					liballoc_unlock();
+					return p;
+				}
+			}
+
+			min = min->next;
+		}
+#endif
+
+#ifdef USE_CASE5
+		if (maj->next == NULL) {
+			if (started_bet == 1) {
+				maj = l_mem_root;
+				started_bet = 0;
+				continue;
+			}
+			maj->next = allocate_new_page(size);
+			if (maj->next == NULL)
+				break;
+			maj->next->prev = maj;
+		}
+#endif
+		maj = maj->next;
+	}
+
+	liballoc_unlock();
+
 	return NULL;
-}
-
-/* static struct h_node *node_last(struct h_bin *bin) */
-/* { */
-/* 	struct h_node *temp = bin->head; */
-/* 	while (temp->next) */
-/* 		temp = temp->next; */
-/* 	return temp; */
-/* } */
-
-static struct h_footer *node_foot(struct h_node *node)
-{
-	return (struct h_footer *)((char *)node + sizeof(*node) + node->size);
-}
-
-static void node_create_foot(struct h_node *head)
-{
-	struct h_footer *foot = node_foot(head);
-	foot->header = head;
-}
-
-static u32 bin_index(u32 sz)
-{
-	u32 index = 0;
-	sz = sz < 4 ? 4 : sz;
-	while (sz >>= 1)
-		index++;
-	index -= 2;
-	if (index > BIN_MAX_IDX)
-		index = BIN_MAX_IDX;
-	return index;
-}
-
-/* struct h_node *wilderness_get(struct heap *heap) */
-/* { */
-/* 	struct h_footer *wild_foot = (struct h_footer *)((char *)heap->end - sizeof(*wild_foot)); */
-/* 	return wild_foot->header; */
-/* } */
-
-/* static u32 expand(struct heap *heap, u32 sz) */
-/* { */
-/* 	(void)heap; */
-/* 	(void)sz; */
-/* 	return 0; */
-/* } */
-
-/* static u32 contract(struct heap *heap, u32 sz) */
-/* { */
-/* 	(void)heap; */
-/* 	(void)sz; */
-/* 	return 0; */
-/* } */
-
-static struct heap heap = { 0 };
-void heap_init(u32 start)
-{
-	struct h_node *init_region = (struct h_node *)start;
-	init_region->hole = 1;
-	init_region->size = HEAP_INIT_SIZE - OVERHEAD;
-	node_create_foot(init_region);
-	node_add(&heap.bins[bin_index(init_region->size)], init_region);
-	heap.start = (u32)start;
-	heap.end = (u32)start + HEAP_INIT_SIZE;
-}
-
-#define ALIGN sizeof(long)
-static void *_malloc(u32 size)
-{
-	size = ((size + ALIGN - 1) / ALIGN) * ALIGN; // Alignment
-	u32 index = bin_index(size);
-	struct h_bin *temp = (struct h_bin *)&heap.bins[index];
-	struct h_node *found = node_best_fit(temp, size);
-
-	while (!found) {
-		assert(index + 1 < BIN_COUNT);
-
-		temp = &heap.bins[++index];
-		found = node_best_fit(temp, size);
-	}
-
-	assert(found->magic == HEAP_MAGIC);
-
-	if ((found->size - size) > (OVERHEAD + MIN_ALLOC_SZ)) {
-		struct h_node *split = (struct h_node *)(((char *)found + OVERHEAD) + size);
-		split->magic = HEAP_MAGIC;
-		split->size = found->size - size - OVERHEAD;
-		split->hole = 1;
-
-		node_create_foot(split);
-
-		u32 new_idx = bin_index(split->size);
-
-		node_add(&heap.bins[new_idx], split);
-
-		found->size = size;
-		node_create_foot(found);
-	}
-
-	found->hole = 0;
-	node_remove(&heap.bins[index], found);
-
-	// TODO: Implement expand/contract
-	/* struct h_node *wild = wilderness_get(&heap); */
-	/* if (wild->size < MIN_WILDERNESS) { */
-	/* 	assert(expand(&heap, 0x1000)); */
-	/* } else if (wild->size > MAX_WILDERNESS) { */
-	/* 	assert(contract(&heap, 0x1000)); */
-	/* } */
-
-	found->prev = NULL;
-	found->next = NULL;
-	return &found->next;
-}
-
-static void _free(void *p)
-{
-	if (!p)
-		return;
-
-	struct h_bin *list;
-	struct h_footer *new_foot, *old_foot;
-
-	struct h_node *head = (struct h_node *)((char *)p - 12);
-	assert(head->magic == HEAP_MAGIC && head->hole == 0);
-	if (head == (struct h_node *)(u32 *)heap.start) {
-		head->hole = 1;
-		node_add(&heap.bins[bin_index(head->size)], head);
-		return;
-	}
-
-	struct h_node *next = (struct h_node *)((char *)node_foot(head) + sizeof(struct h_footer));
-	struct h_footer *f = (struct h_footer *)((char *)head - sizeof(struct h_footer));
-	struct h_node *prev = f->header;
-
-	if (prev->hole) {
-		list = &heap.bins[bin_index(prev->size)];
-		node_remove(list, prev);
-
-		prev->size += OVERHEAD + head->size;
-		new_foot = node_foot(head);
-		new_foot->header = prev;
-
-		head = prev;
-	}
-
-	if (next->hole) {
-		list = &heap.bins[bin_index(next->size)];
-		node_remove(list, next);
-
-		head->size += OVERHEAD + next->size;
-
-		old_foot = node_foot(next);
-		old_foot->header = 0;
-		next->size = 0;
-		next->hole = 0;
-
-		new_foot = node_foot(head);
-		new_foot->header = head;
-	}
-
-	head->hole = 1;
-	node_add(&heap.bins[bin_index(head->size)], head);
-}
-
-#elif defined(userspace)
-
-#define kmalloc(n) (void *)sys1(SYS_MALLOC, n)
-#define kfree(ptr) (void)(sys1(SYS_FREE, (int)ptr))
-
-static void *_malloc(u32 size)
-{
-	return kmalloc(size);
 }
 
 static void _free(void *ptr)
 {
-	kfree(ptr);
+	if (ptr == NULL) {
+		return;
+	}
+
+	liballoc_lock();
+
+	struct liballoc_minor *min = (struct liballoc_minor *)((u32)ptr - MINOR_SIZE);
+
+	if (min->magic != LIBALLOC_MAGIC) {
+		liballoc_unlock();
+		return;
+	}
+
+	struct liballoc_major *maj = min->block;
+	maj->usage -= (min->size + MINOR_SIZE);
+	min->magic = LIBALLOC_DEAD;
+
+	if (min->next != NULL)
+		min->next->prev = min->prev;
+	if (min->prev != NULL)
+		min->prev->next = min->next;
+	if (min->prev == NULL)
+		maj->first = min->next;
+	if (maj->first == NULL) {
+		if (l_mem_root == maj)
+			l_mem_root = maj->next;
+		if (l_best_bet == maj)
+			l_best_bet = NULL;
+		if (maj->prev != NULL)
+			maj->prev->next = maj->next;
+		if (maj->next != NULL)
+			maj->next->prev = maj->prev;
+		liballoc_free(maj, maj->pages * l_page_size);
+	} else {
+		if (l_best_bet != NULL) {
+			int best_size = l_best_bet->size - l_best_bet->usage;
+			int maj_size = maj->size - maj->usage;
+			if (maj_size > best_size)
+				l_best_bet = maj;
+		}
+	}
+	liballoc_unlock();
 }
 
-#endif
+static void *_realloc(void *ptr, u32 size)
+{
+	size = ALIGN_UP(size, 16);
+
+	if (size == 0) {
+		free(ptr);
+		return NULL;
+	}
+
+	if (ptr == NULL)
+		return malloc(size);
+
+	liballoc_lock();
+	struct liballoc_minor *min = (struct liballoc_minor *)((u32)ptr - MINOR_SIZE);
+
+	if (min->magic != LIBALLOC_MAGIC) {
+		liballoc_unlock();
+		return NULL;
+	}
+
+	if (min->size >= size) {
+		min->req_size = size;
+		liballoc_unlock();
+		return ptr;
+	}
+
+	liballoc_unlock();
+
+	void *new_ptr = malloc(size);
+	memcpy(new_ptr, ptr, min->req_size);
+	free(ptr);
+
+	return new_ptr;
+}
 
 #ifdef kernel
 #define PREFIX "K"
@@ -303,42 +389,18 @@ static void _free(void *ptr)
 
 void *zalloc(u32 size)
 {
-#ifdef userspace
-	panic("AAH!\n");
-#endif
 	void *ret = malloc(size);
 	memset(ret, 0, size);
 	return ret;
 }
 
-// Naive realloc implementation - TODO!
 void *realloc(void *ptr, u32 size)
 {
-#ifdef userspace
-	panic("AAH!\n");
-#endif
-	if (!ptr)
-		return malloc(size);
-
-	FUNC("Realloc not implemented!\n");
-	return NULL;
-	/* // This could work; untested
-	struct h_node *node = (struct h_node *)((char *)ptr - 12);
-	u32 old_size = node->size;
-
-	void *new = malloc(size);
-	memcpy(new, ptr, old_size);
-
-	free(ptr);
-	return new;
-	*/
+	return _realloc(ptr, size);
 }
 
 void *malloc_debug(u32 size, const char *file, int line, const char *func, const char *inp)
 {
-#ifdef userspace
-	panic("AAH!\n");
-#endif
 	assert(size < (100 << 20)); // Don't brag with memory pls
 	void *ret = _malloc(size);
 
@@ -352,9 +414,6 @@ void *malloc_debug(u32 size, const char *file, int line, const char *func, const
 
 void free_debug(void *ptr, const char *file, int line, const char *func, const char *inp)
 {
-#ifdef userspace
-	panic("AAH!\n");
-#endif
 	if (ptr)
 		_free(ptr);
 

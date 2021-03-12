@@ -11,7 +11,7 @@
 
 enum sys {
 	SYS_LOOP, // To infinity and beyond (debug)!
-	SYS_MALLOC, // Allocate memory
+	SYS_ALLOC, // Allocate memory
 	SYS_FREE, // Free memory
 	SYS_STAT, // Get file information
 	SYS_READ, // Read file
