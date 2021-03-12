@@ -82,11 +82,7 @@ int main(void)
 	else
 		log("All tests passed\n");
 
-	// Try emulator shutdown
-	outw(0xB004, 0x2000);
-	outw(0x604, 0x2000);
-	outw(0x4004, 0x3400);
+	boot(SYS_BOOT_SHUTDOWN);
 
-	loop();
 	return 0;
 }

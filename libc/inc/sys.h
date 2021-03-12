@@ -9,6 +9,10 @@
 #define KEYBOARD_MAGIC 0x555555
 #define MOUSE_MAGIC 0xaaaaaa
 
+#define SYS_BOOT_MAGIC 0x18122002
+#define SYS_BOOT_REBOOT 0xeeb007
+#define SYS_BOOT_SHUTDOWN 0xdead
+
 enum sys {
 	SYS_LOOP, // To infinity and beyond (debug)!
 	SYS_ALLOC, // Allocate memory
@@ -19,7 +23,8 @@ enum sys {
 	SYS_IOCTL, // Interact with a file/device
 	SYS_POLL, // Wait for multiple files
 	SYS_EXEC, // Execute path
-	SYS_EXIT, // Exit current process // TODO: Free all memory of process
+	SYS_EXIT, // Exit current process
+	SYS_BOOT, // Boot functions (e.g. reboot/shutdown)
 	SYS_YIELD, // Switch to next process
 	SYS_TIME, // Get kernel time
 	SYS_NET_OPEN, // Open network socket
@@ -82,7 +87,8 @@ int sysv(enum sys num, ...);
 			yield();                                                                   \
 		}                                                                                  \
 	}
-#define yield(void) (int)sys0(SYS_YIELD)
+#define boot(cmd) (s32) sys2(SYS_BOOT, SYS_BOOT_MAGIC, cmd)
+#define yield(void) (s32) sys0(SYS_YIELD)
 #define time(void) (u32) sys0(SYS_TIME)
 
 static inline u32 getpid(void)

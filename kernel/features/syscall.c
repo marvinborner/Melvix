@@ -86,7 +86,30 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_EXIT: {
+		print("EXIT!\n");
 		proc_exit(proc_current(), (int)r->ebx);
+		break;
+	}
+	case SYS_BOOT: { // TODO: Move
+		if (r->ebx != SYS_BOOT_MAGIC || !proc_super()) {
+			r->eax = -1;
+			break;
+		}
+		switch (r->ecx) {
+		case SYS_BOOT_REBOOT:
+			print("Rebooting...\n");
+			__asm__ volatile("ud2");
+			break;
+		case SYS_BOOT_SHUTDOWN:
+			print("Shutting down...\n");
+			outw(0xB004, 0x2000);
+			outw(0x604, 0x2000);
+			outw(0x4004, 0x3400);
+			__asm__ volatile("ud2");
+			break;
+		default:
+			r->eax = -1;
+		}
 		break;
 	}
 	case SYS_YIELD: {
@@ -130,7 +153,7 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	default: {
-		print("Unknown syscall!\n");
+		printf("Unknown syscall %d!\n", num);
 		break;
 	}
 	}
