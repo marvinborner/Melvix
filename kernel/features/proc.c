@@ -76,12 +76,6 @@ void scheduler(struct regs *regs)
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
 }
 
-static void kernel_idle(void)
-{
-	while (1)
-		;
-}
-
 void proc_print(void)
 {
 	struct node *node = proc_list->head;
@@ -328,7 +322,7 @@ static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 		}
 	}
 
-	printf("%s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
+	printf("ERR: %s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
 	return -1;
 }
 
@@ -472,11 +466,10 @@ void proc_init(void)
 	vfs_mount(dev, "/proc/");
 
 	// Idle proc
-	/* struct proc *kernel_proc = proc_make(PROC_PRIV_NONE); */
-	/* proc_load(kernel_proc, (u32)kernel_idle); */
-	/* strcpy(kernel_proc->name, "idle"); */
-	/* kernel_proc->state = PROC_SLEEPING; */
-	/* idle_proc = list_add(proc_list, kernel_proc); */
+	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
+	bin_load("/bin/idle", kernel_proc);
+	kernel_proc->state = PROC_SLEEPING;
+	idle_proc = list_add(proc_list, kernel_proc);
 
 	// Init proc (root)
 	struct node *new = list_add(proc_list, proc_make(PROC_PRIV_ROOT));
@@ -496,9 +489,7 @@ void proc_init(void)
 	/* ((u32 *)_esp)[-1] = (u32)argv; // Second argument (argv) */
 
 	printf("Jumping to userspace!\n");
-	/* printf("%x\n", ((u32 *)((struct proc *)new->data)->entry)[5]); */
 	memory_switch_dir(((struct proc *)new->data)->page_dir);
-	/* printf("%x\n", ((u32 *)((struct proc *)new->data)->entry)[5]); */
 	proc_jump_userspace();
 	while (1) {
 	};

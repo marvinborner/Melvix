@@ -6,7 +6,7 @@ CFLAGS_DEFAULT = $(CFLAGS_WARNINGS) $(CFLAGS_OPTIMIZATION) -std=c99 -m32 -nostdl
 
 all: compile
 
-debug: CFLAGS_DEFAULT += -Wno-error -ggdb3 -s -fstack-protector-all -fsanitize=undefined
+debug: CFLAGS_DEFAULT += -Wno-error -ggdb3 -s -fsanitize=undefined # -fstack-protector-all # TODO: Fix stack protector in userspace
 debug: compile
 
 export

@@ -238,6 +238,7 @@ NORETURN void panic(const char *format, ...)
 	vsprintf(buf, format, ap);
 	va_end(ap);
 #ifdef kernel
+	print("--- DON'T PANIC! ---\n");
 	print(buf);
 	loop();
 #else

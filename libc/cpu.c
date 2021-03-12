@@ -82,6 +82,13 @@ void cr0_set(u32 cr0)
 	__asm__ volatile("movl %%eax, %%cr0" ::"a"(cr0));
 }
 
+u32 cr3_get(void)
+{
+	u32 cr3;
+	__asm__ volatile("movl %%cr0, %%eax" : "=a"(cr3));
+	return cr3;
+}
+
 void cr3_set(u32 cr3)
 {
 	__asm__ volatile("movl %%eax, %%cr3" ::"a"(cr3));

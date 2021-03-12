@@ -15,10 +15,10 @@ static struct page_table kernel_tables[256] ALIGNED(PAGE_SIZE) = { 0 };
  * Lowlevel paging
  */
 
-static void paging_disable(void)
+/*static void paging_disable(void)
 {
 	cr0_set(cr0_get() | 0x7fffffff);
-}
+}*/
 
 static void paging_enable(void)
 {
@@ -27,7 +27,6 @@ static void paging_enable(void)
 
 static void paging_switch_dir(u32 dir)
 {
-	assert(dir);
 	cr3_set(dir);
 }
 
@@ -154,7 +153,7 @@ struct memory_range physical_alloc(u32 size)
 	return memory_range(0, 0);
 }
 
-static void physical_free(struct memory_range range)
+void physical_free(struct memory_range range)
 {
 	assert(PAGE_ALIGNED(range.base) && PAGE_ALIGNED(range.size));
 	physical_set_free(range);
@@ -297,11 +296,6 @@ struct page_dir *virtual_create_dir(void)
 	return dir;
 }
 
-struct page_dir *virtual_kernel_dir(void)
-{
-	return &kernel_dir;
-}
-
 void virtual_destroy_dir(struct page_dir *dir)
 {
 	assert(dir != &kernel_dir);
@@ -324,6 +318,11 @@ void virtual_destroy_dir(struct page_dir *dir)
 	}
 
 	memory_free(&kernel_dir, memory_range((u32)dir, sizeof(*dir)));
+}
+
+struct page_dir *virtual_kernel_dir(void)
+{
+	return &kernel_dir;
 }
 
 /**
@@ -403,6 +402,13 @@ void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 f
 void memory_switch_dir(struct page_dir *dir)
 {
 	paging_switch_dir(virtual_to_physical(&kernel_dir, (u32)dir));
+}
+
+void memory_backup_dir(struct page_dir **backup)
+{
+	struct proc *proc = proc_current();
+	struct page_dir *dir = proc ? proc->page_dir : virtual_kernel_dir();
+	*backup = dir;
 }
 
 struct memory_range memory_range_from(u32 base, u32 size)
