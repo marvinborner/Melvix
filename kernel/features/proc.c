@@ -437,6 +437,18 @@ static u8 procfs_ready(const char *path, struct device *dev)
 	return 1;
 }
 
+static void proc_stack_push(struct proc *proc, u32 data)
+{
+	struct page_dir *prev;
+	memory_backup_dir(&prev);
+	memory_switch_dir(proc->page_dir);
+
+	proc->regs.useresp -= sizeof(data);
+	*(u32 *)proc->regs.useresp = data;
+
+	memory_switch_dir(prev);
+}
+
 extern void proc_jump_userspace(void);
 
 u32 _esp, _eip;
