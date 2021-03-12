@@ -57,7 +57,7 @@ void scheduler(struct regs *regs)
 		}
 	}
 
-	memory_dir_switch(((struct proc *)current->data)->page_dir);
+	memory_switch_dir(((struct proc *)current->data)->page_dir);
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 
 	if (regs->cs != GDT_USER_CODE_OFFSET) {
@@ -248,9 +248,9 @@ struct proc *proc_make(enum proc_priv priv)
 	proc->state = PROC_RUNNING;
 
 	if (priv == PROC_PRIV_KERNEL)
-		proc->page_dir = memory_kernel_dir();
+		proc->page_dir = virtual_kernel_dir();
 	else
-		proc->page_dir = memory_dir_create();
+		proc->page_dir = virtual_create_dir();
 
 	if (current)
 		list_add(proc_list, proc);
@@ -472,11 +472,11 @@ void proc_init(void)
 	vfs_mount(dev, "/proc/");
 
 	// Idle proc
-	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
-	proc_load(kernel_proc, (u32)kernel_idle);
-	strcpy(kernel_proc->name, "idle");
-	kernel_proc->state = PROC_SLEEPING;
-	idle_proc = list_add(proc_list, kernel_proc);
+	/* struct proc *kernel_proc = proc_make(PROC_PRIV_NONE); */
+	/* proc_load(kernel_proc, (u32)kernel_idle); */
+	/* strcpy(kernel_proc->name, "idle"); */
+	/* kernel_proc->state = PROC_SLEEPING; */
+	/* idle_proc = list_add(proc_list, kernel_proc); */
 
 	// Init proc (root)
 	struct node *new = list_add(proc_list, proc_make(PROC_PRIV_ROOT));
@@ -496,7 +496,9 @@ void proc_init(void)
 	/* ((u32 *)_esp)[-1] = (u32)argv; // Second argument (argv) */
 
 	printf("Jumping to userspace!\n");
-	memory_dir_switch(((struct proc *)new->data)->page_dir);
+	/* printf("%x\n", ((u32 *)((struct proc *)new->data)->entry)[5]); */
+	memory_switch_dir(((struct proc *)new->data)->page_dir);
+	/* printf("%x\n", ((u32 *)((struct proc *)new->data)->entry)[5]); */
 	proc_jump_userspace();
 	while (1) {
 	};

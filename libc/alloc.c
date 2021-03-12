@@ -303,6 +303,9 @@ static void _free(void *ptr)
 
 void *zalloc(u32 size)
 {
+#ifdef userspace
+	panic("AAH!\n");
+#endif
 	void *ret = malloc(size);
 	memset(ret, 0, size);
 	return ret;
@@ -311,6 +314,9 @@ void *zalloc(u32 size)
 // Naive realloc implementation - TODO!
 void *realloc(void *ptr, u32 size)
 {
+#ifdef userspace
+	panic("AAH!\n");
+#endif
 	if (!ptr)
 		return malloc(size);
 
@@ -330,6 +336,9 @@ void *realloc(void *ptr, u32 size)
 
 void *malloc_debug(u32 size, const char *file, int line, const char *func, const char *inp)
 {
+#ifdef userspace
+	panic("AAH!\n");
+#endif
 	assert(size < (100 << 20)); // Don't brag with memory pls
 	void *ret = _malloc(size);
 
@@ -343,6 +352,9 @@ void *malloc_debug(u32 size, const char *file, int line, const char *func, const
 
 void free_debug(void *ptr, const char *file, int line, const char *func, const char *inp)
 {
+#ifdef userspace
+	panic("AAH!\n");
+#endif
 	if (ptr)
 		_free(ptr);
 

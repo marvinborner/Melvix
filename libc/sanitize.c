@@ -13,13 +13,13 @@
 u32 __stack_chk_guard = STACK_CHK_GUARD;
 
 void __stack_chk_fail(void);
-void __stack_chk_fail(void)
+NORETURN void __stack_chk_fail(void)
 {
 	panic("FATAL: Stack smashing detected\n");
 }
 
 void __stack_chk_fail_local(void);
-void __stack_chk_fail_local(void)
+NORETURN void __stack_chk_fail_local(void)
 {
 	panic("FATAL: Local stack smashing detected\n");
 }

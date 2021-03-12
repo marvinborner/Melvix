@@ -8,6 +8,8 @@
 
 int main(int argc, char **argv)
 {
+	while (1) {
+	};
 	(void)argc;
 	log("%s loaded\n", argv[0]);
 

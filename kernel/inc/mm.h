@@ -15,6 +15,8 @@ struct memory_range {
  * Physical
  */
 
+struct memory_range physical_alloc(u32 size);
+
 /**
  * Virtual
  */

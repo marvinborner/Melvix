@@ -6,7 +6,6 @@
 #include <def.h>
 #include <mem.h>
 #include <mm.h>
-
 #include <print.h>
 
 static struct page_dir kernel_dir ALIGNED(PAGE_SIZE) = { 0 };
@@ -138,7 +137,7 @@ static u8 physical_is_used(struct memory_range range)
 	return 0;
 }
 
-static struct memory_range physical_alloc(u32 size)
+struct memory_range physical_alloc(u32 size)
 {
 	assert(PAGE_ALIGNED(size));
 
@@ -165,34 +164,34 @@ static void physical_free(struct memory_range range)
  * Virtual
  */
 
-#define PDI(vaddr) ((vaddr) >> 22)
+#define PDI(vaddr) (((vaddr) >> 22) & 0x03ff)
 #define PTI(vaddr) (((vaddr) >> 12) & 0x03ff)
 
 u8 virtual_present(struct page_dir *dir, u32 vaddr)
 {
 	u32 pdi = PDI(vaddr);
-	u32 pti = PTI(vaddr);
-
 	union page_dir_entry *dir_entry = &dir->entries[pdi];
 	if (!dir_entry->bits.present)
 		return 0;
 
 	struct page_table *table = (struct page_table *)(dir_entry->bits.address * PAGE_SIZE);
+
+	u32 pti = PTI(vaddr);
 	union page_table_entry *table_entry = &table->entries[pti];
 
-	return !table_entry->bits.present;
+	return table_entry->bits.present;
 }
 
 u32 virtual_to_physical(struct page_dir *dir, u32 vaddr)
 {
 	u32 pdi = PDI(vaddr);
-	u32 pti = PTI(vaddr);
-
 	union page_dir_entry *dir_entry = &dir->entries[pdi];
 	if (!dir_entry->bits.present)
 		return 0;
 
 	struct page_table *table = (struct page_table *)(dir_entry->bits.address * PAGE_SIZE);
+
+	u32 pti = PTI(vaddr);
 	union page_table_entry *table_entry = &table->entries[pti];
 	if (!table_entry->bits.present)
 		return 0;
@@ -204,9 +203,8 @@ void virtual_map(struct page_dir *dir, struct memory_range prange, u32 vaddr, u3
 {
 	for (u32 i = 0; i < prange.size / PAGE_SIZE; i++) {
 		u32 offset = i * PAGE_SIZE;
-		u32 pdi = PDI(vaddr + offset);
-		u32 pti = PTI(vaddr + offset);
 
+		u32 pdi = PDI(vaddr + offset);
 		union page_dir_entry *dir_entry = &dir->entries[pdi];
 		struct page_table *table =
 			(struct page_table *)(dir_entry->bits.address * PAGE_SIZE);
@@ -219,6 +217,7 @@ void virtual_map(struct page_dir *dir, struct memory_range prange, u32 vaddr, u3
 			dir_entry->bits.address = (u32)(table) >> 12;
 		}
 
+		u32 pti = PTI(vaddr + offset);
 		union page_table_entry *table_entry = &table->entries[pti];
 		table_entry->bits.present = 1;
 		table_entry->bits.writable = 1;
@@ -263,14 +262,14 @@ void virtual_free(struct page_dir *dir, struct memory_range vrange)
 		u32 offset = i * PAGE_SIZE;
 
 		u32 pdi = PDI(vrange.base + offset);
-		u32 pti = PTI(vrange.base + offset);
-
 		union page_dir_entry *dir_entry = &dir->entries[pdi];
 		if (!dir_entry->bits.present)
 			continue;
 
 		struct page_table *table =
 			(struct page_table *)(dir_entry->bits.address * PAGE_SIZE);
+
+		u32 pti = PTI(vrange.base + offset);
 		union page_table_entry *table_entry = &table->entries[pti];
 
 		if (table_entry->bits.present)
@@ -284,12 +283,14 @@ struct page_dir *virtual_create_dir(void)
 {
 	struct page_dir *dir = memory_alloc(&kernel_dir, sizeof(*dir), MEMORY_CLEAR);
 
+	memset(dir, 0, sizeof(*dir));
+
 	for (u32 i = 0; i < 256; i++) {
 		union page_dir_entry *dir_entry = &dir->entries[i];
 
-		dir_entry->bits.user = 0;
-		dir_entry->bits.writable = 1;
 		dir_entry->bits.present = 1;
+		dir_entry->bits.writable = 1;
+		dir_entry->bits.user = 0;
 		dir_entry->bits.address = (u32)&kernel_tables[i] / PAGE_SIZE;
 	}
 
@@ -334,22 +335,26 @@ void *memory_alloc(struct page_dir *dir, u32 size, u32 flags)
 	assert(PAGE_ALIGNED(size));
 
 	if (!size)
-		return 0;
+		goto err;
 
 	struct memory_range prange = physical_alloc(size);
 	if (prange.size == 0)
-		return 0;
+		goto err;
 
 	u32 vaddr = virtual_alloc(dir, prange, flags).base;
 	if (!vaddr) {
 		physical_free(prange);
-		return 0;
+		goto err;
 	}
 
 	if (flags & MEMORY_CLEAR)
 		memset((void *)vaddr, 0, size);
 
 	return (void *)vaddr;
+
+err:
+	print("Memory allocation error!\n");
+	return 0;
 }
 
 void *memory_alloc_identity(struct page_dir *dir, u32 flags)

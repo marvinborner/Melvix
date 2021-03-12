@@ -17,6 +17,8 @@
 #include <syscall.h>
 #include <timer.h>
 
+#include <print.h>
+
 struct vid_info *boot_passed;
 
 void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info); // Decl
@@ -31,7 +33,7 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
 	serial_print("Serial connected.\n");
 
-	paging_install(mem_info);
+	memory_install(mem_info);
 
 	boot_passed = vid_info;
 

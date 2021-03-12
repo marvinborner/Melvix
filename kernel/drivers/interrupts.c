@@ -171,9 +171,9 @@ void isr_uninstall_handler(int isr)
 
 void isr_panic(struct regs *r)
 {
+	printf("%s Exception (%x) at 0x%x (ring %d), exiting!\n", isr_exceptions[r->int_no],
+	       r->err_code, r->eip, r->cs & 3);
 	struct proc *proc = proc_current();
-	printf("%s Exception (%x) at 0x%x, exiting!\n", isr_exceptions[r->int_no], r->err_code,
-	       r->eip);
 	if (proc) {
 		printf("\t-> Exception occurred in %s at addr 0x%x\n", proc->name,
 		       r->eip - proc->entry);
