@@ -8,6 +8,7 @@ COBJS = main.o \
 	drivers/mouse.o \
 	drivers/pci.o \
 	drivers/ide.o \
+	drivers/fb.o \
 	drivers/timer.o \
 	drivers/rtl8139.o \
 	features/mm.o \

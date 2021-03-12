@@ -2,6 +2,7 @@
 
 #include <boot.h>
 #include <cpu.h>
+#include <fb.h>
 #include <fs.h>
 #include <ide.h>
 #include <interrupts.h>
@@ -17,10 +18,6 @@
 #include <syscall.h>
 #include <timer.h>
 
-#include <print.h>
-
-struct vid_info *boot_passed;
-
 void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info); // Decl
 void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 {
@@ -35,8 +32,6 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	memory_install(mem_info);
 
-	boot_passed = vid_info;
-
 	cpu_enable_features();
 	cpu_print();
 	srand(rdseed());
@@ -50,6 +45,7 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	timer_install();
 	keyboard_install();
 	mouse_install();
+	fb_install(vid_info);
 	/* net_install(); */
 
 	// Enable drivers

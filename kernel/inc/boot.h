@@ -6,7 +6,6 @@
 
 #include <def.h>
 
-extern struct vid_info *boot_passed;
 struct vid_info {
 	u32 mode;
 	u32 *vbe;

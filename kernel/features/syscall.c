@@ -52,6 +52,11 @@ static void syscall_handler(struct regs *r)
 		r->eax = (u32)vfs_write((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		break;
 	}
+	case SYS_IOCTL: {
+		r->eax = (u32)vfs_ioctl((char *)r->ebx, r->ecx, (void *)r->edx, (void *)r->esi,
+					(void *)r->edi);
+		break;
+	}
 	case SYS_POLL: {
 		s32 ret = vfs_poll((const char **)r->ebx);
 		if (ret == PROC_MAX_WAIT_IDS + 1)
