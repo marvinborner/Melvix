@@ -158,10 +158,10 @@ make_build() {
 
 make_test() {
     if [ "$mode" = "test" ]; then
-        qemu_with_flags -serial file:test.log -nographic -drive file=build/disk.img,format=raw,index=1,media=disk
-        echo
-        grep -E 'PASS|FAIL' test.log
-        if grep -q "All tests passed" test.log; then exit 0; else exit 1; fi
+        qemu_with_flags -nographic -drive file=build/disk.img,format=raw,index=1,media=disk
+        #echo
+        #grep -E 'PASS|FAIL' test.log
+        #if grep -q "All tests passed" test.log; then exit 0; else exit 1; fi
     else
         qemu_with_flags -serial stdio -drive file=build/disk.img,format=raw,index=1,media=disk
     fi
@@ -186,7 +186,7 @@ make_addr() {
         echo "Usage: './run addr kernel 0x50042'"
         exit 1
     fi
-    addr2line -e build/"$1".elf "$2"
+    addr2line -e build/"$1".elf -f -p "$2"
 }
 
 make_append_commands() {
