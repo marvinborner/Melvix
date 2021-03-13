@@ -90,6 +90,7 @@ static void syscall_handler(struct regs *r)
 		switch (r->ecx) {
 		case SYS_BOOT_REBOOT:
 			print("Rebooting...\n");
+			outb(0x64, 0xfe);
 			__asm__ volatile("ud2");
 			break;
 		case SYS_BOOT_SHUTDOWN:
@@ -97,6 +98,7 @@ static void syscall_handler(struct regs *r)
 			outw(0xB004, 0x2000);
 			outw(0x604, 0x2000);
 			outw(0x4004, 0x3400);
+			outb(0x64, 0xfe);
 			__asm__ volatile("ud2");
 			break;
 		default:

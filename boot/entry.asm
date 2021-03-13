@@ -545,7 +545,7 @@ tss_entry:
 	dd 0 ; gs
 	dd 0 ; ldt
 	dw 0 ; trap
-	dw 0 ; iomap base
+	dw -1 ; iomap base
 tss_entry_end:
 
 times 1024 - ($ - $$) db 0

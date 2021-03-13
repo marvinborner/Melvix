@@ -232,6 +232,10 @@ static void isr_install(void)
 	idt_set_gate(29, (u32)isr29, 0x08, 0x8E);
 	idt_set_gate(30, (u32)isr30, 0x08, 0x8E);
 	idt_set_gate(31, (u32)isr31, 0x08, 0x8E);
+
+	// Set default routines
+	for (u32 i = 0; i < 256; i++)
+		isr_routines[i] = isr_panic;
 }
 
 /**
