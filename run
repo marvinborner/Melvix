@@ -126,7 +126,7 @@ make_build() {
 
         $SUDO dd if=build/boot.bin of=/dev/${VND}i conv=notrunc status=none
     else
-        $SUDO mke2fs -q build/disk.img
+        $SUDO mke2fs -b 1024 -q build/disk.img
         dd if=build/boot.bin of=build/disk.img conv=notrunc status=none
     fi
 
@@ -158,10 +158,10 @@ make_build() {
 
 make_test() {
     if [ "$mode" = "test" ]; then
-        qemu_with_flags -nographic -drive file=build/disk.img,format=raw,index=1,media=disk
-        #echo
-        #grep -E 'PASS|FAIL' test.log
-        #if grep -q "All tests passed" test.log; then exit 0; else exit 1; fi
+        qemu_with_flags -serial file:test.log -nographic -drive file=build/disk.img,format=raw,index=1,media=disk
+        echo
+        grep -E 'PASS|FAIL' test.log
+        if grep -q "All tests passed" test.log; then exit 0; else exit 1; fi
     else
         qemu_with_flags -serial stdio -drive file=build/disk.img,format=raw,index=1,media=disk
     fi
