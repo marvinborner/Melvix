@@ -35,9 +35,9 @@ extern void paging_invalidate_tlb(void);
 static void page_fault(struct regs *r)
 {
 	// Check error code
-	const char *type = (r->err_code & 4) ? "present" : "non-present";
+	const char *type = (r->err_code & 1) ? "present" : "non-present";
 	const char *operation = (r->err_code & 2) ? "write" : "read";
-	const char *super = (r->err_code & 1) ? "User" : "Super";
+	const char *super = (r->err_code & 4) ? "User" : "Super";
 
 	// Check cr2 address
 	u32 vaddr;
@@ -446,7 +446,7 @@ static struct memory_range kernel_memory_range(void)
 	return memory_range_around((u32)&kernel_start, (u32)&kernel_end - (u32)&kernel_start);
 }
 
-void memory_install(struct mem_info *mem_info)
+void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 {
 	for (struct mmap_boot *p = mem_info->start; (u32)(p - mem_info->start) < mem_info->size;
 	     p++) {
@@ -484,8 +484,9 @@ void memory_install(struct mem_info *mem_info)
 	memory_map_identity(&kernel_dir, memory_range_around(STACK_START - STACK_SIZE, STACK_SIZE),
 			    MEMORY_NONE);
 
-	// TODO: Triple fault prevention? Probably bootloader stuff or something
-	memory_map_identity(&kernel_dir, memory_range_around(0x7000, 0x1000), MEMORY_NONE);
+	// Map VBE data
+	memory_map_identity(&kernel_dir, memory_range_around((u32)vid_info->vbe, 0x1000),
+			    MEMORY_NONE);
 
 	// Unmap NULL byte/page
 	struct memory_range zero = memory_range(0, PAGE_SIZE);

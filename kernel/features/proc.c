@@ -157,6 +157,9 @@ void proc_yield(struct regs *r)
 
 void proc_enable_waiting(u32 id, enum proc_wait_type type)
 {
+	struct page_dir *dir_bak;
+	memory_backup_dir(&dir_bak);
+
 	struct proc *proc_bak = proc_current();
 	if (!proc_bak)
 		return;
@@ -179,8 +182,11 @@ void proc_enable_waiting(u32 id, enum proc_wait_type type)
 				struct regs *r = &p->regs;
 				u32 (*func)(u32, u32, u32, u32) =
 					(u32(*)(u32, u32, u32, u32))w->ids[i].func_ptr;
-				if (w->ids[i].func_ptr)
+				if (w->ids[i].func_ptr) {
+					memory_switch_dir(p->page_dir);
 					r->eax = func(r->ebx, r->ecx, r->edx, r->esi);
+					memory_switch_dir(dir_bak);
+				}
 				memset(&w->ids[i], 0, sizeof(w->ids[i]));
 				p->wait.id_cnt--;
 				p->state = PROC_RUNNING;
@@ -250,6 +256,18 @@ struct proc *proc_make(enum proc_priv priv)
 		list_add(proc_list, proc);
 
 	return proc;
+}
+
+void proc_stack_push(struct proc *proc, u32 data)
+{
+	struct page_dir *prev;
+	memory_backup_dir(&prev);
+	memory_switch_dir(proc->page_dir);
+
+	proc->regs.useresp -= sizeof(data);
+	*(u32 *)proc->regs.useresp = data;
+
+	memory_switch_dir(prev);
 }
 
 // TODO: Procfs needs a simpler interface structure (memcmp and everything sucks)
@@ -435,18 +453,6 @@ static u8 procfs_ready(const char *path, struct device *dev)
 	}
 
 	return 1;
-}
-
-static void proc_stack_push(struct proc *proc, u32 data)
-{
-	struct page_dir *prev;
-	memory_backup_dir(&prev);
-	memory_switch_dir(proc->page_dir);
-
-	proc->regs.useresp -= sizeof(data);
-	*(u32 *)proc->regs.useresp = data;
-
-	memory_switch_dir(prev);
 }
 
 extern void proc_jump_userspace(void);

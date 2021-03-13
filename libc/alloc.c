@@ -139,7 +139,7 @@ static void *_malloc(u32 req_size)
 		l_mem_root = allocate_new_page(size);
 		if (l_mem_root == NULL) {
 			liballoc_unlock();
-			return NULL;
+			panic("Malloc failed!\n");
 		}
 	}
 
@@ -295,6 +295,7 @@ static void *_malloc(u32 req_size)
 
 	liballoc_unlock();
 
+	panic("Malloc failed!\n");
 	return NULL;
 }
 
@@ -361,6 +362,7 @@ static void *_realloc(void *ptr, u32 size)
 
 	if (min->magic != LIBALLOC_MAGIC) {
 		liballoc_unlock();
+		panic("Malloc failed!\n");
 		return NULL;
 	}
 

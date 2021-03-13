@@ -100,6 +100,6 @@ void memory_free(struct page_dir *dir, struct memory_range vrange);
 void memory_switch_dir(struct page_dir *dir);
 void memory_backup_dir(struct page_dir **backup);
 
-void memory_install(struct mem_info *mem_info);
+void memory_install(struct mem_info *mem_info, struct vid_info *vid_info);
 
 #endif

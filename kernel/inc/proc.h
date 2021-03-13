@@ -70,5 +70,6 @@ void proc_clear_quantum(void);
 void proc_enable_waiting(u32 id, enum proc_wait_type type);
 void proc_wait_for(u32 id, enum proc_wait_type type, u32 func_ptr);
 struct proc *proc_make(enum proc_priv priv);
+void proc_stack_push(struct proc *proc, u32 data);
 
 #endif

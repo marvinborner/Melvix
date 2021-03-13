@@ -71,22 +71,14 @@ static void syscall_handler(struct regs *r)
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make(PROC_PRIV_NONE);
 		r->eax = (u32)bin_load(path, proc);
-		u32 argc = 3; // TODO: Add argc evaluator
-		char **argv = malloc(sizeof(*argv) * (argc + 1));
-		argv[0] = (char *)r->ecx;
-		argv[1] = (char *)r->edx;
-		argv[2] = (char *)r->esi;
-		argv[3] = (char *)r->edi;
-		argv[4] = NULL;
-		((u32 *)proc->regs.useresp)[0] = argc;
-		((u32 *)proc->regs.useresp)[1] = (u32)argv;
+		// TODO: Reimplement argc,argv
+		proc_stack_push(proc, 0);
 		if (r->eax)
 			proc_exit(proc, (int)r->eax);
 		proc_yield(r);
 		break;
 	}
 	case SYS_EXIT: {
-		print("EXIT!\n");
 		proc_exit(proc_current(), (int)r->ebx);
 		break;
 	}

@@ -30,7 +30,7 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
 	serial_print("Serial connected.\n");
 
-	memory_install(mem_info);
+	memory_install(mem_info, vid_info);
 
 	cpu_enable_features();
 	cpu_print();

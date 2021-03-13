@@ -5,6 +5,7 @@
 #include <gfx.h>
 #include <gui.h>
 #include <input.h>
+#include <ioctl.h>
 #include <keymap.h>
 #include <list.h>
 #include <random.h>
@@ -361,11 +362,12 @@ static void handle_message(struct message *msg)
 
 int main(int argc, char **argv)
 {
-	(void)argc;
-	screen = *(struct vbe *)argv[1];
+	UNUSED(argc);
+	UNUSED(argv);
+	assert(ioctl("/dev/fb", IO_FB_GET, &screen) == 0);
+	log("WM loaded: %dx%d\n", screen.width, screen.height);
 	wm_client = (struct client){ .pid = getpid() };
 	bypp = (screen.bpp >> 3);
-	log("WM loaded: %dx%d\n", screen.width, screen.height);
 
 	windows = list_new();
 	keymap = keymap_parse("/res/keymaps/en.keymap");

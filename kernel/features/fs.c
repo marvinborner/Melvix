@@ -62,13 +62,15 @@ static struct mount_info *vfs_recursive_find(char *path)
 
 static struct mount_info *vfs_find_mount_info(const char *path)
 {
-	assert(path[0] == '/');
+	if (path[0] != '/')
+		return NULL;
 	return vfs_recursive_find(strdup(path));
 }
 
 struct device *vfs_find_dev(const char *path)
 {
-	assert(path[0] == '/');
+	if (path[0] != '/')
+		return NULL;
 	struct mount_info *m = vfs_find_mount_info(path);
 	if (m->dev->vfs->type == VFS_DEVFS) // TODO: ?
 		return device_get_by_name(path + strlen(m->path) + 1);
