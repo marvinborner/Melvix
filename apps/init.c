@@ -6,13 +6,15 @@
 #include <str.h>
 #include <sys.h>
 
+#include <cpu.h>
+
 int main(int argc, char **argv)
 {
 	UNUSED(argc);
 	UNUSED(argv);
 
 	int wm = exec("/bin/wm", "wm", NULL);
-	/* int test = exec("/bin/window", "test", NULL); */
+	int test = exec("/bin/window", "test", NULL);
 
-	return wm; //+ test;
+	return wm + test;
 }

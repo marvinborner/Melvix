@@ -8,6 +8,7 @@
 #include <ioctl.h>
 #include <keymap.h>
 #include <list.h>
+#include <msg.h>
 #include <random.h>
 #include <vesa.h>
 
@@ -308,46 +309,34 @@ static void handle_event_mouse(struct event_mouse *event)
 		window_redraw(cursor);
 }
 
-static void handle_message_new_window(struct message *msg)
+static void handle_message_new_window(struct message_new_window *msg)
 {
-	if (!msg->data) {
-		msg_send(msg->src, GUI_NEW_WINDOW | MSG_FAILURE, NULL);
-		return;
-	}
-	struct gui_window *buf = msg->data;
-	struct window *win = window_new((struct client){ .pid = msg->src }, "idk", vec2(500, 600),
-					vec2(600, 400), 0);
-	buf->id = win->id;
-	buf->ctx = &win->ctx;
-	buf->pos = &win->pos;
-	msg_send(msg->src, GUI_NEW_WINDOW | MSG_SUCCESS, NULL);
+	struct window *win = window_new((struct client){ .pid = msg->header.src }, "idk",
+					vec2(500, 600), vec2(600, 400), 0);
+	msg->ctx = win->ctx;
+	msg->id = win->id;
+	msg_send(msg->header.src, GUI_NEW_WINDOW | MSG_SUCCESS, msg, sizeof(*msg));
 	/* window_redraw(win); */
 }
 
-static void handle_message_redraw_window(struct message *msg)
+static void handle_message_redraw_window(struct message_redraw_window *msg)
 {
-	if (!msg->data) {
-		msg_send(msg->src, GUI_REDRAW_WINDOW | MSG_FAILURE, NULL);
-		return;
-	}
-	u32 id = *(u32 *)msg->data;
+	u32 id = msg->id;
 	struct window *win = window_find(id);
 	if (!win) {
-		msg_send(msg->src, GUI_REDRAW_WINDOW | MSG_FAILURE, NULL);
+		msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_FAILURE, NULL,
+			 sizeof(msg->header));
 		return;
 	}
-	msg_send(msg->src, GUI_REDRAW_WINDOW | MSG_SUCCESS, NULL);
+	msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_SUCCESS, NULL, sizeof(msg->header));
 	window_redraw(win);
 }
 
-static void handle_message(struct message *msg)
+static void handle_message(void *msg)
 {
-	if (msg->magic != MSG_MAGIC) {
-		log("Message magic doesn't match!\n");
-		return;
-	}
+	struct message_header *header = msg;
 
-	switch (msg->type) {
+	switch (header->type) {
 	case GUI_NEW_WINDOW:
 		handle_message_new_window(msg);
 		break;
@@ -355,8 +344,8 @@ static void handle_message(struct message *msg)
 		handle_message_redraw_window(msg);
 		break;
 	default:
-		log("Message type %d not implemented!\n", msg->type);
-		msg_send(msg->src, MSG_FAILURE, NULL);
+		log("Message type %d not implemented!\n", header->type);
+		msg_send(header->src, MSG_FAILURE, NULL, sizeof(*header));
 	}
 }
 
@@ -389,32 +378,34 @@ int main(int argc, char **argv)
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
 	window_redraw(wallpaper);
 
-	struct message msg = { 0 };
+	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
 	struct event_mouse event_mouse = { 0 };
-	const char *listeners[] = { "/dev/kbd", "/dev/mouse", "/proc/self/msg" };
+	const char *listeners[] = { "/dev/kbd", "/dev/mouse", "/proc/self/msg", NULL };
 	while (1) {
 		int poll_ret = 0;
 		if ((poll_ret = poll(listeners)) >= 0) {
 			if (poll_ret == 0) {
 				if (read(listeners[poll_ret], &event_keyboard, 0,
-					 sizeof(event_keyboard)) > 0)
+					 sizeof(event_keyboard)) > 0) {
 					handle_event_keyboard(&event_keyboard);
-				continue;
+					continue;
+				}
 			} else if (poll_ret == 1) {
 				if (read(listeners[poll_ret], &event_mouse, 0,
-					 sizeof(event_mouse)) > 0)
+					 sizeof(event_mouse)) > 0) {
 					handle_event_mouse(&event_mouse);
-				continue;
+					continue;
+				}
 			} else if (poll_ret == 2) {
-				if (read(listeners[poll_ret], &msg, 0, sizeof(msg)) > 0)
-					handle_message(&msg);
-				continue;
+				if (msg_receive(msg, 1024) > 0) {
+					handle_message(msg);
+					continue;
+				}
 			}
-		} else {
-			err(1, "POLL ERROR!\n");
 		}
-	};
+		panic("Poll/read error!\n");
+	}
 
 	// TODO: Execute?
 	free(keymap);

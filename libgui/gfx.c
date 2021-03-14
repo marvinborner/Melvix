@@ -98,10 +98,11 @@ static void draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
 
 struct context *gfx_new_ctx(struct context *ctx)
 {
-	struct message msg = { 0 };
-	assert(msg_send(pidof(WM_PATH), GFX_NEW_CONTEXT, ctx) > 0);
-	assert(msg_receive(&msg) > 0);
-	memcpy(ctx, msg.data, sizeof(*ctx));
+	/* struct message msg = { 0 }; */
+	assert(0);
+	/* assert(msg_send(pidof(WM_PATH), GFX_NEW_CONTEXT, ctx) > 0); */
+	/* assert(msg_receive(&msg) > 0); */
+	/* memcpy(ctx, msg.data, sizeof(*ctx)); */
 	return ctx;
 }
 

@@ -8,8 +8,7 @@
 
 struct gui_window {
 	u32 id;
-	struct context *ctx;
-	vec2 *pos;
+	struct context ctx;
 };
 
 s32 gui_new_window(struct gui_window *win);

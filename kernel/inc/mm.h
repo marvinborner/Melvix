@@ -5,6 +5,7 @@
 
 #include <boot.h>
 #include <def.h>
+#include <interrupts.h>
 
 struct memory_range {
 	u32 base;
@@ -101,5 +102,7 @@ void memory_switch_dir(struct page_dir *dir);
 void memory_backup_dir(struct page_dir **backup);
 
 void memory_install(struct mem_info *mem_info, struct vid_info *vid_info);
+
+void page_fault_handler(struct regs *r);
 
 #endif

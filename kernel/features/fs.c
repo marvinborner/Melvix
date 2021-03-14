@@ -122,7 +122,7 @@ s32 vfs_mount(struct device *dev, const char *path)
 
 s32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 {
-	/* printf("%s READ: %s\n", proc_current()->name, path); */
+	/* printf("%s READ: %s\n", proc_current() ? proc_current()->name : "Unknown", path); */
 	if (!count)
 		return 0;
 
@@ -148,7 +148,7 @@ s32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 
 s32 vfs_write(const char *path, void *buf, u32 offset, u32 count)
 {
-	/* printf("%s WRITE: %s\n", proc_current()->name, path); */
+	/* printf("%s WRITE: %s\n", proc_current() ? proc_current()->name : "Unknown", path); */
 	if (!count)
 		return 0;
 

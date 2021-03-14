@@ -25,6 +25,9 @@ typedef unsigned long long u64;
 
 #define UNUSED(a) ((void)(a))
 
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
 #define NORETURN __attribute__((noreturn))
 #define NO_SANITIZE __attribute__((no_sanitize("undefined")))
 #define PACKED __attribute__((packed))

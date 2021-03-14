@@ -86,8 +86,6 @@ struct liballoc_minor {
 
 #define MAJOR_SIZE (ALIGN_UP(sizeof(struct liballoc_major), 16))
 #define MINOR_SIZE (ALIGN_UP(sizeof(struct liballoc_minor), 16))
-#define MIN(__x, __y) ((__x) < (__y) ? (__x) : (__y))
-#define MAX(__x, __y) ((__x) > (__y) ? (__x) : (__y))
 
 static struct liballoc_major *l_mem_root = NULL;
 static struct liballoc_major *l_best_bet = NULL;

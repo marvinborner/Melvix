@@ -5,6 +5,7 @@
 #include <def.h>
 #include <interrupts.h>
 #include <mem.h>
+#include <mm.h>
 #include <print.h>
 #include <proc.h>
 #include <serial.h>
@@ -236,6 +237,9 @@ static void isr_install(void)
 	// Set default routines
 	for (u32 i = 0; i < 256; i++)
 		isr_routines[i] = isr_panic;
+
+	// Set page fault handler
+	isr_install_handler(14, page_fault_handler);
 }
 
 /**

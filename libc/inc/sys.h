@@ -93,7 +93,9 @@ int sysv(enum sys num, ...);
 
 static inline u32 getpid(void)
 {
-	u32 buf = 0;
+	static u32 buf = 0;
+	if (buf)
+		return buf;
 	read("/proc/self/pid", &buf, 0, sizeof(buf));
 	return buf;
 }

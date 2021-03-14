@@ -305,6 +305,11 @@ static enum stream_defaults procfs_stream(const char *path)
 	}
 }
 
+struct procfs_message {
+	u8 *data;
+	u32 size;
+};
+
 static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	u32 pid = 0;
@@ -318,7 +323,10 @@ static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 		if (!memcmp(path, "msg", 4)) {
 			void *msg_data = malloc(count);
 			memcpy(msg_data, buf, count);
-			stack_push_bot(p->messages, msg_data); // TODO: Use offset
+			struct procfs_message *msg = malloc(sizeof(*msg));
+			msg->data = msg_data;
+			msg->size = count;
+			stack_push_bot(p->messages, msg); // TODO: Use offset
 			proc_enable_waiting(pid, PROC_WAIT_MSG);
 			return count;
 		} else if (!memcmp(path, "io/", 3)) {
@@ -371,12 +379,13 @@ static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 			if (stack_empty(p->messages)) {
 				return -1; // This shouldn't happen
 			} else {
-				u8 *msg = stack_pop(p->messages);
+				struct procfs_message *msg = stack_pop(p->messages);
 				if (!msg)
 					return -1;
-				memcpy(buf, msg + offset, count);
+				memcpy(buf, msg->data + offset, MIN(count, msg->size));
+				free(msg->data);
 				free(msg);
-				return count;
+				return MIN(count, msg->size);
 			}
 		} else if (!memcmp(path, "io/", 3)) {
 			path += 3;
@@ -500,7 +509,10 @@ void proc_init(void)
 
 	printf("Jumping to userspace!\n");
 	memory_switch_dir(((struct proc *)new->data)->page_dir);
+
+	// You're waiting for a train. A train that will take you far away...
 	proc_jump_userspace();
+
 	while (1) {
 	};
 }

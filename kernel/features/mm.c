@@ -32,7 +32,7 @@ static void paging_switch_dir(u32 dir)
 
 extern void paging_invalidate_tlb(void);
 
-static void page_fault(struct regs *r)
+void page_fault_handler(struct regs *r)
 {
 	// Check error code
 	const char *type = (r->err_code & 1) ? "present" : "non-present";
@@ -495,6 +495,4 @@ void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	memory_switch_dir(&kernel_dir);
 	paging_enable();
-
-	isr_install_handler(14, page_fault);
 }
