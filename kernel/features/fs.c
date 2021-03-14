@@ -5,6 +5,7 @@
 #include <fs.h>
 #include <ide.h>
 #include <mem.h>
+#include <mm.h>
 #include <print.h>
 #include <random.h>
 #include <str.h>
@@ -240,11 +241,11 @@ s32 vfs_poll(const char **files)
 	if (!files)
 		return -1;
 
-	for (const char **p = files; *p && **p; p++)
+	for (const char **p = files; memory_user_valid((u32)*p) && *p && **p; p++)
 		if (vfs_ready(*p))
 			return p - files;
 
-	for (const char **p = files; *p && **p; p++)
+	for (const char **p = files; memory_user_valid((u32)*p) && *p && **p; p++)
 		vfs_wait(*p, (u32)vfs_poll);
 
 	return PROC_MAX_WAIT_IDS + 1;

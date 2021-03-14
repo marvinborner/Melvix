@@ -25,6 +25,7 @@ void physical_free(struct memory_range range);
 
 #define PAGE_SIZE 0x1000
 #define PAGE_COUNT 1024
+#define PAGE_KERNEL_COUNT 256
 #define PAGE_ALIGN(x) ((x) + PAGE_SIZE - ((x) % PAGE_SIZE))
 #define PAGE_ALIGNED(x) ((x) % PAGE_SIZE == 0)
 #define PAGE_ALIGN_UP(x) (((x) % PAGE_SIZE == 0) ? (x) : (x) + PAGE_SIZE - ((x) % PAGE_SIZE))
@@ -100,6 +101,7 @@ void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 f
 void memory_free(struct page_dir *dir, struct memory_range vrange);
 void memory_switch_dir(struct page_dir *dir);
 void memory_backup_dir(struct page_dir **backup);
+u8 memory_user_valid(u32 addr);
 
 void memory_install(struct mem_info *mem_info, struct vid_info *vid_info);
 

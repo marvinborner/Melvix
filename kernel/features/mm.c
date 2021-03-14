@@ -9,7 +9,7 @@
 #include <print.h>
 
 static struct page_dir kernel_dir ALIGNED(PAGE_SIZE) = { 0 };
-static struct page_table kernel_tables[256] ALIGNED(PAGE_SIZE) = { 0 };
+static struct page_table kernel_tables[PAGE_KERNEL_COUNT] ALIGNED(PAGE_SIZE) = { 0 };
 
 /**
  * Lowlevel paging
@@ -233,8 +233,8 @@ struct memory_range virtual_alloc(struct page_dir *dir, struct memory_range pran
 	u32 vaddr = 0;
 	u32 size = 0;
 
-	for (u32 i = (user ? 256 : 1) * PAGE_COUNT; i < (user ? PAGE_COUNT : 256) * PAGE_COUNT;
-	     i++) {
+	for (u32 i = (user ? PAGE_KERNEL_COUNT : 1) * PAGE_COUNT;
+	     i < (user ? PAGE_COUNT : PAGE_KERNEL_COUNT) * PAGE_COUNT; i++) {
 		u32 addr = i * PAGE_SIZE;
 		if (!virtual_present(dir, addr)) {
 			if (size == 0)
@@ -284,7 +284,7 @@ struct page_dir *virtual_create_dir(void)
 
 	memset(dir, 0, sizeof(*dir));
 
-	for (u32 i = 0; i < 256; i++) {
+	for (u32 i = 0; i < PAGE_KERNEL_COUNT; i++) {
 		union page_dir_entry *dir_entry = &dir->entries[i];
 
 		dir_entry->bits.present = 1;
@@ -300,7 +300,7 @@ void virtual_destroy_dir(struct page_dir *dir)
 {
 	assert(dir != &kernel_dir);
 
-	for (u32 i = 256; i < PAGE_COUNT; i++) {
+	for (u32 i = PAGE_KERNEL_COUNT; i < PAGE_COUNT; i++) {
 		union page_dir_entry *dir_entry = &dir->entries[i];
 		if (dir_entry->bits.present) {
 			struct page_table *table =
@@ -358,7 +358,7 @@ err:
 
 void *memory_alloc_identity(struct page_dir *dir, u32 flags)
 {
-	for (u32 i = 1; i < 256 * PAGE_COUNT; i++) {
+	for (u32 i = 1; i < PAGE_KERNEL_COUNT * PAGE_COUNT; i++) {
 		struct memory_range range = memory_range(i * PAGE_SIZE, PAGE_SIZE);
 
 		if (!virtual_present(dir, range.base) && !physical_is_used(range)) {
@@ -409,6 +409,12 @@ void memory_backup_dir(struct page_dir **backup)
 	struct proc *proc = proc_current();
 	struct page_dir *dir = proc ? proc->page_dir : virtual_kernel_dir();
 	*backup = dir;
+}
+
+// TODO: Check memory validity more often
+u8 memory_user_valid(u32 addr)
+{
+	return addr / PAGE_SIZE / PAGE_COUNT >= PAGE_KERNEL_COUNT;
 }
 
 struct memory_range memory_range_from(u32 base, u32 size)
@@ -466,7 +472,7 @@ void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 		}
 	}
 
-	for (u32 i = 0; i < 256; i++) {
+	for (u32 i = 0; i < PAGE_KERNEL_COUNT; i++) {
 		union page_dir_entry *dir_entry = &kernel_dir.entries[i];
 		dir_entry->bits.present = 1;
 		dir_entry->bits.writable = 1;
