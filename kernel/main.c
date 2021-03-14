@@ -2,12 +2,14 @@
 
 #include <boot.h>
 #include <cpu.h>
+#include <fb.h>
 #include <fs.h>
 #include <ide.h>
 #include <interrupts.h>
 #include <keyboard.h>
 #include <load.h>
 #include <mem.h>
+#include <mm.h>
 #include <mouse.h>
 #include <net.h>
 #include <pci.h>
@@ -16,22 +18,23 @@
 #include <syscall.h>
 #include <timer.h>
 
-struct vid_info *boot_passed;
-
-void kernel_main(struct vid_info *vid_info); // Decl
-void kernel_main(struct vid_info *vid_info)
+void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info); // Decl
+void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 {
+	// Clear stack
+	for (u32 i = 0; i < STACK_SIZE; i++)
+		((u8 *)STACK_START)[-i] = 0;
+
 	// Serial connection
 	serial_install();
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
 	serial_print("Serial connected.\n");
 
-	heap_init(0x00f00000);
-
-	boot_passed = vid_info;
+	memory_install(mem_info, vid_info);
 
 	cpu_enable_features();
 	cpu_print();
+	srand(rdseed());
 
 	// Install drivers
 	vfs_install();
@@ -42,6 +45,7 @@ void kernel_main(struct vid_info *vid_info)
 	timer_install();
 	keyboard_install();
 	mouse_install();
+	fb_install(vid_info);
 	/* net_install(); */
 
 	// Enable drivers

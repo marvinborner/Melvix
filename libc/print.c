@@ -214,9 +214,23 @@ int print(const char *str)
 	return strlen(str);
 }
 
+void print_trace(u32 count)
+{
+	struct frame {
+		struct frame *ebp;
+		u32 eip;
+	} * stk;
+	__asm__ volatile("movl %%ebp, %0;" : "=r"(stk));
+	print("EBP\tEIP\n");
+	for (u32 i = 0; stk && i < count; i++) {
+		printf("0x%x\t0x%x\n", stk->ebp, stk->eip);
+		stk = stk->ebp;
+	}
+}
+
 #endif
 
-void panic(const char *format, ...)
+NORETURN void panic(const char *format, ...)
 {
 	char buf[1024] = { 0 };
 	va_list ap;
@@ -224,6 +238,7 @@ void panic(const char *format, ...)
 	vsprintf(buf, format, ap);
 	va_end(ap);
 #ifdef kernel
+	print("--- DON'T PANIC! ---\n");
 	print(buf);
 	loop();
 #else

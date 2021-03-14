@@ -9,16 +9,22 @@
 #define KEYBOARD_MAGIC 0x555555
 #define MOUSE_MAGIC 0xaaaaaa
 
+#define SYS_BOOT_MAGIC 0x18122002
+#define SYS_BOOT_REBOOT 0xeeb007
+#define SYS_BOOT_SHUTDOWN 0xdead
+
 enum sys {
 	SYS_LOOP, // To infinity and beyond (debug)!
-	SYS_MALLOC, // Allocate memory
+	SYS_ALLOC, // Allocate memory
 	SYS_FREE, // Free memory
 	SYS_STAT, // Get file information
 	SYS_READ, // Read file
 	SYS_WRITE, // Write to file
+	SYS_IOCTL, // Interact with a file/device
 	SYS_POLL, // Wait for multiple files
 	SYS_EXEC, // Execute path
-	SYS_EXIT, // Exit current process // TODO: Free all memory of process
+	SYS_EXIT, // Exit current process
+	SYS_BOOT, // Boot functions (e.g. reboot/shutdown)
 	SYS_YIELD, // Switch to next process
 	SYS_TIME, // Get kernel time
 	SYS_NET_OPEN, // Open network socket
@@ -70,6 +76,7 @@ int sysv(enum sys num, ...);
 	(s32) sys4(SYS_READ, (int)(path), (int)(buf), (int)(offset), (int)(count))
 #define write(path, buf, offset, count)                                                            \
 	(s32) sys4(SYS_WRITE, (int)(path), (int)(buf), (int)(offset), (int)(count))
+#define ioctl(path, ...) (s32) sysv(SYS_IOCTL, (int)(path), ##__VA_ARGS__)
 #define stat(path, stat) (s32) sys2(SYS_STAT, (int)(path), (int)(stat))
 #define poll(files) (s32) sys1(SYS_POLL, (int)(files))
 #define exec(path, ...) (s32) sysv(SYS_EXEC, (int)(path), ##__VA_ARGS__)
@@ -80,12 +87,15 @@ int sysv(enum sys num, ...);
 			yield();                                                                   \
 		}                                                                                  \
 	}
-#define yield(void) (int)sys0(SYS_YIELD)
+#define boot(cmd) (s32) sys2(SYS_BOOT, SYS_BOOT_MAGIC, cmd)
+#define yield(void) (s32) sys0(SYS_YIELD)
 #define time(void) (u32) sys0(SYS_TIME)
 
 static inline u32 getpid(void)
 {
-	u32 buf = 0;
+	static u32 buf = 0;
+	if (buf)
+		return buf;
 	read("/proc/self/pid", &buf, 0, sizeof(buf));
 	return buf;
 }

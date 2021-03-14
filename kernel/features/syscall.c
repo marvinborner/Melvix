@@ -5,6 +5,7 @@
 #include <interrupts.h>
 #include <load.h>
 #include <mem.h>
+#include <mm.h>
 #include <net.h>
 #include <print.h>
 #include <proc.h>
@@ -25,12 +26,13 @@ static void syscall_handler(struct regs *r)
 		loop();
 		break;
 	}
-	case SYS_MALLOC: {
-		r->eax = (u32)malloc(r->ebx);
+	case SYS_ALLOC: {
+		r->eax = (u32)memory_alloc(proc_current()->page_dir, r->ebx,
+					   MEMORY_CLEAR | MEMORY_USER);
 		break;
 	}
 	case SYS_FREE: {
-		free((void *)r->ebx);
+		memory_free(proc_current()->page_dir, memory_range(r->ebx, r->ecx));
 		break;
 	}
 	case SYS_STAT: {
@@ -52,6 +54,11 @@ static void syscall_handler(struct regs *r)
 		r->eax = (u32)vfs_write((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		break;
 	}
+	case SYS_IOCTL: {
+		r->eax = (u32)vfs_ioctl((char *)r->ebx, r->ecx, (void *)r->edx, (void *)r->esi,
+					(void *)r->edi);
+		break;
+	}
 	case SYS_POLL: {
 		s32 ret = vfs_poll((const char **)r->ebx);
 		if (ret == PROC_MAX_WAIT_IDS + 1)
@@ -62,17 +69,10 @@ static void syscall_handler(struct regs *r)
 	}
 	case SYS_EXEC: {
 		char *path = (char *)r->ebx;
-		struct proc *proc = proc_make();
+		struct proc *proc = proc_make(PROC_PRIV_NONE);
 		r->eax = (u32)bin_load(path, proc);
-		u32 argc = 3; // TODO: Add argc evaluator
-		char **argv = malloc(sizeof(*argv) * (argc + 1));
-		argv[0] = (char *)r->ecx;
-		argv[1] = (char *)r->edx;
-		argv[2] = (char *)r->esi;
-		argv[3] = (char *)r->edi;
-		argv[4] = NULL;
-		((u32 *)proc->regs.useresp)[0] = argc;
-		((u32 *)proc->regs.useresp)[1] = (u32)argv;
+		// TODO: Reimplement argc,argv
+		proc_stack_push(proc, 0);
 		if (r->eax)
 			proc_exit(proc, (int)r->eax);
 		proc_yield(r);
@@ -80,6 +80,30 @@ static void syscall_handler(struct regs *r)
 	}
 	case SYS_EXIT: {
 		proc_exit(proc_current(), (int)r->ebx);
+		break;
+	}
+	case SYS_BOOT: { // TODO: Move
+		if (r->ebx != SYS_BOOT_MAGIC || !proc_super()) {
+			r->eax = -1;
+			break;
+		}
+		switch (r->ecx) {
+		case SYS_BOOT_REBOOT:
+			print("Rebooting...\n");
+			outb(0x64, 0xfe);
+			__asm__ volatile("ud2");
+			break;
+		case SYS_BOOT_SHUTDOWN:
+			print("Shutting down...\n");
+			outw(0xB004, 0x2000);
+			outw(0x604, 0x2000);
+			outw(0x4004, 0x3400);
+			outb(0x64, 0xfe);
+			__asm__ volatile("ud2");
+			break;
+		default:
+			r->eax = -1;
+		}
 		break;
 	}
 	case SYS_YIELD: {
@@ -123,7 +147,7 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	default: {
-		print("Unknown syscall!\n");
+		printf("Unknown syscall %d!\n", num);
 		break;
 	}
 	}

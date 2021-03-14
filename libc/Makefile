@@ -3,6 +3,7 @@
 # TODO: Remove serial and cpu from libc?
 COBJS = sanitize.o \
 	str.o \
+	alloc.o \
 	mem.o \
 	math.o \
 	conv.o \

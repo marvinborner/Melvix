@@ -5,6 +5,7 @@
 #include <def.h>
 #include <interrupts.h>
 #include <mem.h>
+#include <mm.h>
 #include <print.h>
 #include <proc.h>
 #include <serial.h>
@@ -169,26 +170,30 @@ void isr_uninstall_handler(int isr)
 	isr_routines[isr] = 0;
 }
 
+void isr_panic(struct regs *r)
+{
+	printf("%s Exception (%x) at 0x%x (ring %d), exiting!\n", isr_exceptions[r->int_no],
+	       r->err_code, r->eip, r->cs & 3);
+	struct proc *proc = proc_current();
+	if (proc) {
+		printf("\t-> Exception occurred in %s at addr 0x%x\n", proc->name,
+		       r->eip - proc->entry);
+		proc_exit(proc, 1);
+	} else {
+		__asm__ volatile("cli\nhlt");
+	}
+	proc_yield(r);
+}
+
 void isr_handler(struct regs *r);
 void isr_handler(struct regs *r)
 {
-	if (r->int_no <= 32) {
-		struct proc *proc = proc_current();
-		printf("%s Exception at 0x%x, exiting!\n", isr_exceptions[r->int_no], r->eip);
-		if (proc) {
-			printf("\t-> Exception occurred in %s at addr 0x%x\n", proc->name,
-			       r->eip - proc->entry);
-			proc_exit(proc, 1);
-		} else {
-			__asm__ volatile("cli\nhlt");
-		}
-		proc_yield(r);
-	} else {
-		// Execute fault handler if exists
-		void (*handler)(struct regs * r) = isr_routines[r->int_no];
-		if (handler)
-			handler(r);
-	}
+	// Execute fault handler if exists
+	void (*handler)(struct regs * r) = isr_routines[r->int_no];
+	if (handler)
+		handler(r);
+	else
+		isr_panic(r);
 }
 
 static void isr_install(void)
@@ -228,6 +233,13 @@ static void isr_install(void)
 	idt_set_gate(29, (u32)isr29, 0x08, 0x8E);
 	idt_set_gate(30, (u32)isr30, 0x08, 0x8E);
 	idt_set_gate(31, (u32)isr31, 0x08, 0x8E);
+
+	// Set default routines
+	for (u32 i = 0; i < 256; i++)
+		isr_routines[i] = isr_panic;
+
+	// Set page fault handler
+	isr_install_handler(14, page_fault_handler);
 }
 
 /**

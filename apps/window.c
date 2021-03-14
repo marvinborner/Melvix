@@ -8,6 +8,9 @@ int main(void)
 {
 	struct gui_window win = { 0 };
 	assert(gui_new_window(&win) > 0);
+	while (1)
+		;
+#if 0
 	gfx_fill(win.ctx, COLOR_GREEN);
 	// Professional testing
 	for (int i = 0; i < 12; i++) {
@@ -16,5 +19,6 @@ int main(void)
 	}
 	assert(gui_redraw_window(win.id) > 0);
 	log("%d\n", win.ctx->size.x);
+#endif
 	return 0;
 }

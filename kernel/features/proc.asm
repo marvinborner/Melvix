@@ -28,3 +28,9 @@ proc_jump_userspace:
 	push dword [_eip]
 
 	iret
+
+global paging_invalidate_tlb
+paging_invalidate_tlb:
+	mov eax, cr3
+	mov cr3, eax
+	ret

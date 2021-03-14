@@ -13,7 +13,8 @@ void *realloc(void *ptr, u32 size);
 void *zalloc(u32 size);
 
 #ifdef kernel
-void heap_init(u32 start);
+#define STACK_START 0x00500000 // Defined it bootloader
+#define STACK_SIZE 0x1000 // idk
 #elif defined(userspace)
 #else
 #error "No lib target specified. Please use -Dkernel or -Duserspace"

@@ -9,7 +9,7 @@
 #include <stack.h>
 #include <sys.h>
 
-#define PROC_QUANTUM 10 // Milliseconds or something // TODO
+#define PROC_QUANTUM 42 // Milliseconds or something // TODO
 
 #define EFLAGS_ALWAYS 0x2 // Always one
 #define EFLAGS_INTERRUPTS 0x200 // Enable interrupts
@@ -23,6 +23,7 @@
 #define STREAM_MAX_SIZE 4096
 enum stream_defaults { STREAM_IN, STREAM_OUT, STREAM_ERR, STREAM_LOG, STREAM_UNKNOWN = -1 };
 
+enum proc_priv { PROC_PRIV_NONE, PROC_PRIV_ROOT, PROC_PRIV_KERNEL };
 enum proc_state { PROC_RUNNING, PROC_SLEEPING };
 enum proc_wait_type { PROC_WAIT_DEV, PROC_WAIT_MSG };
 
@@ -47,9 +48,10 @@ struct stream {
 struct proc {
 	u32 pid;
 	u32 entry;
-	u8 super;
+	u8 priv;
 	char name[32];
 	struct stream streams[4];
+	struct page_dir *page_dir;
 	struct regs regs;
 	struct proc_wait wait; // dev_id
 	enum proc_state state;
@@ -67,6 +69,7 @@ void proc_yield(struct regs *r);
 void proc_clear_quantum(void);
 void proc_enable_waiting(u32 id, enum proc_wait_type type);
 void proc_wait_for(u32 id, enum proc_wait_type type, u32 func_ptr);
-struct proc *proc_make(void);
+struct proc *proc_make(enum proc_priv priv);
+void proc_stack_push(struct proc *proc, u32 data);
 
 #endif

@@ -32,6 +32,7 @@ void irq_uninstall_handler(int irq);
 
 void isr_install_handler(int isr, void (*handler)(struct regs *r));
 void isr_uninstall_handler(int isr);
+void isr_panic(struct regs *r);
 
 void interrupts_install(void);
 

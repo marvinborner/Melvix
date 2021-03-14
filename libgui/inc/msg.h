@@ -4,16 +4,28 @@
 #define MSG_H
 
 #include <def.h>
+#include <gfx.h>
 
 #define MSG_MAGIC 0x42042069
 #define MSG_SUCCESS (1 << 29)
 #define MSG_FAILURE (1 << 30)
 
-struct message {
+struct message_header {
 	u32 magic;
-	int src;
-	int type;
-	void *data;
+	u32 src;
+	u32 type;
+	u32 size;
+};
+
+struct message_new_window {
+	struct message_header header;
+	u32 id;
+	struct context ctx;
+};
+
+struct message_redraw_window {
+	struct message_header header;
+	u32 id;
 };
 
 enum message_type {
@@ -32,7 +44,7 @@ enum message_type {
 	GUI_MAX
 };
 
-int msg_send(u32 pid, enum message_type, void *data);
-int msg_receive(struct message *msg);
+int msg_send(u32 pid, enum message_type type, void *data, u32 size);
+int msg_receive(void *buf, u32 size);
 
 #endif

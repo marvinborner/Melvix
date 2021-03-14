@@ -20,6 +20,7 @@ struct device {
 	void *data;
 	s32 (*read)(void *buf, u32 offset, u32 count, struct device *dev);
 	s32 (*write)(void *buf, u32 offset, u32 count, struct device *dev);
+	s32 (*ioctl)(u32 request, void *arg1, void *arg2, void *arg3, struct device *dev);
 	u8 (*ready)(void);
 };
 
@@ -40,6 +41,8 @@ struct vfs {
 	void *data;
 	s32 (*read)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
 	s32 (*write)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+	s32 (*ioctl)(const char *path, u32 request, void *arg1, void *arg2, void *arg3,
+		     struct device *dev);
 	s32 (*stat)(const char *path, struct stat *buf, struct device *dev);
 	s32 (*wait)(const char *path, u32 func_ptr, struct device *dev);
 	u8 (*perm)(const char *path, enum vfs_perm perm, struct device *dev);
@@ -60,6 +63,7 @@ struct device *vfs_find_dev(const char *path);
 
 s32 vfs_read(const char *path, void *buf, u32 offset, u32 count);
 s32 vfs_write(const char *path, void *buf, u32 offset, u32 count);
+s32 vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3);
 s32 vfs_stat(const char *path, struct stat *buf);
 s32 vfs_wait(const char *path, u32 func_ptr);
 s32 vfs_poll(const char **files);

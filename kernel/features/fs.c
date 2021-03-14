@@ -62,13 +62,15 @@ static struct mount_info *vfs_recursive_find(char *path)
 
 static struct mount_info *vfs_find_mount_info(const char *path)
 {
-	assert(path[0] == '/');
+	if (path[0] != '/')
+		return NULL;
 	return vfs_recursive_find(strdup(path));
 }
 
 struct device *vfs_find_dev(const char *path)
 {
-	assert(path[0] == '/');
+	if (path[0] != '/')
+		return NULL;
 	struct mount_info *m = vfs_find_mount_info(path);
 	if (m->dev->vfs->type == VFS_DEVFS) // TODO: ?
 		return device_get_by_name(path + strlen(m->path) + 1);
@@ -120,7 +122,7 @@ s32 vfs_mount(struct device *dev, const char *path)
 
 s32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 {
-	/* printf("%s READ: %s\n", proc_current()->name, path); */
+	/* printf("%s READ: %s\n", proc_current() ? proc_current()->name : "Unknown", path); */
 	if (!count)
 		return 0;
 
@@ -131,7 +133,8 @@ s32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 		path++;
 
 	struct mount_info *m = vfs_find_mount_info(path);
-	assert(m && m->dev && m->dev->vfs && m->dev->vfs->read && m->dev->vfs->perm);
+	if (!(m && m->dev && m->dev->vfs && m->dev->vfs->read && m->dev->vfs->perm))
+		return -1;
 
 	u32 len = strlen(m->path);
 	if (len > 1)
@@ -145,7 +148,7 @@ s32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 
 s32 vfs_write(const char *path, void *buf, u32 offset, u32 count)
 {
-	/* printf("%s WRITE: %s\n", proc_current()->name, path); */
+	/* printf("%s WRITE: %s\n", proc_current() ? proc_current()->name : "Unknown", path); */
 	if (!count)
 		return 0;
 
@@ -156,7 +159,8 @@ s32 vfs_write(const char *path, void *buf, u32 offset, u32 count)
 		path++;
 
 	struct mount_info *m = vfs_find_mount_info(path);
-	assert(m && m->dev && m->dev->vfs && m->dev->vfs->write && m->dev->vfs->perm);
+	if (!(m && m->dev && m->dev->vfs && m->dev->vfs->write && m->dev->vfs->perm))
+		return -1;
 
 	u32 len = strlen(m->path);
 	if (len > 1)
@@ -168,6 +172,25 @@ s32 vfs_write(const char *path, void *buf, u32 offset, u32 count)
 	return m->dev->vfs->write(path, buf, offset, count, m->dev);
 }
 
+s32 vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3)
+{
+	while (*path == ' ')
+		path++;
+
+	struct mount_info *m = vfs_find_mount_info(path);
+	if (!(m && m->dev && m->dev->vfs && m->dev->vfs->ioctl && m->dev->vfs->perm))
+		return -1;
+
+	u32 len = strlen(m->path);
+	if (len > 1)
+		path += len;
+
+	if (!m->dev->vfs->perm(path, VFS_WRITE, m->dev) && !proc_super())
+		return -1;
+
+	return m->dev->vfs->ioctl(path, request, arg1, arg2, arg3, m->dev);
+}
+
 s32 vfs_stat(const char *path, struct stat *buf)
 {
 	while (*path == ' ')
@@ -177,11 +200,15 @@ s32 vfs_stat(const char *path, struct stat *buf)
 		return -1;
 
 	struct mount_info *m = vfs_find_mount_info(path);
-	assert(m && m->dev && m->dev->vfs && m->dev->vfs->stat);
+	if (!(m && m->dev && m->dev->vfs && m->dev->vfs->stat && m->dev->vfs->perm))
+		return -1;
 
 	u32 len = strlen(m->path);
 	if (len > 1)
 		path += len;
+
+	if (!m->dev->vfs->perm(path, VFS_WRITE, m->dev) && !proc_super())
+		return -1;
 
 	return m->dev->vfs->stat(path, buf, m->dev);
 }
@@ -192,7 +219,8 @@ s32 vfs_wait(const char *path, u32 func_ptr)
 		path++;
 
 	struct mount_info *m = vfs_find_mount_info(path);
-	assert(m && m->dev && m->dev->vfs);
+	if (!(m && m->dev && m->dev->vfs))
+		return -1;
 
 	// Default wait
 	if (!m->dev->vfs->wait) {
@@ -280,8 +308,17 @@ static s32 devfs_read(const char *path, void *buf, u32 offset, u32 count, struct
 {
 	struct device *target = device_get_by_name(path + 1);
 	if (!target || !target->read)
-		return 0;
+		return -1;
 	return target->read(buf, offset, count, dev);
+}
+
+static s32 devfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3,
+		       struct device *dev)
+{
+	struct device *target = device_get_by_name(path + 1);
+	if (!target || !target->ioctl)
+		return -1;
+	return target->ioctl(request, arg1, arg2, arg3, dev);
 }
 
 static u8 devfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
@@ -309,6 +346,7 @@ void device_install(void)
 	struct vfs *vfs = zalloc(sizeof(*vfs));
 	vfs->type = VFS_DEVFS;
 	vfs->read = devfs_read;
+	vfs->ioctl = devfs_ioctl;
 	vfs->perm = devfs_perm;
 	vfs->ready = devfs_ready;
 	struct device *dev = zalloc(sizeof(*dev));

@@ -6,6 +6,7 @@
 #include <fs.h>
 #include <load.h>
 #include <mem.h>
+#include <mm.h>
 #include <print.h>
 #include <proc.h>
 #include <stack.h>
@@ -19,7 +20,7 @@ struct list *proc_list = NULL;
 struct node *idle_proc = NULL;
 struct node *current = NULL;
 
-// TODO: Use less memcpy and only copy relevant registers
+// TODO: Use less memcpy and only copy relevant registers (rewrite for efficiency argh)
 // TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
 void scheduler(struct regs *regs)
 {
@@ -56,6 +57,7 @@ void scheduler(struct regs *regs)
 		}
 	}
 
+	memory_switch_dir(((struct proc *)current->data)->page_dir);
 	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
 
 	if (regs->cs != GDT_USER_CODE_OFFSET) {
@@ -72,12 +74,6 @@ void scheduler(struct regs *regs)
 		quantum = 0;
 
 	/* printf("{%d}", ((struct proc *)current->data)->pid); */
-}
-
-static void kernel_idle(void)
-{
-	while (1)
-		;
 }
 
 void proc_print(void)
@@ -103,7 +99,7 @@ u8 proc_super(void)
 {
 	struct proc *proc = proc_current();
 	if (proc)
-		return proc->super;
+		return proc->priv == PROC_PRIV_ROOT || proc->priv == PROC_PRIV_KERNEL;
 	else if (current_pid == 0)
 		return 1; // Kernel has super permissions
 	else
@@ -161,6 +157,9 @@ void proc_yield(struct regs *r)
 
 void proc_enable_waiting(u32 id, enum proc_wait_type type)
 {
+	struct page_dir *dir_bak;
+	memory_backup_dir(&dir_bak);
+
 	struct proc *proc_bak = proc_current();
 	if (!proc_bak)
 		return;
@@ -183,8 +182,11 @@ void proc_enable_waiting(u32 id, enum proc_wait_type type)
 				struct regs *r = &p->regs;
 				u32 (*func)(u32, u32, u32, u32) =
 					(u32(*)(u32, u32, u32, u32))w->ids[i].func_ptr;
-				if (w->ids[i].func_ptr)
+				if (w->ids[i].func_ptr) {
+					memory_switch_dir(p->page_dir);
 					r->eax = func(r->ebx, r->ecx, r->edx, r->esi);
+					memory_switch_dir(dir_bak);
+				}
 				memset(&w->ids[i], 0, sizeof(w->ids[i]));
 				p->wait.id_cnt--;
 				p->state = PROC_RUNNING;
@@ -237,18 +239,35 @@ end:
 	p->state = PROC_SLEEPING;
 }
 
-struct proc *proc_make(void)
+struct proc *proc_make(enum proc_priv priv)
 {
 	struct proc *proc = zalloc(sizeof(*proc));
 	proc->pid = current_pid++;
-	proc->super = 0;
+	proc->priv = priv;
 	proc->messages = stack_new();
 	proc->state = PROC_RUNNING;
+
+	if (priv == PROC_PRIV_KERNEL)
+		proc->page_dir = virtual_kernel_dir();
+	else
+		proc->page_dir = virtual_create_dir();
 
 	if (current)
 		list_add(proc_list, proc);
 
 	return proc;
+}
+
+void proc_stack_push(struct proc *proc, u32 data)
+{
+	struct page_dir *prev;
+	memory_backup_dir(&prev);
+	memory_switch_dir(proc->page_dir);
+
+	proc->regs.useresp -= sizeof(data);
+	*(u32 *)proc->regs.useresp = data;
+
+	memory_switch_dir(prev);
 }
 
 // TODO: Procfs needs a simpler interface structure (memcmp and everything sucks)
@@ -286,6 +305,11 @@ static enum stream_defaults procfs_stream(const char *path)
 	}
 }
 
+struct procfs_message {
+	u8 *data;
+	u32 size;
+};
+
 static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	u32 pid = 0;
@@ -299,7 +323,10 @@ static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 		if (!memcmp(path, "msg", 4)) {
 			void *msg_data = malloc(count);
 			memcpy(msg_data, buf, count);
-			stack_push_bot(p->messages, msg_data); // TODO: Use offset
+			struct procfs_message *msg = malloc(sizeof(*msg));
+			msg->data = msg_data;
+			msg->size = count;
+			stack_push_bot(p->messages, msg); // TODO: Use offset
 			proc_enable_waiting(pid, PROC_WAIT_MSG);
 			return count;
 		} else if (!memcmp(path, "io/", 3)) {
@@ -321,7 +348,7 @@ static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 		}
 	}
 
-	printf("%s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
+	printf("ERR: %s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
 	return -1;
 }
 
@@ -352,12 +379,13 @@ static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 			if (stack_empty(p->messages)) {
 				return -1; // This shouldn't happen
 			} else {
-				u8 *msg = stack_pop(p->messages);
+				struct procfs_message *msg = stack_pop(p->messages);
 				if (!msg)
 					return -1;
-				memcpy(buf, msg + offset, count);
+				memcpy(buf, msg->data + offset, MIN(count, msg->size));
+				free(msg->data);
 				free(msg);
-				return count;
+				return MIN(count, msg->size);
 			}
 		} else if (!memcmp(path, "io/", 3)) {
 			path += 3;
@@ -465,32 +493,26 @@ void proc_init(void)
 	vfs_mount(dev, "/proc/");
 
 	// Idle proc
-	struct proc *kernel_proc = proc_make();
-	void (*func)(void) = kernel_idle;
-	proc_load(kernel_proc, *(void **)&func);
-	strcpy(kernel_proc->name, "idle");
+	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
+	bin_load("/bin/idle", kernel_proc);
 	kernel_proc->state = PROC_SLEEPING;
 	idle_proc = list_add(proc_list, kernel_proc);
 
-	struct node *new = list_add(proc_list, proc_make());
+	// Init proc (root)
+	struct node *new = list_add(proc_list, proc_make(PROC_PRIV_ROOT));
 	bin_load("/bin/init", new->data);
 	current = new;
+	proc_stack_push(new->data, 0);
 
 	_eip = ((struct proc *)new->data)->regs.eip;
 	_esp = ((struct proc *)new->data)->regs.useresp;
-	((struct proc *)new->data)->super = 1;
-
-	u32 argc = 2;
-	char **argv = malloc(sizeof(*argv) * (argc + 1));
-	argv[0] = strdup("init");
-	argv[1] = (char *)boot_passed->vbe;
-	argv[2] = NULL;
-
-	((u32 *)_esp)[0] = argc; // First argument (argc)
-	((u32 *)_esp)[1] = (u32)argv; // Second argument (argv)
 
 	printf("Jumping to userspace!\n");
+	memory_switch_dir(((struct proc *)new->data)->page_dir);
+
+	// You're waiting for a train. A train that will take you far away...
 	proc_jump_userspace();
+
 	while (1) {
 	};
 }

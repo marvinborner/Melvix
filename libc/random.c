@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <cpu.h>
 #include <def.h>
 #include <mem.h>
 #include <random.h>
@@ -9,6 +10,34 @@ static u32 g_seed = 1;
 void srand(u32 seed)
 {
 	g_seed = seed;
+}
+
+u32 rdrand(void)
+{
+#ifdef kernel
+	if (!cpu_has_cfeature(CPUID_FEAT_ECX_RDRND))
+		return rand();
+
+	u32 rd;
+	__asm__ volatile("rdrand %%eax" : "=a"(rd));
+	return rd;
+#else
+	return rand();
+#endif
+}
+
+u32 rdseed(void)
+{
+#ifdef kernel
+	if (!cpu_has_cfeature(CPUID_FEAT_ECX_RDRND))
+		return rand();
+
+	u32 rd;
+	__asm__ volatile("rdseed %%eax" : "=a"(rd));
+	return rd;
+#else
+	return rand();
+#endif
 }
 
 u32 rand(void)

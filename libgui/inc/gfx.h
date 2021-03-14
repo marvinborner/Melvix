@@ -5,7 +5,6 @@
 #define GFX_H
 
 #include <def.h>
-#include <msg.h>
 #include <sys.h>
 #include <vec.h>
 #include <vesa.h>
@@ -82,8 +81,8 @@ int gfx_font_width(enum font_type);
  * Wrappers
  */
 
-#define gfx_redraw()                                                                               \
-	(msg_send(pidof(WM_PATH), GFX_REDRAW, NULL)) // TODO: Partial redraw (optimization)
-#define gfx_redraw_focused() (msg_send(pidof(WM_PATH), GFX_REDRAW_FOCUSED, NULL))
+/* #define gfx_redraw()                                                                               \ */
+/* 	(msg_send(pidof(WM_PATH), GFX_REDRAW, NULL)) // TODO: Partial redraw (optimization) */
+/* #define gfx_redraw_focused() (msg_send(pidof(WM_PATH), GFX_REDRAW_FOCUSED, NULL)) */
 
 #endif

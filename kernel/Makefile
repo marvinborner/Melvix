@@ -8,8 +8,10 @@ COBJS = main.o \
 	drivers/mouse.o \
 	drivers/pci.o \
 	drivers/ide.o \
+	drivers/fb.o \
 	drivers/timer.o \
 	drivers/rtl8139.o \
+	features/mm.o \
 	features/fs.o \
 	features/load.o \
 	features/proc.o \
@@ -34,5 +36,5 @@ all: compile
 
 compile: $(COBJS)
 	@mkdir -p ../build/
-	@$(LD) -N -ekernel_main -Ttext 0x00050000 -o ../build/kernel.elf -L../build/ $+ -lk
+	@$(LD) -N -z undefs -ekernel_main -Ttext 0x00050000 -o ../build/kernel.elf -L../build/ $+ -lk
 	@$(LD) -N -Tlink.ld -o ../build/kernel.bin -L../build/ $+ -lk

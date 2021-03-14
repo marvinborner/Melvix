@@ -133,16 +133,16 @@ int find_inode(const char *name, int dir_inode);
 void serial_install(void);
 void serial_print(const char *data);
 
-int main(void *data)
+int main(void *data1, void *data2)
 {
 	serial_install();
 	serial_print("Loaded bootloader!\n");
 	heap = 0xf00000;
-	void (*entry)(void *);
+	void (*entry)(void *, void *);
 	*(void **)(&entry) = read_inode(get_inode(find_inode("kernel.bin", 2)));
 	if (entry) {
 		serial_print("Loaded kernel!\n");
-		entry(data);
+		entry(data1, data2);
 	} else {
 		serial_print("Couldn't find kernel!\n");
 	}

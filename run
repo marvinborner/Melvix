@@ -26,7 +26,7 @@ no_ask="${2}"
 # TODO: Support -enable-kvm: GPF?!
 qemu_with_flags() {
     network="rtl8139"
-    qemu-system-i386 -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -netdev user,id=net0,hostfwd=tcp:127.0.0.1:8000-10.0.2.15:8000 -device $network,netdev=net0 -object filter-dump,id=dump,netdev=net0,file=dump.pcap "$@"
+    qemu-system-i386 -d guest_errors -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -netdev user,id=net0,hostfwd=tcp:127.0.0.1:8000-10.0.2.15:8000 -device $network,netdev=net0 -object filter-dump,id=dump,netdev=net0,file=dump.pcap "$@"
 }
 
 make_cross() {
@@ -126,7 +126,7 @@ make_build() {
 
         $SUDO dd if=build/boot.bin of=/dev/${VND}i conv=notrunc status=none
     else
-        $SUDO mke2fs -q build/disk.img
+        $SUDO mke2fs -b 1024 -q build/disk.img
         dd if=build/boot.bin of=build/disk.img conv=notrunc status=none
     fi
 
@@ -186,7 +186,11 @@ make_addr() {
         echo "Usage: './run addr kernel 0x50042'"
         exit 1
     fi
-    addr2line -e build/"$1".elf "$2"
+    addr2line -e build/"$1".elf -f -p "$2"
+}
+
+make_cloc() {
+    cloc . --exclude-dir=build,iso,disk,res,cross
 }
 
 make_append_commands() {
@@ -239,6 +243,8 @@ elif [ "${mode}" = "disasm" ]; then
     make_disasm "$2" "$3"
 elif [ "${mode}" = "addr" ]; then
     make_addr "$2" "$3"
+elif [ "${mode}" = "cloc" ]; then
+    make_cloc
 elif [ "${mode}" = "sync" ]; then
     make_sync
 elif [ "${mode}" = "disk" ]; then
@@ -267,6 +273,7 @@ else
     printf "again\t\tOpens QEMU again using the previous build\n"
     printf "disasm\t\tDisassembles a given part of Melvix\n"
     printf "addr\t\tResolves an address to a line of code\n"
+    printf "cloc\t\tCount the total lines of code\n"
     printf "sync\t\tSyncs the 'tags' and 'compile_commands.json' file\n"
     printf "disk\t\tPrepares the userspace disk (e.g. fonts)\n"
     printf "*\t\tAnything else prints this help\n"

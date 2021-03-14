@@ -94,10 +94,10 @@ static s32 mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
 	if (stack_empty(queue))
 		return -1;
 
-	struct event *e = stack_pop(queue);
-	memcpy(buf, (u8 *)e + offset, count);
+	struct event_mouse *e = stack_pop(queue);
+	memcpy(buf, (u8 *)e + offset, MIN(count, sizeof(*e)));
 	free(e);
-	return count;
+	return MIN(count, sizeof(*e));
 }
 
 void mouse_install(void)

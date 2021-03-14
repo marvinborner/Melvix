@@ -6,6 +6,7 @@ phys = 0x00050000;
 SECTIONS
 {
 	.text phys : AT(phys) {
+		kernel_start = .;
 		code = .;
 		*(.text)
 		*(.rodata)
@@ -26,5 +27,5 @@ SECTIONS
 		. = ALIGN(4096);
 	}
 
-	end = .;
+	kernel_end = .;
 }
