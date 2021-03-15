@@ -45,7 +45,7 @@ static s32 fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct devi
 	}
 }
 
-static u8 fb_ready(void)
+static s32 fb_ready(void)
 {
 	return 1;
 }

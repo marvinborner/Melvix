@@ -3,8 +3,9 @@
 #ifndef LOAD_H
 #define LOAD_H
 
+#include <def.h>
 #include <proc.h>
 
-int bin_load(const char *path, struct proc *proc);
+s32 bin_load(const char *path, struct proc *proc);
 
 #endif

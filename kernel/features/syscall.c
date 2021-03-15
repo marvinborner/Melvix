@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <cpu.h>
+#include <errno.h>
 #include <fs.h>
 #include <interrupts.h>
 #include <load.h>
@@ -24,6 +25,7 @@ static void syscall_handler(struct regs *r)
 	switch (num) {
 	case SYS_LOOP: {
 		loop();
+		panic("Fell out of the looping!\n");
 		break;
 	}
 	case SYS_ALLOC: {
@@ -43,8 +45,9 @@ static void syscall_handler(struct regs *r)
 		if (vfs_ready((char *)r->ebx)) {
 			r->eax = (u32)vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		} else {
-			if (vfs_wait((char *)r->ebx, (u32)vfs_read) < 0)
-				r->eax = -1;
+			s32 wait = vfs_wait((char *)r->ebx, (u32)vfs_read);
+			if (wait != 0)
+				r->eax = wait;
 			else
 				proc_yield(r);
 		}
@@ -61,20 +64,19 @@ static void syscall_handler(struct regs *r)
 	}
 	case SYS_POLL: {
 		s32 ret = vfs_poll((const char **)r->ebx);
+		r->eax = ret;
 		if (ret == PROC_MAX_WAIT_IDS + 1)
 			proc_yield(r);
-		else
-			r->eax = ret;
 		break;
 	}
 	case SYS_EXEC: {
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make(PROC_PRIV_NONE);
 		r->eax = (u32)bin_load(path, proc);
+		if (r->eax != 0)
+			proc_exit(proc, -r->eax);
 		// TODO: Reimplement argc,argv
 		proc_stack_push(proc, 0);
-		if (r->eax)
-			proc_exit(proc, (int)r->eax);
 		proc_yield(r);
 		break;
 	}
@@ -83,9 +85,12 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_BOOT: { // TODO: Move
-		if (r->ebx != SYS_BOOT_MAGIC || !proc_super()) {
-			r->eax = -1;
+		if (r->ebx != SYS_BOOT_MAGIC) {
+			r->eax = -EINVAL;
 			break;
+		}
+		if (!proc_super()) {
+			r->eax = -EACCES;
 		}
 		switch (r->ecx) {
 		case SYS_BOOT_REBOOT:
@@ -102,7 +107,7 @@ static void syscall_handler(struct regs *r)
 			__asm__ volatile("ud2");
 			break;
 		default:
-			r->eax = -1;
+			r->eax = -EINVAL;
 		}
 		break;
 	}
@@ -114,6 +119,13 @@ static void syscall_handler(struct regs *r)
 		r->eax = timer_get();
 		break;
 	}
+	// TODO: Reimplement network functions using VFS
+	case SYS_NET_OPEN:
+	case SYS_NET_CLOSE:
+	case SYS_NET_CONNECT:
+	case SYS_NET_SEND:
+	case SYS_NET_RECEIVE:
+#if 0
 	case SYS_NET_OPEN: {
 		r->eax = (int)net_open(r->ebx);
 		break;
@@ -146,6 +158,7 @@ static void syscall_handler(struct regs *r)
 		r->eax = net_receive((void *)r->ebx, (void *)r->ecx, r->edx);
 		break;
 	}
+#endif
 	default: {
 		printf("Unknown syscall %d!\n", num);
 		break;

@@ -17,4 +17,6 @@ int strncmp(const char *s1, const char *s2, u32 n);
 char *strinv(char *s);
 char *strdup(const char *s);
 
+const char *strerror(u32 err);
+
 #endif

@@ -19,7 +19,10 @@ u32 rdrand(void)
 		return rand();
 
 	u32 rd;
-	__asm__ volatile("rdrand %%eax" : "=a"(rd));
+	__asm__ volatile("1:\n"
+			 "rdrand %0\n"
+			 "jnc 1b\n"
+			 : "=r"(rd));
 	return rd;
 #else
 	return rand();
@@ -33,7 +36,10 @@ u32 rdseed(void)
 		return rand();
 
 	u32 rd;
-	__asm__ volatile("rdseed %%eax" : "=a"(rd));
+	__asm__ volatile("1:\n"
+			 "rdseed %0\n"
+			 "jnc 1b\n"
+			 : "=r"(rd));
 	return rd;
 #else
 	return rand();

@@ -2,6 +2,7 @@
 // Syscall implementation
 
 #include <arg.h>
+#include <errno.h>
 #include <sys.h>
 
 #if defined(userspace)
@@ -10,25 +11,32 @@
  * Definitions
  */
 
+#define ERRIFY(ret)                                                                                \
+	if (ret < 0) {                                                                             \
+		errno = -ret;                                                                      \
+		return -1;                                                                         \
+	}                                                                                          \
+	return ret
+
 int sys0(enum sys num)
 {
 	int a;
 	__asm__ volatile("int $0x80" : "=a"(a) : "0"(num));
-	return a;
+	ERRIFY(a);
 }
 
 int sys1(enum sys num, int d1)
 {
 	int a;
 	__asm__ volatile("int $0x80" : "=a"(a) : "0"(num), "b"((int)d1));
-	return a;
+	ERRIFY(a);
 }
 
 int sys2(enum sys num, int d1, int d2)
 {
 	int a;
 	__asm__ volatile("int $0x80" : "=a"(a) : "0"(num), "b"((int)d1), "c"((int)d2));
-	return a;
+	ERRIFY(a);
 }
 
 int sys3(enum sys num, int d1, int d2, int d3)
@@ -37,7 +45,7 @@ int sys3(enum sys num, int d1, int d2, int d3)
 	__asm__ volatile("int $0x80"
 			 : "=a"(a)
 			 : "0"(num), "b"((int)d1), "c"((int)d2), "d"((int)d3));
-	return a;
+	ERRIFY(a);
 }
 
 int sys4(enum sys num, int d1, int d2, int d3, int d4)
@@ -46,7 +54,7 @@ int sys4(enum sys num, int d1, int d2, int d3, int d4)
 	__asm__ volatile("int $0x80"
 			 : "=a"(a)
 			 : "0"(num), "b"((int)d1), "c"((int)d2), "d"((int)d3), "S"((int)d4));
-	return a;
+	ERRIFY(a);
 }
 
 int sys5(enum sys num, int d1, int d2, int d3, int d4, int d5)
@@ -56,7 +64,7 @@ int sys5(enum sys num, int d1, int d2, int d3, int d4, int d5)
 			 : "=a"(a)
 			 : "0"(num), "b"((int)d1), "c"((int)d2), "d"((int)d3), "S"((int)d4),
 			   "D"((int)d5));
-	return a;
+	ERRIFY(a);
 }
 
 int sysv(enum sys num, ...)

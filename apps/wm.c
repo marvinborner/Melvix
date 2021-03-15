@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <def.h>
+#include <errno.h>
 #include <gfx.h>
 #include <gui.h>
 #include <input.h>
@@ -404,7 +405,7 @@ int main(int argc, char **argv)
 				}
 			}
 		}
-		panic("Poll/read error!\n");
+		panic("Poll/read error: %s\n", strerror(errno));
 	}
 
 	// TODO: Execute?

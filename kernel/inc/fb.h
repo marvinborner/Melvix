@@ -1,7 +1,7 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
-#ifndef FB
-#define FB
+#ifndef FB_H
+#define FB_H
 
 #include <boot.h>
 

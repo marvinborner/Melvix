@@ -21,7 +21,7 @@ struct device {
 	s32 (*read)(void *buf, u32 offset, u32 count, struct device *dev);
 	s32 (*write)(void *buf, u32 offset, u32 count, struct device *dev);
 	s32 (*ioctl)(u32 request, void *arg1, void *arg2, void *arg3, struct device *dev);
-	u8 (*ready)(void);
+	s32 (*ready)(void);
 };
 
 void device_install(void);
@@ -45,8 +45,8 @@ struct vfs {
 		     struct device *dev);
 	s32 (*stat)(const char *path, struct stat *buf, struct device *dev);
 	s32 (*wait)(const char *path, u32 func_ptr, struct device *dev);
-	u8 (*perm)(const char *path, enum vfs_perm perm, struct device *dev);
-	u8 (*ready)(const char *path, struct device *dev);
+	s32 (*ready)(const char *path, struct device *dev);
+	s32 (*perm)(const char *path, enum vfs_perm perm, struct device *dev);
 };
 
 struct mount_info {
@@ -67,7 +67,7 @@ s32 vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3)
 s32 vfs_stat(const char *path, struct stat *buf);
 s32 vfs_wait(const char *path, u32 func_ptr);
 s32 vfs_poll(const char **files);
-u8 vfs_ready(const char *path);
+s32 vfs_ready(const char *path);
 
 struct device *device_get_by_name(const char *name);
 struct device *device_get_by_id(u32 id);
@@ -176,7 +176,7 @@ struct ext2_file {
 
 s32 ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
 s32 ext2_stat(const char *path, struct stat *buf, struct device *dev);
-u8 ext2_perm(const char *path, enum vfs_perm perm, struct device *dev);
-u8 ext2_ready(const char *path, struct device *dev);
+s32 ext2_perm(const char *path, enum vfs_perm perm, struct device *dev);
+s32 ext2_ready(const char *path, struct device *dev);
 
 #endif

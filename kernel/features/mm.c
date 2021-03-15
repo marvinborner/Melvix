@@ -331,9 +331,7 @@ struct page_dir *virtual_kernel_dir(void)
 
 void *memory_alloc(struct page_dir *dir, u32 size, u32 flags)
 {
-	assert(PAGE_ALIGNED(size));
-
-	if (!size)
+	if (!PAGE_ALIGNED(size) || !size)
 		goto err;
 
 	struct memory_range prange = physical_alloc(size);
@@ -352,8 +350,8 @@ void *memory_alloc(struct page_dir *dir, u32 size, u32 flags)
 	return (void *)vaddr;
 
 err:
-	print("Memory allocation error!\n");
-	return 0;
+	printf("Memory allocation error!\n");
+	return NULL;
 }
 
 void *memory_alloc_identity(struct page_dir *dir, u32 flags)
@@ -411,10 +409,24 @@ void memory_backup_dir(struct page_dir **backup)
 	*backup = dir;
 }
 
-// TODO: Check memory validity more often
-u8 memory_user_valid(u32 addr)
+// TODO: Verify that this isn't a huge security risk
+static u8 memory_bypass_validity = 0;
+void memory_bypass_enable(void)
 {
-	return addr / PAGE_SIZE / PAGE_COUNT >= PAGE_KERNEL_COUNT;
+	memory_bypass_validity = 1;
+}
+
+void memory_bypass_disable(void)
+{
+	memory_bypass_validity = 0;
+}
+
+u8 memory_valid(const void *addr)
+{
+	if (proc_current() && !memory_bypass_validity)
+		return ((u32)addr) / PAGE_SIZE / PAGE_COUNT >= PAGE_KERNEL_COUNT;
+	else
+		return 1;
 }
 
 struct memory_range memory_range_from(u32 base, u32 size)

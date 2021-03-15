@@ -2,6 +2,7 @@
 
 #include <boot.h>
 #include <cpu.h>
+#include <errno.h>
 #include <fs.h>
 #include <interrupts.h>
 #include <mem.h>
@@ -83,7 +84,7 @@ static u8 mouse_serial_read(void)
 	return inb(0x60);
 }
 
-static u8 mouse_ready(void)
+static s32 mouse_ready(void)
 {
 	return !stack_empty(queue);
 }
@@ -92,7 +93,7 @@ static s32 mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
 {
 	(void)dev;
 	if (stack_empty(queue))
-		return -1;
+		return -EINVAL;
 
 	struct event_mouse *e = stack_pop(queue);
 	memcpy(buf, (u8 *)e + offset, MIN(count, sizeof(*e)));

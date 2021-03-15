@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <boot.h>
 #include <cpu.h>
+#include <errno.h>
 #include <fs.h>
 #include <load.h>
 #include <mem.h>
@@ -260,6 +261,8 @@ struct proc *proc_make(enum proc_priv priv)
 
 void proc_stack_push(struct proc *proc, u32 data)
 {
+	assert(proc && proc->regs.useresp > sizeof(data));
+
 	struct page_dir *prev;
 	memory_backup_dir(&prev);
 	memory_switch_dir(proc->page_dir);
@@ -361,7 +364,7 @@ static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
 		if (!p || path[0] != '/')
-			return -1;
+			return -ENOENT;
 
 		path++;
 		if (!memcmp(path, "pid", 4)) {
@@ -377,11 +380,11 @@ static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 			return count;
 		} else if (!memcmp(path, "msg", 4)) {
 			if (stack_empty(p->messages)) {
-				return -1; // This shouldn't happen
+				return -EIO; // This shouldn't happen
 			} else {
 				struct procfs_message *msg = stack_pop(p->messages);
 				if (!msg)
-					return -1;
+					return -EIO;
 				memcpy(buf, msg->data + offset, MIN(count, msg->size));
 				free(msg->data);
 				free(msg);
@@ -391,7 +394,7 @@ static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 			path += 3;
 			enum stream_defaults id = procfs_stream(path);
 			if (id == STREAM_UNKNOWN)
-				return -1;
+				return -ENOENT;
 			struct stream *stream = &p->streams[id];
 			memcpy(buf, stream->data + stream->offset_read, count);
 			stream->offset_read += count;
@@ -399,7 +402,7 @@ static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 		}
 	}
 
-	return -1;
+	return -ENOENT;
 }
 
 static s32 procfs_wait(const char *path, u32 func_ptr, struct device *dev)
@@ -410,22 +413,22 @@ static s32 procfs_wait(const char *path, u32 func_ptr, struct device *dev)
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
 		if (!p || path[0] != '/')
-			return -1;
+			return -ENOENT;
 
 		path++;
 		if (!memcmp(path, "msg", 4)) {
 			proc_wait_for(pid, PROC_WAIT_MSG, func_ptr);
-			return 1;
+			return 0;
 		} else {
 			proc_wait_for(dev->id, PROC_WAIT_DEV, func_ptr);
-			return 1;
+			return 0;
 		}
 	}
 
-	return -1;
+	return -ENOENT;
 }
 
-static u8 procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
+static s32 procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
 {
 	(void)path;
 	(void)dev;
@@ -436,7 +439,7 @@ static u8 procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
 		return 1;
 }
 
-static u8 procfs_ready(const char *path, struct device *dev)
+static s32 procfs_ready(const char *path, struct device *dev)
 {
 	(void)dev;
 
@@ -446,7 +449,7 @@ static u8 procfs_ready(const char *path, struct device *dev)
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
 		if (!p || path[0] != '/')
-			return -1;
+			return -ENOENT;
 
 		path++;
 		if (!memcmp(path, "msg", 4)) {
@@ -455,7 +458,7 @@ static u8 procfs_ready(const char *path, struct device *dev)
 			path += 3;
 			enum stream_defaults id = procfs_stream(path);
 			if (id == STREAM_UNKNOWN)
-				return -1;
+				return -ENOENT;
 			struct stream *stream = &p->streams[id];
 			return stream->data[stream->offset_read] != 0;
 		}
@@ -490,26 +493,26 @@ void proc_init(void)
 	dev->type = DEV_CHAR;
 	dev->vfs = vfs;
 	device_add(dev);
-	vfs_mount(dev, "/proc/");
+	assert(vfs_mount(dev, "/proc/") == 0);
 
 	// Idle proc
 	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
-	bin_load("/bin/idle", kernel_proc);
+	assert(bin_load("/bin/idle", kernel_proc) == 0);
 	kernel_proc->state = PROC_SLEEPING;
 	idle_proc = list_add(proc_list, kernel_proc);
 
 	// Init proc (root)
 	struct node *new = list_add(proc_list, proc_make(PROC_PRIV_ROOT));
-	bin_load("/bin/init", new->data);
+	assert(bin_load("/bin/init", new->data) == 0);
 	current = new;
 	proc_stack_push(new->data, 0);
 
 	_eip = ((struct proc *)new->data)->regs.eip;
 	_esp = ((struct proc *)new->data)->regs.useresp;
 
-	printf("Jumping to userspace!\n");
 	memory_switch_dir(((struct proc *)new->data)->page_dir);
 
+	printf("Jumping to userspace!\n");
 	// You're waiting for a train. A train that will take you far away...
 	proc_jump_userspace();
 

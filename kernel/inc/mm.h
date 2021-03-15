@@ -101,7 +101,11 @@ void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 f
 void memory_free(struct page_dir *dir, struct memory_range vrange);
 void memory_switch_dir(struct page_dir *dir);
 void memory_backup_dir(struct page_dir **backup);
-u8 memory_user_valid(u32 addr);
+
+// Bypass should almost never be used
+void memory_bypass_enable(void);
+void memory_bypass_disable(void);
+u8 memory_valid(const void *addr);
 
 void memory_install(struct mem_info *mem_info, struct vid_info *vid_info);
 

@@ -2,6 +2,7 @@
 
 #include <cpu.h>
 #include <def.h>
+#include <errno.h>
 #include <fs.h>
 #include <interrupts.h>
 #include <keyboard.h>
@@ -62,9 +63,9 @@ static void keyboard_rate(void)
 
 static s32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
 {
-	(void)dev;
+	UNUSED(dev);
 	if (stack_empty(queue))
-		return -1;
+		return -EINVAL;
 
 	struct event_keyboard *e = stack_pop(queue);
 	memcpy(buf, (u8 *)e + offset, MIN(count, sizeof(*e)));
@@ -72,7 +73,7 @@ static s32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
 	return MIN(count, sizeof(*e));
 }
 
-static u8 keyboard_ready(void)
+static s32 keyboard_ready(void)
 {
 	return !stack_empty(queue);
 }

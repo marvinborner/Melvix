@@ -158,8 +158,10 @@ int print(const char *str)
 
 // The kernel prints everything into the serial console
 
+#include <mm.h>
 #include <proc.h>
 #include <serial.h>
+
 #define RED "\x1B[1;31m"
 #define GRN "\x1B[1;32m"
 #define YEL "\x1B[1;33m"
@@ -223,6 +225,8 @@ void print_trace(u32 count)
 	__asm__ volatile("movl %%ebp, %0;" : "=r"(stk));
 	print("EBP\tEIP\n");
 	for (u32 i = 0; stk && i < count; i++) {
+		/* u32 eip = memory_valid((void *)stk->eip) ? stk->eip : stk->eip + 64; */
+		/* printf("0x%x\t0x%x\n", stk->ebp, eip); */
 		printf("0x%x\t0x%x\n", stk->ebp, stk->eip);
 		stk = stk->ebp;
 	}
@@ -240,6 +244,7 @@ NORETURN void panic(const char *format, ...)
 #ifdef kernel
 	print("--- DON'T PANIC! ---\n");
 	print(buf);
+	print_trace(5);
 	loop();
 #else
 	err(1, buf);
