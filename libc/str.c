@@ -126,47 +126,82 @@ char *strdup(const char *s)
 	return d;
 }
 
-static const char *strerrors[EMAX] = {
-	"Success",
-	"Operation not permitted",
-	"No such file or directory",
-	"No such process",
-	"Interrupted system call",
-	"I/O error",
-	"No such device or address",
-	"Argument list too long",
-	"Exec format error",
-	"Bad file number",
-	"No child processes",
-	"Try again",
-	"Out of memory",
-	"Permission denied",
-	"Bad address",
-	"Block device required",
-	"Device or resource busy",
-	"File exists",
-	"Cross-device link",
-	"No such device",
-	"Not a directory",
-	"Is a directory",
-	"Invalid argument",
-	"File table overflow",
-	"Too many open files",
-	"Not a typewriter",
-	"Text file busy",
-	"File too large",
-	"No space left on device",
-	"Illegal seek",
-	"Read-only file system",
-	"Too many links",
-	"Broken pipe",
-	"Math argument out of domain of func",
-	"Math result not representable",
-};
-
 const char *strerror(u32 error)
 {
-	if (error <= EMAX)
-		return strerrors[error];
-	return "Unknown error";
+	switch (error) {
+	case 0:
+		return "Success";
+	case EPERM:
+		return "Operation not permitted";
+	case ENOENT:
+		return "No such file or directory";
+	case ESRCH:
+		return "No such process";
+	case EINTR:
+		return "Interrupted system call";
+	case EIO:
+		return "I/O error";
+	case ENXIO:
+		return "No such device or address";
+	case E2BIG:
+		return "Argument list too long";
+	case ENOEXEC:
+		return "Exec format error";
+	case EBADF:
+		return "Bad file number";
+	case ECHILD:
+		return "No child processes";
+	case EAGAIN:
+		return "Try again";
+	case ENOMEM:
+		return "Out of memory";
+	case EACCES:
+		return "Permission denied";
+	case EFAULT:
+		return "Bad address";
+	case ENOTBLK:
+		return "Block device required";
+	case EBUSY:
+		return "Device or resource busy";
+	case EEXIST:
+		return "File exists";
+	case EXDEV:
+		return "Cross-device link";
+	case ENODEV:
+		return "No such device";
+	case ENOTDIR:
+		return "Not a directory";
+	case EISDIR:
+		return "Is a directory";
+	case EINVAL:
+		return "Invalid argument";
+	case ENFILE:
+		return "File table overflow";
+	case EMFILE:
+		return "Too many open files";
+	case ENOTTY:
+		return "Not a typewriter";
+	case ETXTBSY:
+		return "Text file busy";
+	case EFBIG:
+		return "File too large";
+	case ENOSPC:
+		return "No space left on device";
+	case ESPIPE:
+		return "Illegal seek";
+	case EROFS:
+		return "Read-only file system";
+	case EMLINK:
+		return "Too many links";
+	case EPIPE:
+		return "Broken pipe";
+	case EDOM:
+		return "Math argument out of domain of func";
+	case ERANGE:
+		return "Math result not representable";
+	case EMAX:
+		return "Max errno";
+	default:
+		return "Unknown error";
+	}
 }
