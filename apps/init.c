@@ -4,8 +4,6 @@
 #include <def.h>
 #include <sys.h>
 
-#include <cpu.h>
-
 int main(int argc, char **argv)
 {
 	UNUSED(argc);

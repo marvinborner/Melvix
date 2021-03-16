@@ -350,10 +350,23 @@ static void handle_message(void *msg)
 	}
 }
 
+static void handle_exit(void)
+{
+	if (keymap)
+		free(keymap);
+	if (windows)
+		list_destroy(windows);
+	if (screen.fb)
+		memset(screen.fb, COLOR_RED, screen.height * screen.pitch);
+}
+
 int main(int argc, char **argv)
 {
 	UNUSED(argc);
 	UNUSED(argv);
+
+	atexit(handle_exit);
+
 	assert(ioctl("/dev/fb", IO_FB_GET, &screen) == 0);
 	log("WM loaded: %dx%d\n", screen.width, screen.height);
 	wm_client = (struct client){ .pid = getpid() };
@@ -407,10 +420,6 @@ int main(int argc, char **argv)
 		}
 		panic("Poll/read error: %s\n", strerror(errno));
 	}
-
-	// TODO: Execute?
-	free(keymap);
-	list_destroy(windows);
 
 	return 0;
 }

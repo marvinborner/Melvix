@@ -421,6 +421,7 @@ void memory_bypass_disable(void)
 	memory_bypass_validity = 0;
 }
 
+// TODO: Limit by proc stack and data range
 u8 memory_valid(const void *addr)
 {
 	if (proc_current() && !memory_bypass_validity)

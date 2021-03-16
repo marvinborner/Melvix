@@ -3,13 +3,13 @@
 section .text
 
 extern main
-extern sys1
+extern exit
+extern atexit_trigger
 
 global _start
 _start:
 	call main
 
 	push eax
-	push 9
-	call sys1
+	call exit
 	jmp $

@@ -59,37 +59,24 @@ struct stat {
 
 #if defined(userspace)
 
-int sys0(enum sys num);
-int sys1(enum sys num, int d1);
-int sys2(enum sys num, int d1, int d2);
-int sys3(enum sys num, int d1, int d2, int d3);
-int sys4(enum sys num, int d1, int d2, int d3, int d4);
-int sys5(enum sys num, int d1, int d2, int d3, int d4, int d5);
-int sysv(enum sys num, ...);
-
 /**
  * Syscall wrappers
  */
 
-#define loop(void) sys0(SYS_LOOP)
-#define read(path, buf, offset, count)                                                             \
-	(s32) sys4(SYS_READ, (int)(path), (int)(buf), (int)(offset), (int)(count))
-#define write(path, buf, offset, count)                                                            \
-	(s32) sys4(SYS_WRITE, (int)(path), (int)(buf), (int)(offset), (int)(count))
-#define ioctl(path, ...) (s32) sysv(SYS_IOCTL, (int)(path), ##__VA_ARGS__)
-#define stat(path, stat) (s32) sys2(SYS_STAT, (int)(path), (int)(stat))
-#define poll(files) (s32) sys1(SYS_POLL, (int)(files))
-#define exec(path, ...) (s32) sysv(SYS_EXEC, (int)(path), ##__VA_ARGS__)
-#define exit(status)                                                                               \
-	{                                                                                          \
-		sys1(SYS_EXIT, (int)status);                                                       \
-		while (1) {                                                                        \
-			yield();                                                                   \
-		}                                                                                  \
-	}
-#define boot(cmd) (s32) sys2(SYS_BOOT, SYS_BOOT_MAGIC, cmd)
-#define yield(void) (s32) sys0(SYS_YIELD)
-#define time(void) (u32) sys0(SYS_TIME)
+void loop(void);
+s32 read(const char *path, void *buf, u32 offset, u32 count);
+s32 write(const char *path, const void *buf, u32 offset, u32 count);
+s32 ioctl(const char *path, ...);
+s32 stat(const char *path, struct stat *buf);
+s32 poll(const char **files);
+s32 exec(const char *path, ...);
+s32 yield(void);
+void exit(s32 status);
+s32 boot(u32 cmd);
+u32 time(void);
+
+void *sys_alloc(u32 size);
+void sys_free(void *ptr, u32 size);
 
 static inline u32 getpid(void)
 {
@@ -128,6 +115,12 @@ static inline void *sread(const char *path)
 	read(path, buf, 0, s.size);
 	return buf;
 }
+
+/**
+ * At exit
+ */
+
+void atexit(void (*func)(void));
 
 #endif
 #endif

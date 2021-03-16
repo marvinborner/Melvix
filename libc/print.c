@@ -147,6 +147,7 @@ int err(int code, const char *format, ...)
 	vfprintf(PATH_ERR, format, ap);
 	va_end(ap);
 	exit(code);
+	return -1;
 }
 
 int print(const char *str)

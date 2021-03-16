@@ -216,8 +216,7 @@ make_sync() {
     echo "$output" | make_append_commands libc libk libc
     echo "$output" | make_append_commands libk libgui libgui
     echo "$output" | make_append_commands libgui libtxt libtxt
-    echo "$output" | make_append_commands libtxt libnet libnet
-    echo "$output" | make_append_commands libnet kernel kernel
+    echo "$output" | make_append_commands libtxt kernel kernel
     echo "$output" | make_append_commands kernel boot boot
     echo "$output" | make_append_commands boot apps apps
     tr <compile_commands.json '\n' '\r' | sed -e 's/\r]\r\[/,/g' | tr '\r' '\n' >tmp

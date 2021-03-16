@@ -24,17 +24,14 @@ static int liballoc_free(void *ptr, u32 p)
 
 #include <sys.h>
 
-#define sys_alloc(size) (void *)sys1(SYS_ALLOC, size)
-#define sys_free(ptr, size) (u32) sys2(SYS_FREE, ptr, size)
-
 static void *liballoc_alloc(u32 p)
 {
-	return sys_alloc((u32)p);
+	return sys_alloc(p);
 }
 
 static int liballoc_free(void *ptr, u32 p)
 {
-	sys_free((u32)ptr, (u32)p);
+	sys_free(ptr, p);
 	return 0;
 }
 
