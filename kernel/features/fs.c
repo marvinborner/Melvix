@@ -136,9 +136,6 @@ s32 vfs_read(const char *path, void *buf, u32 offset, u32 count)
 	if (!buf || !memory_valid(buf))
 		return -EFAULT;
 
-	if (offset > count)
-		return -EINVAL;
-
 	struct mount_info *m = vfs_find_mount_info(path);
 	if (!m || !m->dev || !m->dev->vfs)
 		return -ENOENT;
@@ -167,9 +164,6 @@ s32 vfs_write(const char *path, void *buf, u32 offset, u32 count)
 
 	if (!buf || !memory_valid(buf))
 		return -EFAULT;
-
-	if (offset > count)
-		return -EINVAL;
 
 	struct mount_info *m = vfs_find_mount_info(path);
 	if (!m || !m->dev || !m->dev->vfs)
@@ -485,25 +479,31 @@ static u32 read_indirect(u32 indirect, u32 block_num, struct device *dev)
 
 static s32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, struct device *dev)
 {
-	// TODO: Support read offset
-	UNUSED(offset);
-
 	if (!in || !buf)
 		return -EINVAL;
 
-	u32 num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE);
+	if (in->size == 0)
+		return 0;
+
+	u32 num_blocks = in->blocks / (BLOCK_SIZE / SECTOR_SIZE) + 1;
 
 	if (!num_blocks)
 		return -EINVAL;
 
-	// TODO: memcpy block chunks until count is copied
-	while (BLOCK_SIZE * num_blocks > count)
-		num_blocks--;
+	u32 first_block = offset / BLOCK_SIZE;
+	u32 last_block = (offset + count) / BLOCK_SIZE;
+	if (last_block >= num_blocks)
+		last_block = num_blocks - 1;
+	u32 first_block_offset = offset % BLOCK_SIZE;
+
+	u32 remaining = MIN(count, in->size - offset);
+	u32 copied = 0;
 
 	u32 indirect = 0;
 	u32 blocknum = 0;
+
 	// TODO: Support triply indirect pointers
-	for (u32 i = 0; i < num_blocks; i++) {
+	for (u32 i = first_block; i <= last_block; i++) {
 		if (i < 12) {
 			blocknum = in->block[i];
 		} else if (i < BLOCK_COUNT + 12) {
@@ -518,9 +518,16 @@ static s32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, s
 		}
 
 		char *data = buffer_read(blocknum, dev);
-		memcpy((u32 *)((u32)buf + i * BLOCK_SIZE), data, BLOCK_SIZE);
+		u32 block_offset = (i == first_block) ? first_block_offset : 0;
+		u32 byte_count = MIN(BLOCK_SIZE - block_offset, remaining);
+
+		memcpy((u8 *)buf + copied, data + block_offset, byte_count);
+
+		copied += byte_count;
+		remaining -= byte_count;
+
 		free(data);
-		/* printf("Loaded %d of %d\n", i + 1, num_blocks); */
+		/* printf("Loaded %d of %d\n", i + 1, last_block); */
 	}
 
 	if (indirect_cache) {
@@ -534,7 +541,7 @@ static s32 read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, s
 		indirect_cache = NULL;
 	}
 
-	return count;
+	return copied;
 }
 
 static u32 find_inode(const char *name, u32 dir_inode, struct device *dev)
@@ -627,11 +634,11 @@ s32 ext2_stat(const char *path, struct stat *buf, struct device *dev)
 	if (find_inode_by_path(path, &in, dev) != &in)
 		return -ENOENT;
 
-	u32 num_blocks = in.blocks / (BLOCK_SIZE / SECTOR_SIZE);
-	u32 sz = BLOCK_SIZE * num_blocks;
+	//u32 num_blocks = in.blocks / (BLOCK_SIZE / SECTOR_SIZE);
+	//u32 sz = BLOCK_SIZE * num_blocks;
 
 	buf->dev_id = dev->id;
-	buf->size = sz; // Actually in->size but ext2..
+	buf->size = in.size;
 
 	return 0;
 }
