@@ -18,6 +18,8 @@
 #include <syscall.h>
 #include <timer.h>
 
+#include <print.h>
+
 void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info); // Decl
 void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 {

@@ -72,7 +72,7 @@ static void syscall_handler(struct regs *r)
 	case SYS_EXEC: {
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make(PROC_PRIV_NONE);
-		r->eax = (u32)bin_load(path, proc);
+		r->eax = (u32)elf_load(path, proc);
 		if (r->eax != 0)
 			proc_exit(proc, -r->eax);
 		// TODO: Reimplement argc,argv

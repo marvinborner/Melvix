@@ -497,13 +497,13 @@ void proc_init(void)
 
 	// Idle proc
 	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
-	assert(bin_load("/bin/idle", kernel_proc) == 0);
+	assert(elf_load("/bin/idle", kernel_proc) == 0);
 	kernel_proc->state = PROC_SLEEPING;
 	idle_proc = list_add(proc_list, kernel_proc);
 
 	// Init proc (root)
 	struct node *new = list_add(proc_list, proc_make(PROC_PRIV_ROOT));
-	assert(bin_load("/bin/init", new->data) == 0);
+	assert(elf_load("/bin/init", new->data) == 0);
 	current = new;
 	proc_stack_push(new->data, 0);
 

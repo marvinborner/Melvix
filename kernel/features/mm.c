@@ -208,11 +208,15 @@ void virtual_map(struct page_dir *dir, struct memory_range prange, u32 vaddr, u3
 		struct page_table *table =
 			(struct page_table *)(dir_entry->bits.address * PAGE_SIZE);
 
-		if (!dir_entry->bits.present) {
+		if (dir_entry->bits.present) {
+			// TODO: Is this a security risk?
+			if (flags & MEMORY_USER)
+				dir_entry->bits.user = 1;
+		} else {
 			table = memory_alloc_identity(dir, MEMORY_CLEAR);
 			dir_entry->bits.present = 1;
 			dir_entry->bits.writable = 1;
-			dir_entry->bits.user = 1;
+			dir_entry->bits.user = flags & MEMORY_USER;
 			dir_entry->bits.address = (u32)(table) >> 12;
 		}
 
@@ -424,8 +428,9 @@ void memory_bypass_disable(void)
 // TODO: Limit by proc stack and data range
 u8 memory_valid(const void *addr)
 {
+	/* return ((u32)addr) / PAGE_SIZE / PAGE_COUNT >= PAGE_KERNEL_COUNT; */
 	if (proc_current() && !memory_bypass_validity)
-		return ((u32)addr) / PAGE_SIZE / PAGE_COUNT >= PAGE_KERNEL_COUNT;
+		return (u32)addr >= 0x100000;
 	else
 		return 1;
 }

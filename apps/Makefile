@@ -5,16 +5,15 @@ CC = ccache ../cross/opt/bin/i686-elf-gcc
 LD = ccache ../cross/opt/bin/i686-elf-ld
 OC = ccache ../cross/opt/bin/i686-elf-objcopy
 
-CFLAGS = $(CFLAGS_DEFAULT) -I../libc/inc/ -I../libgui/inc/ -I../libtxt/inc/ -fPIE -Duserspace
+CFLAGS = $(CFLAGS_DEFAULT) -I../libc/inc/ -I../libgui/inc/ -I../libtxt/inc/ -Duserspace
 
 all: $(COBJS)
 
 %.o: %.c
 	@mkdir -p ../build/apps/
 	@$(CC) -c $(CFLAGS) $< -o $@
-	@$(LD) -o $(@:.o=.elf) -Tlink.ld -L../build/ $@ -lgui -ltxt -lc
-	@$(OC) -O binary $(@:.o=.elf) ../build/apps/$(@:.o=)
-	@cp $(@:.o=.elf) ../build/apps/$(@:.o=.elf)
+	@$(LD) -o $(@:.o=.elf) -L../build/ $@ -lgui -ltxt -lc
+	@cp $(@:.o=.elf) ../build/apps/$(@:.o=)
 
 # %.o: %.c
 # 	@mkdir -p ../build/apps/
