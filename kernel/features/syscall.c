@@ -82,6 +82,7 @@ static void syscall_handler(struct regs *r)
 	}
 	case SYS_EXIT: {
 		proc_exit(proc_current(), (int)r->ebx);
+		proc_yield(r);
 		break;
 	}
 	case SYS_BOOT: { // TODO: Move

@@ -183,10 +183,10 @@ make_disasm() {
 make_addr() {
     printf "Info: Make sure that you've turned the debug build on (e.g. with MELVIX_DEBUG=1)\n\n"
     if [ -z "$2" ]; then
-        echo "Usage: './run addr kernel 0x50042'"
+        echo "Usage: './run addr kernel.elf 0x50042'"
         exit 1
     fi
-    addr2line -e build/"$1".elf -f -p "$2"
+    addr2line -e build/"$1" -f -p "$2"
 }
 
 make_cloc() {

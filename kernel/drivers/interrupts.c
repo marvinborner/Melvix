@@ -179,6 +179,7 @@ void isr_panic(struct regs *r)
 		printf("\t-> Exception occurred in %s at addr 0x%x\n", proc->name,
 		       r->eip - proc->entry);
 		proc_exit(proc, 1);
+		proc_yield(r);
 	} else {
 		__asm__ volatile("cli\nhlt");
 	}

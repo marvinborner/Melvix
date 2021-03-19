@@ -59,7 +59,7 @@ void scheduler(struct regs *regs)
 	}
 
 	memory_switch_dir(((struct proc *)current->data)->page_dir);
-	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
+	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(*regs));
 
 	if (regs->cs != GDT_USER_CODE_OFFSET) {
 		regs->gs = GDT_USER_DATA_OFFSET;
@@ -145,9 +145,10 @@ void proc_exit(struct proc *proc, int status)
 		printf("Process %s exited with status %d (%s)\n", proc->name, status,
 		       status == 0 ? "success" : "error");
 
+	virtual_destroy_dir(proc->page_dir);
 	proc_clear_quantum(); // TODO: Add quantum to each process struct?
-	sti();
-	hlt();
+
+	// The caller has to yield itself
 }
 
 void proc_yield(struct regs *r)

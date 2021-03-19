@@ -34,6 +34,8 @@ extern void paging_invalidate_tlb(void);
 
 void page_fault_handler(struct regs *r)
 {
+	print("--- PAGE FAULT! ---\n");
+
 	// Check error code
 	const char *type = (r->err_code & 1) ? "present" : "non-present";
 	const char *operation = (r->err_code & 2) ? "write" : "read";
