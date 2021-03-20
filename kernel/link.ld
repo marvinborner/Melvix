@@ -1,7 +1,7 @@
 OUTPUT_FORMAT("binary")
 OUTPUT_ARCH(i386)
 ENTRY(kernel_main)
-phys = 0x00050000;
+phys = 0x00009000;
 
 SECTIONS
 {

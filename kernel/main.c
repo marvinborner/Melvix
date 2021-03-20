@@ -21,16 +21,14 @@
 void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info); // Decl
 void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 {
-	// Clear stack
-	for (u32 i = 0; i < STACK_SIZE; i++)
-		((u8 *)STACK_START)[-i] = 0;
-
 	// Serial connection
 	serial_install();
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
 	serial_print("Serial connected.\n");
 
 	memory_install(mem_info, vid_info);
+	memory_switch_dir(virtual_kernel_dir());
+	paging_enable();
 
 	cpu_enable_features();
 	cpu_print();

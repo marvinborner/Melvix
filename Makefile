@@ -7,8 +7,8 @@ CFLAGS_DEFAULT = $(CFLAGS_WARNINGS) $(CFLAGS_OPTIMIZATION) -std=c99 -m32 -nostdl
 all: compile
 
 # TODO: Fix stack protector in userspace
-# TODO: Fix ubsan in userspace (probably due to kernel size)
-debug: CFLAGS_DEFAULT += -Wno-error -ggdb3 -s #-fsanitize=undefined # -fstack-protector-all
+# TODO: Fix ubsan in userspace - Os should be a temporary fix
+debug: CFLAGS_DEFAULT += -Wno-error -ggdb3 -s -Os -fsanitize=undefined -fstack-protector-all
 debug: compile
 
 export

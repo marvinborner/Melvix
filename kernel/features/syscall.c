@@ -72,16 +72,19 @@ static void syscall_handler(struct regs *r)
 	case SYS_EXEC: {
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make(PROC_PRIV_NONE);
-		r->eax = (u32)bin_load(path, proc);
-		if (r->eax != 0)
+		r->eax = (u32)elf_load(path, proc);
+		if (r->eax != 0) {
 			proc_exit(proc, -r->eax);
-		// TODO: Reimplement argc,argv
-		proc_stack_push(proc, 0);
-		proc_yield(r);
+		} else {
+			// TODO: Reimplement argc,argv
+			proc_stack_push(proc, 0);
+			proc_yield(r);
+		}
 		break;
 	}
 	case SYS_EXIT: {
 		proc_exit(proc_current(), (int)r->ebx);
+		proc_yield(r);
 		break;
 	}
 	case SYS_BOOT: { // TODO: Move

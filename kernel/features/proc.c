@@ -59,7 +59,7 @@ void scheduler(struct regs *regs)
 	}
 
 	memory_switch_dir(((struct proc *)current->data)->page_dir);
-	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(struct regs));
+	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(*regs));
 
 	if (regs->cs != GDT_USER_CODE_OFFSET) {
 		regs->gs = GDT_USER_DATA_OFFSET;
@@ -81,11 +81,13 @@ void proc_print(void)
 {
 	struct node *node = proc_list->head;
 
-	printf("\nPROCESSES\n");
+	printf("--- PROCESSES ---\n");
 	struct proc *proc = NULL;
 	while (node && (proc = node->data)) {
-		printf("Process %d: %s [%s]\n", proc->pid, proc->name,
-		       proc->state == PROC_RUNNING ? "RUNNING" : "SLEEPING");
+		printf("Process %d: %s [%s] [entry: %x; stack: %x]\n", proc->pid, proc->name,
+		       proc->state == PROC_RUNNING ? "RUNNING" : "SLEEPING",
+		       virtual_to_physical(proc->page_dir, proc->entry),
+		       virtual_to_physical(proc->page_dir, proc->regs.ebp));
 		node = node->next;
 	}
 	printf("\n");
@@ -145,9 +147,10 @@ void proc_exit(struct proc *proc, int status)
 		printf("Process %s exited with status %d (%s)\n", proc->name, status,
 		       status == 0 ? "success" : "error");
 
+	virtual_destroy_dir(proc->page_dir);
 	proc_clear_quantum(); // TODO: Add quantum to each process struct?
-	sti();
-	hlt();
+
+	// The caller has to yield itself
 }
 
 void proc_yield(struct regs *r)
@@ -497,13 +500,13 @@ void proc_init(void)
 
 	// Idle proc
 	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
-	assert(bin_load("/bin/idle", kernel_proc) == 0);
+	assert(elf_load("/bin/idle", kernel_proc) == 0);
 	kernel_proc->state = PROC_SLEEPING;
 	idle_proc = list_add(proc_list, kernel_proc);
 
 	// Init proc (root)
 	struct node *new = list_add(proc_list, proc_make(PROC_PRIV_ROOT));
-	assert(bin_load("/bin/init", new->data) == 0);
+	assert(elf_load("/bin/init", new->data) == 0);
 	current = new;
 	proc_stack_push(new->data, 0);
 
