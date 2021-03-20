@@ -15,6 +15,7 @@ s32 gui_new_window(struct gui_window *win)
 	    msg.header.type == (GUI_NEW_WINDOW | MSG_SUCCESS)) {
 		win->id = msg.id;
 		win->ctx = msg.ctx;
+		win->ctx.fb = shaccess(msg.shid);
 		return win->id;
 	}
 	return -1;

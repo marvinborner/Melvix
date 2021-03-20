@@ -104,8 +104,10 @@ struct memory_range memory_range_around(u32 base, u32 size);
 
 void *memory_alloc(struct page_dir *dir, u32 size, u32 flags);
 void *memory_alloc_identity(struct page_dir *dir, u32 flags);
-void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 flags);
+u32 memory_shalloc(struct page_dir *dir, u32 size, u32 flags);
+void *memory_shaccess(struct page_dir *dir, u32 shid);
 void memory_free(struct page_dir *dir, struct memory_range vrange);
+void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 flags);
 void memory_switch_dir(struct page_dir *dir);
 void memory_backup_dir(struct page_dir **backup);
 

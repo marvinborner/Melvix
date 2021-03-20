@@ -21,6 +21,7 @@ struct client {
 
 struct window {
 	u32 id;
+	u32 shid;
 	const char *name;
 	struct context ctx;
 	struct client client;
@@ -83,7 +84,8 @@ static struct window *window_new(struct client client, const char *name, struct 
 	if ((flags & WF_NO_FB) != 0) {
 		win->ctx.fb = NULL;
 	} else {
-		win->ctx.fb = zalloc(size.y * win->ctx.pitch);
+		win->shid = shalloc(size.y * win->ctx.pitch);
+		win->ctx.fb = shaccess(win->shid);
 	}
 	win->client = client;
 	win->flags = flags;
@@ -315,6 +317,7 @@ static void handle_message_new_window(struct message_new_window *msg)
 	struct window *win = window_new((struct client){ .pid = msg->header.src }, "idk",
 					vec2(500, 600), vec2(600, 400), 0);
 	msg->ctx = win->ctx;
+	msg->shid = win->shid;
 	msg->id = win->id;
 	msg_send(msg->header.src, GUI_NEW_WINDOW | MSG_SUCCESS, msg, sizeof(*msg));
 	/* window_redraw(win); */
@@ -329,7 +332,7 @@ static void handle_message_redraw_window(struct message_redraw_window *msg)
 			 sizeof(msg->header));
 		return;
 	}
-	msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_SUCCESS, NULL, sizeof(msg->header));
+	msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_SUCCESS, msg, sizeof(msg->header));
 	window_redraw(win);
 }
 
@@ -346,7 +349,7 @@ static void handle_message(void *msg)
 		break;
 	default:
 		log("Message type %d not implemented!\n", header->type);
-		msg_send(header->src, MSG_FAILURE, NULL, sizeof(*header));
+		msg_send(header->src, MSG_FAILURE, msg, sizeof(*header));
 	}
 }
 
@@ -384,7 +387,8 @@ int main(int argc, char **argv)
 	wallpaper =
 		window_new(wm_client, "wallpaper", vec2(0, 0), vec2(screen.width, screen.height),
 			   WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
-	cursor = window_new(wm_client, "cursor", vec2(0, 0), vec2(32, 32),
+	// TODO: Fix strange cursor size segfault
+	cursor = window_new(wm_client, "cursor", vec2(0, 0), vec2(32, 33),
 			    WF_NO_WINDOW | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 
 	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */

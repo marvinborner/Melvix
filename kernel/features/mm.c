@@ -8,6 +8,7 @@
 #include <mem.h>
 #include <mm.h>
 #include <print.h>
+#include <random.h>
 
 static struct page_dir kernel_dir ALIGNED(PAGE_SIZE) = { 0 };
 static struct page_table kernel_tables[PAGE_KERNEL_COUNT] ALIGNED(PAGE_SIZE) = { 0 };
@@ -353,7 +354,7 @@ void *memory_alloc(struct page_dir *dir, u32 size, u32 flags)
 	return (void *)vaddr;
 
 err:
-	printf("Memory allocation error!\n");
+	print("Memory allocation error!\n");
 	return NULL;
 }
 
@@ -374,9 +375,95 @@ void *memory_alloc_identity(struct page_dir *dir, u32 flags)
 	return 0;
 }
 
+#define SHARED_MEMORY_MAX 128
+struct shared_memory {
+	u32 id;
+	u32 refs;
+	u8 used;
+	struct memory_range prange;
+};
+static struct shared_memory shmem[SHARED_MEMORY_MAX] = { 0 };
+u32 memory_shalloc(struct page_dir *dir, u32 size, u32 flags)
+{
+	u32 slot = SHARED_MEMORY_MAX + 1;
+
+	for (u32 i = 0; i < SHARED_MEMORY_MAX; i++) {
+		if (!shmem[i].used) {
+			slot = i;
+			break;
+		}
+	}
+
+	if (slot >= SHARED_MEMORY_MAX)
+		return 0;
+
+	void *addr = memory_alloc(dir, size, flags);
+	if (!addr)
+		return 0;
+
+	// TODO: Verify that shid isn't used already
+	// TODO: Check for colliding prange
+	u32 shid = rand() + 1;
+	shmem[slot].id = shid;
+	shmem[slot].used = 1;
+	shmem[slot].prange = memory_range(virtual_to_physical(dir, (u32)addr), size);
+
+	return shid;
+}
+
+static struct shared_memory memory_shresolve_range(struct memory_range prange)
+{
+	for (u32 i = 0; i < SHARED_MEMORY_MAX; i++) {
+		if (!shmem[i].used)
+			continue;
+
+		struct memory_range shrange = shmem[i].prange;
+		if (prange.base < shrange.base + shrange.size &&
+		    prange.base + prange.size > shrange.base)
+			return shmem[i];
+	}
+
+	return (struct shared_memory){ 0, 0, 0, memory_range(0, 0) };
+}
+
+static struct shared_memory memory_shresolve_id(u32 shid)
+{
+	for (u32 i = 0; i < SHARED_MEMORY_MAX; i++) {
+		if (!shmem[i].used)
+			continue;
+
+		if (shmem[i].id == shid)
+			return shmem[i];
+	}
+
+	return shmem[0];
+}
+
+void *memory_shaccess(struct page_dir *dir, u32 shid)
+{
+	struct shared_memory sh = memory_shresolve_id(shid);
+	struct memory_range prange = sh.prange;
+	if (sh.used == 0 || prange.base == 0 || prange.size == 0)
+		return NULL;
+
+	sh.refs++;
+
+	return (void *)virtual_alloc(dir, prange, MEMORY_CLEAR | MEMORY_USER).base;
+}
+
+// TODO: Free by address instead of vrange (combine with shmem map?)
 void memory_free(struct page_dir *dir, struct memory_range vrange)
 {
 	assert(PAGE_ALIGNED(vrange.base) && PAGE_ALIGNED(vrange.size));
+
+	struct memory_range prange =
+		memory_range(virtual_to_physical(dir, vrange.base), vrange.size);
+	struct shared_memory sh = memory_shresolve_range(prange);
+	if (sh.used != 0 && sh.refs > 1) {
+		panic("Freeing busy memory!\n");
+		return;
+	}
+	/* sh.used = 0; */
 
 	for (u32 i = 0; i < vrange.size / PAGE_SIZE; i++) {
 		u32 vaddr = vrange.base + i * PAGE_SIZE;

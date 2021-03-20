@@ -83,6 +83,17 @@ void *sys_alloc(u32 size)
 	return (void *)sys1(SYS_ALLOC, (int)size);
 }
 
+u32 shalloc(u32 size)
+{
+	return (u32)sys1(SYS_SHALLOC, (int)size);
+}
+
+void *shaccess(u32 id)
+{
+	return (void *)sys1(SYS_SHACCESS, (int)id);
+}
+
+// TODO: Freeing by ptr + size could be a security risk -> only by address!
 void sys_free(void *ptr, u32 size)
 {
 	sys2(SYS_FREE, (int)ptr, (int)size);

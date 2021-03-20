@@ -20,6 +20,7 @@ struct message_header {
 struct message_new_window {
 	struct message_header header;
 	u32 id;
+	u32 shid;
 	struct context ctx;
 };
 

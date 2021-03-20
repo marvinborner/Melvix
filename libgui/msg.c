@@ -1,12 +1,15 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
 #include <assert.h>
+#include <errno.h>
 #include <msg.h>
 #include <print.h>
 #include <sys.h>
 
 int msg_send(u32 pid, enum message_type type, void *data, u32 size)
 {
+	if (!data)
+		return -EFAULT;
 	assert((signed)pid != -1 && size >= sizeof(struct message_header));
 	char path[32] = { 0 };
 	sprintf(path, "/proc/%d/msg", pid);

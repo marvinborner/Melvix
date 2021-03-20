@@ -16,6 +16,8 @@
 enum sys {
 	SYS_LOOP, // To infinity and beyond (debug)!
 	SYS_ALLOC, // Allocate memory
+	SYS_SHALLOC, // Allocate shared memory
+	SYS_SHACCESS, // Access shared memory
 	SYS_FREE, // Free memory
 	SYS_STAT, // Get file information
 	SYS_READ, // Read file
@@ -27,11 +29,11 @@ enum sys {
 	SYS_BOOT, // Boot functions (e.g. reboot/shutdown)
 	SYS_YIELD, // Switch to next process
 	SYS_TIME, // Get kernel time
-	SYS_NET_OPEN, // Open network socket
-	SYS_NET_CLOSE, // Close network socket
-	SYS_NET_CONNECT, // Connect to destination
-	SYS_NET_SEND, // Send to socket
-	SYS_NET_RECEIVE, // Receive data from socket
+	/* SYS_NET_OPEN, // Open network socket */
+	/* SYS_NET_CLOSE, // Close network socket */
+	/* SYS_NET_CONNECT, // Connect to destination */
+	/* SYS_NET_SEND, // Send to socket */
+	/* SYS_NET_RECEIVE, // Receive data from socket */
 };
 
 struct event_keyboard {
@@ -76,6 +78,8 @@ s32 boot(u32 cmd);
 u32 time(void);
 
 void *sys_alloc(u32 size);
+u32 shalloc(u32 size);
+void *shaccess(u32 id);
 void sys_free(void *ptr, u32 size);
 
 static inline u32 getpid(void)

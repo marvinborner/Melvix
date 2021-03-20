@@ -29,8 +29,17 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_ALLOC: {
-		r->eax = (u32)memory_alloc(proc_current()->page_dir, r->ebx,
+		r->eax = (u32)memory_alloc(proc_current()->page_dir, PAGE_ALIGN_UP(r->ebx),
 					   MEMORY_CLEAR | MEMORY_USER);
+		break;
+	}
+	case SYS_SHALLOC: {
+		r->eax = (u32)memory_shalloc(proc_current()->page_dir, PAGE_ALIGN_UP(r->ebx),
+					     MEMORY_CLEAR | MEMORY_USER);
+		break;
+	}
+	case SYS_SHACCESS: {
+		r->eax = (u32)memory_shaccess(proc_current()->page_dir, r->ebx);
 		break;
 	}
 	case SYS_FREE: {
@@ -123,45 +132,6 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	// TODO: Reimplement network functions using VFS
-	case SYS_NET_OPEN:
-	case SYS_NET_CLOSE:
-	case SYS_NET_CONNECT:
-	case SYS_NET_SEND:
-	case SYS_NET_RECEIVE:
-#if 0
-	case SYS_NET_OPEN: {
-		r->eax = (int)net_open(r->ebx);
-		break;
-	}
-	case SYS_NET_CLOSE: {
-		struct socket *s = (void *)r->ebx;
-		int status = net_close(s);
-		if (!status) {
-			proc_yield(r);
-			return;
-		}
-		r->eax = net_close(s);
-		break;
-	}
-	case SYS_NET_CONNECT: {
-		struct socket *s = (void *)r->ebx;
-		if (s->state == S_CONNECTED)
-			r->eax = 1;
-		else if (s->state == S_FAILED || s->state == S_CLOSED)
-			r->eax = 0;
-		else if (s->state == S_OPEN)
-			r->eax = net_connect(s, r->ecx, r->edx);
-		break;
-	}
-	case SYS_NET_SEND: {
-		net_send((void *)r->ebx, (void *)r->ecx, r->edx);
-		break;
-	}
-	case SYS_NET_RECEIVE: {
-		r->eax = net_receive((void *)r->ebx, (void *)r->ecx, r->edx);
-		break;
-	}
-#endif
 	default: {
 		printf("Unknown syscall %d!\n", num);
 		break;
