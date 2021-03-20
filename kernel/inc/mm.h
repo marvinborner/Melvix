@@ -13,6 +13,13 @@ struct memory_range {
 };
 
 /**
+ * Lowlevel paging
+ */
+
+void paging_enable(void);
+void page_fault_handler(struct regs *r);
+
+/**
  * Physical
  */
 
@@ -108,7 +115,5 @@ void memory_bypass_disable(void);
 u8 memory_valid(const void *addr);
 
 void memory_install(struct mem_info *mem_info, struct vid_info *vid_info);
-
-void page_fault_handler(struct regs *r);
 
 #endif

@@ -336,7 +336,7 @@ void *read_inode(struct inode *in)
 	if (!num_blocks)
 		return 0;
 
-	void *buf = (void *)0x50000;
+	void *buf = (void *)0x9000;
 	//assert(buf != 0);
 
 	int indirect;

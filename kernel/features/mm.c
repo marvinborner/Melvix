@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <cpu.h>
 #include <def.h>
+#include <fb.h>
 #include <mem.h>
 #include <mm.h>
 #include <print.h>
@@ -15,22 +16,22 @@ static struct page_table kernel_tables[PAGE_KERNEL_COUNT] ALIGNED(PAGE_SIZE) = {
  * Lowlevel paging
  */
 
-/*static void paging_disable(void)
-{
-	cr0_set(cr0_get() | 0x7fffffff);
-}*/
-
-static void paging_enable(void)
-{
-	cr0_set(cr0_get() | 0x80000000);
-}
-
 static void paging_switch_dir(u32 dir)
 {
 	cr3_set(dir);
 }
 
 extern void paging_invalidate_tlb(void);
+
+/*void paging_disable(void)
+{
+	cr0_set(cr0_get() | 0x7fffffff);
+}*/
+
+void paging_enable(void)
+{
+	cr0_set(cr0_get() | 0x80000000);
+}
 
 void page_fault_handler(struct regs *r)
 {
@@ -415,12 +416,12 @@ void memory_backup_dir(struct page_dir **backup)
 static u8 memory_bypass_validity = 0;
 void memory_bypass_enable(void)
 {
-	memory_bypass_validity = 1;
+	/* memory_bypass_validity = 1; */
 }
 
 void memory_bypass_disable(void)
 {
-	memory_bypass_validity = 0;
+	/* memory_bypass_validity = 0; */
 }
 
 // TODO: Limit by proc stack and data range
@@ -506,9 +507,10 @@ void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 	memory_map_identity(&kernel_dir, memory_range_around(STACK_START - STACK_SIZE, STACK_SIZE),
 			    MEMORY_NONE);
 
-	// Map VBE data
+	// Map framebuffer
 	memory_map_identity(&kernel_dir, memory_range_around((u32)vid_info->vbe, 0x1000),
 			    MEMORY_NONE);
+	fb_map_buffer(virtual_kernel_dir(), vid_info);
 
 	// Unmap NULL byte/page
 	struct memory_range zero = memory_range(0, PAGE_SIZE);

@@ -104,9 +104,8 @@ s32 elf_load(const char *path, struct proc *proc)
 		struct memory_range prange = physical_alloc(vrange.size);
 		virtual_map(proc->page_dir, prange, vrange.base, MEMORY_CLEAR | MEMORY_USER);
 
-		if ((u32)vfs_read(path, (void *)program.vaddr, program.offset, program.filesz) !=
-		    program.filesz) {
-			print("OH NOSE!\n");
+		if ((u32)vfs_read(proc->name, (void *)program.vaddr, program.offset,
+				  program.filesz) != program.filesz) {
 			memory_switch_dir(prev);
 			return -ENOEXEC;
 		}

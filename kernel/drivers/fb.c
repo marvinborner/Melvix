@@ -33,11 +33,8 @@ static s32 fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct devi
 	case IO_FB_GET: {
 		if (!info)
 			return -1;
-		struct vbe_basic *vbe = (struct vbe_basic *)info->vbe;
 		memcpy(arg1, info->vbe, sizeof(struct vbe_basic));
-		u32 size = vbe->height * vbe->pitch;
-		memory_map_identity(proc_current()->page_dir,
-				    memory_range_around((u32)vbe->fb, size), MEMORY_USER);
+		fb_map_buffer(proc_current()->page_dir, info);
 		return 0;
 	}
 	default:
@@ -48,6 +45,13 @@ static s32 fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct devi
 static s32 fb_ready(void)
 {
 	return 1;
+}
+
+void fb_map_buffer(struct page_dir *dir, struct vid_info *boot)
+{
+	struct vbe_basic *vbe = (struct vbe_basic *)boot->vbe;
+	u32 size = vbe->height * vbe->pitch;
+	memory_map_identity(dir, memory_range_around((u32)vbe->fb, size), MEMORY_USER);
 }
 
 void fb_install(struct vid_info *boot)

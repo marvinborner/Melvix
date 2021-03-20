@@ -27,6 +27,8 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	serial_print("Serial connected.\n");
 
 	memory_install(mem_info, vid_info);
+	memory_switch_dir(virtual_kernel_dir());
+	paging_enable();
 
 	cpu_enable_features();
 	cpu_print();

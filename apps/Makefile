@@ -13,7 +13,7 @@ all: $(COBJS)
 %.o: %.c
 	@mkdir -p ../build/apps/
 	@$(CC) -c $(CFLAGS) $< -o $@
-	@$(LD) -o $(@:.o=.elf) -Tlink.ld -L../build/ -static $@ -lgui -ltxt -lc
+	@$(LD) -o $(@:.o=.elf) --section-start=.text=0x42000000 -L../build/ -static $@ -lgui -ltxt -lc
 	@cp $(@:.o=.elf) ../build/apps/$(@:.o=)
 #@$(ST) --strip-all ../build/apps/$(@:.o=)
 
