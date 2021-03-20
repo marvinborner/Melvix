@@ -112,6 +112,7 @@ void memory_backup_dir(struct page_dir **backup);
 // Bypass should almost never be used
 void memory_bypass_enable(void);
 void memory_bypass_disable(void);
+u8 memory_is_user(u32 addr);
 u8 memory_valid(const void *addr);
 
 void memory_install(struct mem_info *mem_info, struct vid_info *vid_info);

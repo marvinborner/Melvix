@@ -7,53 +7,7 @@
 #include <mm.h>
 #include <str.h>
 
-#include <print.h>
-
 #define PROC_STACK_SIZE 0x4000
-
-s32 bin_load(const char *path, struct proc *proc)
-{
-	UNUSED(path);
-	UNUSED(proc);
-	panic("Deprecated!\n");
-#if 0
-	if (!path || !memory_valid(path) || !proc)
-		return -EFAULT;
-
-	struct stat s = { 0 };
-	memory_bypass_enable();
-	s32 stat = vfs_stat(path, &s);
-	memory_bypass_disable();
-	if (stat != 0)
-		return stat;
-
-	strcpy(proc->name, path);
-
-	struct page_dir *prev;
-	memory_backup_dir(&prev);
-	memory_switch_dir(proc->page_dir);
-
-	u32 size = PAGE_ALIGN_UP(s.size);
-	u32 data = (u32)memory_alloc(proc->page_dir, size, MEMORY_USER | MEMORY_CLEAR);
-
-	memory_bypass_enable();
-	s32 read = vfs_read(proc->name, (void *)data, 0, s.size);
-	memory_bypass_disable();
-	if (read <= 0) {
-		memory_switch_dir(prev);
-		return read;
-	}
-
-	u32 stack = (u32)memory_alloc(proc->page_dir, PROC_STACK_SIZE, MEMORY_USER | MEMORY_CLEAR);
-	proc->regs.ebp = stack;
-	proc->regs.useresp = stack;
-	proc->regs.eip = data;
-	proc->entry = data;
-
-	memory_switch_dir(prev);
-	return 0;
-#endif
-}
 
 s32 elf_load(const char *path, struct proc *proc)
 {
@@ -61,12 +15,16 @@ s32 elf_load(const char *path, struct proc *proc)
 		return -EFAULT;
 
 	struct stat s = { 0 };
+	memory_bypass_enable();
 	s32 stat = vfs_stat(path, &s);
+	memory_bypass_disable();
 	if (stat != 0)
 		return stat;
 
 	struct elf_header header = { 0 };
+	memory_bypass_enable();
 	s32 read = vfs_read(path, &header, 0, sizeof(header));
+	memory_bypass_disable();
 	if (read < 0)
 		return read;
 	if (read != sizeof(header))
@@ -86,14 +44,18 @@ s32 elf_load(const char *path, struct proc *proc)
 
 	for (u32 i = 0; i < header.phnum; i++) {
 		struct elf_program program = { 0 };
+		memory_bypass_enable();
 		if (vfs_read(path, &program, header.phoff + header.phentsize * i,
-			     sizeof(program)) != sizeof(program))
+			     sizeof(program)) != sizeof(program)) {
+			memory_bypass_disable();
 			return -ENOEXEC;
+		}
+		memory_bypass_disable();
 
 		if (program.vaddr == 0)
 			continue;
 
-		if (program.vaddr <= 0x100000)
+		if (!memory_is_user(program.vaddr))
 			return -ENOEXEC;
 
 		struct page_dir *prev;
@@ -104,11 +66,14 @@ s32 elf_load(const char *path, struct proc *proc)
 		struct memory_range prange = physical_alloc(vrange.size);
 		virtual_map(proc->page_dir, prange, vrange.base, MEMORY_CLEAR | MEMORY_USER);
 
+		memory_bypass_enable();
 		if ((u32)vfs_read(proc->name, (void *)program.vaddr, program.offset,
 				  program.filesz) != program.filesz) {
+			memory_bypass_disable();
 			memory_switch_dir(prev);
 			return -ENOEXEC;
 		}
+		memory_bypass_disable();
 
 		memory_switch_dir(prev);
 	}

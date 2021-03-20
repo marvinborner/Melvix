@@ -144,7 +144,8 @@ void proc_exit(struct proc *proc, int status)
 		current = NULL;
 
 	if (res)
-		printf("Process %s exited with status %d (%s)\n", proc->name, status,
+		printf("Process %s (%d) exited with status %d (%s)\n",
+		       proc->name[0] ? proc->name : "UNKNOWN", proc->pid, status,
 		       status == 0 ? "success" : "error");
 
 	virtual_destroy_dir(proc->page_dir);

@@ -412,24 +412,27 @@ void memory_backup_dir(struct page_dir **backup)
 	*backup = dir;
 }
 
-// TODO: Verify that this isn't a huge security risk
 static u8 memory_bypass_validity = 0;
 void memory_bypass_enable(void)
 {
-	/* memory_bypass_validity = 1; */
+	memory_bypass_validity = 1;
 }
 
 void memory_bypass_disable(void)
 {
-	/* memory_bypass_validity = 0; */
+	memory_bypass_validity = 0;
+}
+
+u8 memory_is_user(u32 addr)
+{
+	return PDI(addr) >= PAGE_KERNEL_COUNT;
 }
 
 // TODO: Limit by proc stack and data range
 u8 memory_valid(const void *addr)
 {
-	/* return ((u32)addr) / PAGE_SIZE / PAGE_COUNT >= PAGE_KERNEL_COUNT; */
 	if (proc_current() && !memory_bypass_validity)
-		return (u32)addr >= 0x100000;
+		return memory_is_user((u32)addr);
 	else
 		return 1;
 }
