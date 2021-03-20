@@ -9,11 +9,9 @@ int main(int argc, char **argv)
 	UNUSED(argc);
 	UNUSED(argv);
 	log("Arrived!\n");
-	while (1)
-		;
 
-	assert(exec("/bin/wm", "wm", NULL) == 0);
-	assert(exec("/bin/window", "test", NULL) == 0);
+	/* assert(exec("/bin/wm", "wm", NULL) == 0); */
+	/* assert(exec("/bin/window", "test", NULL) == 0); */
 
 	return 0;
 }

@@ -119,8 +119,8 @@ s32 elf_load(const char *path, struct proc *proc)
 	memory_switch_dir(proc->page_dir);
 
 	u32 stack = (u32)memory_alloc(proc->page_dir, PROC_STACK_SIZE, MEMORY_USER | MEMORY_CLEAR);
-	proc->regs.ebp = stack + PROC_STACK_SIZE - 1;
-	proc->regs.useresp = stack + PROC_STACK_SIZE - 1;
+	proc->regs.ebp = stack + PROC_STACK_SIZE;
+	proc->regs.useresp = stack + PROC_STACK_SIZE;
 	proc->regs.eip = header.entry;
 	proc->entry = header.entry;
 

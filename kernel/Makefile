@@ -37,4 +37,4 @@ all: compile
 compile: $(COBJS)
 	@mkdir -p ../build/
 	@$(LD) -N -z undefs -ekernel_main -Ttext 0x00050000 -o ../build/kernel.elf -L../build/ $+ -lk
-	@$(LD) -N -Tlink.ld -o ../build/kernel.bin -L../build/ $+ -lk
+	@$(LD) -N -z max-page-size=0x1000 -Tlink.ld -o ../build/kernel.bin -L../build/ $+ -lk

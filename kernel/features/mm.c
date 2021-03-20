@@ -48,8 +48,8 @@ void page_fault_handler(struct regs *r)
 	struct page_dir *dir = NULL;
 	if (proc && proc->page_dir) {
 		dir = proc->page_dir;
-		printf("Stack is at %x, entry at %x\n", virtual_to_physical(dir, proc->regs.ebp),
-		       virtual_to_physical(dir, proc->entry));
+		/* printf("Stack is at %x, entry at %x\n", virtual_to_physical(dir, proc->regs.ebp), */
+		/*        virtual_to_physical(dir, proc->entry)); */
 	} else {
 		dir = &kernel_dir;
 	}
@@ -165,7 +165,7 @@ void physical_free(struct memory_range range)
  * Virtual
  */
 
-#define PDI(vaddr) (((vaddr) >> 22) & 0x03ff)
+#define PDI(vaddr) ((vaddr) >> 22)
 #define PTI(vaddr) (((vaddr) >> 12) & 0x03ff)
 
 u8 virtual_present(struct page_dir *dir, u32 vaddr)
@@ -210,15 +210,11 @@ void virtual_map(struct page_dir *dir, struct memory_range prange, u32 vaddr, u3
 		struct page_table *table =
 			(struct page_table *)(dir_entry->bits.address * PAGE_SIZE);
 
-		if (dir_entry->bits.present) {
-			// TODO: Is this a security risk?
-			if (flags & MEMORY_USER)
-				dir_entry->bits.user = 1;
-		} else {
+		if (!dir_entry->bits.present) {
 			table = memory_alloc_identity(dir, MEMORY_CLEAR);
 			dir_entry->bits.present = 1;
 			dir_entry->bits.writable = 1;
-			dir_entry->bits.user = flags & MEMORY_USER;
+			dir_entry->bits.user = 1;
 			dir_entry->bits.address = (u32)(table) >> 12;
 		}
 

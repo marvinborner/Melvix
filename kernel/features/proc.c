@@ -81,11 +81,13 @@ void proc_print(void)
 {
 	struct node *node = proc_list->head;
 
-	printf("\nPROCESSES\n");
+	printf("--- PROCESSES ---\n");
 	struct proc *proc = NULL;
 	while (node && (proc = node->data)) {
-		printf("Process %d: %s [%s]\n", proc->pid, proc->name,
-		       proc->state == PROC_RUNNING ? "RUNNING" : "SLEEPING");
+		printf("Process %d: %s [%s] [entry: %x; stack: %x]\n", proc->pid, proc->name,
+		       proc->state == PROC_RUNNING ? "RUNNING" : "SLEEPING",
+		       virtual_to_physical(proc->page_dir, proc->entry),
+		       virtual_to_physical(proc->page_dir, proc->regs.ebp));
 		node = node->next;
 	}
 	printf("\n");
