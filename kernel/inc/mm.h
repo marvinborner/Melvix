@@ -117,8 +117,9 @@ u8 memory_is_user(u32 addr);
 u8 memory_valid(const void *addr);
 
 // User interface
-res memory_shalloc(struct page_dir *dir, u32 size, u32 *id, u32 flags);
-res memory_shaccess(struct page_dir *dir, u32 shid, u32 *addr, u32 *size);
+res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared);
+res memory_sys_free(struct page_dir *dir, u32 addr);
+res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size);
 
 void memory_install(struct mem_info *mem_info, struct vid_info *vid_info);
 

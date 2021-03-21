@@ -29,22 +29,17 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_ALLOC: {
-		r->eax = (u32)memory_alloc(proc_current()->page_dir, PAGE_ALIGN_UP(r->ebx),
-					   MEMORY_CLEAR | MEMORY_USER);
-		break;
-	}
-	case SYS_SHALLOC: {
-		r->eax = memory_shalloc(proc_current()->page_dir, PAGE_ALIGN_UP(r->ebx),
-					(u32 *)r->ecx, MEMORY_CLEAR | MEMORY_USER);
-		break;
-	}
-	case SYS_SHACCESS: {
-		r->eax = memory_shaccess(proc_current()->page_dir, r->ebx, (u32 *)r->ecx,
-					 (u32 *)r->edx);
+		r->eax = (u32)memory_sys_alloc(proc_current()->page_dir, r->ebx, (u32 *)r->ecx,
+					       (u32 *)r->edx, (u8)r->esi);
 		break;
 	}
 	case SYS_FREE: {
-		memory_free(proc_current()->page_dir, memory_range(r->ebx, r->ecx));
+		r->eax = memory_sys_free(proc_current()->page_dir, r->ebx);
+		break;
+	}
+	case SYS_SHACCESS: {
+		r->eax = memory_sys_shaccess(proc_current()->page_dir, r->ebx, (u32 *)r->ecx,
+					     (u32 *)r->edx);
 		break;
 	}
 	case SYS_STAT: {

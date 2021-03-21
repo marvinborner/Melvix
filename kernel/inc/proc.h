@@ -56,6 +56,7 @@ struct proc {
 	struct proc_wait wait; // dev_id
 	enum proc_state state;
 	struct stack *messages;
+	struct list *memory;
 };
 
 void scheduler(struct regs *regs);

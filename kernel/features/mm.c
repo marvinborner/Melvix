@@ -373,115 +373,14 @@ void *memory_alloc_identity(struct page_dir *dir, u32 flags)
 		}
 	}
 
-	return 0;
-}
-
-#define SHARED_MEMORY_MAX 128
-struct shared_memory {
-	u32 id;
-	u32 refs;
-	u8 used;
-	struct memory_range prange;
-};
-static struct shared_memory shmem[SHARED_MEMORY_MAX] = { 0 };
-res memory_shalloc(struct page_dir *dir, u32 size, u32 *id, u32 flags)
-{
-	if (!id || !memory_valid(id))
-		return -EFAULT;
-
-	*id = 0;
-
-	u32 slot = SHARED_MEMORY_MAX + 1;
-
-	for (u32 i = 0; i < SHARED_MEMORY_MAX; i++) {
-		if (!shmem[i].used) {
-			slot = i;
-			break;
-		}
-	}
-
-	if (slot >= SHARED_MEMORY_MAX)
-		return -ENOMEM;
-
-	void *addr = memory_alloc(dir, size, flags);
-	if (!addr)
-		return -ENOMEM;
-
-	// TODO: Verify that shid isn't used already
-	// TODO: Check for colliding prange
-	u32 shid = rdseed() + 1;
-	shmem[slot].id = shid;
-	shmem[slot].used = 1;
-	shmem[slot].prange = memory_range(virtual_to_physical(dir, (u32)addr), size);
-
-	*id = shid;
-
-	return EOK;
-}
-
-static struct shared_memory memory_shresolve_range(struct memory_range prange)
-{
-	for (u32 i = 0; i < SHARED_MEMORY_MAX; i++) {
-		if (!shmem[i].used)
-			continue;
-
-		struct memory_range shrange = shmem[i].prange;
-		if (prange.base < shrange.base + shrange.size &&
-		    prange.base + prange.size > shrange.base)
-			return shmem[i];
-	}
-
-	return (struct shared_memory){ 0 };
-}
-
-static struct shared_memory memory_shresolve_id(u32 shid)
-{
-	for (u32 i = 0; i < SHARED_MEMORY_MAX; i++) {
-		if (!shmem[i].used)
-			continue;
-
-		if (shmem[i].id == shid)
-			return shmem[i];
-	}
-
-	return (struct shared_memory){ 0 };
-}
-
-res memory_shaccess(struct page_dir *dir, u32 shid, u32 *addr, u32 *size)
-{
-	if (!addr || !memory_valid(addr) || !size || !memory_valid(size))
-		return -EFAULT;
-
-	*addr = 0;
-	*size = 0;
-
-	struct shared_memory sh = memory_shresolve_id(shid);
-	struct memory_range prange = sh.prange;
-	if (sh.used == 0 || prange.base == 0 || prange.size == 0)
-		return -ENOENT;
-
-	sh.refs++;
-
-	struct memory_range shrange = virtual_alloc(dir, prange, MEMORY_CLEAR | MEMORY_USER);
-	*addr = shrange.base;
-	*size = shrange.size;
-
-	return EOK;
+	print("Memory allocation error!\n");
+	return NULL;
 }
 
 // TODO: Free by address instead of vrange (combine with shmem map?)
 void memory_free(struct page_dir *dir, struct memory_range vrange)
 {
 	assert(PAGE_ALIGNED(vrange.base) && PAGE_ALIGNED(vrange.size));
-
-	struct memory_range prange =
-		memory_range(virtual_to_physical(dir, vrange.base), vrange.size);
-	struct shared_memory sh = memory_shresolve_range(prange);
-	if (sh.used != 0 && sh.refs > 1) {
-		panic("Freeing busy memory!\n");
-		return;
-	}
-	/* sh.used = 0; */
 
 	for (u32 i = 0; i < vrange.size / PAGE_SIZE; i++) {
 		u32 vaddr = vrange.base + i * PAGE_SIZE;
@@ -503,6 +402,109 @@ void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 f
 	virtual_map(dir, prange, prange.base, flags);
 	if (flags & MEMORY_CLEAR)
 		memset((void *)prange.base, 0, prange.size);
+}
+
+struct memory_object {
+	u32 id;
+	u32 refs;
+	u8 shared;
+	struct memory_range prange;
+};
+struct memory_proc_link {
+	struct memory_object *obj;
+	struct memory_range vrange;
+};
+static struct list *memory_objects = NULL;
+res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared)
+{
+	if (!addr || !memory_valid(addr) || !id || !memory_valid(id))
+		return -EFAULT;
+
+	size = PAGE_ALIGN_UP(size);
+
+	u32 vaddr = (u32)memory_alloc(dir, size, MEMORY_CLEAR | MEMORY_USER);
+	if (!vaddr)
+		return -ENOMEM;
+
+	struct memory_object *obj = zalloc(sizeof(*obj));
+	obj->id = rdrand() + 1;
+	obj->prange = memory_range(virtual_to_physical(dir, vaddr), size);
+	obj->refs = 1;
+	obj->shared = shared;
+	list_add(memory_objects, obj);
+
+	struct memory_proc_link *link = zalloc(sizeof(*link));
+	link->obj = obj;
+	link->vrange = memory_range(vaddr, size);
+	list_add(proc_current()->memory, link);
+
+	*addr = vaddr;
+	*id = obj->id;
+
+	return EOK;
+}
+
+res memory_sys_free(struct page_dir *dir, u32 addr)
+{
+	if (!addr || !memory_valid((void *)addr))
+		return -EFAULT;
+
+	struct list *links = proc_current()->memory;
+	struct node *iterator = links->head;
+	while (iterator) {
+		struct memory_proc_link *link = iterator->data;
+		if (link->vrange.base == addr) {
+			virtual_free(dir, link->vrange);
+			link->obj->refs--;
+			if (link->obj->refs == 0) {
+				list_remove(memory_objects,
+					    list_first_data(memory_objects, link->obj));
+				physical_free(link->obj->prange);
+				free(link->obj);
+			}
+			list_remove(links, list_first_data(links, link));
+			free(link);
+			return EOK;
+		}
+		iterator = iterator->next;
+	}
+
+	return -ENOENT;
+}
+
+res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size)
+{
+	if (!addr || !memory_valid(addr) || !size || !memory_valid(size))
+		return -EFAULT;
+
+	*addr = 0;
+	*size = 0;
+
+	struct node *iterator = memory_objects->head;
+	while (iterator) {
+		struct memory_object *obj = iterator->data;
+		if (obj->id == id) {
+			if (!obj->shared)
+				return -EACCES;
+
+			obj->refs++;
+			struct memory_range shrange =
+				virtual_alloc(dir, obj->prange, MEMORY_CLEAR | MEMORY_USER);
+
+			*addr = shrange.base;
+			*size = shrange.size;
+
+			struct memory_proc_link *link = zalloc(sizeof(*link));
+			link->obj = obj;
+			link->vrange = shrange;
+			list_add(proc_current()->memory, link);
+
+			return EOK;
+		}
+		iterator = iterator->next;
+	}
+
+	return -ENOENT;
 }
 
 void memory_switch_dir(struct page_dir *dir)
@@ -627,4 +629,6 @@ void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	memory_switch_dir(&kernel_dir);
 	paging_enable();
+
+	memory_objects = list_new();
 }

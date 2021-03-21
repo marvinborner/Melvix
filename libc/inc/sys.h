@@ -17,7 +17,6 @@
 enum sys {
 	SYS_LOOP, // To infinity and beyond (debug)!
 	SYS_ALLOC, // Allocate memory
-	SYS_SHALLOC, // Allocate shared memory
 	SYS_SHACCESS, // Access shared memory
 	SYS_FREE, // Free memory
 	SYS_STAT, // Get file information
@@ -78,10 +77,10 @@ res yield(void);
 res boot(u32 cmd);
 u32 time(void);
 
-void *sys_alloc(u32 size);
-res shalloc(u32 size, u32 *id);
+res sys_alloc(u32 size, u32 *addr);
+res sys_free(void *ptr);
+res shalloc(u32 size, u32 *addr, u32 *id);
 res shaccess(u32 id, u32 *addr, u32 *size);
-void sys_free(void *ptr, u32 size);
 
 static inline u32 getpid(void)
 {

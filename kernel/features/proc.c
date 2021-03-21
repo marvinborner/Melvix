@@ -140,15 +140,21 @@ void proc_exit(struct proc *proc, s32 status)
 		iterator = iterator->next;
 	}
 
+	assert(found);
+
 	if (memcmp(proc, current->data, sizeof(*proc)) == 0)
 		current = NULL;
 
-	if (found)
-		printf("Process %s (%d) exited with status %d (%s)\n",
-		       proc->name[0] ? proc->name : "UNKNOWN", proc->pid, status,
-		       status == 0 ? "success" : "error");
+	printf("Process %s (%d) exited with status %d (%s)\n",
+	       proc->name[0] ? proc->name : "UNKNOWN", proc->pid, status,
+	       status == 0 ? "success" : "error");
 
+	stack_destroy(proc->messages);
+	list_destroy(proc->memory); // TODO: Decrement memory ref links
 	virtual_destroy_dir(proc->page_dir);
+
+	free(proc);
+
 	proc_clear_quantum(); // TODO: Add quantum to each process struct?
 
 	// The caller has to yield itself
@@ -250,6 +256,7 @@ struct proc *proc_make(enum proc_priv priv)
 	proc->pid = current_pid++;
 	proc->priv = priv;
 	proc->messages = stack_new();
+	proc->memory = list_new();
 	proc->state = PROC_RUNNING;
 
 	if (priv == PROC_PRIV_KERNEL)

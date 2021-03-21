@@ -2,6 +2,7 @@
 // Syscall implementation
 
 #include <arg.h>
+#include <assert.h>
 #include <errno.h>
 #include <sys.h>
 
@@ -78,25 +79,25 @@ res sys5(enum sys num, int d1, int d2, int d3, int d4, int d5)
  * Syscalls
  */
 
-void *sys_alloc(u32 size)
+res sys_alloc(u32 size, u32 *addr)
 {
-	return (void *)sys1(SYS_ALLOC, (int)size);
+	u32 id = 0;
+	return sys4(SYS_ALLOC, (int)size, (int)addr, (int)&id, 0);
 }
 
-res shalloc(u32 size, u32 *id)
+res sys_free(void *ptr)
 {
-	return (res)sys2(SYS_SHALLOC, (int)size, (int)id);
+	return sys1(SYS_FREE, (int)ptr);
+}
+
+res shalloc(u32 size, u32 *addr, u32 *id)
+{
+	return sys4(SYS_ALLOC, (int)size, (int)addr, (int)id, 1);
 }
 
 res shaccess(u32 id, u32 *addr, u32 *size)
 {
-	return (res)sys3(SYS_SHACCESS, (int)id, (int)addr, (int)size);
-}
-
-// TODO: Freeing by ptr + size could be a security risk -> only by address!
-void sys_free(void *ptr, u32 size)
-{
-	sys2(SYS_FREE, (int)ptr, (int)size);
+	return sys3(SYS_SHACCESS, (int)id, (int)addr, (int)size);
 }
 
 void loop(void)

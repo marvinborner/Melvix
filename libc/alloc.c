@@ -26,12 +26,15 @@ static int liballoc_free(void *ptr, u32 p)
 
 static void *liballoc_alloc(u32 p)
 {
-	return sys_alloc(p);
+	u32 addr;
+	assert(sys_alloc(p, &addr) == EOK);
+	return (void *)addr;
 }
 
 static int liballoc_free(void *ptr, u32 p)
 {
-	sys_free(ptr, p);
+	UNUSED(p);
+	assert(sys_free(ptr) == EOK);
 	return 0;
 }
 
