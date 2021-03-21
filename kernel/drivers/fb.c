@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <def.h>
+#include <errno.h>
 #include <fb.h>
 #include <fs.h>
 #include <ioctl.h>
@@ -23,7 +24,8 @@ struct vbe_basic {
 static u32 dev_id = 0;
 static struct vid_info *info = NULL;
 
-static s32 fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct device *dev)
+static u32 fb_owner = 0;
+static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct device *dev)
 {
 	UNUSED(arg2);
 	UNUSED(arg3);
@@ -32,17 +34,26 @@ static s32 fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct devi
 	switch (request) {
 	case IO_FB_GET: {
 		if (!info)
-			return -1;
+			return -ENOENT;
+
+		if (!arg1 || !memory_valid(arg1))
+			return -EFAULT;
+
+		if (fb_owner != 0 && proc_from_pid(fb_owner))
+			return -EBUSY;
+		else
+			fb_owner = proc_current()->pid;
+
 		memcpy(arg1, info->vbe, sizeof(struct vbe_basic));
 		fb_map_buffer(proc_current()->page_dir, info);
-		return 0;
+		return EOK;
 	}
 	default:
-		return -1;
+		return -EINVAL;
 	}
 }
 
-static s32 fb_ready(void)
+static res fb_ready(void)
 {
 	return 1;
 }

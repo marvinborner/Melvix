@@ -64,7 +64,7 @@ void proc_print(void);
 struct proc *proc_current(void);
 u8 proc_super(void);
 struct proc *proc_from_pid(u32 pid);
-void proc_exit(struct proc *proc, int status);
+void proc_exit(struct proc *proc, s32 status);
 void proc_yield(struct regs *r);
 void proc_clear_quantum(void);
 void proc_enable_waiting(u32 id, enum proc_wait_type type);

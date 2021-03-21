@@ -142,6 +142,7 @@ int log(const char *format, ...)
 
 int err(int code, const char *format, ...)
 {
+	log("ERRNO: %d (%s)\n", errno, strerror(errno));
 	va_list ap;
 	va_start(ap, format);
 	vfprintf(PATH_ERR, format, ap);

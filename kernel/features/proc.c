@@ -125,15 +125,15 @@ void proc_clear_quantum(void)
 	quantum = 0;
 }
 
-void proc_exit(struct proc *proc, int status)
+void proc_exit(struct proc *proc, s32 status)
 {
 	assert(proc);
 
-	int res = 0;
+	u8 found = 0;
 	struct node *iterator = proc_list->head;
 	while (iterator) {
 		if (iterator->data == proc) {
-			res = 1;
+			found = 1;
 			list_remove(proc_list, iterator);
 			break;
 		}
@@ -143,7 +143,7 @@ void proc_exit(struct proc *proc, int status)
 	if (memcmp(proc, current->data, sizeof(*proc)) == 0)
 		current = NULL;
 
-	if (res)
+	if (found)
 		printf("Process %s (%d) exited with status %d (%s)\n",
 		       proc->name[0] ? proc->name : "UNKNOWN", proc->pid, status,
 		       status == 0 ? "success" : "error");
@@ -317,14 +317,14 @@ struct procfs_message {
 	u32 size;
 };
 
-static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+static res procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	u32 pid = 0;
 	procfs_parse_path(&path, &pid);
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
 		if (!p || path[0] != '/')
-			return -1;
+			return -ENOENT;
 
 		path++;
 		if (!memcmp(path, "msg", 4)) {
@@ -340,7 +340,7 @@ static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 			path += 3;
 			enum stream_defaults id = procfs_stream(path);
 			if (id == STREAM_UNKNOWN)
-				return -1;
+				return -ENOENT;
 
 			// Put proc log/err messages to serial console for debugging
 			if (id == STREAM_LOG || id == STREAM_ERR)
@@ -356,10 +356,10 @@ static s32 procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 	}
 
 	printf("ERR: %s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
-	return -1;
+	return -ENOENT;
 }
 
-static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	(void)dev;
 	u32 pid = 0;
@@ -409,7 +409,7 @@ static s32 procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 	return -ENOENT;
 }
 
-static s32 procfs_wait(const char *path, u32 func_ptr, struct device *dev)
+static res procfs_wait(const char *path, u32 func_ptr, struct device *dev)
 {
 	u32 pid = 0;
 	procfs_parse_path(&path, &pid);
@@ -422,28 +422,28 @@ static s32 procfs_wait(const char *path, u32 func_ptr, struct device *dev)
 		path++;
 		if (!memcmp(path, "msg", 4)) {
 			proc_wait_for(pid, PROC_WAIT_MSG, func_ptr);
-			return 0;
+			return EOK;
 		} else {
 			proc_wait_for(dev->id, PROC_WAIT_DEV, func_ptr);
-			return 0;
+			return EOK;
 		}
 	}
 
 	return -ENOENT;
 }
 
-static s32 procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
+static res procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
 {
 	(void)path;
 	(void)dev;
 
 	if (perm == VFS_EXEC)
-		return 0;
+		return -EACCES;
 	else
-		return 1;
+		return EOK;
 }
 
-static s32 procfs_ready(const char *path, struct device *dev)
+static res procfs_ready(const char *path, struct device *dev)
 {
 	(void)dev;
 

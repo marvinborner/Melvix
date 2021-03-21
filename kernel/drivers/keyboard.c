@@ -61,7 +61,7 @@ static void keyboard_rate(void)
 	outb(0x60, 0x0); // Rate{00000} Delay{00} 0
 }*/
 
-static s32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
+static res keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
 {
 	UNUSED(dev);
 	if (stack_empty(queue))
@@ -73,7 +73,7 @@ static s32 keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
 	return MIN(count, sizeof(*e));
 }
 
-static s32 keyboard_ready(void)
+static res keyboard_ready(void)
 {
 	return !stack_empty(queue);
 }

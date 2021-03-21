@@ -106,7 +106,7 @@ static u8 ata_read_one(u8 *buf, u32 lba, struct device *dev)
 	return 1;
 }
 
-static s32 ata_read(void *buf, u32 lba, u32 sector_count, struct device *dev)
+static res ata_read(void *buf, u32 lba, u32 sector_count, struct device *dev)
 {
 	u8 *b = buf; // I love bytes, yk
 	for (u32 i = 0; i < sector_count; i++) {

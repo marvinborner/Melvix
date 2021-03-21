@@ -84,8 +84,8 @@ static struct window *window_new(struct client client, const char *name, struct 
 	if ((flags & WF_NO_FB) != 0) {
 		win->ctx.fb = NULL;
 	} else {
-		win->shid = shalloc(size.y * win->ctx.pitch);
-		win->ctx.fb = shaccess(win->shid);
+		assert(shalloc(win->ctx.bytes, &win->shid) == EOK);
+		assert(shaccess(win->shid, (u32 *)&win->ctx.fb, &win->ctx.bytes) == EOK);
 	}
 	win->client = client;
 	win->flags = flags;

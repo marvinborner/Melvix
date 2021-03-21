@@ -84,12 +84,12 @@ static u8 mouse_serial_read(void)
 	return inb(0x60);
 }
 
-static s32 mouse_ready(void)
+static res mouse_ready(void)
 {
 	return !stack_empty(queue);
 }
 
-static s32 mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
+static res mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
 {
 	(void)dev;
 	if (stack_empty(queue))

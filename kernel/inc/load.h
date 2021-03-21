@@ -105,6 +105,6 @@ struct elf_program {
 	u32 align;
 };
 
-s32 elf_load(const char *path, struct proc *proc);
+res elf_load(const char *path, struct proc *proc);
 
 #endif

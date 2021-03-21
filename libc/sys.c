@@ -19,32 +19,32 @@
 	errno = 0;                                                                                 \
 	return ret
 
-s32 sys0(enum sys num);
-s32 sys0(enum sys num)
+res sys0(enum sys num);
+res sys0(enum sys num)
 {
 	int a;
 	__asm__ volatile("int $0x80" : "=a"(a) : "0"(num));
 	ERRIFY(a);
 }
 
-s32 sys1(enum sys num, int d1);
-s32 sys1(enum sys num, int d1)
+res sys1(enum sys num, int d1);
+res sys1(enum sys num, int d1)
 {
 	int a;
 	__asm__ volatile("int $0x80" : "=a"(a) : "0"(num), "b"((int)d1));
 	ERRIFY(a);
 }
 
-s32 sys2(enum sys num, int d1, int d2);
-s32 sys2(enum sys num, int d1, int d2)
+res sys2(enum sys num, int d1, int d2);
+res sys2(enum sys num, int d1, int d2)
 {
 	int a;
 	__asm__ volatile("int $0x80" : "=a"(a) : "0"(num), "b"((int)d1), "c"((int)d2));
 	ERRIFY(a);
 }
 
-s32 sys3(enum sys num, int d1, int d2, int d3);
-s32 sys3(enum sys num, int d1, int d2, int d3)
+res sys3(enum sys num, int d1, int d2, int d3);
+res sys3(enum sys num, int d1, int d2, int d3)
 {
 	int a;
 	__asm__ volatile("int $0x80"
@@ -53,8 +53,8 @@ s32 sys3(enum sys num, int d1, int d2, int d3)
 	ERRIFY(a);
 }
 
-s32 sys4(enum sys num, int d1, int d2, int d3, int d4);
-s32 sys4(enum sys num, int d1, int d2, int d3, int d4)
+res sys4(enum sys num, int d1, int d2, int d3, int d4);
+res sys4(enum sys num, int d1, int d2, int d3, int d4)
 {
 	int a;
 	__asm__ volatile("int $0x80"
@@ -63,8 +63,8 @@ s32 sys4(enum sys num, int d1, int d2, int d3, int d4)
 	ERRIFY(a);
 }
 
-s32 sys5(enum sys num, int d1, int d2, int d3, int d4, int d5);
-s32 sys5(enum sys num, int d1, int d2, int d3, int d4, int d5)
+res sys5(enum sys num, int d1, int d2, int d3, int d4, int d5);
+res sys5(enum sys num, int d1, int d2, int d3, int d4, int d5)
 {
 	int a;
 	__asm__ volatile("int $0x80"
@@ -83,14 +83,14 @@ void *sys_alloc(u32 size)
 	return (void *)sys1(SYS_ALLOC, (int)size);
 }
 
-u32 shalloc(u32 size)
+res shalloc(u32 size, u32 *id)
 {
-	return (u32)sys1(SYS_SHALLOC, (int)size);
+	return (res)sys2(SYS_SHALLOC, (int)size, (int)id);
 }
 
-void *shaccess(u32 id)
+res shaccess(u32 id, u32 *addr, u32 *size)
 {
-	return (void *)sys1(SYS_SHACCESS, (int)id);
+	return (res)sys3(SYS_SHACCESS, (int)id, (int)addr, (int)size);
 }
 
 // TODO: Freeing by ptr + size could be a security risk -> only by address!
@@ -104,17 +104,17 @@ void loop(void)
 	sys0(SYS_LOOP);
 }
 
-s32 read(const char *path, void *buf, u32 offset, u32 count)
+res read(const char *path, void *buf, u32 offset, u32 count)
 {
 	return sys4(SYS_READ, (int)path, (int)buf, (int)offset, (int)count);
 }
 
-s32 write(const char *path, const void *buf, u32 offset, u32 count)
+res write(const char *path, const void *buf, u32 offset, u32 count)
 {
 	return sys4(SYS_WRITE, (int)path, (int)buf, (int)offset, (int)count);
 }
 
-s32 ioctl(const char *path, ...)
+res ioctl(const char *path, ...)
 {
 	va_list ap;
 	int args[4] = { 0 };
@@ -127,17 +127,17 @@ s32 ioctl(const char *path, ...)
 	return sys5(SYS_IOCTL, (int)path, args[0], args[1], args[2], args[3]);
 }
 
-s32 stat(const char *path, struct stat *buf)
+res stat(const char *path, struct stat *buf)
 {
 	return sys2(SYS_STAT, (int)path, (int)buf);
 }
 
-s32 poll(const char **files)
+res poll(const char **files)
 {
 	return sys1(SYS_POLL, (int)files);
 }
 
-s32 exec(const char *path, ...)
+res exec(const char *path, ...)
 {
 	va_list ap;
 	int args[4] = { 0 };
@@ -150,7 +150,7 @@ s32 exec(const char *path, ...)
 	return sys5(SYS_EXEC, (int)path, args[0], args[1], args[2], args[3]);
 }
 
-s32 yield(void)
+res yield(void)
 {
 	return sys0(SYS_YIELD);
 }
@@ -164,7 +164,7 @@ void exit(s32 status)
 		yield();
 }
 
-s32 boot(u32 cmd)
+res boot(u32 cmd)
 {
 	return sys2(SYS_BOOT, SYS_BOOT_MAGIC, cmd);
 }

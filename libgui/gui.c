@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
 #include <def.h>
+#include <errno.h>
 #include <gui.h>
 #include <msg.h>
 #include <print.h>
@@ -15,7 +16,10 @@ s32 gui_new_window(struct gui_window *win)
 	    msg.header.type == (GUI_NEW_WINDOW | MSG_SUCCESS)) {
 		win->id = msg.id;
 		win->ctx = msg.ctx;
-		win->ctx.fb = shaccess(msg.shid);
+		u32 size;
+		res ret = shaccess(msg.shid, (u32 *)&win->ctx.fb, &size);
+		if (ret < 0 || !win->ctx.fb)
+			return MIN(ret, -1);
 		return win->id;
 	}
 	return -1;

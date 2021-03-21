@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <cpu.h>
 #include <def.h>
+#include <errno.h>
 #include <fb.h>
 #include <mem.h>
 #include <mm.h>
@@ -383,8 +384,13 @@ struct shared_memory {
 	struct memory_range prange;
 };
 static struct shared_memory shmem[SHARED_MEMORY_MAX] = { 0 };
-u32 memory_shalloc(struct page_dir *dir, u32 size, u32 flags)
+res memory_shalloc(struct page_dir *dir, u32 size, u32 *id, u32 flags)
 {
+	if (!id || !memory_valid(id))
+		return -EFAULT;
+
+	*id = 0;
+
 	u32 slot = SHARED_MEMORY_MAX + 1;
 
 	for (u32 i = 0; i < SHARED_MEMORY_MAX; i++) {
@@ -395,20 +401,22 @@ u32 memory_shalloc(struct page_dir *dir, u32 size, u32 flags)
 	}
 
 	if (slot >= SHARED_MEMORY_MAX)
-		return 0;
+		return -ENOMEM;
 
 	void *addr = memory_alloc(dir, size, flags);
 	if (!addr)
-		return 0;
+		return -ENOMEM;
 
 	// TODO: Verify that shid isn't used already
 	// TODO: Check for colliding prange
-	u32 shid = rand() + 1;
+	u32 shid = rdseed() + 1;
 	shmem[slot].id = shid;
 	shmem[slot].used = 1;
 	shmem[slot].prange = memory_range(virtual_to_physical(dir, (u32)addr), size);
 
-	return shid;
+	*id = shid;
+
+	return EOK;
 }
 
 static struct shared_memory memory_shresolve_range(struct memory_range prange)
@@ -423,7 +431,7 @@ static struct shared_memory memory_shresolve_range(struct memory_range prange)
 			return shmem[i];
 	}
 
-	return (struct shared_memory){ 0, 0, 0, memory_range(0, 0) };
+	return (struct shared_memory){ 0 };
 }
 
 static struct shared_memory memory_shresolve_id(u32 shid)
@@ -436,19 +444,29 @@ static struct shared_memory memory_shresolve_id(u32 shid)
 			return shmem[i];
 	}
 
-	return shmem[0];
+	return (struct shared_memory){ 0 };
 }
 
-void *memory_shaccess(struct page_dir *dir, u32 shid)
+res memory_shaccess(struct page_dir *dir, u32 shid, u32 *addr, u32 *size)
 {
+	if (!addr || !memory_valid(addr) || !size || !memory_valid(size))
+		return -EFAULT;
+
+	*addr = 0;
+	*size = 0;
+
 	struct shared_memory sh = memory_shresolve_id(shid);
 	struct memory_range prange = sh.prange;
 	if (sh.used == 0 || prange.base == 0 || prange.size == 0)
-		return NULL;
+		return -ENOENT;
 
 	sh.refs++;
 
-	return (void *)virtual_alloc(dir, prange, MEMORY_CLEAR | MEMORY_USER).base;
+	struct memory_range shrange = virtual_alloc(dir, prange, MEMORY_CLEAR | MEMORY_USER);
+	*addr = shrange.base;
+	*size = shrange.size;
+
+	return EOK;
 }
 
 // TODO: Free by address instead of vrange (combine with shmem map?)

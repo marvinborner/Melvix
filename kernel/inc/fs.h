@@ -4,6 +4,7 @@
 #define FS_H
 
 #include <def.h>
+#include <errno.h>
 #include <sys.h>
 
 /**
@@ -18,10 +19,10 @@ struct device {
 	enum dev_type type;
 	struct vfs *vfs;
 	void *data;
-	s32 (*read)(void *buf, u32 offset, u32 count, struct device *dev);
-	s32 (*write)(void *buf, u32 offset, u32 count, struct device *dev);
-	s32 (*ioctl)(u32 request, void *arg1, void *arg2, void *arg3, struct device *dev);
-	s32 (*ready)(void);
+	res (*read)(void *buf, u32 offset, u32 count, struct device *dev);
+	res (*write)(void *buf, u32 offset, u32 count, struct device *dev);
+	res (*ioctl)(u32 request, void *arg1, void *arg2, void *arg3, struct device *dev);
+	res (*ready)(void);
 };
 
 void device_install(void);
@@ -39,14 +40,14 @@ struct vfs {
 	enum vfs_type type;
 	int flags;
 	void *data;
-	s32 (*read)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
-	s32 (*write)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
-	s32 (*ioctl)(const char *path, u32 request, void *arg1, void *arg2, void *arg3,
+	res (*read)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+	res (*write)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+	res (*ioctl)(const char *path, u32 request, void *arg1, void *arg2, void *arg3,
 		     struct device *dev);
-	s32 (*stat)(const char *path, struct stat *buf, struct device *dev);
-	s32 (*wait)(const char *path, u32 func_ptr, struct device *dev);
-	s32 (*ready)(const char *path, struct device *dev);
-	s32 (*perm)(const char *path, enum vfs_perm perm, struct device *dev);
+	res (*stat)(const char *path, struct stat *buf, struct device *dev);
+	res (*wait)(const char *path, u32 func_ptr, struct device *dev);
+	res (*ready)(const char *path, struct device *dev);
+	res (*perm)(const char *path, enum vfs_perm perm, struct device *dev);
 };
 
 struct mount_info {
@@ -57,17 +58,17 @@ struct mount_info {
 void vfs_install(void);
 
 u8 vfs_mounted(struct device *dev, const char *path);
-s32 vfs_mount(struct device *dev, const char *path);
+res vfs_mount(struct device *dev, const char *path);
 
 struct device *vfs_find_dev(const char *path);
 
-s32 vfs_read(const char *path, void *buf, u32 offset, u32 count);
-s32 vfs_write(const char *path, void *buf, u32 offset, u32 count);
-s32 vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3);
-s32 vfs_stat(const char *path, struct stat *buf);
-s32 vfs_wait(const char *path, u32 func_ptr);
-s32 vfs_poll(const char **files);
-s32 vfs_ready(const char *path);
+res vfs_read(const char *path, void *buf, u32 offset, u32 count);
+res vfs_write(const char *path, void *buf, u32 offset, u32 count);
+res vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3);
+res vfs_stat(const char *path, struct stat *buf);
+res vfs_wait(const char *path, u32 func_ptr);
+res vfs_poll(const char **files);
+res vfs_ready(const char *path);
 
 struct device *device_get_by_name(const char *name);
 struct device *device_get_by_id(u32 id);
@@ -174,9 +175,9 @@ struct ext2_file {
 	u32 curr_block_pos;
 };
 
-s32 ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
-s32 ext2_stat(const char *path, struct stat *buf, struct device *dev);
-s32 ext2_perm(const char *path, enum vfs_perm perm, struct device *dev);
-s32 ext2_ready(const char *path, struct device *dev);
+res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+res ext2_stat(const char *path, struct stat *buf, struct device *dev);
+res ext2_perm(const char *path, enum vfs_perm perm, struct device *dev);
+res ext2_ready(const char *path, struct device *dev);
 
 #endif

@@ -18,7 +18,7 @@
 static void syscall_handler(struct regs *r)
 {
 	enum sys num = r->eax;
-	r->eax = 0;
+	r->eax = EOK;
 
 	/* printf("[SYSCALL] %d from %s\n", num, proc_current()->name); */
 
@@ -34,12 +34,13 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_SHALLOC: {
-		r->eax = (u32)memory_shalloc(proc_current()->page_dir, PAGE_ALIGN_UP(r->ebx),
-					     MEMORY_CLEAR | MEMORY_USER);
+		r->eax = memory_shalloc(proc_current()->page_dir, PAGE_ALIGN_UP(r->ebx),
+					(u32 *)r->ecx, MEMORY_CLEAR | MEMORY_USER);
 		break;
 	}
 	case SYS_SHACCESS: {
-		r->eax = (u32)memory_shaccess(proc_current()->page_dir, r->ebx);
+		r->eax = memory_shaccess(proc_current()->page_dir, r->ebx, (u32 *)r->ecx,
+					 (u32 *)r->edx);
 		break;
 	}
 	case SYS_FREE: {
@@ -47,14 +48,14 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_STAT: {
-		r->eax = (u32)vfs_stat((char *)r->ebx, (struct stat *)r->ecx);
+		r->eax = vfs_stat((char *)r->ebx, (struct stat *)r->ecx);
 		break;
 	}
 	case SYS_READ: {
 		if (vfs_ready((char *)r->ebx)) {
 			r->eax = (u32)vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		} else {
-			s32 wait = vfs_wait((char *)r->ebx, (u32)vfs_read);
+			res wait = vfs_wait((char *)r->ebx, (u32)vfs_read);
 			if (wait != 0)
 				r->eax = wait;
 			else
@@ -63,16 +64,16 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_WRITE: {
-		r->eax = (u32)vfs_write((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
+		r->eax = vfs_write((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		break;
 	}
 	case SYS_IOCTL: {
-		r->eax = (u32)vfs_ioctl((char *)r->ebx, r->ecx, (void *)r->edx, (void *)r->esi,
-					(void *)r->edi);
+		r->eax = vfs_ioctl((char *)r->ebx, r->ecx, (void *)r->edx, (void *)r->esi,
+				   (void *)r->edi);
 		break;
 	}
 	case SYS_POLL: {
-		s32 ret = vfs_poll((const char **)r->ebx);
+		res ret = vfs_poll((const char **)r->ebx);
 		r->eax = ret;
 		if (ret == PROC_MAX_WAIT_IDS + 1)
 			proc_yield(r);
@@ -92,7 +93,7 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_EXIT: {
-		proc_exit(proc_current(), (int)r->ebx);
+		proc_exit(proc_current(), (s32)r->ebx);
 		proc_yield(r);
 		break;
 	}

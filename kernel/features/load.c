@@ -9,21 +9,21 @@
 
 #define PROC_STACK_SIZE 0x4000
 
-s32 elf_load(const char *path, struct proc *proc)
+res elf_load(const char *path, struct proc *proc)
 {
 	if (!path || !memory_valid(path) || !proc)
 		return -EFAULT;
 
 	struct stat s = { 0 };
 	memory_bypass_enable();
-	s32 stat = vfs_stat(path, &s);
+	res stat = vfs_stat(path, &s);
 	memory_bypass_disable();
 	if (stat != 0)
 		return stat;
 
 	struct elf_header header = { 0 };
 	memory_bypass_enable();
-	s32 read = vfs_read(path, &header, 0, sizeof(header));
+	res read = vfs_read(path, &header, 0, sizeof(header));
 	memory_bypass_disable();
 	if (read < 0)
 		return read;

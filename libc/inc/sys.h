@@ -5,6 +5,7 @@
 #define SYS_H
 
 #include <def.h>
+#include <errno.h>
 
 #define KEYBOARD_MAGIC 0x555555
 #define MOUSE_MAGIC 0xaaaaaa
@@ -66,20 +67,20 @@ struct stat {
  */
 
 void loop(void);
-s32 read(const char *path, void *buf, u32 offset, u32 count);
-s32 write(const char *path, const void *buf, u32 offset, u32 count);
-s32 ioctl(const char *path, ...);
-s32 stat(const char *path, struct stat *buf);
-s32 poll(const char **files);
-s32 exec(const char *path, ...);
-s32 yield(void);
 void exit(s32 status);
-s32 boot(u32 cmd);
+res read(const char *path, void *buf, u32 offset, u32 count);
+res write(const char *path, const void *buf, u32 offset, u32 count);
+res ioctl(const char *path, ...);
+res stat(const char *path, struct stat *buf);
+res poll(const char **files);
+res exec(const char *path, ...);
+res yield(void);
+res boot(u32 cmd);
 u32 time(void);
 
 void *sys_alloc(u32 size);
-u32 shalloc(u32 size);
-void *shaccess(u32 id);
+res shalloc(u32 size, u32 *id);
+res shaccess(u32 id, u32 *addr, u32 *size);
 void sys_free(void *ptr, u32 size);
 
 static inline u32 getpid(void)

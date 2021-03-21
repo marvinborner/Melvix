@@ -5,6 +5,7 @@
 
 #include <boot.h>
 #include <def.h>
+#include <errno.h>
 #include <interrupts.h>
 
 struct memory_range {
@@ -104,8 +105,6 @@ struct memory_range memory_range_around(u32 base, u32 size);
 
 void *memory_alloc(struct page_dir *dir, u32 size, u32 flags);
 void *memory_alloc_identity(struct page_dir *dir, u32 flags);
-u32 memory_shalloc(struct page_dir *dir, u32 size, u32 flags);
-void *memory_shaccess(struct page_dir *dir, u32 shid);
 void memory_free(struct page_dir *dir, struct memory_range vrange);
 void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 flags);
 void memory_switch_dir(struct page_dir *dir);
@@ -116,6 +115,10 @@ void memory_bypass_enable(void);
 void memory_bypass_disable(void);
 u8 memory_is_user(u32 addr);
 u8 memory_valid(const void *addr);
+
+// User interface
+res memory_shalloc(struct page_dir *dir, u32 size, u32 *id, u32 flags);
+res memory_shaccess(struct page_dir *dir, u32 shid, u32 *addr, u32 *size);
 
 void memory_install(struct mem_info *mem_info, struct vid_info *vid_info);
 
