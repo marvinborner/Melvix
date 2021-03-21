@@ -2,6 +2,7 @@
 
 #include <conv.h>
 #include <cpu.h>
+#include <crypto.h>
 #include <math.h>
 #include <mem.h>
 #include <print.h>
@@ -33,6 +34,22 @@ TEST(math)
 	EQUALS(pow(2, 3), 8);
 	EQUALS(pow(0, 3), 0);
 	EQUALS(pow(0, 0), 1);
+}
+
+TEST(crypto)
+{
+	const char *text = "Melvix";
+	u32 length = 6;
+
+	EQUALS(crc32(0, text, length), 0x98bb3595);
+
+	const u8 md5_text[16] = {
+		0x01, 0xdc, 0xaf, 0x55, 0x2a, 0xe5, 0x7a, 0xf2,
+		0xe5, 0xb4, 0x75, 0xac, 0x0f, 0x38, 0x97, 0x9c,
+	};
+	u8 md5_res[16] = { 0 };
+	md5(text, length, md5_res);
+	EQUALS(memcmp(md5_res, md5_text, 16), 0);
 }
 
 TEST(conv)
@@ -74,6 +91,7 @@ TEST(mem)
 int main(void)
 {
 	test_math();
+	test_crypto();
 	test_conv();
 	test_mem();
 

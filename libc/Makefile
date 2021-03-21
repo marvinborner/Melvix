@@ -7,6 +7,7 @@ COBJS = sanitize.o \
 	alloc.o \
 	mem.o \
 	math.o \
+	crypto.o \
 	conv.o \
 	print.o \
 	cpu.o \
