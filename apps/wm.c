@@ -71,49 +71,11 @@ static void buffer_flush(void)
 #endif
 }
 
-static struct window *window_new(struct client client, const char *name, struct vec2 pos,
-				 struct vec2 size, u32 flags)
-{
-	struct window *win = malloc(sizeof(*win));
-	win->id = rand();
-	win->name = name; // strdup?
-	win->ctx.size = size;
-	win->ctx.bpp = screen.bpp;
-	win->ctx.pitch = size.x * bypp;
-	win->ctx.bytes = win->ctx.pitch * win->ctx.size.y;
-	if ((flags & WF_NO_FB) != 0) {
-		win->ctx.fb = NULL;
-	} else {
-		assert(shalloc(win->ctx.bytes, (u32 *)&win->ctx.fb, &win->shid) == EOK);
-	}
-	win->client = client;
-	win->flags = flags;
-	win->pos = pos;
-	win->pos_prev = pos;
-	list_add(windows, win);
-	return win;
-}
+/**
+ * 5head algorithms
+ * Thanks to @LarsVomMars for the help
+ */
 
-static struct window *window_find(u32 id)
-{
-	struct node *iterator = windows->head;
-	while (iterator) {
-		struct window *win = iterator->data;
-		if (win->id == id)
-			return win;
-		iterator = iterator->next;
-	}
-	return NULL;
-}
-
-/*static void window_destroy(struct window *win)
-{
-	//free(win->name);
-	free(win->ctx.fb);
-	free(win);
-}*/
-
-// Beautiful
 static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 {
 	u32 width = pos2.x - pos1.x;
@@ -212,7 +174,7 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 
 		// Copy window data to rectangle buffer
 		for (u32 cy = start_y; cy < end_y; cy++) {
-			int diff = 0;
+			u32 diff = 0;
 			for (u32 cx = start_x; cx < end_x; cx++) {
 				if (srcfb[bypp - 1])
 					memcpy(destfb, srcfb, bypp);
@@ -230,28 +192,105 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 	return (struct rectangle){ .pos1 = pos1, .pos2 = pos2, .data = data };
 }
 
-static void window_redraw(struct window *win)
+static void rectangle_redraw(vec2 pos1, vec2 pos2, struct window *excluded)
 {
-	// TODO: Only redraw difference of prev/curr (difficult with negative directions)
-	vec2 pos1 = win->pos_prev;
-	vec2 pos2 = vec2(pos1.x + win->ctx.size.x, pos1.y + win->ctx.size.y);
-	struct rectangle rec = rectangle_at(pos1, pos2, win);
+	struct rectangle rec = rectangle_at(pos1, pos2, excluded);
 
 	u8 *srcfb = rec.data;
 	u8 *destfb = &root->ctx.fb[rec.pos1.x * bypp + rec.pos1.y * root->ctx.pitch];
-	for (u32 cy = 0; cy < win->ctx.size.y; cy++) {
-		memcpy(destfb, srcfb, win->ctx.size.x * bypp);
-		srcfb += win->ctx.pitch;
+	for (u32 cy = 0; cy < excluded->ctx.size.y; cy++) {
+		memcpy(destfb, srcfb, excluded->ctx.size.x * bypp);
+		srcfb += excluded->ctx.pitch;
 		destfb += root->ctx.pitch;
 	}
 
 	free(rec.data);
 
-	gfx_ctx_on_ctx(&root->ctx, &win->ctx, win->pos);
+	gfx_ctx_on_ctx(&root->ctx, &excluded->ctx, excluded->pos);
+}
+
+/**
+ * Window operations
+ */
+
+static struct window *window_new(struct client client, const char *name, struct vec2 pos,
+				 struct vec2 size, u32 flags)
+{
+	struct window *win = malloc(sizeof(*win));
+	win->id = rand();
+	win->name = name; // strdup?
+	win->ctx.size = size;
+	win->ctx.bpp = screen.bpp;
+	win->ctx.pitch = size.x * bypp;
+	win->ctx.bytes = win->ctx.pitch * win->ctx.size.y;
+	if ((flags & WF_NO_FB) != 0) {
+		win->ctx.fb = NULL;
+	} else {
+		assert(shalloc(win->ctx.bytes, (u32 *)&win->ctx.fb, &win->shid) == EOK);
+	}
+	win->client = client;
+	win->flags = flags;
+	win->pos = pos;
+	win->pos_prev = pos;
+	list_add(windows, win);
+	return win;
+}
+
+static struct window *window_find(u32 id)
+{
+	struct node *iterator = windows->head;
+	while (iterator) {
+		struct window *win = iterator->data;
+		if (win->id == id)
+			return win;
+		iterator = iterator->next;
+	}
+	return NULL;
+}
+
+static struct window *window_at(vec2 pos)
+{
+	struct window *ret = NULL;
+
+	struct node *iterator = windows->head;
+	while (iterator) {
+		struct window *win = iterator->data;
+		if (!(win->flags & (WF_NO_WINDOW | WF_NO_FOCUS)) && pos.x >= win->pos.x &&
+		    pos.x <= win->pos.x + win->ctx.size.x && pos.y >= win->pos.y &&
+		    pos.y <= win->pos.y + win->ctx.size.y)
+			ret = win;
+		iterator = iterator->next;
+	}
+	return ret;
+}
+
+static void window_redraw(struct window *win)
+{
+	// TODO: Only redraw difference of prev/curr (difficult with negative directions)
+	vec2 pos1 = win->pos_prev;
+	vec2 pos2 = vec2(pos1.x + win->ctx.size.x, pos1.y + win->ctx.size.y);
+
+	rectangle_redraw(pos1, pos2, win);
 	if (win != cursor)
 		window_redraw(cursor);
 	buffer_flush();
 }
+
+// TODO: Fix strange artifacts after destroying
+static void window_destroy(struct window *win)
+{
+	//free(win->name);
+	memset(win->ctx.fb, 0, win->ctx.bytes);
+	rectangle_redraw(win->pos, vec2_add(win->pos, win->ctx.size), win);
+	buffer_flush();
+	list_remove(windows, list_first_data(windows, win));
+	free(win->ctx.fb);
+	free(win);
+}
+
+/**
+ * Event handlers
+ */
 
 static void handle_event_keyboard(struct event_keyboard *event)
 {
@@ -309,7 +348,19 @@ static void handle_event_mouse(struct event_mouse *event)
 
 	if (!vec2_eq(cursor->pos, cursor->pos_prev))
 		window_redraw(cursor);
+
+	struct window *win = window_at(mouse.pos);
+	if (win) {
+		struct message_mouse msg = { 0 };
+		msg.header.state = MSG_GO_ON;
+		msg.pos = vec2_sub(mouse.pos, win->pos);
+		msg_send(win->client.pid, GUI_MOUSE, &msg, sizeof(msg));
+	}
 }
+
+/**
+ * Message handlers
+ */
 
 static void handle_message_new_window(struct message_new_window *msg)
 {
@@ -318,8 +369,9 @@ static void handle_message_new_window(struct message_new_window *msg)
 	msg->ctx = win->ctx;
 	msg->shid = win->shid;
 	msg->id = win->id;
-	msg_send(msg->header.src, GUI_NEW_WINDOW | MSG_SUCCESS, msg, sizeof(*msg));
-	/* window_redraw(win); */
+
+	if (msg->header.state == MSG_NEED_ANSWER)
+		msg_send(msg->header.src, GUI_NEW_WINDOW | MSG_SUCCESS, msg, sizeof(*msg));
 }
 
 static void handle_message_redraw_window(struct message_redraw_window *msg)
@@ -327,12 +379,35 @@ static void handle_message_redraw_window(struct message_redraw_window *msg)
 	u32 id = msg->id;
 	struct window *win = window_find(id);
 	if (!win) {
-		msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_FAILURE, NULL,
-			 sizeof(msg->header));
+		if (msg->header.state == MSG_NEED_ANSWER)
+			msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_FAILURE, NULL,
+				 sizeof(msg->header));
 		return;
 	}
-	msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_SUCCESS, msg, sizeof(msg->header));
+
 	window_redraw(win);
+
+	if (msg->header.state == MSG_NEED_ANSWER)
+		msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_SUCCESS, msg,
+			 sizeof(msg->header));
+}
+
+static void handle_message_destroy_window(struct message_destroy_window *msg)
+{
+	u32 id = msg->id;
+	struct window *win = window_find(id);
+	if (!win) {
+		if (msg->header.state == MSG_NEED_ANSWER)
+			msg_send(msg->header.src, GUI_DESTROY_WINDOW | MSG_FAILURE, NULL,
+				 sizeof(msg->header));
+		return;
+	}
+
+	window_destroy(win);
+
+	if (msg->header.state == MSG_NEED_ANSWER)
+		msg_send(msg->header.src, GUI_DESTROY_WINDOW | MSG_SUCCESS, msg,
+			 sizeof(msg->header));
 }
 
 static void handle_message(void *msg)
@@ -346,9 +421,12 @@ static void handle_message(void *msg)
 	case GUI_REDRAW_WINDOW:
 		handle_message_redraw_window(msg);
 		break;
+	case GUI_DESTROY_WINDOW:
+		handle_message_destroy_window(msg);
+		break;
 	default:
 		log("Message type %d not implemented!\n", header->type);
-		msg_send(header->src, MSG_FAILURE, msg, sizeof(*header));
+		msg_send(header->src, header->type | MSG_FAILURE, msg, sizeof(*header));
 	}
 }
 
@@ -361,6 +439,10 @@ static void handle_exit(void)
 	if (screen.fb)
 		memset(screen.fb, COLOR_RED, screen.height * screen.pitch);
 }
+
+/**
+ * Main loop
+ */
 
 int main(int argc, char **argv)
 {

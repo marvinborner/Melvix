@@ -6,7 +6,7 @@
 #include <print.h>
 #include <sys.h>
 
-int msg_send(u32 pid, enum message_type type, void *data, u32 size)
+res msg_send(u32 pid, enum message_type type, void *data, u32 size)
 {
 	if (!data)
 		return -EFAULT;
@@ -20,7 +20,7 @@ int msg_send(u32 pid, enum message_type type, void *data, u32 size)
 	return write(path, data, 0, size);
 }
 
-int msg_receive(void *buf, u32 size)
+res msg_receive(void *buf, u32 size)
 {
 	int ret = read("/proc/self/msg", buf, 0, size);
 	struct message_header *header = buf;

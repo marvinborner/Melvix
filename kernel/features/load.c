@@ -89,5 +89,5 @@ res elf_load(const char *path, struct proc *proc)
 	proc->entry = header.entry;
 
 	memory_switch_dir(prev);
-	return 0;
+	return EOK;
 }

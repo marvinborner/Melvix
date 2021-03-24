@@ -4,14 +4,10 @@
 #define GUI_H
 
 #include <def.h>
-#include <gfx.h>
+#include <errno.h>
 
-struct gui_window {
-	u32 id;
-	struct context ctx;
-};
-
-s32 gui_new_window(struct gui_window *win);
-s32 gui_redraw_window(u32 id);
+res gui_new_window(void);
+res gui_redraw_window(u32 id);
+void gui_loop(void);
 
 #endif

@@ -118,7 +118,6 @@ void gfx_write_char(struct context *ctx, vec2 pos, enum font_type font_type, u32
 {
 	struct font *font = gfx_resolve_font(font_type);
 	write_char(ctx, pos, font, c, ch);
-	/* gfx_redraw(); */
 }
 
 void gfx_write(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, const char *text)
@@ -144,7 +143,6 @@ void gfx_write(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, c
 			cnt++;
 		}
 	}
-	/* gfx_redraw(); */
 }
 
 void gfx_load_image(struct context *ctx, vec2 pos, const char *path)
@@ -227,13 +225,11 @@ void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos)
 void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
 {
 	draw_rectangle(ctx, pos1, pos2, c);
-	/* gfx_redraw(); */
 }
 
 void gfx_fill(struct context *ctx, u32 c)
 {
 	draw_rectangle(ctx, vec2(0, 0), vec2(ctx->size.x, ctx->size.y), c);
-	/* gfx_redraw(); */
 }
 
 void gfx_border(struct context *ctx, u32 c, u32 width)
@@ -256,7 +252,6 @@ void gfx_border(struct context *ctx, u32 c, u32 width)
 		}
 		draw += ctx->pitch;
 	}
-	/* gfx_redraw(); */
 }
 
 int gfx_font_height(enum font_type font_type)

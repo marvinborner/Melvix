@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
+#include <crypto.h>
 #include <def.h>
 #include <errno.h>
 #include <fs.h>
