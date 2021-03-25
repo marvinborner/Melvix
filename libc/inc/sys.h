@@ -38,17 +38,17 @@ enum sys {
 
 struct event_keyboard {
 	u32 magic;
-	int press;
-	int scancode;
+	u32 scancode;
+	u8 press;
 };
 
 struct event_mouse {
 	u32 magic;
-	int diff_x;
-	int diff_y;
-	int but1;
-	int but2;
-	int but3;
+	s32 diff_x;
+	s32 diff_y;
+	u8 but1;
+	u8 but2;
+	u8 but3;
 };
 
 struct stat {

@@ -43,6 +43,7 @@ static struct window *direct = NULL;
 static struct window *root = NULL;
 static struct window *wallpaper = NULL;
 static struct window *cursor = NULL;
+static struct window *focused = NULL;
 static struct keymap *keymap = NULL;
 static struct client wm_client = { 0 };
 static struct {
@@ -271,9 +272,10 @@ static void window_redraw(struct window *win)
 	vec2 pos2 = vec2(pos1.x + win->ctx.size.x, pos1.y + win->ctx.size.y);
 
 	rectangle_redraw(pos1, pos2, win);
-	if (win != cursor)
+	if (win != cursor) {
 		window_redraw(cursor);
-	buffer_flush();
+		buffer_flush();
+	}
 }
 
 // TODO: Fix strange artifacts after destroying
@@ -284,7 +286,7 @@ static void window_destroy(struct window *win)
 	rectangle_redraw(win->pos, vec2_add(win->pos, win->ctx.size), win);
 	buffer_flush();
 	list_remove(windows, list_first_data(windows, win));
-	free(win->ctx.fb);
+	sys_free(win->ctx.fb);
 	free(win);
 }
 
@@ -346,16 +348,27 @@ static void handle_event_mouse(struct event_mouse *event)
 
 	cursor->pos = mouse.pos;
 
-	if (!vec2_eq(cursor->pos, cursor->pos_prev))
-		window_redraw(cursor);
-
 	struct window *win = window_at(mouse.pos);
-	if (win) {
-		struct message_mouse msg = { 0 };
-		msg.header.state = MSG_GO_ON;
-		msg.pos = vec2_sub(mouse.pos, win->pos);
-		msg_send(win->client.pid, GUI_MOUSE, &msg, sizeof(msg));
+	if (win && !(win->flags & WF_NO_FOCUS) && !event->but1 && !event->but2 && !event->but3)
+		focused = win;
+
+	if (focused && !(focused->flags & WF_NO_DRAG) && event->but1 && special_keys.alt) {
+		focused->pos_prev = focused->pos;
+		focused->pos = mouse.pos;
+		window_redraw(focused);
+		return;
+	} else if (!vec2_eq(cursor->pos, cursor->pos_prev)) {
+		window_redraw(cursor);
+		buffer_flush();
 	}
+
+	if (!win)
+		return;
+
+	struct message_mouse msg = { 0 };
+	msg.header.state = MSG_GO_ON;
+	msg.pos = vec2_sub(mouse.pos, win->pos);
+	msg_send(win->client.pid, GUI_MOUSE, &msg, sizeof(msg));
 }
 
 /**
