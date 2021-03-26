@@ -3,11 +3,11 @@
 #include <assert.h>
 #include <conv.h>
 #include <def.h>
-#include <http.h>
+#include <libnet/http.h>
+#include <libnet/net.h>
+#include <libnet/socket.h>
 #include <mem.h>
-#include <net.h>
 #include <print.h>
-#include <socket.h>
 #include <str.h>
 
 char *http_data(char *r)

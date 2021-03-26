@@ -14,15 +14,15 @@ debug: compile
 export
 
 compile:
-	@$(MAKE) clean --no-print-directory -C libc/
-	@$(MAKE) libc --no-print-directory -C libc/
+	@$(MAKE) clean --no-print-directory -C libs/libc/
+	@$(MAKE) libc --no-print-directory -C libs/libc/
 	@echo "Compiled libc"
-	@$(MAKE) clean --no-print-directory -C libc/
-	@$(MAKE) libk --no-print-directory -C libc/
+	@$(MAKE) clean --no-print-directory -C libs/libc/
+	@$(MAKE) libk --no-print-directory -C libs/libc/
 	@echo "Compiled libk"
-	@$(MAKE) --no-print-directory -C libgui/
+	@$(MAKE) --no-print-directory -C libs/libgui/
 	@echo "Compiled libgui"
-	@$(MAKE) --no-print-directory -C libtxt/
+	@$(MAKE) --no-print-directory -C libs/libtxt/
 	@echo "Compiled libtxt"
 	@$(MAKE) --no-print-directory -C kernel/
 	@echo "Compiled kernel"
@@ -32,4 +32,4 @@ compile:
 	@echo "Compiled apps"
 
 clean:
-	@find kernel/ apps/ libc/ libtxt/ libgui/ libnet/ boot/ \( -name "*.o" -or -name "*.a" -or -name "*.elf" -or -name "*.bin" \) -type f -delete
+	@find kernel/ apps/ libs/ boot/ \( -name "*.o" -or -name "*.a" -or -name "*.elf" -or -name "*.bin" \) -type f -delete

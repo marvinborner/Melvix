@@ -3,8 +3,8 @@
 // This is a userspace wrapper for some things
 
 #include <def.h>
+#include <libnet/net.h>
 #include <mem.h>
-#include <net.h>
 #include <str.h>
 
 // Inspired by Paul Vixie, 1996

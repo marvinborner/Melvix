@@ -3,15 +3,15 @@
 #include <assert.h>
 #include <def.h>
 #include <errno.h>
-#include <gfx.h>
-#include <gui.h>
 #include <input.h>
 #include <ioctl.h>
-#include <keymap.h>
+#include <libgui/gfx.h>
+#include <libgui/gui.h>
+#include <libgui/msg.h>
+#include <libgui/vesa.h>
+#include <libtxt/keymap.h>
 #include <list.h>
-#include <msg.h>
 #include <random.h>
-#include <vesa.h>
 
 //#define FLUSH_TIMEOUT 6
 

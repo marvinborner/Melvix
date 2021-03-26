@@ -30,8 +30,8 @@ Rename this file to png.cpp to use it for C++, or to png.c to use it for C.
 */
 
 #include <def.h>
+#include <libgui/png.h>
 #include <mem.h>
-#include <png.h>
 #include <sys.h>
 
 #if defined(_MSC_VER) &&                                                                           \

@@ -4,15 +4,15 @@
 // TODO: Use efficient redrawing
 
 #include <assert.h>
-#include <bmp.h>
-#include <gfx.h>
+#include <libgui/bmp.h>
+#include <libgui/gfx.h>
+#include <libgui/msg.h>
+#include <libgui/png.h>
+#include <libgui/psf.h>
+#include <libgui/vesa.h>
 #include <mem.h>
-#include <msg.h>
-#include <png.h>
-#include <psf.h>
 #include <str.h>
 #include <sys.h>
-#include <vesa.h>
 
 // TODO: Move to some global config file
 #define FONT_COUNT 6

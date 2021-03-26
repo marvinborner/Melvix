@@ -3,11 +3,11 @@
 // TODO: DNS cache
 
 #include <def.h>
+#include <libnet/net.h>
+#include <libnet/socket.h>
 #include <mem.h>
-#include <net.h>
 #include <print.h>
 #include <random.h>
-#include <socket.h>
 #include <str.h>
 
 static u32 dns_ip_addr = ip(1, 1, 1, 1);

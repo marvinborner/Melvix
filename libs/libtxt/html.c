@@ -2,13 +2,13 @@
 // HTML parsing is mainly based on the XML parser
 
 #include <assert.h>
-#include <gui.h>
-#include <html.h>
+#include <libgui/gui.h>
+#include <libtxt/html.h>
+#include <libtxt/xml.h>
 #include <list.h>
 #include <mem.h>
 #include <print.h>
 #include <str.h>
-#include <xml.h>
 
 static int is_self_closing(const char *tag)
 {

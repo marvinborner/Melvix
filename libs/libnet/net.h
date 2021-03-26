@@ -3,10 +3,10 @@
 #ifndef NET_H
 #define NET_H
 
-#include <dns.h>
-#include <ip.h>
+#include <libnet/dns.h>
+#include <libnet/ip.h>
+#include <libnet/socket.h>
 #include <print.h>
-#include <socket.h>
 #include <sys.h>
 
 #define htonl(l)                                                                                   \

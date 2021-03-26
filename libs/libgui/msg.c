@@ -2,7 +2,7 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <msg.h>
+#include <libgui/msg.h>
 #include <print.h>
 #include <sys.h>
 

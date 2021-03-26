@@ -4,7 +4,7 @@
 #define HTTP_H
 
 #include <def.h>
-#include <socket.h>
+#include <libnet/socket.h>
 
 char *http_data(char *response);
 char *http_header_key(char *r, const char *key);

@@ -2,9 +2,9 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
+#include <libtxt/xml.h>
 #include <mem.h>
 #include <str.h>
-#include <xml.h>
 
 static const char *str_findchr(const char *start, const char *end, int c)
 {

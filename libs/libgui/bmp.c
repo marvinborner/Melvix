@@ -1,7 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include <bmp.h>
 #include <def.h>
+#include <libgui/bmp.h>
 #include <mem.h>
 #include <print.h>
 #include <sys.h>

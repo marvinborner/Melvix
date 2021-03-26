@@ -6,7 +6,7 @@ LD = ccache ../cross/opt/bin/i686-elf-ld
 OC = ccache ../cross/opt/bin/i686-elf-objcopy
 ST = ccache ../cross/opt/bin/i686-elf-strip
 
-CFLAGS = $(CFLAGS_DEFAULT) -I../libc/inc/ -I../libgui/inc/ -I../libtxt/inc/ -Duserspace
+CFLAGS = $(CFLAGS_DEFAULT) -I../libs/ -I../libs/libc/inc/ -Duserspace
 
 all: $(COBJS)
 

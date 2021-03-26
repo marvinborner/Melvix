@@ -213,9 +213,9 @@ make_sync() {
 
     rm -f compile_commands.json
     output=$($MAKE --always-make --dry-run)
-    echo "$output" | make_append_commands libc libk libc
-    echo "$output" | make_append_commands libk libgui libgui
-    echo "$output" | make_append_commands libgui libtxt libtxt
+    echo "$output" | make_append_commands libc libk libs/libc
+    echo "$output" | make_append_commands libk libgui libs/libgui
+    echo "$output" | make_append_commands libgui libtxt libs/libtxt
     echo "$output" | make_append_commands libtxt kernel kernel
     echo "$output" | make_append_commands kernel boot boot
     echo "$output" | make_append_commands boot apps apps

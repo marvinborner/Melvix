@@ -1,7 +1,7 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
 #include <assert.h>
-#include <gui.h>
+#include <libgui/gui.h>
 #include <print.h>
 
 int main(void)

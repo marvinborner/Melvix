@@ -2,10 +2,10 @@
 // PSF parser
 
 #include <def.h>
-#include <gfx.h>
+#include <libgui/gfx.h>
+#include <libgui/psf.h>
 #include <mem.h>
 #include <print.h>
-#include <psf.h>
 
 // Verifies the PSF magics
 // Returns the PSF version or 0

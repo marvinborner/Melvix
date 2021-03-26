@@ -4,7 +4,7 @@
 #define MSG_H
 
 #include <def.h>
-#include <gfx.h>
+#include <libgui/gfx.h>
 
 #define MSG_PING_SEND 0x07734
 #define MSG_PING_RECV 0x7474

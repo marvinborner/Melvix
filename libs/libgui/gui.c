@@ -3,9 +3,9 @@
 #include <assert.h>
 #include <def.h>
 #include <errno.h>
-#include <gui.h>
+#include <libgui/gui.h>
+#include <libgui/msg.h>
 #include <list.h>
-#include <msg.h>
 #include <print.h>
 
 #define WM_PATH "/bin/wm"

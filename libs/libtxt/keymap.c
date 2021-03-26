@@ -1,7 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <def.h>
-#include <keymap.h>
+#include <libtxt/keymap.h>
 #include <mem.h>
 #include <print.h>
 #include <sys.h>
