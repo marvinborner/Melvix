@@ -23,6 +23,7 @@ struct node *current = NULL;
 
 // TODO: Use less memcpy and only copy relevant registers (rewrite for efficiency argh)
 // TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
+// TODO: Optimize scheduler
 void scheduler(struct regs *regs)
 {
 	if (quantum == 0) {
@@ -58,18 +59,9 @@ void scheduler(struct regs *regs)
 		}
 	}
 
-	memory_switch_dir(((struct proc *)current->data)->page_dir);
-	memcpy(regs, &((struct proc *)current->data)->regs, sizeof(*regs));
-
-	if (regs->cs != GDT_USER_CODE_OFFSET) {
-		regs->gs = GDT_USER_DATA_OFFSET;
-		regs->fs = GDT_USER_DATA_OFFSET;
-		regs->es = GDT_USER_DATA_OFFSET;
-		regs->ds = GDT_USER_DATA_OFFSET;
-		regs->ss = GDT_USER_DATA_OFFSET;
-		regs->cs = GDT_USER_CODE_OFFSET;
-		regs->eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
-	}
+	struct proc *p = current->data;
+	memory_switch_dir(p->page_dir);
+	memcpy(regs, &p->regs, sizeof(*regs));
 
 	if (current == idle_proc)
 		quantum = 0;
@@ -258,11 +250,19 @@ struct proc *proc_make(enum proc_priv priv)
 	proc->messages = stack_new();
 	proc->memory = list_new();
 	proc->state = PROC_RUNNING;
+	proc->page_dir = virtual_create_dir();
 
-	if (priv == PROC_PRIV_KERNEL)
-		proc->page_dir = virtual_kernel_dir();
-	else
-		proc->page_dir = virtual_create_dir();
+	// Init regs
+	u8 is_kernel = priv == PROC_PRIV_KERNEL;
+	u32 data = is_kernel ? GDT_SUPER_DATA_OFFSET : GDT_USER_DATA_OFFSET;
+	u32 code = is_kernel ? GDT_SUPER_CODE_OFFSET : GDT_USER_CODE_OFFSET;
+	proc->regs.gs = data;
+	proc->regs.fs = data;
+	proc->regs.es = data;
+	proc->regs.ds = data;
+	proc->regs.ss = data;
+	proc->regs.cs = code;
+	proc->regs.eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
 
 	if (current)
 		list_add(proc_list, proc);
@@ -507,7 +507,7 @@ void proc_init(void)
 	assert(vfs_mount(dev, "/proc/") == 0);
 
 	// Idle proc
-	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
+	struct proc *kernel_proc = proc_make(PROC_PRIV_KERNEL);
 	assert(elf_load("/bin/idle", kernel_proc) == 0);
 	kernel_proc->state = PROC_SLEEPING;
 	idle_proc = list_add(proc_list, kernel_proc);

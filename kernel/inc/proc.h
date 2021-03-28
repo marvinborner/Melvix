@@ -14,6 +14,8 @@
 #define EFLAGS_ALWAYS 0x2 // Always one
 #define EFLAGS_INTERRUPTS 0x200 // Enable interrupts
 
+#define GDT_SUPER_CODE_OFFSET 0x08 // Super (kernel) code segment offset in GDT
+#define GDT_SUPER_DATA_OFFSET 0x10 // Super (kernel) data segment offset in GDT
 #define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
 #define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
 
@@ -48,12 +50,12 @@ struct stream {
 struct proc {
 	u32 pid;
 	u32 entry;
-	u8 priv;
 	char name[32];
 	struct stream streams[4];
 	struct page_dir *page_dir;
 	struct regs regs;
 	struct proc_wait wait; // dev_id
+	enum proc_priv priv;
 	enum proc_state state;
 	struct stack *messages;
 	struct list *memory;

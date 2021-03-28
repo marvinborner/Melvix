@@ -26,7 +26,6 @@ NORETURN void __stack_chk_fail_local(void)
 
 /**
  * UBSan
- * TODO: Fix san-paths for userspace (maybe due to -fPIE?)
  */
 
 #define is_aligned(value, alignment) !(value & (alignment - 1))
