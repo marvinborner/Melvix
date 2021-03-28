@@ -62,7 +62,7 @@ struct context {
 	u32 bytes;
 };
 
-struct context *gfx_new_ctx(struct context *ctx);
+struct context *gfx_new_ctx(struct context *ctx, vec2 size, u8 bpp);
 struct font *gfx_resolve_font(enum font_type font_type);
 void gfx_write_char(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, char ch);
 void gfx_write(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, const char *text);

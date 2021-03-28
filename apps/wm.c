@@ -367,6 +367,7 @@ static void handle_event_mouse(struct event_mouse *event)
 
 	struct message_mouse msg = { 0 };
 	msg.header.state = MSG_GO_ON;
+	msg.id = win->id;
 	msg.pos = vec2_sub(mouse.pos, win->pos);
 	msg_send(win->client.pid, GUI_MOUSE, &msg, sizeof(msg));
 }

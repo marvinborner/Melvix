@@ -96,13 +96,13 @@ static void draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
 	}
 }
 
-struct context *gfx_new_ctx(struct context *ctx)
+struct context *gfx_new_ctx(struct context *ctx, vec2 size, u8 bpp)
 {
-	/* struct message msg = { 0 }; */
-	assert(0);
-	/* assert(msg_send(pidof(WM_PATH), GFX_NEW_CONTEXT, ctx) > 0); */
-	/* assert(msg_receive(&msg) > 0); */
-	/* memcpy(ctx, msg.data, sizeof(*ctx)); */
+	ctx->size = size;
+	ctx->bpp = bpp;
+	ctx->pitch = size.x * (bpp >> 3);
+	ctx->bytes = ctx->pitch * ctx->size.y;
+	ctx->fb = zalloc(ctx->bytes);
 	return ctx;
 }
 

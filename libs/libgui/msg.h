@@ -49,6 +49,7 @@ struct message_destroy_window {
 
 struct message_mouse {
 	struct message_header header;
+	u32 id;
 	vec2 pos;
 	struct {
 		u8 click : 1;

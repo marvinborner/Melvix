@@ -47,6 +47,12 @@ typedef s32 res;
 #ifdef userspace
 #define errno (*__errno())
 extern u32 *__errno(void);
+
+#define return_errno(__num)                                                                        \
+	{                                                                                          \
+		errno = __num;                                                                     \
+		return -errno;                                                                     \
+	}
 #endif
 
 #endif
