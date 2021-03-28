@@ -76,6 +76,21 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 
 -   If you need help: `./run to help`
 
+## Contributions
+
+If you decide to contribute to this project, these are some ideas that could get you started:
+
+-   Fix some `TODO`s in the code. While these are often not very well described, most of them should be self-explanatory
+-   Fix issues posted on GitHubs issues tab
+-   Improve the size/speed of the system or the overall performance of libraries and functions
+-   Find/fix security issues and potentially write an exploit
+-   Add new features (whatever you like, really)
+-   Huge parts of the code are kind of a mess to be honest. Feel free to make the code more beautiful :)
+-   I'm not very good in design and frontend, so feel free to improve these kind of things too
+-   Write more tests for the test suite (which is extremely incomplete at the moment)
+
+Just remember to pass the test suite and follow the code formatting guidelines (`.clang-format`).
+
 ## Contributors :heart:
 
 -   [Marvin Borner](https://github.com/marvinborner/) - Project initiator and main contributor
