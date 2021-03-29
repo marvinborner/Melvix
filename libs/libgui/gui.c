@@ -34,7 +34,7 @@ struct list *windows = NULL;
  * Resolve/find stuff
  */
 
-static struct gui_window *win_by_id(u32 win_id)
+static struct gui_window *gui_window_by_id(u32 win_id)
 {
 	assert(windows);
 	struct node *iterator = windows->head;
@@ -48,8 +48,11 @@ static struct gui_window *win_by_id(u32 win_id)
 	return NULL;
 }
 
-static struct gui_widget *widget_in_widget(struct gui_widget *parent, u32 widget_id)
+static struct gui_widget *gui_widget_in_widget(struct gui_widget *parent, u32 widget_id)
 {
+	if (!parent)
+		return NULL;
+
 	if (parent->id == widget_id)
 		return parent;
 
@@ -62,7 +65,7 @@ static struct gui_widget *widget_in_widget(struct gui_widget *parent, u32 widget
 		if (widget->id == widget_id)
 			return iterator->data;
 
-		struct gui_widget *sub = widget_in_widget(widget, widget_id);
+		struct gui_widget *sub = gui_widget_in_widget(widget, widget_id);
 		if (sub && sub->id == widget_id)
 			return sub;
 
@@ -72,16 +75,18 @@ static struct gui_widget *widget_in_widget(struct gui_widget *parent, u32 widget
 	return NULL;
 }
 
-static struct gui_widget *widget_in_win(struct gui_window *win, u32 widget_id)
+static struct gui_widget *gui_widget_in_win(struct gui_window *win, u32 widget_id)
 {
-	assert(win->widgets);
+	if (!win || !win->widgets)
+		return NULL;
+
 	struct node *iterator = win->widgets->head;
 	while (iterator) {
 		struct gui_widget *widget = iterator->data;
 		if (widget->id == widget_id)
 			return iterator->data;
 
-		struct gui_widget *sub = widget_in_widget(widget, widget_id);
+		struct gui_widget *sub = gui_widget_in_widget(widget, widget_id);
 		if (sub && sub->id == widget_id)
 			return sub;
 
@@ -93,8 +98,8 @@ static struct gui_widget *widget_in_win(struct gui_window *win, u32 widget_id)
 
 static struct gui_widget *widget_by_id(u32 win_id, u32 widget_id)
 {
-	struct gui_window *win = win_by_id(win_id);
-	return widget_in_win(win, widget_id);
+	struct gui_window *win = gui_window_by_id(win_id);
+	return gui_widget_in_win(win, widget_id);
 }
 
 /**
@@ -116,25 +121,63 @@ res gui_fill(u32 win_id, u32 widget_id, u32 c)
  * Widgets
  */
 
+static res gui_sub_widget_at(struct gui_widget *widget, vec2 pos, struct gui_widget *buf)
+{
+	if (!widget || !widget->children || !buf)
+		return_errno(EFAULT);
+
+	struct gui_widget *ret = NULL;
+	struct gui_widget sub = { 0 };
+
+	struct node *iterator = widget->children->head;
+	while (iterator) {
+		struct gui_widget *w = iterator->data;
+		if (pos.x >= w->pos.x && pos.x <= w->pos.x + w->ctx.size.x && pos.y >= w->pos.y &&
+		    pos.y <= w->pos.y + w->ctx.size.y)
+			ret = w;
+
+		if (w->children->head) {
+			if (gui_sub_widget_at(w, pos, &sub) == EOK)
+				ret = &sub;
+		}
+		iterator = iterator->next;
+	}
+
+	if (ret) {
+		*buf = *ret;
+		return_errno(EOK);
+	} else {
+		return_errno(ENOENT);
+	}
+}
+
 static res gui_widget_at(u32 win_id, vec2 pos, struct gui_widget *widget)
 {
-	struct gui_window *win = win_by_id(win_id);
-	if (!win)
+	if (!widget)
+		return_errno(EFAULT);
+
+	struct gui_window *win = gui_window_by_id(win_id);
+	if (!win || !win->widgets)
 		return_errno(ENOENT);
 
 	struct gui_widget *ret = NULL;
+	struct gui_widget sub = { 0 };
 
 	struct node *iterator = win->widgets->head;
 	while (iterator) {
 		struct gui_widget *w = iterator->data;
 		if (pos.x >= w->pos.x && pos.x <= w->pos.x + w->ctx.size.x && pos.y >= w->pos.y &&
 		    pos.y <= w->pos.y + w->ctx.size.y)
-			ret = widget;
-		// TODO: Search in children
+			ret = w;
+
+		if (w->children->head) {
+			if (gui_sub_widget_at(w, pos, &sub) == EOK)
+				ret = &sub;
+		}
 		iterator = iterator->next;
 	}
 
-	if (widget) {
+	if (ret) {
 		*widget = *ret;
 		return_errno(EOK);
 	} else {
@@ -144,8 +187,8 @@ static res gui_widget_at(u32 win_id, vec2 pos, struct gui_widget *widget)
 
 static res gui_sync_widget(u32 win_id, u32 widget_id)
 {
-	struct gui_window *win = win_by_id(win_id);
-	struct gui_widget *widget = widget_in_win(win, widget_id);
+	struct gui_window *win = gui_window_by_id(win_id);
+	struct gui_widget *widget = gui_widget_in_win(win, widget_id);
 	if (!widget)
 		return_errno(ENOENT);
 
@@ -186,7 +229,7 @@ res gui_add_widget(u32 win_id, u32 widget_id, vec2 size, vec2 pos)
 
 res gui_new_widget(u32 win_id, vec2 size, vec2 pos)
 {
-	struct gui_window *win = win_by_id(win_id);
+	struct gui_window *win = gui_window_by_id(win_id);
 	if (!win)
 		return_errno(ENOENT);
 
@@ -234,7 +277,7 @@ res gui_redraw_widget(u32 win_id, u32 widget_id)
 
 vec2 gui_window_size(u32 win_id)
 {
-	struct gui_window *win = win_by_id(win_id);
+	struct gui_window *win = gui_window_by_id(win_id);
 	if (!win)
 		return vec2(0, 0);
 	return win->ctx.size;
@@ -345,6 +388,9 @@ static void handle_exit(void)
 void gui_loop(void)
 {
 	atexit(handle_exit);
+
+	if (!windows)
+		err(1, "Create some windows first\n");
 
 	void *msg = zalloc(4096);
 	while (msg_receive(msg, 4096)) {
