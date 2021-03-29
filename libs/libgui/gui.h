@@ -8,7 +8,10 @@
 #include <libgui/gfx.h>
 #include <vec.h>
 
-enum gui_listener { GUI_LISTEN_MOUSEMOVE };
+enum gui_listener {
+	GUI_LISTEN_MOUSEMOVE,
+	GUI_LISTEN_MOUSECLICK,
+};
 
 res gui_new_window(void);
 res gui_redraw_window(u32 id);

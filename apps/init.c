@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 	UNUSED(argv);
 
 	assert(exec("/bin/wm", "wm", NULL) == 0);
-	assert(exec("/bin/window", "test", NULL) == 0);
+	assert(exec("/bin/chess", "chess", NULL) == 0);
 
 	return 0;
 }

@@ -7,7 +7,6 @@
 #include <libgui/msg.h>
 #include <list.h>
 #include <print.h>
-#include <random.h>
 
 #define WM_PATH "/bin/wm"
 
@@ -18,7 +17,8 @@ struct gui_widget {
 	struct list *children;
 
 	struct {
-		void (*mousemove)(vec2 pos);
+		void (*mousemove)(u32 widget_id, vec2 pos);
+		void (*mouseclick)(u32 widget_id, vec2 pos);
 	} event;
 };
 
@@ -96,7 +96,7 @@ static struct gui_widget *gui_widget_in_win(struct gui_window *win, u32 widget_i
 	return NULL;
 }
 
-static struct gui_widget *widget_by_id(u32 win_id, u32 widget_id)
+static struct gui_widget *gui_widget_by_id(u32 win_id, u32 widget_id)
 {
 	struct gui_window *win = gui_window_by_id(win_id);
 	return gui_widget_in_win(win, widget_id);
@@ -108,7 +108,7 @@ static struct gui_widget *widget_by_id(u32 win_id, u32 widget_id)
 
 res gui_fill(u32 win_id, u32 widget_id, u32 c)
 {
-	struct gui_widget *widget = widget_by_id(win_id, widget_id);
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
 	if (!widget)
 		return_errno(ENOENT);
 
@@ -157,8 +157,11 @@ static res gui_widget_at(u32 win_id, vec2 pos, struct gui_widget *widget)
 		return_errno(EFAULT);
 
 	struct gui_window *win = gui_window_by_id(win_id);
-	if (!win || !win->widgets)
+	if (!win)
 		return_errno(ENOENT);
+
+	if (!win->widgets)
+		return_errno(EOK);
 
 	struct gui_widget *ret = NULL;
 	struct gui_widget sub = { 0 };
@@ -185,6 +188,24 @@ static res gui_widget_at(u32 win_id, vec2 pos, struct gui_widget *widget)
 	}
 }
 
+static res gui_sync_sub_widgets(struct gui_widget *widget)
+{
+	if (!widget)
+		return_errno(EFAULT);
+
+	if (!widget->children)
+		return_errno(EOK);
+
+	struct node *iterator = widget->children->head;
+	while (iterator) {
+		struct gui_widget *w = iterator->data;
+		gfx_ctx_on_ctx(&widget->ctx, &w->ctx, w->pos);
+		iterator = iterator->next;
+	}
+
+	return_errno(EOK);
+}
+
 static res gui_sync_widget(u32 win_id, u32 widget_id)
 {
 	struct gui_window *win = gui_window_by_id(win_id);
@@ -192,7 +213,28 @@ static res gui_sync_widget(u32 win_id, u32 widget_id)
 	if (!widget)
 		return_errno(ENOENT);
 
+	gui_sync_sub_widgets(widget);
 	gfx_ctx_on_ctx(&win->ctx, &widget->ctx, widget->pos);
+
+	return_errno(EOK);
+}
+
+static res gui_sync_widgets(u32 win_id)
+{
+	struct gui_window *win = gui_window_by_id(win_id);
+	if (!win)
+		return_errno(ENOENT);
+
+	if (!win->widgets)
+		return_errno(EOK);
+
+	struct node *iterator = win->widgets->head;
+	while (iterator) {
+		struct gui_widget *widget = iterator->data;
+		gui_sync_sub_widgets(widget);
+		gfx_ctx_on_ctx(&win->ctx, &widget->ctx, widget->pos);
+		iterator = iterator->next;
+	}
 
 	return_errno(EOK);
 }
@@ -202,12 +244,41 @@ static struct gui_widget *gui_win_main_widget(struct gui_window *win)
 	return win->widgets->head->data;
 }
 
+// TODO: This is very recursive and inefficient -> improve!
+static vec2 gui_offset_widget(struct gui_widget *parent, struct gui_widget *child)
+{
+	if (!parent || !parent->children || !child)
+		return vec2(0, 0);
+
+	vec2 offset = vec2(0, 0);
+
+	struct node *iterator = parent->children->head;
+	while (iterator) {
+		struct gui_widget *w = iterator->data;
+		if (w == child) {
+			offset = vec2_add(offset, w->pos);
+			break;
+		}
+		struct gui_widget *sub = gui_widget_in_widget(w, child->id);
+		if (sub) {
+			offset = vec2_add(offset, w->pos);
+			gui_offset_widget(w, child);
+			break;
+		}
+
+		iterator = iterator->next;
+	}
+
+	return offset;
+}
+
 static struct gui_widget *gui_new_plain_widget(vec2 size, vec2 pos, u8 bpp)
 {
 	struct gui_widget *widget = zalloc(sizeof(*widget));
 	struct context *ctx = zalloc(sizeof(*ctx));
 
-	widget->id = rand();
+	static u32 id = 0;
+	widget->id = id++;
 	widget->pos = pos;
 	widget->ctx = *gfx_new_ctx(ctx, size, bpp);
 	widget->children = list_new();
@@ -217,7 +288,7 @@ static struct gui_widget *gui_new_plain_widget(vec2 size, vec2 pos, u8 bpp)
 
 res gui_add_widget(u32 win_id, u32 widget_id, vec2 size, vec2 pos)
 {
-	struct gui_widget *parent = widget_by_id(win_id, widget_id);
+	struct gui_widget *parent = gui_widget_by_id(win_id, widget_id);
 	if (!parent)
 		return_errno(ENOENT);
 
@@ -245,13 +316,16 @@ res gui_listen_widget(u32 win_id, u32 widget_id, enum gui_listener listener, u32
 	if (!func)
 		return_errno(EFAULT);
 
-	struct gui_widget *widget = widget_by_id(win_id, widget_id);
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
 	if (!widget)
 		return_errno(ENOENT);
 
 	switch (listener) {
 	case GUI_LISTEN_MOUSEMOVE:
-		widget->event.mousemove = (void (*)(vec2))func;
+		widget->event.mousemove = (void (*)(u32, vec2))func;
+		break;
+	case GUI_LISTEN_MOUSECLICK:
+		widget->event.mouseclick = (void (*)(u32, vec2))func;
 		break;
 	default:
 		return_errno(ENOENT);
@@ -315,11 +389,15 @@ res gui_new_window(void)
 
 res gui_redraw_window(u32 id)
 {
+	res ret = gui_sync_widgets(id);
+	if (ret != 0)
+		return_errno(ENOENT);
+
 	struct message_redraw_window msg = { .id = id, .header.state = MSG_NEED_ANSWER };
 	if (msg_send(pidof(WM_PATH), GUI_REDRAW_WINDOW, &msg, sizeof(msg)) > 0 &&
 	    msg_receive(&msg, sizeof(msg)) > 0 &&
 	    msg.header.type == (GUI_REDRAW_WINDOW | MSG_SUCCESS))
-		return id;
+		return EOK;
 
 	return_errno(EINVAL);
 }
@@ -328,16 +406,16 @@ res gui_redraw_window(u32 id)
  * Message handling
  */
 
-static res handle_error(const char *op, res code)
+static res gui_handle_error(const char *op, res code)
 {
 	log("GUI error at '%s': %s (%d)\n", op, strerror(code), code);
 	return code;
 }
 
-static res handle_ping(struct message_ping *msg)
+static res gui_handle_ping(struct message_ping *msg)
 {
 	if (msg->ping != MSG_PING_SEND)
-		return handle_error("ping", EINVAL);
+		return gui_handle_error("ping", EINVAL);
 
 	msg->header.type |= MSG_SUCCESS;
 	msg->ping = MSG_PING_RECV;
@@ -346,7 +424,7 @@ static res handle_ping(struct message_ping *msg)
 	return errno;
 }
 
-static res handle_mouse(struct message_mouse *msg)
+static res gui_handle_mouse(struct message_mouse *msg)
 {
 	if (msg->header.state == MSG_NEED_ANSWER) {
 		msg_send(msg->header.src, msg->header.type | MSG_SUCCESS, msg, sizeof(*msg));
@@ -359,13 +437,19 @@ static res handle_mouse(struct message_mouse *msg)
 	if (gui_widget_at(msg->id, msg->pos, &widget) != EOK)
 		return_errno(EOK);
 
+	struct gui_window *win = gui_window_by_id(msg->id);
+	vec2 offset = gui_offset_widget(gui_win_main_widget(win), &widget);
+
 	if (widget.event.mousemove)
-		widget.event.mousemove(msg->pos);
+		widget.event.mousemove(widget.id, vec2_sub(msg->pos, offset));
+
+	if (widget.event.mouseclick && msg->bits.click)
+		widget.event.mouseclick(widget.id, vec2_sub(msg->pos, offset));
 
 	return_errno(EOK);
 }
 
-static void handle_exit(void)
+static void gui_handle_exit(void)
 {
 	if (!windows)
 		return;
@@ -387,7 +471,7 @@ static void handle_exit(void)
 
 void gui_loop(void)
 {
-	atexit(handle_exit);
+	atexit(gui_handle_exit);
 
 	if (!windows)
 		err(1, "Create some windows first\n");
@@ -397,13 +481,14 @@ void gui_loop(void)
 		struct message_header *head = msg;
 		switch (head->type) {
 		case GUI_PING:
-			handle_ping(msg);
+			gui_handle_ping(msg);
 			break;
 		case GUI_MOUSE:
-			handle_mouse(msg);
+			gui_handle_mouse(msg);
 			break;
 		default:
-			handle_error("loop", EINVAL);
+			// TODO: Fix random unknown msg types
+			gui_handle_error("loop", EINVAL);
 		}
 	}
 }
