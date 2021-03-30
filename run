@@ -10,13 +10,13 @@ NPROC=nproc
 SUDO=sudo
 TAGS=ctags
 if [ "$(uname -s)" = "OpenBSD" ]; then
-        NPROC="sysctl -n hw.ncpuonline"
-        SUDO="doas"
-        TAGS="ectags"
-        export MAKE=gmake
-        export CC="egcc"
-        export CXX="eg++"
-        export LDFLAGS=-Wl,-z,notext
+    NPROC="sysctl -n hw.ncpuonline"
+    SUDO="doas"
+    TAGS="ectags"
+    export MAKE=gmake
+    export CC="egcc"
+    export CXX="eg++"
+    export LDFLAGS=-Wl,-z,notext
 fi
 
 mode="${1}"
@@ -60,8 +60,8 @@ make_cross() {
         export PATH="$PREFIX/bin:$PATH"
 
         if [ "$(uname -s)" = "OpenBSD" ]; then
-                export with_gmp=/usr/local
-                sed -i 's/-no-pie/-nopie/g' "${DIR}/src/gcc-9.2.0/gcc/configure"
+            export with_gmp=/usr/local
+            sed -i 's/-no-pie/-nopie/g' "${DIR}/src/gcc-9.2.0/gcc/configure"
         fi
 
         # Compile binutils
@@ -78,7 +78,7 @@ make_cross() {
 
         # Fix things
         if [ "$(uname -s)" = "OpenBSD" ]; then
-                cd "${DIR}/opt/libexec/gcc/i686-elf/9.2.0/" && ln -sf liblto_plugin.so.0.0 liblto_plugin.so
+            cd "${DIR}/opt/libexec/gcc/i686-elf/9.2.0/" && ln -sf liblto_plugin.so.0.0 liblto_plugin.so
         fi
 
         cd "${DIR}/.."
@@ -86,19 +86,39 @@ make_cross() {
 }
 
 make_disk() {
-    rm -rf disk && mkdir -p disk/font/ && mkdir -p disk/conf/
-    echo "Hallo" > disk/conf/test
+    rm -rf disk && mkdir -p disk/font/ && mkdir -p disk/icons/ && mkdir -p disk/conf/
+    echo "Hallo" >disk/conf/test
 
     cp -r res/ disk/
 
+    echo "Getting font"
     cd disk/font/
     VERSION="1.8.2"
     wget -q "https://github.com/fcambus/spleen/releases/download/$VERSION/spleen-$VERSION.tar.gz"
     tar xzf "spleen-$VERSION.tar.gz"
     mv spleen-"$VERSION"/*.psfu .
     rm -rf "spleen-$VERSION"*
-
     cd ../../
+
+    icons="cursor-default
+    cursor-default-outline
+    chess-bishop
+    chess-king
+    chess-knight
+    chess-pawn
+    chess-queen
+    chess-rook"
+
+    [ -d icons/ ] || git clone --depth=1 https://github.com/Templarian/MaterialDesign.git icons/
+    echo "$icons" | while read icon; do
+        echo "Converting $icon"
+        convert -depth 8 -background none -resize 18x18 icons/svg/"$icon".svg disk/icons/"$icon"-18.png
+        convert -depth 8 -background none -resize 24x24 icons/svg/"$icon".svg disk/icons/"$icon"-24.png
+        convert -depth 8 -background none -resize 36x36 icons/svg/"$icon".svg disk/icons/"$icon"-36.png
+        convert -depth 8 -background none -resize 48x48 icons/svg/"$icon".svg disk/icons/"$icon"-48.png
+    done
+
+    echo "Done!"
 }
 
 make_build() {
@@ -121,7 +141,14 @@ make_build() {
     dd if=/dev/zero of=build/disk.img bs=1k count=32k status=none
     if [ "$(uname -s)" = "OpenBSD" ]; then
         VND=$($SUDO vnconfig build/disk.img)
-        (echo "e 0"; echo 83; echo n; echo 0; echo "*"; echo "quit") | $SUDO fdisk -e $VND >/dev/null
+        (
+            echo "e 0"
+            echo 83
+            echo n
+            echo 0
+            echo "*"
+            echo "quit"
+        ) | $SUDO fdisk -e $VND >/dev/null
         $SUDO mkfs.ext2 -F /dev/${VND}i >/dev/null
 
         $SUDO dd if=build/boot.bin of=/dev/${VND}i conv=notrunc status=none
