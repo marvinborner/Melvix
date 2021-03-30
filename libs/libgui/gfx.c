@@ -145,7 +145,7 @@ void gfx_write(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, c
 	}
 }
 
-void gfx_load_image(struct context *ctx, vec2 pos, const char *path)
+void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter, const char *path)
 {
 	// TODO: Support x, y
 	// TODO: Detect image type
@@ -162,16 +162,36 @@ void gfx_load_image(struct context *ctx, vec2 pos, const char *path)
 	bmp.pitch = bmp.size.x * (bmp.bpp >> 3);
 
 	// TODO: Fix reversed png in decoder
-	int bypp = bmp.bpp >> 3;
-	// u8 *srcfb = &bmp->data[bypp + (bmp->size.y - 1) * bmp->pitch];
+	u8 bypp = bmp.bpp >> 3;
+	/* u8 *srcfb = &bmp->data[bypp + (bmp->size.y - 1) * bmp->pitch]; */
 	u8 *srcfb = bmp.data;
 	u8 *destfb = &ctx->fb[bypp];
-	for (u32 cy = 0; cy < bmp.size.y; cy++) {
-		memcpy(destfb, srcfb, bmp.pitch);
-		// srcfb -= bmp->pitch;
-		srcfb += bmp.pitch;
-		destfb += ctx->pitch;
+	for (u32 cy = 0; cy < bmp.size.y && cy + pos.y < ctx->size.y; cy++) {
+		int diff = 0;
+		for (u32 cx = 0; cx < bmp.size.x && cx + pos.x < ctx->size.x; cx++) {
+			if (srcfb[bypp - 1]) {
+				if (filter == GFX_FILTER_NONE) {
+					memcpy(destfb, srcfb, bypp);
+				} else if (filter == GFX_FILTER_INVERT) {
+					destfb[0] = 0xff - srcfb[0];
+					destfb[1] = 0xff - srcfb[1];
+					destfb[2] = 0xff - srcfb[2];
+					destfb[3] = srcfb[3];
+				}
+			}
+
+			srcfb += bypp;
+			destfb += bypp;
+			diff += bypp;
+		}
+		srcfb += bmp.pitch - diff;
+		destfb += ctx->pitch - diff;
 	}
+}
+
+void gfx_load_image(struct context *ctx, vec2 pos, const char *path)
+{
+	gfx_load_image_filter(ctx, pos, GFX_FILTER_NONE, path);
 }
 
 void gfx_load_wallpaper(struct context *ctx, const char *path)
@@ -195,16 +215,17 @@ void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size)
 // TODO: Optimize!
 void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos)
 {
-	if (src->size.x == dest->size.x && src->size.y == dest->size.y) {
-		memcpy(dest->fb, src->fb, dest->pitch * dest->size.y);
-		return;
-	}
+	// TODO: Some kind of alpha-acknowledging memcpy?
+	/* if (src->size.x == dest->size.x && src->size.y == dest->size.y) { */
+	/* 	memcpy(dest->fb, src->fb, dest->pitch * dest->size.y); */
+	/* 	return; */
+	/* } */
 
 	if (src->size.x > dest->size.x || src->size.y > dest->size.y)
 		return;
 
 	// TODO: Negative x and y
-	int bypp = dest->bpp >> 3;
+	u8 bypp = dest->bpp >> 3;
 	u8 *srcfb = src->fb;
 	u8 *destfb = &dest->fb[pos.x * bypp + pos.y * dest->pitch];
 	for (u32 cy = 0; cy < src->size.y && cy + pos.y < dest->size.y; cy++) {

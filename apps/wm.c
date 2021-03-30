@@ -40,7 +40,6 @@ static u8 bypp = 4;
 static struct vbe screen = { 0 };
 static struct list *windows = NULL; // THIS LIST SHALL BE SORTED BY Z-INDEX!
 static struct window *direct = NULL;
-static struct window *root = NULL;
 static struct window *wallpaper = NULL;
 static struct window *cursor = NULL;
 static struct window *focused = NULL;
@@ -57,20 +56,6 @@ static struct {
 	u8 mid : 1;
 	u8 right : 1;
 } mouse = { 0 };
-
-static void buffer_flush(void)
-{
-#ifdef FLUSH_TIMEOUT
-	static u32 time_flush = 0;
-	u32 time_now = time();
-	if (time_now - time_flush > FLUSH_TIMEOUT) {
-		memcpy(direct->ctx.fb, root->ctx.fb, root->ctx.bytes);
-		time_flush = time_now;
-	}
-#else
-	memcpy(direct->ctx.fb, root->ctx.fb, root->ctx.bytes);
-#endif
-}
 
 /**
  * 5head algorithms
@@ -198,16 +183,16 @@ static void rectangle_redraw(vec2 pos1, vec2 pos2, struct window *excluded)
 	struct rectangle rec = rectangle_at(pos1, pos2, excluded);
 
 	u8 *srcfb = rec.data;
-	u8 *destfb = &root->ctx.fb[rec.pos1.x * bypp + rec.pos1.y * root->ctx.pitch];
+	u8 *destfb = &direct->ctx.fb[rec.pos1.x * bypp + rec.pos1.y * direct->ctx.pitch];
 	for (u32 cy = 0; cy < excluded->ctx.size.y; cy++) {
 		memcpy(destfb, srcfb, excluded->ctx.size.x * bypp);
 		srcfb += excluded->ctx.pitch;
-		destfb += root->ctx.pitch;
+		destfb += direct->ctx.pitch;
 	}
 
 	free(rec.data);
 
-	gfx_ctx_on_ctx(&root->ctx, &excluded->ctx, excluded->pos);
+	gfx_ctx_on_ctx(&direct->ctx, &excluded->ctx, excluded->pos);
 }
 
 /**
@@ -218,7 +203,8 @@ static struct window *window_new(struct client client, const char *name, struct 
 				 struct vec2 size, u32 flags)
 {
 	struct window *win = malloc(sizeof(*win));
-	win->id = rand();
+	static u32 id = 0;
+	win->id = id++;
 	win->name = name; // strdup?
 	win->ctx.size = size;
 	win->ctx.bpp = screen.bpp;
@@ -272,10 +258,8 @@ static void window_redraw(struct window *win)
 	vec2 pos2 = vec2(pos1.x + win->ctx.size.x, pos1.y + win->ctx.size.y);
 
 	rectangle_redraw(pos1, pos2, win);
-	if (win != cursor) {
+	if (win != cursor)
 		window_redraw(cursor);
-		buffer_flush();
-	}
 }
 
 // TODO: Fix strange artifacts after destroying
@@ -284,7 +268,6 @@ static void window_destroy(struct window *win)
 	//free(win->name);
 	memset(win->ctx.fb, 0, win->ctx.bytes);
 	rectangle_redraw(win->pos, vec2_add(win->pos, win->ctx.size), win);
-	buffer_flush();
 	list_remove(windows, list_first_data(windows, win));
 	sys_free(win->ctx.fb);
 	free(win);
@@ -359,7 +342,6 @@ static void handle_event_mouse(struct event_mouse *event)
 		return;
 	} else if (!vec2_eq(cursor->pos, cursor->pos_prev)) {
 		window_redraw(cursor);
-		buffer_flush();
 	}
 
 	if (!win)
@@ -393,7 +375,7 @@ static void handle_message_redraw_window(struct message_redraw_window *msg)
 {
 	u32 id = msg->id;
 	struct window *win = window_find(id);
-	if (!win) {
+	if (!win || win->client.pid != msg->header.src) {
 		if (msg->header.state == MSG_NEED_ANSWER)
 			msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_FAILURE, NULL,
 				 sizeof(msg->header));
@@ -411,7 +393,7 @@ static void handle_message_destroy_window(struct message_destroy_window *msg)
 {
 	u32 id = msg->id;
 	struct window *win = window_find(id);
-	if (!win) {
+	if (!win || win->client.pid != msg->header.src) {
 		if (msg->header.state == MSG_NEED_ANSWER)
 			msg_send(msg->header.src, GUI_DESTROY_WINDOW | MSG_FAILURE, NULL,
 				 sizeof(msg->header));
@@ -478,8 +460,6 @@ int main(int argc, char **argv)
 			    WF_NO_WINDOW | WF_NO_FB | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	direct->ctx.fb = screen.fb;
 	direct->flags ^= WF_NO_FB;
-	root = window_new(wm_client, "root", vec2(0, 0), vec2(screen.width, screen.height),
-			  WF_NO_WINDOW | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	wallpaper =
 		window_new(wm_client, "wallpaper", vec2(0, 0), vec2(screen.width, screen.height),
 			   WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);

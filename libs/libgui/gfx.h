@@ -46,6 +46,10 @@
 /* #define WF_RELATIVE (1 << 4) */
 
 enum font_type { FONT_8, FONT_12, FONT_16, FONT_24, FONT_32, FONT_64 };
+enum gfx_filter {
+	GFX_FILTER_NONE,
+	GFX_FILTER_INVERT,
+};
 
 // Generalized font struct
 struct font {
@@ -67,6 +71,7 @@ struct font *gfx_resolve_font(enum font_type font_type);
 void gfx_write_char(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, char ch);
 void gfx_write(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, const char *text);
 void gfx_load_image(struct context *ctx, vec2 pos, const char *path);
+void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter, const char *path);
 void gfx_load_wallpaper(struct context *ctx, const char *path);
 void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size);
 void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos);

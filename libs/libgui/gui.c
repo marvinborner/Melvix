@@ -13,7 +13,9 @@
 struct gui_widget {
 	u32 id;
 	vec2 pos;
-	struct context ctx;
+	/* struct context ctx; */
+	struct context fg;
+	struct context bg;
 	struct list *children;
 
 	struct {
@@ -106,15 +108,45 @@ static struct gui_widget *gui_widget_by_id(u32 win_id, u32 widget_id)
  * GFX wrappers
  */
 
-res gui_fill(u32 win_id, u32 widget_id, u32 c)
+res gui_fill(u32 win_id, u32 widget_id, enum gui_layer layer, u32 c)
 {
 	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
 	if (!widget)
 		return_errno(ENOENT);
 
-	gfx_fill(&widget->ctx, c);
+	if (layer == GUI_LAYER_BG)
+		gfx_fill(&widget->bg, c);
+	else if (layer == GUI_LAYER_FG)
+		gfx_fill(&widget->fg, c);
+	else
+		return_errno(EINVAL);
 
 	return_errno(EOK);
+}
+
+res gui_load_image_filter(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
+			  enum gfx_filter filter, const char *path)
+{
+	UNUSED(size); // TODO: Add image scaling
+
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
+	if (!widget)
+		return_errno(ENOENT);
+
+	if (layer == GUI_LAYER_BG)
+		gfx_load_image_filter(&widget->bg, pos, filter, path);
+	else if (layer == GUI_LAYER_FG)
+		gfx_load_image_filter(&widget->fg, pos, filter, path);
+	else
+		return_errno(EINVAL);
+
+	return_errno(EOK);
+}
+
+res gui_load_image(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
+		   const char *path)
+{
+	return gui_load_image_filter(win_id, widget_id, layer, pos, size, GFX_FILTER_NONE, path);
 }
 
 /**
@@ -132,8 +164,8 @@ static res gui_sub_widget_at(struct gui_widget *widget, vec2 pos, struct gui_wid
 	struct node *iterator = widget->children->head;
 	while (iterator) {
 		struct gui_widget *w = iterator->data;
-		if (pos.x >= w->pos.x && pos.x <= w->pos.x + w->ctx.size.x && pos.y >= w->pos.y &&
-		    pos.y <= w->pos.y + w->ctx.size.y)
+		if (pos.x >= w->pos.x && pos.x <= w->pos.x + w->bg.size.x && pos.y >= w->pos.y &&
+		    pos.y <= w->pos.y + w->bg.size.y)
 			ret = w;
 
 		if (w->children->head) {
@@ -169,8 +201,8 @@ static res gui_widget_at(u32 win_id, vec2 pos, struct gui_widget *widget)
 	struct node *iterator = win->widgets->head;
 	while (iterator) {
 		struct gui_widget *w = iterator->data;
-		if (pos.x >= w->pos.x && pos.x <= w->pos.x + w->ctx.size.x && pos.y >= w->pos.y &&
-		    pos.y <= w->pos.y + w->ctx.size.y)
+		if (pos.x >= w->pos.x && pos.x <= w->pos.x + w->bg.size.x && pos.y >= w->pos.y &&
+		    pos.y <= w->pos.y + w->bg.size.y)
 			ret = w;
 
 		if (w->children->head) {
@@ -199,7 +231,8 @@ static res gui_sync_sub_widgets(struct gui_widget *widget)
 	struct node *iterator = widget->children->head;
 	while (iterator) {
 		struct gui_widget *w = iterator->data;
-		gfx_ctx_on_ctx(&widget->ctx, &w->ctx, w->pos);
+		gfx_ctx_on_ctx(&widget->bg, &w->bg, w->pos);
+		gfx_ctx_on_ctx(&widget->fg, &w->fg, w->pos);
 		iterator = iterator->next;
 	}
 
@@ -214,7 +247,8 @@ static res gui_sync_widget(u32 win_id, u32 widget_id)
 		return_errno(ENOENT);
 
 	gui_sync_sub_widgets(widget);
-	gfx_ctx_on_ctx(&win->ctx, &widget->ctx, widget->pos);
+	gfx_ctx_on_ctx(&win->ctx, &widget->bg, widget->pos);
+	gfx_ctx_on_ctx(&win->ctx, &widget->fg, widget->pos);
 
 	return_errno(EOK);
 }
@@ -232,7 +266,8 @@ static res gui_sync_widgets(u32 win_id)
 	while (iterator) {
 		struct gui_widget *widget = iterator->data;
 		gui_sync_sub_widgets(widget);
-		gfx_ctx_on_ctx(&win->ctx, &widget->ctx, widget->pos);
+		gfx_ctx_on_ctx(&win->ctx, &widget->bg, widget->pos);
+		gfx_ctx_on_ctx(&win->ctx, &widget->fg, widget->pos);
 		iterator = iterator->next;
 	}
 
@@ -275,12 +310,14 @@ static vec2 gui_offset_widget(struct gui_widget *parent, struct gui_widget *chil
 static struct gui_widget *gui_new_plain_widget(vec2 size, vec2 pos, u8 bpp)
 {
 	struct gui_widget *widget = zalloc(sizeof(*widget));
-	struct context *ctx = zalloc(sizeof(*ctx));
+	struct context *bg = zalloc(sizeof(*bg));
+	struct context *fg = zalloc(sizeof(*fg));
 
 	static u32 id = 0;
 	widget->id = id++;
 	widget->pos = pos;
-	widget->ctx = *gfx_new_ctx(ctx, size, bpp);
+	widget->bg = *gfx_new_ctx(bg, size, bpp);
+	widget->fg = *gfx_new_ctx(fg, size, bpp);
 	widget->children = list_new();
 
 	return widget;
@@ -292,7 +329,7 @@ res gui_add_widget(u32 win_id, u32 widget_id, vec2 size, vec2 pos)
 	if (!parent)
 		return_errno(ENOENT);
 
-	struct gui_widget *child = gui_new_plain_widget(size, pos, parent->ctx.bpp);
+	struct gui_widget *child = gui_new_plain_widget(size, pos, parent->bg.bpp);
 	list_add(parent->children, child);
 
 	return child->id;
