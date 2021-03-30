@@ -112,10 +112,10 @@ make_disk() {
     [ -d icons/ ] || git clone --depth=1 https://github.com/Templarian/MaterialDesign.git icons/
     echo "$icons" | while read icon; do
         echo "Converting $icon"
-        convert -depth 8 -background none -resize 18x18 icons/svg/"$icon".svg disk/icons/"$icon"-18.png
-        convert -depth 8 -background none -resize 24x24 icons/svg/"$icon".svg disk/icons/"$icon"-24.png
-        convert -depth 8 -background none -resize 36x36 icons/svg/"$icon".svg disk/icons/"$icon"-36.png
-        convert -depth 8 -background none -resize 48x48 icons/svg/"$icon".svg disk/icons/"$icon"-48.png
+        inkscape -w 18 -h 18 icons/svg/"$icon".svg -o disk/icons/"$icon"-18.png
+        inkscape -w 24 -h 24 icons/svg/"$icon".svg -o disk/icons/"$icon"-24.png
+        inkscape -w 36 -h 36 icons/svg/"$icon".svg -o disk/icons/"$icon"-36.png
+        inkscape -w 48 -h 48 icons/svg/"$icon".svg -o disk/icons/"$icon"-48.png
     done
 
     echo "Done!"
