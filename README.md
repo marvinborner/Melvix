@@ -49,24 +49,11 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 
 -   Use any system running GNU/Linux or OpenBSD
 
--   Install build dependencies (package names may vary depending on your operating system)
+-   Install build dependencies
 
-    -   Ubuntu/Debian _"instructions"_ can be found here: [GitHub Workflow](https://raw.githubusercontent.com/marvinborner/Melvix/main/.github/workflows/build.yml)
-    -   OpenBSD: `pkg_add git ccache gcc g++ gmake bison gmp libmpc mpfr texinfo curl nasm qemu e2fsprogs`
-    -   git
-    -   binutils
-    -   ccache
-    -   gcc
-    -   make
-    -   bison
-    -   flex
-    -   gmp
-    -   mpc
-    -   mpfr
-    -   texinfo
-    -   curl
-    -   nasm
-    -   qemu
+    -   General template: `[pkg_manager] [install] git binutils ccache gcc make bison flex gmp mpc mpfr texinfo curl nasm qemu inkscape` (package names may vary depending on your operating system)
+    -   Ubuntu/Debian: `apt-get install -y build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo ccache curl nasm grub-common qemu qemu-kvm mtools ctags inkscape`
+    -   OpenBSD: `pkg_add git ccache gcc g++ gmake bison gmp libmpc mpfr texinfo curl nasm qemu e2fsprogs inkscape`
 
 -   Clone this repository using `git clone https://github.com/marvinborner/Melvix.git`
 
@@ -88,6 +75,7 @@ If you decide to contribute to this project, these are some ideas that could get
 -   Huge parts of the code are kind of a mess to be honest. Feel free to make the code more beautiful :)
 -   I'm not very good in design and frontend, so feel free to improve these kind of things too
 -   Write more tests for the test suite (which is extremely incomplete at the moment)
+-   Write/improve documentation - either in code or in the README, wiki or manuals.
 
 Just remember to pass the test suite and follow the code formatting guidelines (`.clang-format`).
 
