@@ -110,12 +110,20 @@ make_disk() {
     chess-rook"
 
     [ -d icons/ ] || git clone --depth=1 https://github.com/Templarian/MaterialDesign.git icons/
+    inkscape_version="$(inkscape --version | awk '{print $2}' | cut -c1)"
     echo "$icons" | while read icon; do
         echo "Converting $icon"
-        inkscape -w 18 -h 18 icons/svg/"$icon".svg -o disk/icons/"$icon"-18.png
-        inkscape -w 24 -h 24 icons/svg/"$icon".svg -o disk/icons/"$icon"-24.png
-        inkscape -w 36 -h 36 icons/svg/"$icon".svg -o disk/icons/"$icon"-36.png
-        inkscape -w 48 -h 48 icons/svg/"$icon".svg -o disk/icons/"$icon"-48.png
+        if [ "$inkscape_version" = "0" ]; then
+            inkscape -z -w 18 -h 18 icons/svg/"$icon".svg -e disk/icons/"$icon"-18.png
+            inkscape -z -w 24 -h 24 icons/svg/"$icon".svg -e disk/icons/"$icon"-24.png
+            inkscape -z -w 36 -h 36 icons/svg/"$icon".svg -e disk/icons/"$icon"-36.png
+            inkscape -z -w 48 -h 48 icons/svg/"$icon".svg -e disk/icons/"$icon"-48.png
+        else
+            inkscape -w 18 -h 18 icons/svg/"$icon".svg -o disk/icons/"$icon"-18.png
+            inkscape -w 24 -h 24 icons/svg/"$icon".svg -o disk/icons/"$icon"-24.png
+            inkscape -w 36 -h 36 icons/svg/"$icon".svg -o disk/icons/"$icon"-36.png
+            inkscape -w 48 -h 48 icons/svg/"$icon".svg -o disk/icons/"$icon"-48.png
+        fi
     done
 
     echo "Done!"
