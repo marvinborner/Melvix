@@ -73,9 +73,12 @@ static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 		vec2_add(pos1, vec2(0, height)),
 	};
 
+	u8 cursor_found = 0;
+
 	struct node *iterator = windows->head;
 	while (iterator) {
 		struct window *win = iterator->data;
+
 		if ((win->flags & WF_NO_WINDOW) != 0)
 			goto next;
 
@@ -88,9 +91,12 @@ static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 
 		for (int i = 0; i < 4; i++) {
 			vec2 corner = corners[i];
-			if ((pos1.x < corner.x && pos1.y < corner.y) &&
-			    (pos2.x > corner.x && pos2.y > corner.y)) {
-				list_add(list, win);
+			if ((pos1.x <= corner.x && pos1.y <= corner.y) &&
+			    (pos2.x >= corner.x && pos2.y >= corner.y)) {
+				if (win == cursor)
+					cursor_found = 1;
+				else
+					list_add(list, win);
 				goto next;
 			}
 		}
@@ -99,9 +105,12 @@ static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 		vec2 win_pos2 = vec2_add(win->pos, win->ctx.size);
 		for (int i = 0; i < 4; i++) {
 			vec2 corner = rec_corners[i];
-			if ((win_pos1.x < corner.x && win_pos1.y < corner.y) &&
-			    (win_pos2.x > corner.x && win_pos2.y > corner.y)) {
-				list_add(list, win);
+			if ((win_pos1.x <= corner.x && win_pos1.y <= corner.y) &&
+			    (win_pos2.x >= corner.x && win_pos2.y >= corner.y)) {
+				if (win == cursor)
+					cursor_found = 1;
+				else
+					list_add(list, win);
 				goto next;
 			}
 		}
@@ -109,12 +118,15 @@ static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 	next:
 		iterator = iterator->next;
 	}
+
+	if (cursor_found)
+		list_add(list, cursor);
 }
 
-static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *excluded)
+static struct rectangle rectangle_at(vec2 pos1, vec2 pos2)
 {
-	u32 width = pos2.x - pos1.x;
-	u32 height = pos2.y - pos1.y;
+	u32 width = ABS(pos2.x - pos1.x);
+	u32 height = ABS(pos2.y - pos1.y);
 	u32 pitch = width * bypp;
 	u8 *data = zalloc(width * height * bypp);
 
@@ -123,10 +135,6 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 	struct node *iterator = windows_at->head;
 	while (iterator) {
 		struct window *win = iterator->data;
-		iterator = iterator->next;
-
-		if (win == excluded)
-			continue;
 
 		s32 start_x = win->pos.x - pos1.x;
 		u32 end_x = width;
@@ -172,27 +180,32 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2, struct window *exclud
 			srcfb += win->ctx.pitch - diff;
 			destfb += pitch - diff;
 		}
+
+		iterator = iterator->next;
 	}
 	list_destroy(windows_at);
 
 	return (struct rectangle){ .pos1 = pos1, .pos2 = pos2, .data = data };
 }
 
-static void rectangle_redraw(vec2 pos1, vec2 pos2, struct window *excluded)
+static void rectangle_redraw(vec2 pos1, vec2 pos2)
 {
-	struct rectangle rec = rectangle_at(pos1, pos2, excluded);
+	struct rectangle rec = rectangle_at(pos1, pos2);
+
+	u32 width = ABS(pos2.x - pos1.x);
+	u32 height = ABS(pos2.y - pos1.y);
+
+	/* log("REDR at %d %d: %d %d\n", pos1.x, pos1.y, width, height); */
 
 	u8 *srcfb = rec.data;
 	u8 *destfb = &direct->ctx.fb[rec.pos1.x * bypp + rec.pos1.y * direct->ctx.pitch];
-	for (u32 cy = 0; cy < excluded->ctx.size.y; cy++) {
-		memcpy(destfb, srcfb, excluded->ctx.size.x * bypp);
-		srcfb += excluded->ctx.pitch;
+	for (u32 cy = 0; cy < height; cy++) {
+		memcpy(destfb, srcfb, width * bypp);
+		srcfb += width * bypp;
 		destfb += direct->ctx.pitch;
 	}
 
 	free(rec.data);
-
-	gfx_ctx_on_ctx(&direct->ctx, &excluded->ctx, excluded->pos);
 }
 
 /**
@@ -257,9 +270,7 @@ static void window_redraw(struct window *win)
 	vec2 pos1 = win->pos_prev;
 	vec2 pos2 = vec2(pos1.x + win->ctx.size.x, pos1.y + win->ctx.size.y);
 
-	rectangle_redraw(pos1, pos2, win);
-	if (win != cursor)
-		window_redraw(cursor);
+	rectangle_redraw(pos1, pos2);
 }
 
 // TODO: Fix strange artifacts after destroying
@@ -267,7 +278,7 @@ static void window_destroy(struct window *win)
 {
 	//free(win->name);
 	memset(win->ctx.fb, 0, win->ctx.bytes);
-	rectangle_redraw(win->pos, vec2_add(win->pos, win->ctx.size), win);
+	rectangle_redraw(win->pos, vec2_add(win->pos, win->ctx.size));
 	list_remove(windows, list_first_data(windows, win));
 	sys_free(win->ctx.fb);
 	free(win);
@@ -463,9 +474,8 @@ int main(int argc, char **argv)
 	wallpaper =
 		window_new(wm_client, "wallpaper", vec2(0, 0), vec2(screen.width, screen.height),
 			   WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
-	// TODO: Fix strange cursor size segfault
-	cursor = window_new(wm_client, "cursor", vec2(0, 0), vec2(32, 33),
-			    WF_NO_WINDOW | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+	cursor = window_new(wm_client, "cursor", vec2(0, 0), vec2(32, 32),
+			    WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 
 	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */
 	gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png");

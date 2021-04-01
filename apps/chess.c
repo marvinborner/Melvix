@@ -8,7 +8,7 @@
 
 // Config
 #define SIZE 8
-#define TILE 36
+#define TILE 48
 #define WHITE_STARTS 1
 #define DARK_COLOR 0xff946f51
 #define LIGHT_COLOR 0xfff0d9b5
@@ -77,6 +77,9 @@ static void mouseclick(u32 widget_id, vec2 pos)
 				clicked = vec2(x, y);
 
 	struct piece *clicked_piece = &tiles[clicked.x][clicked.y];
+
+	if (vec2_eq(clicked, selected))
+		return;
 
 	if (selected.x != (u32)-1) {
 		struct piece *selected_piece = &tiles[selected.x][selected.y];

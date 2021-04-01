@@ -28,9 +28,10 @@ typedef unsigned long long u64;
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-#define ABS(a) (((a) < 0) ? (-a) : (a))
+#define ABS(a) ((u32)(((s32)(a) < 0) ? (-a) : (a)))
 
 #define NORETURN __attribute__((noreturn))
+#define DEPRECATED __attribute__((deprecated))
 #define NO_SANITIZE __attribute__((no_sanitize("undefined")))
 #define PACKED __attribute__((packed))
 #define ALIGNED(align) __attribute__((aligned(align)))
