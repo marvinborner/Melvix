@@ -30,7 +30,7 @@
 
 int rtl8139_install(void);
 int rtl8139_installed(void);
-void rtl8139_send_packet(void *data, u32 len);
+void rtl8139_send_packet(void *data, u32 len) NONNULL;
 u8 *rtl8139_get_mac(void);
 
 #endif

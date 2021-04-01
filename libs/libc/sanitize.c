@@ -49,6 +49,12 @@ struct type_mismatch {
 	u8 type_check_kind;
 };
 
+struct nonnull_arg {
+	struct source_location location;
+	struct source_location attribute_location;
+	u32 index;
+};
+
 struct overflow {
 	struct source_location location;
 	struct type_descriptor *type;
@@ -66,16 +72,18 @@ void __ubsan_handle_load_invalid_value(void)
 	panic("UBSAN: load-invalid-value\n");
 }
 
-void __ubsan_handle_nonnull_arg(void);
-void __ubsan_handle_nonnull_arg(void)
+void __ubsan_handle_nonnull_arg(struct nonnull_arg *data);
+void __ubsan_handle_nonnull_arg(struct nonnull_arg *data)
 {
-	panic("UBSAN: nonnull-arg\n");
+	struct source_location *loc = &data->location;
+	panic("%s:%d: UBSAN: nonnull-arg [index: %d]\n", loc->file, loc->line, data->index);
 }
 
-void __ubsan_handle_nullability_arg(void);
-void __ubsan_handle_nullability_arg(void)
+void __ubsan_handle_nullability_arg(struct nonnull_arg *data);
+void __ubsan_handle_nullability_arg(struct nonnull_arg *data)
 {
-	panic("UBSAN: nullability-arg\n");
+	struct source_location *loc = &data->location;
+	panic("%s:%d: UBSAN: nonnull-arg [index: %d]\n", loc->file, loc->line, data->index);
 }
 
 void __ubsan_handle_nonnull_return_v1(void);

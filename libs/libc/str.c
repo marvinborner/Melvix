@@ -5,35 +5,32 @@
 #include <mem.h>
 #include <str.h>
 
-u32 strlen(const char *s)
+u32 strlen(const char *str)
 {
-	const char *ss = s;
-	while (*ss)
-		ss++;
-	return ss - s;
+	const char *s = str;
+	while (*s)
+		s++;
+	return s - str;
 }
 
-char *strcpy(char *dst, const char *src)
+u32 strlcpy(char *dst, const char *src, u32 size)
 {
-	char *q = dst;
-	const char *p = src;
-	char ch;
+	const char *orig = src;
+	u32 left = size;
 
-	do {
-		*q++ = ch = *p++;
-	} while (ch);
+	if (left)
+		while (--left)
+			if (!(*dst++ = *src++))
+				break;
 
-	return dst;
-}
+	if (!left) {
+		if (!size)
+			*dst = 0;
+		while (*src++)
+			;
+	}
 
-char *strncpy(char *dst, const char *src, u32 n)
-{
-	char *q = dst;
-
-	while (n-- && (*dst++ = *src++))
-		;
-
-	return q;
+	return src - orig - 1;
 }
 
 int strcmp(const char *s1, const char *s2)
@@ -91,16 +88,32 @@ char *strrchr(char *s, int c)
 	return ret;
 }
 
-char *strcat(char *dst, const char *src)
+u32 strlcat(char *dst, const char *src, u32 size)
 {
-	strcpy(strchr(dst, '\0'), src);
-	return dst;
-}
+	const char *orig_dst = dst;
+	const char *orig_src = src;
 
-char *strncat(char *dst, const char *src, u32 n)
-{
-	strncpy(strchr(dst, '\0'), src, n);
-	return dst;
+	u32 n = size;
+	while (n-- && *dst)
+		dst++;
+
+	u32 len = dst - orig_dst;
+	n = size - len;
+
+	if (!n--)
+		return len + strlen(src);
+
+	while (*src) {
+		if (n) {
+			*dst++ = *src;
+			n--;
+		}
+		src++;
+	}
+
+	src = 0;
+
+	return len + (src - orig_src);
 }
 
 char *strinv(char *s)

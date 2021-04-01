@@ -109,10 +109,10 @@ static void vfs_list_mounts()
 
 res vfs_mount(struct device *dev, const char *path)
 {
-	if (!path || !memory_valid(path))
+	if (!memory_valid(path))
 		return -EFAULT;
 
-	if (!dev || !memory_valid(dev) || !dev->id)
+	if (!memory_valid(dev) || !dev->id)
 		return -EFAULT;
 
 	if (vfs_mounted(dev, path))
@@ -131,10 +131,10 @@ res vfs_mount(struct device *dev, const char *path)
 res vfs_read(const char *path, void *buf, u32 offset, u32 count)
 {
 	/* printf("%s READ: %s\n", proc_current() ? proc_current()->name : "Unknown", path); */
-	if (!path || !memory_valid(path))
+	if (!memory_valid(path))
 		return -EFAULT;
 
-	if (!buf || !memory_valid(buf))
+	if (!memory_valid(buf))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -160,10 +160,10 @@ res vfs_read(const char *path, void *buf, u32 offset, u32 count)
 res vfs_write(const char *path, void *buf, u32 offset, u32 count)
 {
 	/* printf("%s WRITE: %s\n", proc_current() ? proc_current()->name : "Unknown", path); */
-	if (!path || !memory_valid(path))
+	if (!memory_valid(path))
 		return -EFAULT;
 
-	if (!buf || !memory_valid(buf))
+	if (!memory_valid(buf))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -188,7 +188,7 @@ res vfs_write(const char *path, void *buf, u32 offset, u32 count)
 
 res vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3)
 {
-	if (!path || !memory_valid(path))
+	if (!memory_valid(path))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -210,10 +210,10 @@ res vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3)
 
 res vfs_stat(const char *path, struct stat *buf)
 {
-	if (!path || !memory_valid(path))
+	if (!memory_valid(path))
 		return -EFAULT;
 
-	if (!buf || !memory_valid(buf))
+	if (!memory_valid(buf))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -235,7 +235,7 @@ res vfs_stat(const char *path, struct stat *buf)
 
 res vfs_wait(const char *path, u32 func_ptr)
 {
-	if (!path || !func_ptr || !memory_valid(path))
+	if (!func_ptr || !memory_valid(path))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -257,7 +257,7 @@ res vfs_wait(const char *path, u32 func_ptr)
 
 res vfs_poll(const char **files)
 {
-	if (!files || !memory_valid(files))
+	if (!memory_valid(files))
 		return -EFAULT;
 
 	for (const char **p = files; *p && memory_valid(*p) && **p; p++) {
@@ -276,7 +276,7 @@ res vfs_poll(const char **files)
 
 res vfs_ready(const char *path)
 {
-	if (!path || !memory_valid(path))
+	if (!memory_valid(path))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);

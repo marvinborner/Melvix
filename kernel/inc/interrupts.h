@@ -18,21 +18,21 @@ struct idt_entry {
 	u8 always0; // Always 0
 	u8 flags;
 	u16 base_high;
-} __attribute__((packed));
+} PACKED;
 
 struct idt_ptr {
 	u16 limit;
 	void *base;
-} __attribute__((packed));
+} PACKED;
 
 void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags);
 
-void irq_install_handler(int irq, void (*handler)(struct regs *r));
+void irq_install_handler(int irq, void (*handler)(struct regs *r)) NONNULL;
 void irq_uninstall_handler(int irq);
 
-void isr_install_handler(int isr, void (*handler)(struct regs *r));
+void isr_install_handler(int isr, void (*handler)(struct regs *r)) NONNULL;
 void isr_uninstall_handler(int isr);
-void isr_panic(struct regs *r);
+void isr_panic(struct regs *r) NONNULL;
 
 void interrupts_install(void);
 

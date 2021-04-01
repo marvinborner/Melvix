@@ -15,13 +15,15 @@ static void append(char *dest, char *src, int index)
 	dest[index + strlen(src)] = 0;
 }
 
-int vsprintf(char *str, const char *format, va_list ap)
+int vsnprintf(char *str, u32 size, const char *format, va_list ap)
 {
 	u8 ready_to_format = 0;
 
-	int i = 0;
+	u32 i = 0;
 	char buf = 0;
-	char format_buffer[20] = { '\0' };
+
+	// TODO: Fix format buffer overflow exploit
+	char format_buffer[42] = { 0 };
 
 	for (; *format; format++) {
 		if (ready_to_format) {
@@ -71,21 +73,24 @@ int vsprintf(char *str, const char *format, va_list ap)
 				ready_to_format = 1;
 			else {
 				str[i] = *format;
-				i++;
+				if (++i == size) {
+					str[i] = 0;
+					break;
+				}
 			}
 		}
 
-		format_buffer[0] = '\0';
+		memset(format_buffer, 0, sizeof(format_buffer));
 	}
 
 	return strlen(str);
 }
 
-int sprintf(char *str, const char *format, ...)
+int snprintf(char *str, u32 size, const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	int len = vsprintf(str, format, ap);
+	int len = vsnprintf(str, size, format, ap);
 	va_end(ap);
 
 	return len;
@@ -106,7 +111,7 @@ int vprintf(const char *format, va_list ap)
 int vfprintf(const char *path, const char *format, va_list ap)
 {
 	char buf[1024] = { 0 };
-	int len = vsprintf(buf, format, ap);
+	int len = vsnprintf(buf, sizeof(buf), format, ap);
 	return write(path, buf, 0, len);
 }
 
@@ -185,7 +190,7 @@ static void print_kernel(const char *str)
 int vprintf(const char *format, va_list ap)
 {
 	char buf[1024] = { 0 };
-	int len = vsprintf(buf, format, ap);
+	int len = vsnprintf(buf, sizeof(buf), format, ap);
 	print_kernel(buf);
 	return len;
 }
@@ -242,7 +247,7 @@ NORETURN void panic(const char *format, ...)
 	char buf[1024] = { 0 };
 	va_list ap;
 	va_start(ap, format);
-	vsprintf(buf, format, ap);
+	vsnprintf(buf, sizeof(buf), format, ap);
 	va_end(ap);
 #ifdef kernel
 	print("--- DON'T PANIC! ---\n");

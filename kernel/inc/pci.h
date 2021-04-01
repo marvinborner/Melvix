@@ -91,11 +91,11 @@ static inline u32 pci_box_device(int bus, int slot, int func)
 u32 pci_read_field(u32 device, int field, int size);
 void pci_write_field(u32 device, int field, u32 value);
 u16 pci_find_type(u32 dev);
-void pci_scan_hit(pci_func_t f, u32 dev, void *extra);
-void pci_scan_func(pci_func_t f, int type, int bus, int slot, int func, void *extra);
-void pci_scan_slot(pci_func_t f, int type, int bus, int slot, void *extra);
-void pci_scan_bus(pci_func_t f, int type, int bus, void *extra);
-void pci_scan(pci_func_t f, int type, void *extra);
+void pci_scan_hit(pci_func_t f, u32 dev, void *extra) NONNULL;
+void pci_scan_func(pci_func_t f, int type, int bus, int slot, int func, void *extra) NONNULL;
+void pci_scan_slot(pci_func_t f, int type, int bus, int slot, void *extra) NONNULL;
+void pci_scan_bus(pci_func_t f, int type, int bus, void *extra) NONNULL;
+void pci_scan(pci_func_t f, int type, void *extra) NONNULL;
 int pci_get_interrupt(u32 device);
 void pci_install(void);
 

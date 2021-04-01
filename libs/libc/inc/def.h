@@ -30,11 +30,17 @@ typedef unsigned long long u64;
 
 #define ABS(a) ((u32)(((s32)(a) < 0) ? (-a) : (a)))
 
-#define NORETURN __attribute__((noreturn))
-#define DEPRECATED __attribute__((deprecated))
-#define NO_SANITIZE __attribute__((no_sanitize("undefined")))
-#define PACKED __attribute__((packed))
-#define ALIGNED(align) __attribute__((aligned(align)))
+#define ATTR __attribute__
+#define NORETURN ATTR((noreturn))
+#define DEPRECATED ATTR((deprecated))
+#define NONNULL ATTR((nonnull))
+#define PURE ATTR((pure))
+#define CONST ATTR((const))
+#define FLATTEN ATTR((flatten))
+#define PACKED ATTR((packed))
+#define HOT ATTR((hot))
+#define ALIGNED(align) ATTR((aligned(align)))
+#define NO_SANITIZE ATTR((no_sanitize("undefined")))
 
 #define EOF (-1)
 #define NULL ((void *)0)

@@ -66,7 +66,7 @@ enum message_type {
 	GUI_KEYBOARD,
 };
 
-res msg_send(u32 pid, enum message_type type, void *data, u32 size);
-res msg_receive(void *buf, u32 size);
+res msg_send(u32 pid, enum message_type type, void *data, u32 size) NONNULL;
+res msg_receive(void *buf, u32 size) NONNULL;
 
 #endif

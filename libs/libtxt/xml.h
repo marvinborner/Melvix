@@ -44,8 +44,8 @@ struct xml {
 };
 
 enum xml_error xml_parse(struct xml *parser, const char *buffer, u32 buffer_length,
-			 struct xml_token *tokens, u32 num_tokens);
+			 struct xml_token *tokens, u32 num_tokens) NONNULL;
 
-void xml_init(struct xml *parser);
+void xml_init(struct xml *parser) NONNULL;
 
 #endif

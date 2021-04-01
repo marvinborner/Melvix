@@ -3,6 +3,8 @@
 #ifndef KEYMAP_H
 #define KEYMAP_H
 
+#include <def.h>
+
 #define KEYMAP_LENGTH 90
 
 struct keymap {
@@ -11,6 +13,6 @@ struct keymap {
 	char alt_map[KEYMAP_LENGTH];
 };
 
-struct keymap *keymap_parse(const char *path);
+struct keymap *keymap_parse(const char *path) NONNULL;
 
 #endif

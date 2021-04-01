@@ -5,11 +5,11 @@
 
 #include <def.h>
 
-int atoi(const char *str);
+int atoi(const char *str) NONNULL;
 char *htoa(u32 n);
-int htoi(const char *str);
+int htoi(const char *str) NONNULL;
 char *itoa(int n);
 
-char *conv_base(int value, char *result, int base, int is_signed);
+char *conv_base(int value, char *result, int base, int is_signed) NONNULL;
 
 #endif

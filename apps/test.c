@@ -79,7 +79,6 @@ TEST(mem)
 	EQUALS(memcmp(str2, str4, strlen(str2)), -1);
 	EQUALS(memcmp(str2, str3, strlen(str2)), 0);
 	EQUALS(memcmp(str0, str1, strlen(str0)), 0);
-	EQUALS(memcmp(NULL, NULL, 0), 0);
 
 	char buf[6] = { 0 };
 	EQUALS_STR(memcpy(buf, "hallo", 6), "hallo");

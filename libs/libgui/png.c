@@ -90,7 +90,8 @@ static void *png_realloc(void *ptr, u32 new_size)
 
 static void png_free(void *ptr)
 {
-	free(ptr);
+	if (ptr)
+		free(ptr);
 }
 #else /*PNG_COMPILE_ALLOCATORS*/
 /* TODO: support giving additional void* payload to the custom allocators */

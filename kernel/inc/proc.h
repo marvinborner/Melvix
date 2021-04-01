@@ -61,18 +61,18 @@ struct proc {
 	struct list *memory;
 };
 
-void scheduler(struct regs *regs);
+void scheduler(struct regs *regs) NONNULL;
 void proc_init(void);
 void proc_print(void);
 struct proc *proc_current(void);
 u8 proc_super(void);
 struct proc *proc_from_pid(u32 pid);
-void proc_exit(struct proc *proc, s32 status);
-void proc_yield(struct regs *r);
+void proc_exit(struct proc *proc, s32 status) NONNULL;
+void proc_yield(struct regs *r) NONNULL;
 void proc_clear_quantum(void);
 void proc_enable_waiting(u32 id, enum proc_wait_type type);
 void proc_wait_for(u32 id, enum proc_wait_type type, u32 func_ptr);
 struct proc *proc_make(enum proc_priv priv);
-void proc_stack_push(struct proc *proc, u32 data);
+void proc_stack_push(struct proc *proc, u32 data) NONNULL;
 
 #endif

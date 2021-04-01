@@ -39,11 +39,8 @@ static struct stack_node *stack_new_node(void)
 	return node;
 }
 
-static u32 stack_push_bot_node(struct stack *stack, struct stack_node *node)
+NONNULL static u32 stack_push_bot_node(struct stack *stack, struct stack_node *node)
 {
-	if (!stack || !node)
-		return 0;
-
 	if (stack->tail) {
 		struct stack_node *iterator = stack->tail;
 		while (iterator) {
@@ -60,11 +57,8 @@ static u32 stack_push_bot_node(struct stack *stack, struct stack_node *node)
 	return 1;
 }
 
-static u32 stack_push_node(struct stack *stack, struct stack_node *node)
+NONNULL static u32 stack_push_node(struct stack *stack, struct stack_node *node)
 {
-	if (!stack || !node)
-		return 0;
-
 	if (stack->tail) {
 		stack->tail->next = node;
 		node->prev = stack->tail;
@@ -97,7 +91,7 @@ u32 stack_push(struct stack *stack, void *data)
 
 void *stack_pop(struct stack *stack)
 {
-	if (!stack || !stack->tail)
+	if (!stack->tail)
 		return NULL;
 
 	struct stack_node *prev = stack->tail;
@@ -113,7 +107,7 @@ void *stack_pop(struct stack *stack)
 
 void *stack_peek(struct stack *stack)
 {
-	if (!stack || !stack->tail)
+	if (!stack->tail)
 		return NULL;
 
 	return stack->tail->data;

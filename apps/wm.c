@@ -388,7 +388,7 @@ static void handle_message_redraw_window(struct message_redraw_window *msg)
 	struct window *win = window_find(id);
 	if (!win || win->client.pid != msg->header.src) {
 		if (msg->header.state == MSG_NEED_ANSWER)
-			msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_FAILURE, NULL,
+			msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_FAILURE, msg,
 				 sizeof(msg->header));
 		return;
 	}
@@ -406,7 +406,7 @@ static void handle_message_destroy_window(struct message_destroy_window *msg)
 	struct window *win = window_find(id);
 	if (!win || win->client.pid != msg->header.src) {
 		if (msg->header.state == MSG_NEED_ANSWER)
-			msg_send(msg->header.src, GUI_DESTROY_WINDOW | MSG_FAILURE, NULL,
+			msg_send(msg->header.src, GUI_DESTROY_WINDOW | MSG_FAILURE, msg,
 				 sizeof(msg->header));
 		return;
 	}

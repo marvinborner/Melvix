@@ -67,20 +67,20 @@ struct stat {
 
 void loop(void);
 void exit(s32 status);
-res read(const char *path, void *buf, u32 offset, u32 count);
-res write(const char *path, const void *buf, u32 offset, u32 count);
-res ioctl(const char *path, ...);
-res stat(const char *path, struct stat *buf);
-res poll(const char **files);
-res exec(const char *path, ...);
+res read(const char *path, void *buf, u32 offset, u32 count) NONNULL;
+res write(const char *path, const void *buf, u32 offset, u32 count) NONNULL;
+res ioctl(const char *path, ...) NONNULL;
+res stat(const char *path, struct stat *buf) NONNULL;
+res poll(const char **files) NONNULL;
+res exec(const char *path, ...) ATTR((nonnull(1)));
 res yield(void);
 res boot(u32 cmd);
 u32 time(void);
 
-res sys_alloc(u32 size, u32 *addr);
-res sys_free(void *ptr);
-res shalloc(u32 size, u32 *addr, u32 *id);
-res shaccess(u32 id, u32 *addr, u32 *size);
+res sys_alloc(u32 size, u32 *addr) NONNULL;
+res sys_free(void *ptr) NONNULL;
+res shalloc(u32 size, u32 *addr, u32 *id) NONNULL;
+res shaccess(u32 id, u32 *addr, u32 *size) NONNULL;
 
 static inline u32 getpid(void)
 {
@@ -93,12 +93,13 @@ static inline u32 getpid(void)
 
 #include <print.h>
 #include <str.h>
-static inline u32 pidof(const char *name)
+NONNULL static inline u32 pidof(const char *name)
 {
 	u32 curr = 1;
 	char buf[32] = { 0 }, path[32] = { 0 };
 	while (curr < 1000) { // Max pid??
-		if (sprintf(path, "/proc/%d/name", curr) > 0 && read(path, buf, 0, 32) > 0)
+		if (snprintf(path, sizeof(buf), "/proc/%d/name", curr) > 0 &&
+		    read(path, buf, 0, 32) > 0)
 			if (!strcmp(name, buf))
 				return curr;
 
@@ -110,7 +111,7 @@ static inline u32 pidof(const char *name)
 
 // Simple read wrapper
 #include <mem.h>
-static inline void *sread(const char *path)
+NONNULL static inline void *sread(const char *path)
 {
 	struct stat s = { 0 };
 	if (stat(path, &s) != 0 || !s.size)

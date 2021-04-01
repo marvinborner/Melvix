@@ -414,8 +414,7 @@ void *malloc_debug(u32 size, const char *file, int line, const char *func, const
 
 void free_debug(void *ptr, const char *file, int line, const char *func, const char *inp)
 {
-	if (ptr)
-		_free(ptr);
+	_free(ptr);
 
 	(void)file;
 	(void)line;

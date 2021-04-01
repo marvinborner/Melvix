@@ -20,7 +20,7 @@ struct dns_packet {
 	u16 authorities;
 	u16 additional;
 	u8 data[];
-} __attribute__((packed));
+} PACKED;
 
 static u32 part_count(const char *name)
 {

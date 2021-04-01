@@ -21,6 +21,6 @@ struct html_element {
 	struct element *obj;
 };
 
-int html_render(struct element *container, char *data, u32 length);
+int html_render(struct element *container, char *data, u32 length) NONNULL;
 
 #endif

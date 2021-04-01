@@ -17,12 +17,12 @@ struct stack {
 };
 
 struct stack *stack_new(void);
-void stack_destroy(struct stack *stack);
-u32 stack_empty(struct stack *stack);
-u32 stack_push_bot(struct stack *stack, void *data);
-u32 stack_push(struct stack *stack, void *data);
-void *stack_pop(struct stack *stack);
-void *stack_peek(struct stack *stack);
-void stack_clear(struct stack *stack);
+void stack_destroy(struct stack *stack) NONNULL;
+u32 stack_empty(struct stack *stack) NONNULL;
+u32 stack_push_bot(struct stack *stack, void *data) NONNULL;
+u32 stack_push(struct stack *stack, void *data) NONNULL;
+void *stack_pop(struct stack *stack) NONNULL;
+void *stack_peek(struct stack *stack) NONNULL;
+void stack_clear(struct stack *stack) NONNULL;
 
 #endif

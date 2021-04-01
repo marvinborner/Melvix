@@ -11,7 +11,7 @@
 
 res elf_load(const char *path, struct proc *proc)
 {
-	if (!path || !memory_valid(path) || !proc)
+	if (!memory_valid(path))
 		return -EFAULT;
 
 	struct stat s = { 0 };
@@ -30,7 +30,7 @@ res elf_load(const char *path, struct proc *proc)
 	if (read != sizeof(header))
 		return -ENOEXEC;
 
-	strcpy(proc->name, path);
+	strlcpy(proc->name, path, sizeof(proc->name));
 
 	// Valid?
 	u8 *magic = header.ident;

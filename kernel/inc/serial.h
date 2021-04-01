@@ -3,8 +3,10 @@
 #ifndef SERIAL_H
 #define SERIAL_H
 
+#include <def.h>
+
 void serial_install(void);
-void serial_print(const char *data);
+void serial_print(const char *data) NONNULL;
 void serial_put(char ch);
 
 #endif

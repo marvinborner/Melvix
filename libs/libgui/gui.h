@@ -23,9 +23,9 @@ res gui_redraw_window(u32 id);
 
 res gui_fill(u32 win_id, u32 widget_id, enum gui_layer layer, u32 c);
 res gui_load_image(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
-		   const char *path);
+		   const char *path) NONNULL;
 res gui_load_image_filter(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
-			  enum gfx_filter filter, const char *path);
+			  enum gfx_filter filter, const char *path) NONNULL;
 
 res gui_add_widget(u32 win_id, u32 widget_id, vec2 size, vec2 pos);
 res gui_new_widget(u32 win_id, vec2 size, vec2 pos);

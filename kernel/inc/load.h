@@ -105,6 +105,6 @@ struct elf_program {
 	u32 align;
 };
 
-res elf_load(const char *path, struct proc *proc);
+res elf_load(const char *path, struct proc *proc) NONNULL;
 
 #endif

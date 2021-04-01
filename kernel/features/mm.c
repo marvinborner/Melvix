@@ -417,7 +417,7 @@ struct memory_proc_link {
 static struct list *memory_objects = NULL;
 res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared)
 {
-	if (!addr || !memory_valid(addr) || !id || !memory_valid(id))
+	if (!memory_valid(addr) || !memory_valid(id))
 		return -EFAULT;
 
 	size = PAGE_ALIGN_UP(size);
@@ -474,7 +474,7 @@ res memory_sys_free(struct page_dir *dir, u32 addr)
 
 res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size)
 {
-	if (!addr || !memory_valid(addr) || !size || !memory_valid(size))
+	if (!memory_valid(addr) || !memory_valid(size))
 		return -EFAULT;
 
 	*addr = 0;

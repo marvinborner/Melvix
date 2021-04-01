@@ -732,7 +732,7 @@ struct socket *net_open(enum socket_type type)
 
 int net_close(struct socket *socket)
 {
-	if (!net_installed() || !socket)
+	if (!net_installed())
 		return 1;
 
 	if (socket->state == S_CLOSING)
@@ -750,7 +750,7 @@ int net_close(struct socket *socket)
 
 int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 {
-	if (!net_installed() || !socket || socket->state != S_OPEN || !ip_addr || !dst_port)
+	if (!net_installed() || socket->state != S_OPEN || !ip_addr || !dst_port)
 		return 0;
 
 	socket->ip_addr = ip_addr;
@@ -777,7 +777,7 @@ int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port)
 
 void net_send(struct socket *socket, void *data, u32 len)
 {
-	if (!net_installed() || !socket || socket->state != S_CONNECTED)
+	if (!net_installed() || socket->state != S_CONNECTED)
 		return;
 
 	if (socket->type == S_TCP) {
@@ -792,7 +792,7 @@ void net_send(struct socket *socket, void *data, u32 len)
 
 int net_receive(struct socket *socket, void *buf, u32 len)
 {
-	if (!net_installed() || !socket || !socket->packets)
+	if (!net_installed() || !socket->packets)
 		return 0;
 
 	u32 offset = 0;

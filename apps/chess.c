@@ -58,7 +58,7 @@ static vec2 selected = { -1, -1 }; // Selected tile
 static void load_image(struct piece *tile)
 {
 	char icon[48] = { 0 };
-	sprintf(icon, "/icons/chess-%s-%d.png", tile->name, TILE);
+	snprintf(icon, sizeof(icon), "/icons/chess-%s-%d.png", tile->name, TILE);
 	enum gfx_filter filter = IS_COLOR(tile->piece, BLACK) ? GFX_FILTER_NONE : GFX_FILTER_INVERT;
 
 	/* assert(gui_fill(win, tile->widget, GUI_LAYER_FG, 0) == EOK); */
@@ -87,7 +87,7 @@ static void mouseclick(u32 widget_id, vec2 pos)
 		clicked_piece->piece = selected_piece->piece;
 		selected_piece->piece = 0;
 
-		strcpy(clicked_piece->name, selected_piece->name);
+		strlcpy(clicked_piece->name, selected_piece->name, sizeof(clicked_piece->name));
 		selected_piece->name[0] = '\0';
 
 		/* assert(gui_fill(win, selected_piece->widget, GUI_LAYER_FG, 0) == EOK); */
@@ -102,7 +102,7 @@ static void mouseclick(u32 widget_id, vec2 pos)
 	}
 }
 
-static const char *resolve_name(u32 piece, char *buf)
+static const char *resolve_name(u32 piece, char buf[8])
 {
 	const char *name = NULL;
 	switch (piece & TYPE_MASK) {
@@ -128,7 +128,7 @@ static const char *resolve_name(u32 piece, char *buf)
 		err(1, "Unknown piece %d\n", piece);
 	}
 
-	strcpy(buf, name);
+	strlcpy(buf, name, 8);
 
 	return buf;
 }
@@ -204,7 +204,7 @@ static void fen_parse(const char *fen)
 		u32 piece = fen_resolve_letter(*p);
 
 		tiles[x][y].piece = piece;
-		resolve_name(piece, (char *)&tiles[x][y].name);
+		resolve_name(piece, tiles[x][y].name);
 
 		x++;
 	}

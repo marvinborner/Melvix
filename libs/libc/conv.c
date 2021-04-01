@@ -105,7 +105,7 @@ char *itoa(int n)
 
 	if (negative) {
 		char *aux = (char *)malloc((u32)(sz + 2));
-		strcpy(aux, ret);
+		strlcpy(aux, ret, sz + 2);
 		aux[sz] = '-';
 		aux[sz + 1] = 0;
 		free(ret);

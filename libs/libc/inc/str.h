@@ -5,17 +5,15 @@
 
 #include <def.h>
 
-u32 strlen(const char *s);
-char *strcpy(char *dst, const char *src);
-char *strncpy(char *dst, const char *src, u32 n);
-char *strchr(char *s, int c);
-char *strrchr(char *s, int c);
-char *strcat(char *dst, const char *src);
-char *strncat(char *dst, const char *src, u32 n);
-int strcmp(const char *s1, const char *s2);
-int strncmp(const char *s1, const char *s2, u32 n);
-char *strinv(char *s);
-char *strdup(const char *s);
+u32 strlen(const char *s) NONNULL;
+u32 strlcpy(char *dst, const char *src, u32 size) NONNULL;
+char *strchr(char *s, int c) NONNULL;
+char *strrchr(char *s, int c) NONNULL;
+u32 strlcat(char *dst, const char *src, u32 size) NONNULL;
+int strcmp(const char *s1, const char *s2) NONNULL;
+int strncmp(const char *s1, const char *s2, u32 n) NONNULL;
+char *strinv(char *s) NONNULL;
+char *strdup(const char *s) NONNULL;
 
 const char *strerror(u32 err);
 

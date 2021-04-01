@@ -67,7 +67,7 @@ struct madt {
 	u32 local_address;
 	u32 flags;
 	struct madt_entry_header entry;
-} __attribute__((packed));
+} PACKED;
 
 #define MADT_LOCAL_APIC_ENTRY 0
 #define MADT_IO_APIC_ENTRY 1
@@ -80,7 +80,7 @@ struct madt_local_apic_entry {
 	u8 processor_id;
 	u8 id;
 	u32 flags;
-} __attribute__((packed));
+} PACKED;
 
 struct madt_io_apic_entry {
 	struct madt_entry_header header;
@@ -88,7 +88,7 @@ struct madt_io_apic_entry {
 	u8 reserved;
 	u32 address;
 	u32 global_system_interrupt_base;
-} __attribute__((packed));
+} PACKED;
 
 struct madt_int_src_override_entry {
 	struct madt_entry_header header;
@@ -96,20 +96,20 @@ struct madt_int_src_override_entry {
 	u8 irq_source;
 	u32 global_system_interrupt;
 	u16 flags;
-} __attribute__((packed));
+} PACKED;
 
 struct madt_non_maskable_int_entry {
 	struct madt_entry_header header;
 	u8 processor_id;
 	u16 flags;
 	u8 lint_number;
-} __attribute__((packed));
+} PACKED;
 
 struct madt_local_apic_override_entry {
 	struct madt_entry_header header;
 	u16 reserved;
 	u64 address;
-} __attribute__((packed));
+} PACKED;
 
 /**
  * FADT
@@ -118,7 +118,7 @@ struct madt_local_apic_override_entry {
 struct fadt {
 	struct sdt_header header;
 	// TODO: FADT table (big!)
-} __attribute__((packed));
+} PACKED;
 
 /**
  * HPET
@@ -136,7 +136,7 @@ struct hpet {
 	u8 hpet_number;
 	u16 minimum_tick;
 	u8 page_protection;
-} __attribute__((packed));
+} PACKED;
 
 enum hpet_features { hpet_counter_size = 1 << 3, hpet_legacy_replacement_support = 1 << 5 };
 enum hpet_config { hpet_enable = 1 << 0, hpet_legacy_replacement = 1 << 1 };
@@ -168,7 +168,7 @@ struct hpet_registers {
 	u64 reserved5;
 	u64 timer0; // enum hpet_timer
 	u64 timer_comparator0; // In femtoseconds
-} __attribute__((packed));
+} PACKED;
 
 /**
  * RSDP

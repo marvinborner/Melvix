@@ -64,7 +64,7 @@ void *memcpy(void *dest, const void *src, u32 n)
 #endif
 }
 
-void *memset(void *dest, int val, u32 n)
+void *memset(void *dest, u32 val, u32 n)
 {
 	u32 uval = val;
 	u32 num_dwords = n / 4;
@@ -90,7 +90,7 @@ void *memset(void *dest, int val, u32 n)
 	return dest;
 }
 
-void *memchr(void *src, int c, u32 n)
+void *memchr(void *src, char c, u32 n)
 {
 	u8 *s = (u8 *)src;
 

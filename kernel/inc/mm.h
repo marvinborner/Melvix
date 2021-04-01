@@ -18,7 +18,7 @@ struct memory_range {
  */
 
 void paging_enable(void);
-void page_fault_handler(struct regs *r);
+void page_fault_handler(struct regs *r) NONNULL;
 
 /**
  * Physical
@@ -81,14 +81,14 @@ struct page_dir {
 	union page_dir_entry entries[PAGE_COUNT];
 } PACKED;
 
-u8 virtual_present(struct page_dir *dir, u32 vaddr);
-u32 virtual_to_physical(struct page_dir *dir, u32 vaddr);
-void virtual_map(struct page_dir *dir, struct memory_range prange, u32 vaddr, u32 flags);
+u8 virtual_present(struct page_dir *dir, u32 vaddr) NONNULL;
+u32 virtual_to_physical(struct page_dir *dir, u32 vaddr) NONNULL;
+void virtual_map(struct page_dir *dir, struct memory_range prange, u32 vaddr, u32 flags) NONNULL;
 struct memory_range virtual_alloc(struct page_dir *dir, struct memory_range physical_range,
-				  u32 flags);
-void virtual_free(struct page_dir *dir, struct memory_range vrange);
+				  u32 flags) NONNULL;
+void virtual_free(struct page_dir *dir, struct memory_range vrange) NONNULL;
 struct page_dir *virtual_create_dir(void);
-void virtual_destroy_dir(struct page_dir *dir);
+void virtual_destroy_dir(struct page_dir *dir) NONNULL;
 struct page_dir *virtual_kernel_dir(void);
 
 /**
@@ -103,24 +103,24 @@ struct page_dir *virtual_kernel_dir(void);
 struct memory_range memory_range_from(u32 base, u32 size);
 struct memory_range memory_range_around(u32 base, u32 size);
 
-void *memory_alloc(struct page_dir *dir, u32 size, u32 flags);
-void *memory_alloc_identity(struct page_dir *dir, u32 flags);
-void memory_free(struct page_dir *dir, struct memory_range vrange);
-void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 flags);
-void memory_switch_dir(struct page_dir *dir);
-void memory_backup_dir(struct page_dir **backup);
+void *memory_alloc(struct page_dir *dir, u32 size, u32 flags) NONNULL;
+void *memory_alloc_identity(struct page_dir *dir, u32 flags) NONNULL;
+void memory_free(struct page_dir *dir, struct memory_range vrange) NONNULL;
+void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 flags) NONNULL;
+void memory_switch_dir(struct page_dir *dir) NONNULL;
+void memory_backup_dir(struct page_dir **backup) NONNULL;
 
 // Bypass should almost never be used
 void memory_bypass_enable(void);
 void memory_bypass_disable(void);
 u8 memory_is_user(u32 addr);
-u8 memory_valid(const void *addr);
+u8 memory_valid(const void *addr) NONNULL;
 
 // User interface
-res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared);
-res memory_sys_free(struct page_dir *dir, u32 addr);
-res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size);
+res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared) NONNULL;
+res memory_sys_free(struct page_dir *dir, u32 addr) NONNULL;
+res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size) NONNULL;
 
-void memory_install(struct mem_info *mem_info, struct vid_info *vid_info);
+void memory_install(struct mem_info *mem_info, struct vid_info *vid_info) NONNULL;
 
 #endif

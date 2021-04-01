@@ -124,7 +124,7 @@ static void fpu_handler(struct regs *r)
 	__asm__ volatile("clts");
 }
 
-static u8 fpu_state[512] __attribute__((aligned(16)));
+static u8 fpu_state[512] ALIGNED(16);
 void fpu_restore(void)
 {
 	__asm__ volatile("fxrstor (%0)" ::"r"(fpu_state));

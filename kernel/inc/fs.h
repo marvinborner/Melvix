@@ -19,15 +19,16 @@ struct device {
 	enum dev_type type;
 	struct vfs *vfs;
 	void *data;
-	res (*read)(void *buf, u32 offset, u32 count, struct device *dev);
-	res (*write)(void *buf, u32 offset, u32 count, struct device *dev);
-	res (*ioctl)(u32 request, void *arg1, void *arg2, void *arg3, struct device *dev);
+	res (*read)(void *buf, u32 offset, u32 count, struct device *dev) NONNULL;
+	res (*write)(void *buf, u32 offset, u32 count, struct device *dev) NONNULL;
+	res (*ioctl)(u32 request, void *arg1, void *arg2, void *arg3, struct device *dev)
+		ATTR((nonnull(5)));
 	res (*ready)(void);
 };
 
 void device_install(void);
 
-void device_add(struct device *dev);
+void device_add(struct device *dev) NONNULL;
 
 /**
  * VFS
@@ -40,14 +41,15 @@ struct vfs {
 	enum vfs_type type;
 	int flags;
 	void *data;
-	res (*read)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
-	res (*write)(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
+	res (*read)(const char *path, void *buf, u32 offset, u32 count, struct device *dev) NONNULL;
+	res (*write)(const char *path, void *buf, u32 offset, u32 count,
+		     struct device *dev) NONNULL;
 	res (*ioctl)(const char *path, u32 request, void *arg1, void *arg2, void *arg3,
-		     struct device *dev);
-	res (*stat)(const char *path, struct stat *buf, struct device *dev);
-	res (*wait)(const char *path, u32 func_ptr, struct device *dev);
-	res (*ready)(const char *path, struct device *dev);
-	res (*perm)(const char *path, enum vfs_perm perm, struct device *dev);
+		     struct device *dev) ATTR((nonnull(1, 6)));
+	res (*stat)(const char *path, struct stat *buf, struct device *dev) NONNULL;
+	res (*wait)(const char *path, u32 func_ptr, struct device *dev) NONNULL;
+	res (*ready)(const char *path, struct device *dev) NONNULL;
+	res (*perm)(const char *path, enum vfs_perm perm, struct device *dev) NONNULL;
 };
 
 struct mount_info {
@@ -57,21 +59,21 @@ struct mount_info {
 
 void vfs_install(void);
 
-u8 vfs_mounted(struct device *dev, const char *path);
-res vfs_mount(struct device *dev, const char *path);
+u8 vfs_mounted(struct device *dev, const char *path) NONNULL;
+res vfs_mount(struct device *dev, const char *path) NONNULL;
 
-struct device *vfs_find_dev(const char *path);
+struct device *vfs_find_dev(const char *path) NONNULL;
 
-res vfs_read(const char *path, void *buf, u32 offset, u32 count);
-res vfs_write(const char *path, void *buf, u32 offset, u32 count);
-res vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3);
-res vfs_stat(const char *path, struct stat *buf);
-res vfs_wait(const char *path, u32 func_ptr);
-res vfs_poll(const char **files);
-res vfs_ready(const char *path);
+res vfs_read(const char *path, void *buf, u32 offset, u32 count) NONNULL;
+res vfs_write(const char *path, void *buf, u32 offset, u32 count) NONNULL;
+res vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3) ATTR((nonnull(1)));
+res vfs_stat(const char *path, struct stat *buf) NONNULL;
+res vfs_wait(const char *path, u32 func_ptr) NONNULL;
+res vfs_poll(const char **files) NONNULL;
+res vfs_ready(const char *path) NONNULL;
 
-struct device *device_get_by_name(const char *name);
-struct device *device_get_by_id(u32 id);
+struct device *device_get_by_name(const char *name) NONNULL;
+struct device *device_get_by_id(u32 id) NONNULL;
 
 /**
  * EXT2
@@ -175,9 +177,9 @@ struct ext2_file {
 	u32 curr_block_pos;
 };
 
-res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev);
-res ext2_stat(const char *path, struct stat *buf, struct device *dev);
-res ext2_perm(const char *path, enum vfs_perm perm, struct device *dev);
-res ext2_ready(const char *path, struct device *dev);
+res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev) NONNULL;
+res ext2_stat(const char *path, struct stat *buf, struct device *dev) NONNULL;
+res ext2_perm(const char *path, enum vfs_perm perm, struct device *dev) NONNULL;
+res ext2_ready(const char *path, struct device *dev) NONNULL;
 
 #endif

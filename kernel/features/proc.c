@@ -24,7 +24,7 @@ struct node *current = NULL;
 // TODO: Use less memcpy and only copy relevant registers (rewrite for efficiency argh)
 // TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
 // TODO: Optimize scheduler
-void scheduler(struct regs *regs)
+HOT FLATTEN void scheduler(struct regs *regs)
 {
 	if (quantum == 0) {
 		quantum = PROC_QUANTUM;
@@ -119,8 +119,6 @@ void proc_clear_quantum(void)
 
 void proc_exit(struct proc *proc, s32 status)
 {
-	assert(proc);
-
 	u8 found = 0;
 	struct node *iterator = proc_list->head;
 	while (iterator) {
@@ -272,7 +270,7 @@ struct proc *proc_make(enum proc_priv priv)
 
 void proc_stack_push(struct proc *proc, u32 data)
 {
-	assert(proc && proc->regs.useresp > sizeof(data));
+	assert(proc->regs.useresp > sizeof(data));
 
 	struct page_dir *prev;
 	memory_backup_dir(&prev);

@@ -53,7 +53,7 @@ struct ethernet_packet {
 	u8 src[6];
 	u16 type;
 	u8 data[];
-} __attribute__((packed));
+} PACKED;
 
 struct arp_packet {
 	u16 hardware_type;
@@ -65,7 +65,7 @@ struct arp_packet {
 	u32 src_protocol_addr;
 	u8 dst_mac[6];
 	u32 dst_protocol_addr;
-} __attribute__((packed));
+} PACKED;
 
 struct ip_packet {
 	u8 version_ihl;
@@ -79,7 +79,7 @@ struct ip_packet {
 	u32 src;
 	u32 dst;
 	u8 data[];
-} __attribute__((packed));
+} PACKED;
 
 struct dhcp_packet {
 	u8 op;
@@ -98,7 +98,7 @@ struct dhcp_packet {
 	u8 server_name[64];
 	u8 file[128];
 	u8 options[64];
-} __attribute__((packed));
+} PACKED;
 
 struct dns_packet {
 	u16 qid;
@@ -108,7 +108,7 @@ struct dns_packet {
 	u16 authorities;
 	u16 additional;
 	u8 data[];
-} __attribute__((packed));
+} PACKED;
 
 struct udp_packet {
 	u16 src_port;
@@ -116,7 +116,7 @@ struct udp_packet {
 	u16 length;
 	u16 checksum;
 	u8 data[];
-} __attribute__((packed));
+} PACKED;
 
 struct tcp_packet {
 	u16 src_port;
@@ -128,7 +128,7 @@ struct tcp_packet {
 	u16 checksum;
 	u16 urgent;
 	u8 data[];
-} __attribute__((packed));
+} PACKED;
 
 struct tcp_pseudo_header {
 	u32 src;
@@ -145,7 +145,7 @@ struct icmp_packet {
 	u16 checksum;
 	u16 identifier;
 	u16 sequence;
-} __attribute__((packed));
+} PACKED;
 
 // Other structs
 
@@ -154,13 +154,13 @@ struct arp_table_entry {
 	u64 mac_addr;
 };
 
-void ethernet_handle_packet(struct ethernet_packet *packet, int len);
+void ethernet_handle_packet(struct ethernet_packet *packet, int len) NONNULL;
 
 struct socket *net_open(enum socket_type type);
-int net_close(struct socket *socket);
-int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port);
-void net_send(struct socket *socket, void *data, u32 len);
-int net_receive(struct socket *socket, void *buf, u32 len);
+int net_close(struct socket *socket) NONNULL;
+int net_connect(struct socket *socket, u32 ip_addr, u16 dst_port) NONNULL;
+void net_send(struct socket *socket, void *data, u32 len) NONNULL;
+int net_receive(struct socket *socket, void *buf, u32 len) NONNULL;
 
 int net_installed(void);
 void net_install(void);

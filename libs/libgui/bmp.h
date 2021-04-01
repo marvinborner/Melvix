@@ -11,7 +11,7 @@ struct bmp_header {
 	u32 size;
 	u32 reserved;
 	u32 offset;
-} __attribute__((packed));
+} PACKED;
 
 struct bmp_info {
 	u32 size;
@@ -34,6 +34,6 @@ struct bmp {
 	u32 pitch;
 };
 
-struct bmp *bmp_load(const char *path);
+struct bmp *bmp_load(const char *path) NONNULL;
 
 #endif

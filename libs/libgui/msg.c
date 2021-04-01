@@ -8,11 +8,9 @@
 
 res msg_send(u32 pid, enum message_type type, void *data, u32 size)
 {
-	if (!data)
-		return -EFAULT;
 	assert((signed)pid != -1 && size >= sizeof(struct message_header));
 	char path[32] = { 0 };
-	sprintf(path, "/proc/%d/msg", pid);
+	snprintf(path, sizeof(path), "/proc/%d/msg", pid);
 	struct message_header *header = data;
 	header->magic = MSG_MAGIC;
 	header->src = getpid();
