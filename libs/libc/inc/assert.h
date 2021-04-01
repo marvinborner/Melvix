@@ -11,11 +11,7 @@
 	if (!(exp)) {                                                                              \
 		printf("%s:%d: %s: Kernel assertion '%s' failed\n", __FILE__, __LINE__, __func__,  \
 		       #exp);                                                                      \
-		struct proc *assert_proc = proc_current();                                         \
-		if (assert_proc)                                                                   \
-			proc_exit(assert_proc, 1);                                                 \
-		else                                                                               \
-			__asm__ volatile("cli\nhlt");                                              \
+		__asm__ volatile("cli\nhlt");                                                      \
 	}
 #elif defined(userspace)
 #define assert(exp)                                                                                \

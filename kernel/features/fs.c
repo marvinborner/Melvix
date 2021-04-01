@@ -233,7 +233,7 @@ res vfs_stat(const char *path, struct stat *buf)
 	return m->dev->vfs->stat(path, buf, m->dev);
 }
 
-res vfs_wait(const char *path, u32 func_ptr)
+res vfs_block(const char *path, u32 func_ptr)
 {
 	if (!func_ptr || !memory_valid(path))
 		return -EFAULT;
@@ -242,9 +242,9 @@ res vfs_wait(const char *path, u32 func_ptr)
 	if (!m || !m->dev || !m->dev->vfs)
 		return -ENOENT;
 
-	// Default wait
-	if (!m->dev->vfs->wait) {
-		proc_wait_for(vfs_find_dev(path)->id, PROC_WAIT_DEV, func_ptr);
+	// Default block
+	if (!m->dev->vfs->block) {
+		proc_block(vfs_find_dev(path)->id, PROC_BLOCK_DEV, func_ptr);
 		return EOK;
 	}
 
@@ -252,7 +252,7 @@ res vfs_wait(const char *path, u32 func_ptr)
 	if (len > 1)
 		path += len;
 
-	return m->dev->vfs->wait(path, func_ptr, m->dev);
+	return m->dev->vfs->block(path, func_ptr, m->dev);
 }
 
 res vfs_poll(const char **files)
@@ -269,9 +269,9 @@ res vfs_poll(const char **files)
 	}
 
 	for (const char **p = files; *p && memory_valid(*p) && **p; p++)
-		vfs_wait(*p, (u32)vfs_poll);
+		vfs_block(*p, (u32)vfs_poll);
 
-	return PROC_MAX_WAIT_IDS + 1;
+	return PROC_MAX_BLOCK_IDS + 1;
 }
 
 res vfs_ready(const char *path)

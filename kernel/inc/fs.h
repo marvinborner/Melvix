@@ -47,7 +47,7 @@ struct vfs {
 	res (*ioctl)(const char *path, u32 request, void *arg1, void *arg2, void *arg3,
 		     struct device *dev) ATTR((nonnull(1, 6)));
 	res (*stat)(const char *path, struct stat *buf, struct device *dev) NONNULL;
-	res (*wait)(const char *path, u32 func_ptr, struct device *dev) NONNULL;
+	res (*block)(const char *path, u32 func_ptr, struct device *dev) NONNULL;
 	res (*ready)(const char *path, struct device *dev) NONNULL;
 	res (*perm)(const char *path, enum vfs_perm perm, struct device *dev) NONNULL;
 };
@@ -68,7 +68,7 @@ res vfs_read(const char *path, void *buf, u32 offset, u32 count) NONNULL;
 res vfs_write(const char *path, void *buf, u32 offset, u32 count) NONNULL;
 res vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3) ATTR((nonnull(1)));
 res vfs_stat(const char *path, struct stat *buf) NONNULL;
-res vfs_wait(const char *path, u32 func_ptr) NONNULL;
+res vfs_block(const char *path, u32 func_ptr) NONNULL;
 res vfs_poll(const char **files) NONNULL;
 res vfs_ready(const char *path) NONNULL;
 

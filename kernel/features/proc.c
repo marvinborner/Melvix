@@ -14,72 +14,58 @@
 #include <str.h>
 #include <timer.h>
 
-u32 current_pid = 0;
-u32 quantum = 0;
-struct proc *priority_proc = NULL;
-struct list *proc_list = NULL;
-struct node *idle_proc = NULL;
-struct node *current = NULL;
+#define PROC(node) ((struct proc *)node->data)
 
-// TODO: Use less memcpy and only copy relevant registers (rewrite for efficiency argh)
+static u8 locked = 0;
+static u32 current_pid = 0;
+static struct node *idle_proc = NULL;
+static struct node *current = NULL;
+
+static struct list *proc_list_running = NULL;
+static struct list *proc_list_blocked = NULL;
+static struct list *proc_list_idle = NULL;
+
+// TODO: Use less memcpy and only copy relevant registers
 // TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
-// TODO: Optimize scheduler
 HOT FLATTEN void scheduler(struct regs *regs)
 {
-	if (quantum == 0) {
-		quantum = PROC_QUANTUM;
+	spinlock(&locked);
+
+	PROC(current)->ticks++;
+
+	if (PROC(current)->quantum.cnt >= PROC(current)->quantum.val) {
+		PROC(current)->quantum.cnt = 0;
 	} else {
-		quantum--;
+		PROC(current)->quantum.cnt++;
+		locked = 0;
 		return;
 	}
 
-	assert(proc_list->head);
+	memcpy(&PROC(current)->regs, regs, sizeof(*regs));
 
-	if (current)
-		memcpy(&((struct proc *)current->data)->regs, regs, sizeof(struct regs));
-
-	if (priority_proc && priority_proc->state == PROC_RUNNING) {
-		current = list_first_data(proc_list, priority_proc);
-		priority_proc = NULL;
-		assert(current);
-	} else if (current && current->next &&
-		   ((struct proc *)current->next->data)->state == PROC_RUNNING) {
+	if (current->next) {
 		current = current->next;
-	} else if (((struct proc *)proc_list->head->data)->state == PROC_RUNNING) {
-		current = proc_list->head;
+	} else if (proc_list_running->head) {
+		current = proc_list_running->head;
 	} else {
 		current = idle_proc;
-		struct node *iterator = proc_list->head;
-		while (iterator) {
-			if (((struct proc *)iterator->data)->state == PROC_RUNNING) {
-				current = iterator;
-				break;
-			}
-			iterator = iterator->next;
-		}
 	}
 
-	struct proc *p = current->data;
-	memory_switch_dir(p->page_dir);
-	memcpy(regs, &p->regs, sizeof(*regs));
+	memory_switch_dir(PROC(current)->page_dir);
+	memcpy(regs, &PROC(current)->regs, sizeof(*regs));
 
-	if (current == idle_proc)
-		quantum = 0;
-
-	/* printf("{%d}", ((struct proc *)current->data)->pid); */
+	locked = 0;
 }
 
 void proc_print(void)
 {
-	struct node *node = proc_list->head;
+	struct node *node = proc_list_running->head;
+	struct proc *proc = NULL;
 
 	printf("--- PROCESSES ---\n");
-	struct proc *proc = NULL;
 	while (node && (proc = node->data)) {
-		printf("Process %d: %s [%s] [entry: %x; stack: %x]\n", proc->pid, proc->name,
-		       proc->state == PROC_RUNNING ? "RUNNING" : "SLEEPING",
-		       virtual_to_physical(proc->page_dir, proc->entry),
-		       virtual_to_physical(proc->page_dir, proc->regs.ebp));
+		printf("Process %d: %s [%s]\n", proc->pid, proc->name,
+		       proc->state == PROC_RUNNING ? "RUNNING" : "SLEEPING");
 		node = node->next;
 	}
 	printf("\n");
@@ -103,37 +89,60 @@ u8 proc_super(void)
 
 struct proc *proc_from_pid(u32 pid)
 {
-	struct node *iterator = proc_list->head;
-	while (iterator != NULL) {
+	struct node *iterator = NULL;
+
+	iterator = proc_list_blocked->head;
+	while (iterator) {
 		if (((struct proc *)iterator->data)->pid == pid)
 			return iterator->data;
 		iterator = iterator->next;
 	}
-	return NULL;
-}
 
-void proc_clear_quantum(void)
-{
-	quantum = 0;
-}
-
-void proc_exit(struct proc *proc, s32 status)
-{
-	u8 found = 0;
-	struct node *iterator = proc_list->head;
+	iterator = proc_list_running->head;
 	while (iterator) {
-		if (iterator->data == proc) {
-			found = 1;
-			list_remove(proc_list, iterator);
-			break;
-		}
+		if (((struct proc *)iterator->data)->pid == pid)
+			return iterator->data;
 		iterator = iterator->next;
 	}
 
-	assert(found);
+	return NULL;
+}
 
-	if (memcmp(proc, current->data, sizeof(*proc)) == 0)
-		current = NULL;
+void proc_set_quantum(struct proc *proc, u32 value)
+{
+	proc->quantum.val = value;
+}
+
+void proc_reset_quantum(struct proc *proc)
+{
+	proc->quantum.cnt = proc->quantum.val;
+}
+
+void proc_state(struct proc *proc, enum proc_state state)
+{
+	if (state == PROC_RUNNING && !list_first_data(proc_list_running, proc)) {
+		assert(list_remove(proc_list_blocked, list_first_data(proc_list_blocked, proc)));
+		assert(list_add(proc_list_running, proc));
+	} else if (state == PROC_BLOCKED && !list_first_data(proc_list_blocked, proc)) {
+		assert(list_remove(proc_list_running, list_first_data(proc_list_running, proc)));
+		assert(list_add(proc_list_blocked, proc));
+	}
+	// else: Nothing to do!
+}
+
+void proc_exit(struct proc *proc, struct regs *r, s32 status)
+{
+	struct node *running = list_first_data(proc_list_running, proc);
+	if (!running || !list_remove(proc_list_running, running)) {
+		struct node *blocked = list_first_data(proc_list_blocked, proc);
+		assert(blocked && list_remove(proc_list_blocked, blocked));
+		// Idle procs can't be killed -> assertion failure.
+	}
+
+	if (current->data == proc) {
+		current = idle_proc;
+		memcpy(r, &PROC(idle_proc)->regs, sizeof(*r));
+	}
 
 	printf("Process %s (%d) exited with status %d (%s)\n",
 	       proc->name[0] ? proc->name : "UNKNOWN", proc->pid, status,
@@ -145,40 +154,77 @@ void proc_exit(struct proc *proc, s32 status)
 
 	free(proc);
 
-	proc_clear_quantum(); // TODO: Add quantum to each process struct?
-
-	// The caller has to yield itself
+	if (current->data == proc)
+		proc_yield(r);
 }
 
 void proc_yield(struct regs *r)
 {
-	proc_clear_quantum();
+	proc_reset_quantum(PROC(current));
 	scheduler(r);
 }
 
-void proc_enable_waiting(u32 id, enum proc_wait_type type)
+void proc_block(u32 id, enum proc_block_type type, u32 func_ptr)
+{
+	u8 already_exists = 0;
+	struct proc *p = proc_current();
+
+	// Check if already exists
+	for (u32 i = 0; i < p->block.id_cnt; i++) {
+		if (p->block.ids[i].id == id && p->block.ids[i].type == type) {
+			assert(p->block.ids[i].func_ptr == func_ptr);
+			already_exists = 1;
+		}
+	}
+
+	if (already_exists)
+		goto end;
+
+	assert(p->block.id_cnt + 1 < PROC_MAX_BLOCK_IDS);
+
+	// Find slot
+	struct proc_block_identifier *slot = NULL;
+	for (u32 i = 0; i < PROC_MAX_BLOCK_IDS; i++) {
+		if (p->block.ids[i].magic != PROC_BLOCK_MAGIC) {
+			slot = &p->block.ids[i];
+			break;
+		}
+	}
+	assert(slot);
+
+	slot->magic = PROC_BLOCK_MAGIC;
+	slot->id = id;
+	slot->type = type;
+	slot->func_ptr = func_ptr;
+	p->block.id_cnt++;
+
+end:
+	proc_state(p, PROC_BLOCKED);
+}
+
+void proc_unblock(u32 id, enum proc_block_type type)
 {
 	struct page_dir *dir_bak;
 	memory_backup_dir(&dir_bak);
 
-	struct proc *proc_bak = proc_current();
+	struct node *proc_bak = current;
 	if (!proc_bak)
 		return;
 
-	struct node *iterator = proc_list->head;
+	struct node *iterator = proc_list_blocked->head;
 	while (iterator) {
 		struct proc *p = iterator->data;
-		struct proc_wait *w = &p->wait;
+		struct proc_block *w = &p->block;
 
 		if (!p || !w || w->id_cnt == 0) {
 			iterator = iterator->next;
 			continue;
 		}
 
-		current = list_first_data(proc_list, p);
-		assert(w->id_cnt < PROC_MAX_WAIT_IDS);
+		current = list_first_data(proc_list_blocked, p);
+		assert(w->id_cnt < PROC_MAX_BLOCK_IDS);
 		for (u32 i = 0; i < w->id_cnt; i++) {
-			if (w->ids[i].magic == PROC_WAIT_MAGIC && w->ids[i].id == id &&
+			if (w->ids[i].magic == PROC_BLOCK_MAGIC && w->ids[i].id == id &&
 			    w->ids[i].type == type) {
 				struct regs *r = &p->regs;
 				u32 (*func)(u32, u32, u32, u32) =
@@ -189,8 +235,8 @@ void proc_enable_waiting(u32 id, enum proc_wait_type type)
 					memory_switch_dir(dir_bak);
 				}
 				memset(&w->ids[i], 0, sizeof(w->ids[i]));
-				p->wait.id_cnt--;
-				p->state = PROC_RUNNING;
+				p->block.id_cnt--;
+				proc_state(p, PROC_RUNNING);
 				break;
 			}
 		}
@@ -198,46 +244,8 @@ void proc_enable_waiting(u32 id, enum proc_wait_type type)
 		iterator = iterator->next;
 	}
 
-	if (current->data != proc_bak)
-		current = list_first_data(proc_list, proc_bak);
-}
-
-void proc_wait_for(u32 id, enum proc_wait_type type, u32 func_ptr)
-{
-	u8 already_exists = 0;
-	struct proc *p = proc_current();
-
-	// Check if already exists
-	for (u32 i = 0; i < p->wait.id_cnt; i++) {
-		if (p->wait.ids[i].id == id && p->wait.ids[i].type == type) {
-			assert(p->wait.ids[i].func_ptr == func_ptr);
-			already_exists = 1;
-		}
-	}
-
-	if (already_exists)
-		goto end;
-
-	assert(p->wait.id_cnt + 1 < PROC_MAX_WAIT_IDS);
-
-	// Find slot
-	struct proc_wait_identifier *slot = NULL;
-	for (u32 i = 0; i < PROC_MAX_WAIT_IDS; i++) {
-		if (p->wait.ids[i].magic != PROC_WAIT_MAGIC) {
-			slot = &p->wait.ids[i];
-			break;
-		}
-	}
-	assert(slot != NULL);
-
-	slot->magic = PROC_WAIT_MAGIC;
-	slot->id = id;
-	slot->type = type;
-	slot->func_ptr = func_ptr;
-	p->wait.id_cnt++;
-
-end:
-	p->state = PROC_SLEEPING;
+	if (current != proc_bak)
+		current = proc_bak;
 }
 
 struct proc *proc_make(enum proc_priv priv)
@@ -249,6 +257,8 @@ struct proc *proc_make(enum proc_priv priv)
 	proc->memory = list_new();
 	proc->state = PROC_RUNNING;
 	proc->page_dir = virtual_create_dir();
+	proc->quantum.val = PROC_QUANTUM;
+	proc->quantum.cnt = 0;
 
 	// Init regs
 	u8 is_kernel = priv == PROC_PRIV_KERNEL;
@@ -262,8 +272,7 @@ struct proc *proc_make(enum proc_priv priv)
 	proc->regs.cs = code;
 	proc->regs.eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
 
-	if (current)
-		list_add(proc_list, proc);
+	list_add(proc_list_running, proc);
 
 	return proc;
 }
@@ -339,7 +348,7 @@ static res procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 			msg->data = msg_data;
 			msg->size = count;
 			stack_push_bot(p->messages, msg); // TODO: Use offset
-			proc_enable_waiting(pid, PROC_WAIT_MSG);
+			proc_unblock(pid, PROC_BLOCK_MSG);
 			return count;
 		} else if (!memcmp(path, "io/", 3)) {
 			path += 3;
@@ -355,7 +364,7 @@ static res procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 			assert(stream->offset_write + count < STREAM_MAX_SIZE); // TODO: Resize
 			memcpy((char *)(stream->data + stream->offset_write), buf, count);
 			stream->offset_write += count;
-			proc_enable_waiting(dev->id, PROC_WAIT_DEV);
+			proc_unblock(dev->id, PROC_BLOCK_DEV);
 			return count;
 		}
 	}
@@ -414,7 +423,7 @@ static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 	return -ENOENT;
 }
 
-static res procfs_wait(const char *path, u32 func_ptr, struct device *dev)
+static res procfs_block(const char *path, u32 func_ptr, struct device *dev)
 {
 	u32 pid = 0;
 	procfs_parse_path(&path, &pid);
@@ -426,10 +435,10 @@ static res procfs_wait(const char *path, u32 func_ptr, struct device *dev)
 
 		path++;
 		if (!memcmp(path, "msg", 4)) {
-			proc_wait_for(pid, PROC_WAIT_MSG, func_ptr);
+			proc_block(pid, PROC_BLOCK_MSG, func_ptr);
 			return EOK;
 		} else {
-			proc_wait_for(dev->id, PROC_WAIT_DEV, func_ptr);
+			proc_block(dev->id, PROC_BLOCK_DEV, func_ptr);
 			return EOK;
 		}
 	}
@@ -479,21 +488,23 @@ static res procfs_ready(const char *path, struct device *dev)
 extern void proc_jump_userspace(void);
 
 u32 _esp, _eip;
-void proc_init(void)
+NORETURN void proc_init(void)
 {
-	if (proc_list)
-		return;
+	if (proc_list_running)
+		panic("Already initialized processes!");
 
 	cli();
 	scheduler_enable();
-	proc_list = list_new();
+	proc_list_running = list_new();
+	proc_list_blocked = list_new();
+	proc_list_idle = list_new();
 
 	// Procfs
 	struct vfs *vfs = zalloc(sizeof(*vfs));
 	vfs->type = VFS_PROCFS;
 	vfs->read = procfs_read;
 	vfs->write = procfs_write;
-	vfs->wait = procfs_wait;
+	vfs->block = procfs_block;
 	vfs->perm = procfs_perm;
 	vfs->ready = procfs_ready;
 	vfs->data = NULL;
@@ -502,29 +513,32 @@ void proc_init(void)
 	dev->type = DEV_CHAR;
 	dev->vfs = vfs;
 	device_add(dev);
-	assert(vfs_mount(dev, "/proc/") == 0);
+	assert(vfs_mount(dev, "/proc/") == EOK);
 
 	// Idle proc
 	struct proc *kernel_proc = proc_make(PROC_PRIV_KERNEL);
-	assert(elf_load("/bin/idle", kernel_proc) == 0);
-	kernel_proc->state = PROC_SLEEPING;
-	idle_proc = list_add(proc_list, kernel_proc);
+	assert(elf_load("/bin/idle", kernel_proc) == EOK);
+	kernel_proc->state = PROC_BLOCKED;
+	kernel_proc->quantum.val = 0;
+	kernel_proc->quantum.cnt = 0;
+	idle_proc = list_add(proc_list_idle, kernel_proc);
+	list_remove(proc_list_running, list_first_data(proc_list_running, kernel_proc));
 
 	// Init proc (root)
-	struct node *new = list_add(proc_list, proc_make(PROC_PRIV_ROOT));
-	assert(elf_load("/bin/init", new->data) == 0);
-	current = new;
-	proc_stack_push(new->data, 0);
+	struct proc *init = proc_make(PROC_PRIV_ROOT);
+	assert(elf_load("/bin/init", init) == EOK);
+	proc_stack_push(init, 0);
+	current = list_first_data(proc_list_running, init);
 
-	_eip = ((struct proc *)new->data)->regs.eip;
-	_esp = ((struct proc *)new->data)->regs.useresp;
+	_eip = init->regs.eip;
+	_esp = init->regs.useresp;
 
-	memory_switch_dir(((struct proc *)new->data)->page_dir);
+	memory_switch_dir(init->page_dir);
 
 	printf("Jumping to userspace!\n");
+
 	// You're waiting for a train. A train that will take you far away...
 	proc_jump_userspace();
 
-	while (1) {
-	};
+	panic("Returned from limbo!\n");
 }

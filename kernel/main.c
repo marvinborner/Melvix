@@ -52,6 +52,4 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	syscall_init();
 	proc_init();
-
-	idle();
 }

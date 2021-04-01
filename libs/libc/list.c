@@ -16,8 +16,8 @@ struct list *list_new(void)
 void list_destroy(struct list *list)
 {
 	struct node *iterator = list->head;
-	while (iterator != NULL) {
-		if (iterator->next == NULL) {
+	while (iterator) {
+		if (!iterator->next) {
 			free(iterator);
 			break;
 		}
@@ -41,14 +41,14 @@ static struct node *list_new_node(void)
 
 NONNULL static struct node *list_add_node(struct list *list, struct node *node)
 {
-	if (list->head == NULL) {
+	if (!list->head) {
 		list->head = node;
 		return list->head;
 	}
 
 	struct node *iterator = list->head;
-	while (iterator != NULL) {
-		if (iterator->next == NULL) {
+	while (iterator) {
+		if (!iterator->next) {
 			iterator->next = node;
 			node->prev = iterator;
 			break;
@@ -64,8 +64,8 @@ struct node *list_last(struct list *list)
 		return NULL;
 
 	struct node *iterator = list->head;
-	while (iterator != NULL) {
-		if (iterator->next == NULL)
+	while (iterator) {
+		if (!iterator->next)
 			return iterator;
 		iterator = iterator->next;
 	}
@@ -79,7 +79,7 @@ struct node *list_first_data(struct list *list, void *data)
 		return NULL;
 
 	struct node *iterator = list->head;
-	while (iterator != NULL) {
+	while (iterator) {
 		if (iterator->data == data)
 			return iterator;
 		iterator = iterator->next;
@@ -109,6 +109,7 @@ struct node *list_add(struct list *list, void *data)
 }
 
 // Maybe list_remove_node?
+// TODO: Free node on destroy
 struct list *list_remove(struct list *list, struct node *node)
 {
 	if (!list->head)
@@ -122,7 +123,7 @@ struct list *list_remove(struct list *list, struct node *node)
 	struct node *iterator = list->head->next;
 	while (iterator != node) {
 		iterator = iterator->next;
-		if (iterator == NULL)
+		if (!iterator)
 			return NULL;
 	}
 

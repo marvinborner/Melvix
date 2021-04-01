@@ -47,7 +47,7 @@ static void mouse_handler(struct regs *r)
 		event->but3 = (mouse_byte[0] >> 2) & 1;
 		stack_push_bot(queue, event);
 		mouse_cycle = 0;
-		proc_enable_waiting(dev_id, PROC_WAIT_DEV);
+		proc_unblock(dev_id, PROC_BLOCK_DEV);
 		break;
 	default:
 		break;

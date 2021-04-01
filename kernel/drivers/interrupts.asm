@@ -5,7 +5,6 @@
 %macro IRQ 2
   global irq%1
   irq%1:
-	cli
 	push byte 0
 	push byte %2
 	jmp irq_common_stub
@@ -63,7 +62,6 @@ irq_common_stub:
 %macro ISR_NOERRCODE 1
 	global isr%1
 	isr%1:
-		cli
 		push byte 0
 		push %1
 		jmp isr_common_stub
@@ -72,7 +70,6 @@ irq_common_stub:
 %macro ISR_ERRCODE 1
 	global isr%1
 	isr%1:
-		cli
 		push byte %1
 		jmp isr_common_stub
 %endmacro

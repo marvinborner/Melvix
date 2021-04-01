@@ -14,9 +14,9 @@ void outb(u16 port, u8 data);
 void outw(u16 port, u16 data);
 void outl(u16 port, u32 data);
 
-static inline void spinlock(int *ptr)
+static inline void spinlock(u8 *ptr)
 {
-	int prev;
+	u32 prev;
 	do
 		__asm__ volatile("lock xchgl %0,%1" : "=a"(prev) : "m"(*ptr), "a"(1));
 	while (prev);

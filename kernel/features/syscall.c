@@ -50,7 +50,7 @@ static void syscall_handler(struct regs *r)
 		if (vfs_ready((char *)r->ebx)) {
 			r->eax = (u32)vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		} else {
-			res wait = vfs_wait((char *)r->ebx, (u32)vfs_read);
+			res wait = vfs_block((char *)r->ebx, (u32)vfs_read);
 			if (wait != 0)
 				r->eax = wait;
 			else
@@ -70,7 +70,7 @@ static void syscall_handler(struct regs *r)
 	case SYS_POLL: {
 		res ret = vfs_poll((const char **)r->ebx);
 		r->eax = ret;
-		if (ret == PROC_MAX_WAIT_IDS + 1)
+		if (ret == PROC_MAX_BLOCK_IDS + 1)
 			proc_yield(r);
 		break;
 	}
@@ -78,8 +78,8 @@ static void syscall_handler(struct regs *r)
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make(PROC_PRIV_NONE);
 		r->eax = (u32)elf_load(path, proc);
-		if (r->eax != 0) {
-			proc_exit(proc, -r->eax);
+		if (r->eax != EOK) {
+			proc_exit(proc, r, -r->eax);
 		} else {
 			// TODO: Reimplement argc,argv
 			proc_stack_push(proc, 0);
@@ -88,8 +88,7 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_EXIT: {
-		proc_exit(proc_current(), (s32)r->ebx);
-		proc_yield(r);
+		proc_exit(proc_current(), r, (s32)r->ebx);
 		break;
 	}
 	case SYS_BOOT: { // TODO: Move

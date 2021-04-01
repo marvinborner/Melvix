@@ -45,7 +45,7 @@ static void keyboard_handler(struct regs *r)
 	state = 0;
 	merged = 0;
 
-	proc_enable_waiting(dev_id, PROC_WAIT_DEV);
+	proc_unblock(dev_id, PROC_BLOCK_DEV);
 }
 
 /*static void keyboard_acknowledge(void)

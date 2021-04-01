@@ -23,12 +23,12 @@ typedef unsigned long long u64;
  * Macros
  */
 
-#define UNUSED(a) ((void)(a))
+#define UNUSED(__a) ((void)(__a))
 
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define MIN(__a, __b) (((__a) < (__b)) ? (__a) : (__b))
+#define MAX(__a, __b) (((__a) > (__b)) ? (__a) : (__b))
 
-#define ABS(a) ((u32)(((s32)(a) < 0) ? (-a) : (a)))
+#define ABS(__a) ((u32)(((s32)(__a) < 0) ? (-__a) : (__a)))
 
 #define ATTR __attribute__
 #define NORETURN ATTR((noreturn))
@@ -39,8 +39,12 @@ typedef unsigned long long u64;
 #define FLATTEN ATTR((flatten))
 #define PACKED ATTR((packed))
 #define HOT ATTR((hot))
-#define ALIGNED(align) ATTR((aligned(align)))
+#define SENTINEL ATTR((sentinel))
+#define USED_FUNC ATTR((used))
+#define UNUSED_FUNC ATTR((unused))
 #define NO_SANITIZE ATTR((no_sanitize("undefined")))
+#define ALIGNED(align) ATTR((aligned(align)))
+#define SECTION(section) ATTR((section(section)))
 
 #define EOF (-1)
 #define NULL ((void *)0)

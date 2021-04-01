@@ -72,7 +72,7 @@ res write(const char *path, const void *buf, u32 offset, u32 count) NONNULL;
 res ioctl(const char *path, ...) NONNULL;
 res stat(const char *path, struct stat *buf) NONNULL;
 res poll(const char **files) NONNULL;
-res exec(const char *path, ...) ATTR((nonnull(1)));
+res exec(const char *path, ...) ATTR((nonnull(1))) SENTINEL;
 res yield(void);
 res boot(u32 cmd);
 u32 time(void);
