@@ -27,13 +27,13 @@ ASFLAGS = -f elf32
 %.o: %.c
 	@$(CC) -c $(CFLAGS) $< -o $@
 
-libc: CFLAGS += -Duserspace
+libc: CFLAGS += -DUSER
 libc: $(COBJS)
 	@$(AS) $(ASFLAGS) crt/crt0.asm -o crt0.o
 	@mkdir -p ../../build/
 	@$(AR) rcs ../../build/libc.a crt0.o $+
 
-libk: CFLAGS += -Dkernel -ffreestanding -I../../kernel/inc/ $(CFLAGS_EXTRA)
+libk: CFLAGS += -DKERNEL -ffreestanding -I../../kernel/inc/ $(CFLAGS_EXTRA)
 libk: $(COBJS)
 	@mkdir -p ../../build/
 	@$(AR) rcs ../../build/libk.a $+

@@ -59,7 +59,7 @@ struct stat {
 	u32 size;
 };
 
-#if defined(userspace)
+#ifdef USER
 
 /**
  * Syscall wrappers

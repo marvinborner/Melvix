@@ -31,7 +31,10 @@ HOT FLATTEN void scheduler(struct regs *regs)
 {
 	spinlock(&locked);
 
-	PROC(current)->ticks++;
+	if (RING(regs) == 3)
+		PROC(current)->ticks.user++;
+	else
+		PROC(current)->ticks.kernel++;
 
 	if (PROC(current)->quantum.cnt >= PROC(current)->quantum.val) {
 		PROC(current)->quantum.cnt = 0;
@@ -93,14 +96,14 @@ struct proc *proc_from_pid(u32 pid)
 
 	iterator = proc_list_blocked->head;
 	while (iterator) {
-		if (((struct proc *)iterator->data)->pid == pid)
+		if (PROC(iterator)->pid == pid)
 			return iterator->data;
 		iterator = iterator->next;
 	}
 
 	iterator = proc_list_running->head;
 	while (iterator) {
-		if (((struct proc *)iterator->data)->pid == pid)
+		if (PROC(iterator)->pid == pid)
 			return iterator->data;
 		iterator = iterator->next;
 	}
@@ -152,12 +155,15 @@ void proc_exit(struct proc *proc, struct regs *r, s32 status)
 
 	if (proc->memory->head) {
 		printf("Process leaked memory:\n");
+		u32 total = 0;
 		struct node *iterator = proc->memory->head;
 		while (iterator) {
 			struct memory_proc_link *link = iterator->data;
 			printf("\t-> 0x%x: %dB\n", link->vrange.base, link->vrange.size);
+			total += link->vrange.size;
 			iterator = iterator->next;
 		}
+		printf("\tTOTAL: %dB (%dKiB)\n", total, total >> 10);
 	} else {
 		printf("Process didn't leak memory!\n");
 	}

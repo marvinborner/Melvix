@@ -25,10 +25,10 @@ typedef unsigned long long u64;
 
 #define UNUSED(__a) ((void)(__a))
 
-#define MIN(__a, __b) (((__a) < (__b)) ? (__a) : (__b))
-#define MAX(__a, __b) (((__a) > (__b)) ? (__a) : (__b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-#define ABS(__a) ((u32)(((s32)(__a) < 0) ? (-__a) : (__a)))
+#define ABS(a) ((u32)(((s32)(a) < 0) ? -(a) : (a)))
 
 #define ATTR __attribute__
 #define NORETURN ATTR((noreturn))

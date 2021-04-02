@@ -12,12 +12,10 @@ void free_debug(void *ptr, const char *file, int line, const char *func, const c
 void *realloc(void *ptr, u32 size);
 void *zalloc(u32 size);
 
-#ifdef kernel
+#ifdef KERNEL
 #define STACK_START 0x00500000 // Defined it bootloader
 #define STACK_SIZE 0x1000 // idk
-#elif defined(userspace)
-#else
-#error "No lib target specified. Please use -Dkernel or -Duserspace"
+#elif defined(USER)
 #endif
 
 void *memcpy(void *dest, const void *src, u32 n) NONNULL;

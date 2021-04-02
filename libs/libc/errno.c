@@ -2,7 +2,7 @@
 
 #include <def.h>
 #include <errno.h>
-#ifdef userspace
+#ifdef USER
 
 static u32 error = 0;
 

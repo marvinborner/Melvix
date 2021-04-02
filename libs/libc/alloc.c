@@ -5,7 +5,7 @@
 #include <cpu.h>
 #include <mem.h>
 
-#ifdef kernel
+#ifdef KERNEL
 
 #include <mm.h>
 
@@ -379,7 +379,7 @@ static void *_realloc(void *ptr, u32 size)
 	return new_ptr;
 }
 
-#ifdef kernel
+#ifdef KERNEL
 #define PREFIX "K"
 #define FUNC printf
 #else

@@ -22,7 +22,7 @@ static inline void spinlock(u32 *ptr)
 	while (prev);
 }
 
-#ifdef kernel
+#ifdef KERNEL
 void cpu_print(void);
 void cpu_enable_features(void);
 void fpu_restore(void);

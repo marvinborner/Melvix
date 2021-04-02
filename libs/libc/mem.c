@@ -7,7 +7,7 @@
 
 void *memcpy(void *dest, const void *src, u32 n)
 {
-#ifdef userspace
+#ifdef USER
 	// Inspired by Jeko at osdev
 	u8 *dest_byte = dest;
 	const u8 *src_byte = src;

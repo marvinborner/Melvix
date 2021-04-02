@@ -96,7 +96,7 @@ int snprintf(char *str, u32 size, const char *format, ...)
 	return len;
 }
 
-#ifdef userspace
+#ifdef USER
 
 #include <sys.h>
 #define PATH_OUT "/proc/self/io/out"
@@ -247,7 +247,7 @@ NORETURN void panic(const char *format, ...)
 	va_start(ap, format);
 	vsnprintf(buf, sizeof(buf), format, ap);
 	va_end(ap);
-#ifdef kernel
+#ifdef KERNEL
 	print("--- DON'T PANIC! ---\n");
 	print(buf);
 	print_trace(5);

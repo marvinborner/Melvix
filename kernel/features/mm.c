@@ -377,7 +377,6 @@ void *memory_alloc_identity(struct page_dir *dir, u32 flags)
 	return NULL;
 }
 
-// TODO: Free by address instead of vrange (combine with shmem map?)
 void memory_free(struct page_dir *dir, struct memory_range vrange)
 {
 	assert(PAGE_ALIGNED(vrange.base) && PAGE_ALIGNED(vrange.size));

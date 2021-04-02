@@ -6,7 +6,7 @@
 #include <errno.h>
 #include <sys.h>
 
-#if defined(userspace)
+#ifdef USER
 
 /**
  * Definitions

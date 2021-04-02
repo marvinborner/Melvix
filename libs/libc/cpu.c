@@ -48,7 +48,7 @@ void outl(u16 port, u32 data)
 	__asm__ volatile("outl %0, %1" ::"a"(data), "Nd"(port));
 }
 
-#ifdef kernel
+#ifdef KERNEL
 
 static void cpuid(int code, u32 *a, u32 *b, u32 *c, u32 *d)
 {

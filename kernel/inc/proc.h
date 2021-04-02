@@ -19,6 +19,8 @@
 #define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
 #define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
 
+#define RING(regs) ((regs->cs) & 3)
+
 #define PROC_MAX_BLOCK_IDS 16
 #define PROC_BLOCK_MAGIC 0x00528491
 
@@ -60,7 +62,11 @@ struct proc {
 	struct stack *messages;
 	struct list *memory;
 
-	u32 ticks;
+	struct {
+		u32 user;
+		u32 kernel;
+	} ticks;
+
 	struct {
 		u8 val;
 		u8 cnt;
