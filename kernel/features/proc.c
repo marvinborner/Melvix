@@ -16,7 +16,7 @@
 
 #define PROC(node) ((struct proc *)node->data)
 
-static u8 locked = 0;
+static u32 locked = 0;
 static u32 current_pid = 0;
 static struct node *idle_proc = NULL;
 static struct node *current = NULL;
@@ -132,6 +132,8 @@ void proc_state(struct proc *proc, enum proc_state state)
 
 void proc_exit(struct proc *proc, struct regs *r, s32 status)
 {
+	assert(proc != idle_proc->data);
+
 	struct node *running = list_first_data(proc_list_running, proc);
 	if (!running || !list_remove(proc_list_running, running)) {
 		struct node *blocked = list_first_data(proc_list_blocked, proc);
@@ -156,6 +158,8 @@ void proc_exit(struct proc *proc, struct regs *r, s32 status)
 			printf("\t-> 0x%x: %dB\n", link->vrange.base, link->vrange.size);
 			iterator = iterator->next;
 		}
+	} else {
+		printf("Process didn't leak memory!\n");
 	}
 
 	stack_destroy(proc->messages);
@@ -164,8 +168,7 @@ void proc_exit(struct proc *proc, struct regs *r, s32 status)
 
 	free(proc);
 
-	if (current->data == proc)
-		proc_yield(r);
+	proc_yield(r);
 }
 
 void proc_yield(struct regs *r)
