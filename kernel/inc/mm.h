@@ -95,6 +95,18 @@ struct page_dir *virtual_kernel_dir(void);
  * Memory wrappers
  */
 
+struct memory_object {
+	u32 id;
+	u32 refs;
+	u8 shared;
+	struct memory_range prange;
+};
+
+struct memory_proc_link {
+	struct memory_object *obj;
+	struct memory_range vrange;
+};
+
 #define MEMORY_NONE (0 << 0)
 #define MEMORY_USER (1 << 0)
 #define MEMORY_CLEAR (1 << 1)

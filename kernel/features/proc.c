@@ -148,6 +148,16 @@ void proc_exit(struct proc *proc, struct regs *r, s32 status)
 	       proc->name[0] ? proc->name : "UNKNOWN", proc->pid, status,
 	       status == 0 ? "success" : "error");
 
+	if (proc->memory->head) {
+		printf("Process leaked memory:\n");
+		struct node *iterator = proc->memory->head;
+		while (iterator) {
+			struct memory_proc_link *link = iterator->data;
+			printf("\t-> 0x%x: %dB\n", link->vrange.base, link->vrange.size);
+			iterator = iterator->next;
+		}
+	}
+
 	stack_destroy(proc->messages);
 	list_destroy(proc->memory); // TODO: Decrement memory ref links
 	virtual_destroy_dir(proc->page_dir);

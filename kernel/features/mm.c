@@ -404,16 +404,6 @@ void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 f
 		memset((void *)prange.base, 0, prange.size);
 }
 
-struct memory_object {
-	u32 id;
-	u32 refs;
-	u8 shared;
-	struct memory_range prange;
-};
-struct memory_proc_link {
-	struct memory_object *obj;
-	struct memory_range vrange;
-};
 static struct list *memory_objects = NULL;
 res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared)
 {
