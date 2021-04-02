@@ -7,9 +7,9 @@
 #include <timer.h>
 
 static u32 timer_ticks = 0;
-static u8 call_scheduler = 0;
+PROTECTED static u8 call_scheduler = 0;
 
-static void timer_phase(int hz)
+CLEAR static void timer_phase(int hz)
 {
 	int divisor = 3579545 / 3 / hz;
 	outb(0x43, 0x36); // 01 10 11 0b // CTR, RW, MODE, BCD
@@ -38,12 +38,12 @@ void timer_wait(u32 ticks)
 {
 	u32 eticks = timer_ticks + ticks;
 	while (timer_ticks < eticks) {
-		__asm__ volatile("sti//hlt//cli");
+		__asm__ volatile("sti\nhlt\ncli");
 	}
 }
 
 // Install timer handler into IRQ0
-void timer_install(void)
+CLEAR void timer_install(void)
 {
 	/* hpet_install(10000); // TODO: Find optimal femtosecond period */
 	/* if (!hpet) */
@@ -51,13 +51,13 @@ void timer_install(void)
 	irq_install_handler(0, timer_handler);
 }
 
-void scheduler_enable(void)
+CLEAR void scheduler_enable(void)
 {
 	call_scheduler = 1;
 	irq_install_handler(0, timer_handler);
 }
 
-void scheduler_disable(void)
+CLEAR void scheduler_disable(void)
 {
 	call_scheduler = 0;
 	irq_install_handler(0, timer_handler);

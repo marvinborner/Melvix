@@ -14,10 +14,11 @@
  * IDT
  */
 
+// TODO: Why does PROTECTED on idt only work when debug mode is disabled? File size?
 static struct idt_entry idt[256] = { 0 };
-static struct idt_ptr idt_ptr = { 0 };
+PROTECTED static struct idt_ptr idt_ptr = { 0 };
 
-void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags)
+CLEAR void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags)
 {
 	// Specify the interrupt routine's base address
 	idt[num].base_low = (u16)(base & 0xFFFF);
@@ -30,14 +31,14 @@ void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags)
 }
 
 // Install IDT
-static void idt_install(void)
+CLEAR static void idt_install(void)
 {
 	// Set IDT pointer and limit
-	idt_ptr.limit = (sizeof(struct idt_entry) * 256) - 1;
+	idt_ptr.limit = sizeof(idt) - 1;
 	idt_ptr.base = &idt;
 
 	// Clear IDT by setting memory cells to 0
-	memset(&idt, 0, sizeof(struct idt_entry) * 256);
+	memset(&idt, 0, sizeof(idt));
 
 	__asm__ volatile("lidt %0" : : "m"(idt_ptr));
 }
@@ -46,22 +47,22 @@ static void idt_install(void)
  * IRQ
  */
 
-static void (*irq_routines[16])(struct regs *) = { 0 };
+PROTECTED static void (*irq_routines[16])(struct regs *) = { 0 };
 
 // Install IRQ handler
-void irq_install_handler(int irq, void (*handler)(struct regs *r))
+CLEAR void irq_install_handler(int irq, void (*handler)(struct regs *r))
 {
 	irq_routines[irq] = handler;
 }
 
 // Remove IRQ handler
-void irq_uninstall_handler(int irq)
+CLEAR void irq_uninstall_handler(int irq)
 {
 	irq_routines[irq] = 0;
 }
 
 // Remap the IRQ table
-static void irq_remap(void)
+CLEAR static void irq_remap(void)
 {
 	outb(0x20, 0x11);
 	outb(0xA0, 0x11);
@@ -95,7 +96,7 @@ void irq_handler(struct regs *r)
 }
 
 // Map ISRs to the correct entries in the IDT
-static void irq_install(void)
+CLEAR static void irq_install(void)
 {
 	irq_remap();
 
@@ -122,57 +123,59 @@ static void irq_install(void)
  * ISR
  */
 
-static void (*isr_routines[256])(struct regs *) = { 0 };
+PROTECTED static void (*isr_routines[256])(struct regs *) = { 0 };
 
-const char *isr_exceptions[32] = { "Division By Zero",
-				   "Debug",
-				   "Non Maskable Interrupt",
-				   "Breakpoint",
-				   "Into Detected Overflow",
-				   "Out of Bounds",
-				   "Invalid Opcode",
-				   "No Coprocessor",
+PROTECTED const char *isr_exceptions[32] = {
+	"Division By Zero",
+	"Debug",
+	"Non Maskable Interrupt",
+	"Breakpoint",
+	"Into Detected Overflow",
+	"Out of Bounds",
+	"Invalid Opcode",
+	"No Coprocessor",
 
-				   "Double Fault",
-				   "Coprocessor Segment Overrun",
-				   "Bad TSS",
-				   "Segment Not Present",
-				   "Stack Fault",
-				   "General Protection Fault",
-				   "Page Fault",
-				   "Unknown Interrupt",
+	"Double Fault",
+	"Coprocessor Segment Overrun",
+	"Bad TSS",
+	"Segment Not Present",
+	"Stack Fault",
+	"General Protection Fault",
+	"Page Fault",
+	"Unknown Interrupt",
 
-				   "Coprocessor Fault",
-				   "Alignment Check",
-				   "Machine Check",
-				   "Reserved",
-				   "Reserved",
-				   "Reserved",
-				   "Reserved",
-				   "Reserved",
+	"Coprocessor Fault",
+	"Alignment Check",
+	"Machine Check",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
 
-				   "Reserved",
-				   "Reserved",
-				   "Reserved",
-				   "Reserved",
-				   "Reserved",
-				   "Reserved",
-				   "Reserved",
-				   "Reserved" };
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+	"Reserved",
+};
 
-void isr_install_handler(int isr, void (*handler)(struct regs *r))
+CLEAR void isr_install_handler(int isr, void (*handler)(struct regs *r))
 {
 	isr_routines[isr] = handler;
 }
 
-void isr_uninstall_handler(int isr)
+CLEAR void isr_uninstall_handler(int isr)
 {
 	isr_routines[isr] = 0;
 }
 
 void isr_panic(struct regs *r)
 {
-	printf("%s Exception (%x) at 0x%x (ring %d), exiting!\n", isr_exceptions[r->int_no],
+	printf("%s Exception (code %x) at 0x%x (ring %d), exiting!\n", isr_exceptions[r->int_no],
 	       r->err_code, r->eip, RING(r));
 	struct proc *proc = proc_current();
 	if (proc) {
@@ -196,7 +199,7 @@ void isr_handler(struct regs *r)
 		isr_panic(r);
 }
 
-static void isr_install(void)
+CLEAR static void isr_install(void)
 {
 	idt_set_gate(0, (u32)isr0, 0x08, 0x8E);
 	idt_set_gate(1, (u32)isr1, 0x08, 0x8E);
@@ -245,7 +248,8 @@ static void isr_install(void)
 /**
  * Combined
  */
-void interrupts_install(void)
+
+CLEAR void interrupts_install(void)
 {
 	idt_install();
 	isr_install();

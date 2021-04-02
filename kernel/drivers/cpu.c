@@ -26,13 +26,6 @@ u32 inl(u16 port)
 	return value;
 }
 
-void insl(u16 port, void *addr, int n)
-{
-	__asm__ volatile("rep insl" ::"c"(n), // Count
-			 "d"(port), // Port #
-			 "D"(addr)); // Buffer
-}
-
 void outb(u16 port, u8 data)
 {
 	__asm__ volatile("outb %0, %1" ::"a"(data), "Nd"(port));
@@ -48,14 +41,12 @@ void outl(u16 port, u32 data)
 	__asm__ volatile("outl %0, %1" ::"a"(data), "Nd"(port));
 }
 
-#ifdef KERNEL
-
-static void cpuid(int code, u32 *a, u32 *b, u32 *c, u32 *d)
+CLEAR static void cpuid(int code, u32 *a, u32 *b, u32 *c, u32 *d)
 {
 	__asm__ volatile("cpuid" : "=a"(*a), "=b"(*b), "=c"(*c), "=d"(*d) : "a"(code));
 }
 
-static char *cpu_string(char buf[16])
+CLEAR static char *cpu_string(char buf[16])
 {
 	// wtf
 	cpuid(CPUID_VENDOR_STRING, (u32 *)(buf + 12), (u32 *)(buf), (u32 *)(buf + 8),
@@ -64,20 +55,20 @@ static char *cpu_string(char buf[16])
 	return buf;
 }
 
-void cpu_print(void)
+CLEAR void cpu_print(void)
 {
 	char buf[16] = { 0 };
 	printf("CPU vendor: %s\n", cpu_string(buf));
 }
 
-u32 cr0_get(void)
+CLEAR u32 cr0_get(void)
 {
 	u32 cr0;
 	__asm__ volatile("movl %%cr0, %%eax" : "=a"(cr0));
 	return cr0;
 }
 
-void cr0_set(u32 cr0)
+CLEAR void cr0_set(u32 cr0)
 {
 	__asm__ volatile("movl %%eax, %%cr0" ::"a"(cr0));
 }
@@ -94,14 +85,14 @@ void cr3_set(u32 cr3)
 	__asm__ volatile("movl %%eax, %%cr3" ::"a"(cr3));
 }
 
-u32 cr4_get(void)
+CLEAR u32 cr4_get(void)
 {
 	u32 cr4;
 	__asm__ volatile("movl %%cr4, %%eax" : "=a"(cr4));
 	return cr4;
 }
 
-void cr4_set(u32 cr4)
+CLEAR void cr4_set(u32 cr4)
 {
 	__asm__ volatile("movl %%eax, %%cr4" ::"a"(cr4));
 }
@@ -130,7 +121,7 @@ void fpu_restore(void)
 	__asm__ volatile("fxrstor (%0)" ::"r"(fpu_state));
 }
 
-void cpu_enable_features(void)
+CLEAR void cpu_enable_features(void)
 {
 	u32 a, b, c, d;
 	cpuid(CPUID_FEATURES, &a, &b, &c, &d);
@@ -153,30 +144,12 @@ void cpu_enable_features(void)
 	}
 }
 
-void cli(void)
+CLEAR void cli(void)
 {
 	__asm__ volatile("cli");
 }
 
-void sti(void)
+CLEAR void sti(void)
 {
 	__asm__ volatile("sti");
 }
-
-void hlt(void)
-{
-	__asm__ volatile("hlt");
-}
-
-void idle(void)
-{
-	while (1)
-		hlt();
-}
-
-void loop(void)
-{
-	cli();
-	idle();
-}
-#endif

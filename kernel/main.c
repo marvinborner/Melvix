@@ -50,5 +50,6 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	keyboard_reset();
 
 	syscall_init();
+
 	proc_init();
 }

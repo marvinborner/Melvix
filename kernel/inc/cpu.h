@@ -5,15 +5,6 @@
 
 #include <def.h>
 
-u8 inb(u16 port);
-u16 inw(u16 port);
-u32 inl(u16 port);
-void insl(u16 port, void *addr, int n) ATTR((nonnull(2)));
-
-void outb(u16 port, u8 data);
-void outw(u16 port, u16 data);
-void outl(u16 port, u32 data);
-
 static inline void spinlock(u32 *ptr)
 {
 	u32 prev;
@@ -22,7 +13,14 @@ static inline void spinlock(u32 *ptr)
 	while (prev);
 }
 
-#ifdef KERNEL
+u8 inb(u16 port);
+u16 inw(u16 port);
+u32 inl(u16 port);
+
+void outb(u16 port, u8 data);
+void outw(u16 port, u16 data);
+void outl(u16 port, u32 data);
+
 void cpu_print(void);
 void cpu_enable_features(void);
 void fpu_restore(void);
@@ -36,9 +34,6 @@ void cr4_set(u32 cr4);
 
 void cli(void);
 void sti(void);
-void hlt(void);
-void idle(void);
-void loop(void);
 
 enum cpuid_requests { CPUID_VENDOR_STRING, CPUID_FEATURES, CPUID_TLB, CPUID_SERIAL };
 enum cpuid_features {
@@ -104,7 +99,5 @@ enum cpuid_features {
 
 u8 cpu_has_cfeature(enum cpuid_features feature);
 u8 cpu_has_dfeature(enum cpuid_features feature);
-
-#endif
 
 #endif

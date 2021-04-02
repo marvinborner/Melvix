@@ -66,7 +66,7 @@ struct stat {
  */
 
 void loop(void);
-void exit(s32 status);
+void exit(s32 status) NORETURN;
 res read(const char *path, void *buf, u32 offset, u32 count) NONNULL;
 res write(const char *path, const void *buf, u32 offset, u32 count) NONNULL;
 res ioctl(const char *path, ...) NONNULL;

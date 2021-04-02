@@ -11,7 +11,7 @@
 #include <print.h>
 #include <random.h>
 
-static struct page_dir kernel_dir ALIGNED(PAGE_SIZE) = { 0 };
+PROTECTED static struct page_dir kernel_dir ALIGNED(PAGE_SIZE) = { 0 };
 static struct page_table kernel_tables[PAGE_KERNEL_COUNT] ALIGNED(PAGE_SIZE) = { 0 };
 
 /**
@@ -23,14 +23,14 @@ static void paging_switch_dir(u32 dir)
 	cr3_set(dir);
 }
 
-extern void paging_invalidate_tlb(void);
+CLEAR extern void paging_invalidate_tlb(void);
 
-void paging_disable(void)
+CLEAR void paging_disable(void)
 {
 	cr0_set(cr0_get() | 0x7fffffff);
 }
 
-void paging_enable(void)
+CLEAR void paging_enable(void)
 {
 	cr0_set(cr0_get() | 0x80010000);
 }
@@ -70,7 +70,7 @@ void page_fault_handler(struct regs *r)
  */
 
 static u32 memory_used = 0;
-static u32 memory_total = 0;
+PROTECTED static u32 memory_total = 0;
 static u32 best_bet = 0;
 static u8 memory[PAGE_COUNT * PAGE_COUNT / 8] = { 0 };
 
@@ -563,7 +563,7 @@ struct memory_range memory_range_around(u32 base, u32 size)
 
 extern u32 kernel_rw_start;
 extern u32 kernel_rw_end;
-static struct memory_range kernel_rw_memory_range(void)
+CLEAR static struct memory_range kernel_rw_memory_range(void)
 {
 	return memory_range_around((u32)&kernel_rw_start,
 				   (u32)&kernel_rw_end - (u32)&kernel_rw_start);
@@ -571,13 +571,44 @@ static struct memory_range kernel_rw_memory_range(void)
 
 extern u32 kernel_ro_start;
 extern u32 kernel_ro_end;
-static struct memory_range kernel_ro_memory_range(void)
+CLEAR static struct memory_range kernel_ro_memory_range(void)
 {
 	return memory_range_around((u32)&kernel_ro_start,
 				   (u32)&kernel_ro_end - (u32)&kernel_ro_start);
 }
 
-void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
+extern u32 kernel_temp_clear_start;
+extern u32 kernel_temp_clear_end;
+static void memory_temp_clear(void)
+{
+	u8 *data = (u8 *)&kernel_temp_clear_start;
+	u32 size = (u32)&kernel_temp_clear_end - (u32)&kernel_temp_clear_start;
+	memset(data, 0, size);
+	memory_free(&kernel_dir, memory_range_around((u32)data, size));
+	printf("Cleared %dKiB\n", size >> 10);
+}
+
+extern u32 kernel_temp_protect_start;
+extern u32 kernel_temp_protect_end;
+CLEAR static void memory_temp_protect(void)
+{
+	u32 data = (u32)&kernel_temp_protect_start;
+	u32 size = (u32)&kernel_temp_protect_end - (u32)&kernel_temp_protect_start;
+	memory_map_identity(&kernel_dir, memory_range_around((u32)data, size), MEMORY_READONLY);
+	printf("Protected %dKiB\n", size >> 10);
+}
+
+void memory_user_hook(void)
+{
+	PROTECTED static u8 called = 0;
+	if (!called) {
+		called = 1;
+		memory_temp_protect();
+		memory_temp_clear();
+	}
+}
+
+CLEAR void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 {
 	for (struct mmap_boot *p = mem_info->start; (u32)(p - mem_info->start) < mem_info->size;
 	     p++) {

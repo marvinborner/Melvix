@@ -13,10 +13,10 @@
 #include <str.h>
 #include <sys.h>
 
-static struct event_keyboard *event = NULL;
-static struct stack *queue = NULL;
-static u32 dev_id = 0;
+PROTECTED static struct stack *queue = NULL;
+PROTECTED static u32 dev_id = 0;
 
+static struct event_keyboard *event = NULL;
 static int state = 0;
 static int merged = 0;
 static void keyboard_handler(struct regs *r)
@@ -78,12 +78,12 @@ static res keyboard_ready(void)
 	return !stack_empty(queue);
 }
 
-void keyboard_reset(void)
+CLEAR void keyboard_reset(void)
 {
 	stack_clear(queue);
 }
 
-void keyboard_install(void)
+CLEAR void keyboard_install(void)
 {
 	//keyboard_rate(); TODO: Fix keyboard rate?
 	irq_install_handler(1, keyboard_handler);

@@ -135,6 +135,7 @@ res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shar
 res memory_sys_free(struct page_dir *dir, u32 addr) NONNULL;
 res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size) NONNULL;
 
+void memory_user_hook(void);
 void memory_install(struct mem_info *mem_info, struct vid_info *vid_info) NONNULL;
 
 #endif

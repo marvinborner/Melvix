@@ -16,7 +16,7 @@
  * VFS
  */
 
-static struct list *mount_points = NULL;
+PROTECTED static struct list *mount_points = NULL;
 
 static char *vfs_normalize_path(const char *path)
 {
@@ -293,7 +293,7 @@ res vfs_ready(const char *path)
 	return m->dev->vfs->ready(path, m->dev);
 }
 
-void vfs_install(void)
+CLEAR void vfs_install(void)
 {
 	mount_points = list_new();
 }
@@ -302,9 +302,9 @@ void vfs_install(void)
  * Device
  */
 
-static struct list *devices = NULL;
+PROTECTED static struct list *devices = NULL;
 
-void device_add(struct device *dev)
+CLEAR void device_add(struct device *dev)
 {
 	dev->id = rand() + 1;
 	list_add(devices, dev);
@@ -373,7 +373,7 @@ static res devfs_ready(const char *path, struct device *dev)
 	return target->ready();
 }
 
-void device_install(void)
+CLEAR void device_install(void)
 {
 	devices = list_new();
 

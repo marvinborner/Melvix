@@ -18,12 +18,12 @@
 
 static u32 locked = 0;
 static u32 current_pid = 0;
-static struct node *idle_proc = NULL;
 static struct node *current = NULL;
+PROTECTED static struct node *idle_proc = NULL;
 
-static struct list *proc_list_running = NULL;
-static struct list *proc_list_blocked = NULL;
-static struct list *proc_list_idle = NULL;
+PROTECTED static struct list *proc_list_running = NULL;
+PROTECTED static struct list *proc_list_blocked = NULL;
+PROTECTED static struct list *proc_list_idle = NULL;
 
 // TODO: Use less memcpy and only copy relevant registers
 // TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
@@ -111,7 +111,7 @@ struct proc *proc_from_pid(u32 pid)
 	return NULL;
 }
 
-void proc_set_quantum(struct proc *proc, u32 value)
+CLEAR void proc_set_quantum(struct proc *proc, u32 value)
 {
 	proc->quantum.val = value;
 }
@@ -552,8 +552,10 @@ NORETURN void proc_init(void)
 	_eip = init->regs.eip;
 	_esp = init->regs.useresp;
 
-	memory_switch_dir(init->page_dir);
+	// We'll shortly jump to usermode. Clear and protect every secret!
+	memory_user_hook();
 
+	memory_switch_dir(init->page_dir);
 	printf("Jumping to userspace!\n");
 
 	// You're waiting for a train. A train that will take you far away...

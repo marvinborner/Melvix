@@ -13,13 +13,12 @@
 #include <str.h>
 #include <sys.h>
 
-static char mouse_cycle = 0;
-static char mouse_byte[3] = { 0 };
-static struct stack *queue = NULL;
-static u32 dev_id = 0;
+PROTECTED static struct stack *queue = NULL;
+PROTECTED static u32 dev_id = 0;
 
 static struct event_mouse *event = NULL;
-
+static char mouse_cycle = 0;
+static char mouse_byte[3] = { 0 };
 static void mouse_handler(struct regs *r)
 {
 	UNUSED(r);
@@ -54,7 +53,7 @@ static void mouse_handler(struct regs *r)
 	}
 }
 
-static void mouse_serial_wait(u8 a_type)
+CLEAR static void mouse_serial_wait(u8 a_type)
 {
 	u32 time_out = 100000;
 	if (a_type == 0) {
@@ -70,7 +69,7 @@ static void mouse_serial_wait(u8 a_type)
 	}
 }
 
-static void mouse_serial_write(u8 a_write)
+CLEAR static void mouse_serial_write(u8 a_write)
 {
 	mouse_serial_wait(1);
 	outb(0x64, 0xD4);
@@ -78,7 +77,7 @@ static void mouse_serial_write(u8 a_write)
 	outb(0x60, a_write);
 }
 
-static u8 mouse_serial_read(void)
+CLEAR static u8 mouse_serial_read(void)
 {
 	mouse_serial_wait(0);
 	return inb(0x60);
@@ -101,7 +100,7 @@ static res mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
 	return MIN(count, sizeof(*e));
 }
 
-void mouse_install(void)
+CLEAR void mouse_install(void)
 {
 	u8 status;
 
@@ -143,7 +142,7 @@ void mouse_install(void)
 	mouse_serial_read();
 	status = (u8)mouse_serial_read();
 	if (status == 3) {
-	};
+	}
 	/* printf("Scrollwheel support!\n"); */
 
 	// Activate 4th and 5th mouse buttons
@@ -166,7 +165,7 @@ void mouse_install(void)
 	mouse_serial_read();
 	status = (u8)mouse_serial_read();
 	if (status == 4) {
-	};
+	}
 	/* printf("4th and 5th mouse button support!\n"); */
 
 	/* TODO: Fix mouse laggyness

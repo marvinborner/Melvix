@@ -21,8 +21,8 @@ struct vbe_basic {
 	u8 stuff3[212];
 };
 
-static u32 dev_id = 0;
-static struct vid_info *info = NULL;
+PROTECTED static u32 dev_id = 0;
+PROTECTED static struct vid_info *info = NULL;
 
 static u32 fb_owner = 0;
 static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct device *dev)
@@ -65,7 +65,7 @@ void fb_map_buffer(struct page_dir *dir, struct vid_info *boot)
 	memory_map_identity(dir, memory_range_around((u32)vbe->fb, size), MEMORY_USER);
 }
 
-void fb_install(struct vid_info *boot)
+CLEAR void fb_install(struct vid_info *boot)
 {
 	info = boot;
 

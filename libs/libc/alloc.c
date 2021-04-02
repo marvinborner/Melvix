@@ -2,7 +2,6 @@
 // Mostly by Durand Miller, released into public domain
 
 #include <assert.h>
-#include <cpu.h>
 #include <mem.h>
 
 #ifdef KERNEL
@@ -40,17 +39,13 @@ static int liballoc_free(void *ptr, u32 p)
 
 #endif
 
-static u32 locked = 0;
-
 static int liballoc_lock(void)
 {
-	spinlock(&locked);
 	return 0;
 }
 
 static int liballoc_unlock(void)
 {
-	locked = 0;
 	return 0;
 }
 

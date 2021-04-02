@@ -8,13 +8,13 @@
 #include <mem.h>
 #include <print.h>
 
-static u8 *ide_buf = NULL;
+PROTECTED static u8 *ide_buf = NULL;
 
 struct ata_data {
 	u8 drive;
 };
 
-static void ide_select_drive(u8 bus, u8 drive)
+CLEAR static void ide_select_drive(u8 bus, u8 drive)
 {
 	if (bus == ATA_PRIMARY) {
 		if (drive == ATA_MASTER)
@@ -29,7 +29,7 @@ static void ide_select_drive(u8 bus, u8 drive)
 	}
 }
 
-static u8 ide_find(u8 bus, u8 drive)
+CLEAR static u8 ide_find(u8 bus, u8 drive)
 {
 	u16 io = bus == ATA_PRIMARY ? ATA_PRIMARY_IO : ATA_SECONDARY_IO;
 	ide_select_drive(bus, drive);
@@ -116,12 +116,12 @@ static res ata_read(void *buf, u32 lba, u32 sector_count, struct device *dev)
 	return sector_count;
 }
 
-int ata_pm = 0, ata_ps = 0, ata_sm = 0, ata_ss = 0;
-static void ata_probe(void)
+u8 ata_pm = 0, ata_ps = 0, ata_sm = 0, ata_ss = 0;
+CLEAR static void ata_probe(void)
 {
-	for (int i = 0; i < 4; i++) {
-		int bus = i < 2 ? ATA_PRIMARY : ATA_SECONDARY;
-		int drive = i % 2 ? ATA_MASTER : ATA_SLAVE;
+	for (u8 i = 0; i < 4; i++) {
+		u32 bus = i < 2 ? ATA_PRIMARY : ATA_SECONDARY;
+		u32 drive = i % 2 ? ATA_MASTER : ATA_SLAVE;
 
 		if (!ide_find(bus, drive))
 			continue;
@@ -156,7 +156,7 @@ static void ata_probe(void)
 	}
 }
 
-void ata_install(void)
+CLEAR void ata_install(void)
 {
 	ide_buf = zalloc(SECTOR_SIZE);
 	ata_probe();

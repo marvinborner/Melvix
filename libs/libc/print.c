@@ -3,7 +3,6 @@
 #include <arg.h>
 #include <assert.h>
 #include <conv.h>
-#include <cpu.h>
 #include <def.h>
 #include <mem.h>
 #include <str.h>
@@ -145,7 +144,7 @@ int log(const char *format, ...)
 	return len;
 }
 
-int err(int code, const char *format, ...)
+NORETURN void err(int code, const char *format, ...)
 {
 	if (errno != EOK)
 		log("ERRNO: %d (%s)\n", errno, strerror(errno));
@@ -154,7 +153,6 @@ int err(int code, const char *format, ...)
 	vfprintf(PATH_ERR, format, ap);
 	va_end(ap);
 	exit(code);
-	return -1;
 }
 
 int print(const char *str)
@@ -251,10 +249,9 @@ NORETURN void panic(const char *format, ...)
 	print("--- DON'T PANIC! ---\n");
 	print(buf);
 	print_trace(5);
-	loop();
+	while (1)
+		__asm__ volatile("cli\nhlt");
 #else
 	err(1, buf);
 #endif
-	while (1)
-		;
 }

@@ -10,7 +10,6 @@ COBJS = sanitize.o \
 	crypto.o \
 	conv.o \
 	print.o \
-	cpu.o \
 	sys.o \
 	list.o \
 	stack.o \

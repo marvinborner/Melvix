@@ -7,13 +7,13 @@
 #include <mem.h>
 #include <pci.h>
 
-void pci_write_field(u32 device, int field, u32 value)
+CLEAR void pci_write_field(u32 device, int field, u32 value)
 {
 	outl(PCI_ADDRESS_PORT, pci_get_addr(device, field));
 	outl(PCI_VALUE_PORT, value);
 }
 
-u32 pci_read_field(u32 device, int field, int size)
+CLEAR u32 pci_read_field(u32 device, int field, int size)
 {
 	outl(PCI_ADDRESS_PORT, pci_get_addr(device, field));
 
@@ -30,13 +30,13 @@ u32 pci_read_field(u32 device, int field, int size)
 	return 0xFFFF;
 }
 
-u16 pci_find_type(u32 device)
+CLEAR u16 pci_find_type(u32 device)
 {
 	return (u16)((pci_read_field(device, PCI_CLASS, 1) << 8) |
 		     pci_read_field(device, PCI_SUBCLASS, 1));
 }
 
-void pci_scan_hit(pci_func_t f, u32 dev, void *extra)
+CLEAR void pci_scan_hit(pci_func_t f, u32 dev, void *extra)
 {
 	int dev_vend = (int)pci_read_field(dev, PCI_VENDOR_ID, 2);
 	int dev_dvid = (int)pci_read_field(dev, PCI_DEVICE_ID, 2);
@@ -44,7 +44,7 @@ void pci_scan_hit(pci_func_t f, u32 dev, void *extra)
 	f(dev, (u16)dev_vend, (u16)dev_dvid, extra);
 }
 
-void pci_scan_func(pci_func_t f, int type, int bus, int slot, int func, void *extra)
+CLEAR void pci_scan_func(pci_func_t f, int type, int bus, int slot, int func, void *extra)
 {
 	u32 dev = pci_box_device(bus, slot, func);
 	if (type == -1 || type == pci_find_type(dev))
@@ -53,7 +53,7 @@ void pci_scan_func(pci_func_t f, int type, int bus, int slot, int func, void *ex
 		pci_scan_bus(f, type, (int)pci_read_field(dev, PCI_SECONDARY_BUS, 1), extra);
 }
 
-void pci_scan_slot(pci_func_t f, int type, int bus, int slot, void *extra)
+CLEAR void pci_scan_slot(pci_func_t f, int type, int bus, int slot, void *extra)
 {
 	u32 dev = pci_box_device(bus, slot, 0);
 	if (pci_read_field(dev, PCI_VENDOR_ID, 2) == PCI_NONE)
@@ -68,13 +68,13 @@ void pci_scan_slot(pci_func_t f, int type, int bus, int slot, void *extra)
 	}
 }
 
-void pci_scan_bus(pci_func_t f, int type, int bus, void *extra)
+CLEAR void pci_scan_bus(pci_func_t f, int type, int bus, void *extra)
 {
 	for (int slot = 0; slot < 32; ++slot)
 		pci_scan_slot(f, type, bus, slot, extra);
 }
 
-void pci_scan(pci_func_t f, int type, void *extra)
+CLEAR void pci_scan(pci_func_t f, int type, void *extra)
 {
 	if ((pci_read_field(0, PCI_HEADER_TYPE, 1) & 0x80) == 0) {
 		pci_scan_bus(f, type, 0, extra);
@@ -90,17 +90,17 @@ void pci_scan(pci_func_t f, int type, void *extra)
 	}
 }
 
-static void find_isa_bridge(u32 device, u16 vendor_id, u16 device_id, void *extra)
+CLEAR static void find_isa_bridge(u32 device, u16 vendor_id, u16 device_id, void *extra)
 {
 	if (vendor_id == 0x8086 && (device_id == 0x7000 || device_id == 0x7110))
 		*((u32 *)extra) = device;
 }
 
-static u32 pci_isa = 0;
-static u8 pci_remaps[4] = { 0 };
+PROTECTED static u32 pci_isa = 0;
+PROTECTED static u8 pci_remaps[4] = { 0 };
 
 // Remap
-void pci_install(void)
+CLEAR void pci_install(void)
 {
 	pci_scan(&find_isa_bridge, -1, &pci_isa);
 	if (pci_isa) {
@@ -116,7 +116,7 @@ void pci_install(void)
 	}
 }
 
-int pci_get_interrupt(u32 device)
+CLEAR int pci_get_interrupt(u32 device)
 {
 	if (pci_isa) {
 		u32 irq_pin = pci_read_field(device, 0x3D, 1);
