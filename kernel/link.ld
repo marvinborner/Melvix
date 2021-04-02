@@ -5,27 +5,31 @@ phys = 0x00009000;
 
 SECTIONS
 {
-	.text phys : AT(phys) {
-		kernel_start = .;
-		code = .;
+	. = phys;
+
+	kernel_ro_start = .;
+	.text BLOCK(4K) : ALIGN(4K)
+	{
 		*(.text)
+	}
+
+	.rodata BLOCK(4K) : ALIGN(4K)
+	{
 		*(.rodata)
-		. = ALIGN(4096);
 	}
+	kernel_ro_end = .;
 
-	.data : AT(phys + (data - code))
+
+	kernel_rw_start = .;
+	.data BLOCK(4K) : ALIGN(4K)
 	{
-		data = .;
 		*(.data)
-		. = ALIGN(4096);
 	}
 
-	.bss : AT(phys + (bss - code))
+	.bss BLOCK(4K) : ALIGN(4K)
 	{
-		bss = .;
+		*(COMMON)
 		*(.bss)
-		. = ALIGN(4096);
 	}
-
-	kernel_end = .;
+	kernel_rw_end = .;
 }

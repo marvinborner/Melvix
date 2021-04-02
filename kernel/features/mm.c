@@ -25,14 +25,14 @@ static void paging_switch_dir(u32 dir)
 
 extern void paging_invalidate_tlb(void);
 
-/*void paging_disable(void)
+void paging_disable(void)
 {
 	cr0_set(cr0_get() | 0x7fffffff);
-}*/
+}
 
 void paging_enable(void)
 {
-	cr0_set(cr0_get() | 0x80000000);
+	cr0_set(cr0_get() | 0x80010000);
 }
 
 void page_fault_handler(struct regs *r)
@@ -224,7 +224,7 @@ void virtual_map(struct page_dir *dir, struct memory_range prange, u32 vaddr, u3
 		u32 pti = PTI(vaddr + offset);
 		union page_table_entry *table_entry = &table->entries[pti];
 		table_entry->bits.present = 1;
-		table_entry->bits.writable = 1;
+		table_entry->bits.writable = !(flags & MEMORY_READONLY);
 		table_entry->bits.user = flags & MEMORY_USER;
 		table_entry->bits.address = (prange.base + offset) >> 12;
 	}
@@ -561,11 +561,20 @@ struct memory_range memory_range_around(u32 base, u32 size)
 	return memory_range(base, size);
 }
 
-extern u32 kernel_start;
-extern u32 kernel_end;
-static struct memory_range kernel_memory_range(void)
+extern u32 kernel_rw_start;
+extern u32 kernel_rw_end;
+static struct memory_range kernel_rw_memory_range(void)
 {
-	return memory_range_around((u32)&kernel_start, (u32)&kernel_end - (u32)&kernel_start);
+	return memory_range_around((u32)&kernel_rw_start,
+				   (u32)&kernel_rw_end - (u32)&kernel_rw_start);
+}
+
+extern u32 kernel_ro_start;
+extern u32 kernel_ro_end;
+static struct memory_range kernel_ro_memory_range(void)
+{
+	return memory_range_around((u32)&kernel_ro_start,
+				   (u32)&kernel_ro_end - (u32)&kernel_ro_start);
 }
 
 void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
@@ -600,7 +609,8 @@ void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 	printf("Detected memory: %dKiB (%dMiB)\n", memory_total >> 10, memory_total >> 20);
 
 	// Map kernel
-	memory_map_identity(&kernel_dir, kernel_memory_range(), MEMORY_NONE);
+	memory_map_identity(&kernel_dir, kernel_ro_memory_range(), MEMORY_READONLY);
+	memory_map_identity(&kernel_dir, kernel_rw_memory_range(), MEMORY_NONE);
 
 	// Map kernel stack
 	memory_map_identity(&kernel_dir, memory_range_around(STACK_START - STACK_SIZE, STACK_SIZE),

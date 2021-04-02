@@ -17,6 +17,7 @@ struct memory_range {
  * Lowlevel paging
  */
 
+void paging_disable(void);
 void paging_enable(void);
 void page_fault_handler(struct regs *r) NONNULL;
 
@@ -110,6 +111,7 @@ struct memory_proc_link {
 #define MEMORY_NONE (0 << 0)
 #define MEMORY_USER (1 << 0)
 #define MEMORY_CLEAR (1 << 1)
+#define MEMORY_READONLY (1 << 2)
 #define memory_range(base, size) ((struct memory_range){ (base), (size) })
 
 struct memory_range memory_range_from(u32 base, u32 size);
