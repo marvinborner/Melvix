@@ -85,6 +85,7 @@ struct page_dir {
 u8 virtual_present(struct page_dir *dir, u32 vaddr) NONNULL;
 u32 virtual_to_physical(struct page_dir *dir, u32 vaddr) NONNULL;
 void virtual_map(struct page_dir *dir, struct memory_range prange, u32 vaddr, u32 flags) NONNULL;
+void virtual_remap_readonly(struct page_dir *dir, struct memory_range vrange);
 struct memory_range virtual_alloc(struct page_dir *dir, struct memory_range physical_range,
 				  u32 flags) NONNULL;
 void virtual_free(struct page_dir *dir, struct memory_range vrange) NONNULL;

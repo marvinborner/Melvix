@@ -257,6 +257,29 @@ void virtual_map(struct page_dir *dir, struct memory_range prange, u32 vaddr, u3
 	paging_invalidate_tlb();
 }
 
+void virtual_remap_readonly(struct page_dir *dir, struct memory_range vrange)
+{
+	for (u32 i = 0; i < vrange.size / PAGE_SIZE; i++) {
+		u32 offset = i * PAGE_SIZE;
+
+		u32 pdi = PDI(vrange.base + offset);
+		union page_dir_entry *dir_entry = &dir->entries[pdi];
+		if (!dir_entry->bits.present)
+			continue;
+
+		struct page_table *table =
+			(struct page_table *)(dir_entry->bits.address * PAGE_SIZE);
+
+		u32 pti = PTI(vrange.base + offset);
+		union page_table_entry *table_entry = &table->entries[pti];
+
+		if (table_entry->bits.present)
+			table_entry->bits.writable = 0;
+	}
+
+	paging_invalidate_tlb();
+}
+
 struct memory_range virtual_alloc(struct page_dir *dir, struct memory_range prange, u32 flags)
 {
 	u8 user = flags & MEMORY_USER;

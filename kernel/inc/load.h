@@ -41,6 +41,7 @@
 #define ELF_ETYPE_EXEC 2
 #define ELF_ETYPE_DYN 3
 #define ELF_ETYPE_CORE 4
+#define ELF_ETYPE_NUM 5
 
 #define ELF_MACHINE_NONE 0
 #define ELF_MACHINE_SPARC 2
@@ -49,19 +50,18 @@
 #define ELF_MACHINE_SPARCV9 43
 #define ELF_MACHINE_AMD64 62
 
-#define ELF_FLAG_SPARC_EXT_MASK 0xffff00
-#define ELF_FLAG_SPARC_32PLUS 0x000100
-#define ELF_FLAG_SPARC_SUN_US1 0x000200
-#define ELF_FLAG_SPARC_HAL_R1 0x000400
-#define ELF_FLAG_SPARC_SUN_US3 0x000800
-#define ELF_FLAG_SPARCV9_MM 0x3
-#define ELF_FLAG_SPARCV9_TSO 0x0
-#define ELF_FLAG_SPARCV9_PSO 0x1
-#define ELF_FLAG_SPARCV9_RMO 0x2
+#define ELF_PROGRAM_TYPE_NULL 0
+#define ELF_PROGRAM_TYPE_LOAD 1
+#define ELF_PROGRAM_TYPE_DYNAMIC 2
+#define ELF_PROGRAM_TYPE_INTERP 3
+#define ELF_PROGRAM_TYPE_NOTE 4
+#define ELF_PROGRAM_TYPE_SHLIB 5
+#define ELF_PROGRAM_TYPE_PHDR 6
+#define ELF_PROGRAM_TYPE_TLS 7
 
-#define ELF_PROGRAM_X 0x1
-#define ELF_PROGRAM_W 0x2
-#define ELF_PROGRAM_R 0x4
+#define ELF_PROGRAM_FLAG_X 0x1
+#define ELF_PROGRAM_FLAG_W 0x2
+#define ELF_PROGRAM_FLAG_R 0x4
 
 #define ELF_SECTION_TYPE_NULL 0
 #define ELF_SECTION_TYPE_PROGBITS 1
@@ -76,6 +76,40 @@
 #define ELF_SECTION_TYPE_SHLIB 10
 #define ELF_SECTION_TYPE_DYNSYM 11
 #define ELF_SECTION_TYPE_COUNT 12
+
+#define ELF_SECTION_FLAG_WRITE 0x1
+#define ELF_SECTION_FLAG_ALLOC 0x2
+#define ELF_SECTION_FLAG_EXEC 0x3
+#define ELF_SECTION_FLAG_MERGE 0x10
+#define ELF_SECTION_FLAG_STRINGS 0x20
+#define ELF_SECTION_FLAG_INFO_LINK 0x40
+#define ELF_SECTION_FLAG_LINK_ORDER 0x80
+#define ELF_SECTION_FLAG_OS_SPECIAL 0x100
+#define ELF_SECTION_FLAG_GROUP 0x200
+#define ELF_SECTION_FLAG_TLS 0x400
+#define ELF_SECTION_FLAG_COMPRESSED 0x800
+
+#define ELF_BSS ".bss"
+#define ELF_DATA ".data"
+#define ELF_DEBUG ".debug"
+#define ELF_DYNAMIC ".dynamic"
+#define ELF_DYNSTR ".dynstr"
+#define ELF_DYNSYM ".dynsym"
+#define ELF_FINI ".fini"
+#define ELF_GOT ".got"
+#define ELF_HASH ".hash"
+#define ELF_INIT ".init"
+#define ELF_REL_DATA ".rel.data"
+#define ELF_REL_FINI ".rel.fini"
+#define ELF_REL_INIT ".rel.init"
+#define ELF_REL_DYN ".rel.dyn"
+#define ELF_REL_RODATA ".rel.rodata"
+#define ELF_REL_TEXT ".rel.text"
+#define ELF_RODATA ".rodata"
+#define ELF_SHSTRTAB ".shstrtab"
+#define ELF_STRTAB ".strtab"
+#define ELF_SYMTAB ".symtab"
+#define ELF_TEXT ".text"
 
 struct PACKED elf_header {
 	u8 ident[ELF_IDENT_COUNT];
@@ -94,7 +128,7 @@ struct PACKED elf_header {
 	u16 shstrndx;
 };
 
-struct elf_program {
+struct PACKED elf_program {
 	u32 type;
 	u32 offset;
 	u32 vaddr;
@@ -103,6 +137,28 @@ struct elf_program {
 	u32 memsz;
 	u32 flags;
 	u32 align;
+};
+
+struct PACKED elf_section {
+	u32 name;
+	u32 type;
+	u32 flags;
+	u32 addr;
+	u32 offset;
+	u32 size;
+	u32 link;
+	u32 info;
+	u32 addralign;
+	u32 entsize;
+};
+
+struct PACKED elf_symbol {
+	u32 name;
+	u32 value;
+	u32 size;
+	u8 info;
+	u8 other;
+	u16 shndx;
 };
 
 res elf_load(const char *path, struct proc *proc) NONNULL;

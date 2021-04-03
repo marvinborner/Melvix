@@ -49,6 +49,7 @@ res elf_load(const char *path, struct proc *proc)
 	    header.version != 1 || header.machine != ELF_MACHINE_386)
 		return -ENOEXEC;
 
+	// Loop through programs
 	for (u32 i = 0; i < header.phnum; i++) {
 		struct elf_program program = { 0 };
 
@@ -61,7 +62,7 @@ res elf_load(const char *path, struct proc *proc)
 		}
 		memory_bypass_disable();
 
-		if (program.vaddr == 0)
+		if (program.vaddr == 0 || program.type != ELF_PROGRAM_TYPE_LOAD)
 			continue;
 
 		if (!memory_is_user(program.vaddr))
@@ -85,6 +86,56 @@ res elf_load(const char *path, struct proc *proc)
 		memory_bypass_disable();
 
 		memory_switch_dir(prev);
+	}
+
+	// Find section string table
+	struct elf_section section_strings = { 0 };
+	memory_bypass_enable();
+	if (vfs_read(path, &section_strings, header.shoff + header.shentsize * header.shstrndx,
+		     sizeof(section_strings)) != sizeof(section_strings)) {
+		memory_bypass_disable();
+		clac();
+		return -ENOEXEC;
+	}
+	memory_bypass_disable();
+
+	if (section_strings.type != ELF_SECTION_TYPE_STRTAB)
+		return -ENOEXEC;
+
+	// Loop through sections
+	for (u32 i = 0; i < header.shnum; i++) {
+		struct elf_section section = { 0 };
+		memory_bypass_enable();
+		if (vfs_read(path, &section, header.shoff + header.shentsize * i,
+			     sizeof(section)) != sizeof(section)) {
+			memory_bypass_disable();
+			clac();
+			return -ENOEXEC;
+		}
+		memory_bypass_disable();
+
+		// TODO: Use section and symbol name for logging or something? (e.g. in page fault handler)
+		/* u32 offset = section_strings.offset + section.name; */
+		/* if (offset >= s.size) */
+		/* 	return -ENOEXEC; */
+		/* memory_bypass_enable(); */
+		/* char name[64] = { 0 }; // Max length? */
+		/* if (vfs_read(path, &name, offset, sizeof(name)) != sizeof(name)) { */
+		/* 	memory_bypass_disable(); */
+		/* 	clac(); */
+		/* 	return -ENOEXEC; */
+		/* } */
+		/* memory_bypass_disable(); */
+		/* printf("%d\n", section.name); */
+		/* if (section.type == ELF_SECTION_TYPE_SYMTAB) { */
+		/* } else if (section.type == ELF_SECTION_TYPE_STRTAB && i != header.shstrndx) { */
+		/* } */
+
+		// Remap readonly sections
+		if (!(section.flags & ELF_SECTION_FLAG_WRITE)) {
+			struct memory_range range = memory_range_around(section.addr, section.size);
+			virtual_remap_readonly(proc->page_dir, range);
+		}
 	}
 
 	struct page_dir *prev;
