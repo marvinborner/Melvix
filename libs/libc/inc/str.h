@@ -6,6 +6,7 @@
 #include <def.h>
 
 u32 strlen(const char *s) NONNULL;
+u32 strnlen(const char *s, u32 max) NONNULL;
 u32 strlcpy(char *dst, const char *src, u32 size) NONNULL;
 char *strchr(char *s, char c) NONNULL;
 char *strrchr(char *s, char c) NONNULL;
@@ -18,6 +19,7 @@ char *strdup(const char *s) NONNULL;
 #ifdef KERNEL
 
 u32 strlen_user(const char *s) NONNULL;
+u32 strnlen_user(const char *s, u32 max) NONNULL;
 u32 strlcpy_user(char *dst, const char *src, u32 size) NONNULL;
 char *strchr_user(char *s, char c) NONNULL;
 char *strrchr_user(char *s, char c) NONNULL;

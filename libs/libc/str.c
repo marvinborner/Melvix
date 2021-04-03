@@ -13,6 +13,16 @@ u32 strlen(const char *str)
 	return s - str;
 }
 
+u32 strnlen(const char *str, u32 max)
+{
+	const char *s = str;
+	while (max && *s) {
+		s++;
+		max--;
+	}
+	return s - str;
+}
+
 u32 strlcpy(char *dst, const char *src, u32 size)
 {
 	const char *orig = src;
@@ -227,6 +237,14 @@ u32 strlen_user(const char *str)
 {
 	stac();
 	u32 ret = strlen(str);
+	clac();
+	return ret;
+}
+
+u32 strnlen_user(const char *str, u32 max)
+{
+	stac();
+	u32 ret = strnlen(str, max);
 	clac();
 	return ret;
 }
