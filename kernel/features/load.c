@@ -143,7 +143,13 @@ res elf_load(const char *path, struct proc *proc)
 	memory_switch_dir(proc->page_dir);
 
 	stac();
-	u32 stack = (u32)memory_alloc(proc->page_dir, PROC_STACK_SIZE, MEMORY_USER | MEMORY_CLEAR);
+
+	// Allocate stack with readonly lower and upper page boundary
+	u32 stack = PAGE_SIZE + (u32)memory_alloc(proc->page_dir, PROC_STACK_SIZE + 2 * PAGE_SIZE,
+						  MEMORY_USER | MEMORY_CLEAR);
+	virtual_remap_readonly(proc->page_dir, memory_range(stack - PAGE_SIZE, PAGE_SIZE));
+	virtual_remap_readonly(proc->page_dir, memory_range(stack + PROC_STACK_SIZE, PAGE_SIZE));
+
 	proc->regs.ebp = stack + PROC_STACK_SIZE;
 	proc->regs.useresp = stack + PROC_STACK_SIZE;
 	proc->regs.eip = header.entry;
