@@ -1,7 +1,8 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
 # TODO: Remove cpu from libc?
-COBJS = sanitize.o \
+COBJS = crt/crt0.o \
+	sanitize.o \
 	errno.o \
 	str.o \
 	alloc.o \
@@ -26,11 +27,12 @@ ASFLAGS = -f elf32
 %.o: %.c
 	@$(CC) -c $(CFLAGS) $< -o $@
 
-libc: CFLAGS += -DUSER
+libc: CFLAGS += -pie -fPIE -fPIC -DUSER
 libc: $(COBJS)
-	@$(AS) $(ASFLAGS) crt/crt0.asm -o crt0.o
 	@mkdir -p ../../build/
-	@$(AR) rcs ../../build/libc.a crt0.o $+
+	@$(AS) $(ASFLAGS) crt/crti.asm -o ../../build/crti.o
+	@$(AS) $(ASFLAGS) crt/crtn.asm -o ../../build/crtn.o
+	@$(AR) rcs ../../build/libc.a ../../build/crti.o ../../build/crti.o $+
 
 libk: CFLAGS += -DKERNEL -ffreestanding -I../../kernel/inc/ $(CFLAGS_EXTRA)
 libk: $(COBJS)

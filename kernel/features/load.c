@@ -6,11 +6,10 @@
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
+#include <random.h>
 #include <str.h>
 
 #define PROC_STACK_SIZE 0x4000
-
-#include <print.h>
 
 res elf_load(const char *path, struct proc *proc)
 {
@@ -45,9 +44,14 @@ res elf_load(const char *path, struct proc *proc)
 			 magic[ELF_IDENT_MAG2] == ELF_MAG2 && magic[ELF_IDENT_MAG3] == ELF_MAG3 &&
 			 magic[ELF_IDENT_CLASS] == ELF_IDENT_CLASS_32 &&
 			 magic[ELF_IDENT_DATA] == ELF_IDENT_DATA_LSB;
-	if (!valid_magic || (header.type != ELF_ETYPE_REL && header.type != ELF_ETYPE_EXEC) ||
+	if (!valid_magic ||
+	    (header.type != ELF_ETYPE_REL && header.type != ELF_ETYPE_EXEC &&
+	     header.type != ELF_ETYPE_DYN) ||
 	    header.version != 1 || header.machine != ELF_MACHINE_386)
 		return -ENOEXEC;
+
+	// ASLR
+	u32 rand_off = (rand() & 0xffff) * PAGE_SIZE;
 
 	// Loop through programs
 	for (u32 i = 0; i < header.phnum; i++) {
@@ -62,6 +66,9 @@ res elf_load(const char *path, struct proc *proc)
 		}
 		memory_bypass_disable();
 
+		if (program.type == ELF_PROGRAM_TYPE_INTERP)
+			return -ENOEXEC;
+
 		if (program.vaddr == 0 || program.type != ELF_PROGRAM_TYPE_LOAD)
 			continue;
 
@@ -72,13 +79,14 @@ res elf_load(const char *path, struct proc *proc)
 		memory_backup_dir(&prev);
 		memory_switch_dir(proc->page_dir);
 
-		struct memory_range vrange = memory_range_around(program.vaddr, program.memsz);
+		struct memory_range vrange =
+			memory_range_around(program.vaddr + rand_off, program.memsz);
 		struct memory_range prange = physical_alloc(vrange.size);
 		virtual_map(proc->page_dir, prange, vrange.base, MEMORY_CLEAR | MEMORY_USER);
 
 		memory_bypass_enable();
-		if ((u32)vfs_read(proc->name, (void *)program.vaddr, program.offset,
-				  program.filesz) != program.filesz) {
+		if ((u32)vfs_read(proc->name, (void *)((u32)program.vaddr + rand_off),
+				  program.offset, program.filesz) != program.filesz) {
 			memory_bypass_disable();
 			memory_switch_dir(prev);
 			return -ENOEXEC;
@@ -133,7 +141,8 @@ res elf_load(const char *path, struct proc *proc)
 
 		// Remap readonly sections
 		if (!(section.flags & ELF_SECTION_FLAG_WRITE)) {
-			struct memory_range range = memory_range_around(section.addr, section.size);
+			struct memory_range range =
+				memory_range_around(section.addr + rand_off, section.size);
 			virtual_remap_readonly(proc->page_dir, range);
 		}
 	}
@@ -152,8 +161,9 @@ res elf_load(const char *path, struct proc *proc)
 
 	proc->regs.ebp = stack + PROC_STACK_SIZE;
 	proc->regs.useresp = stack + PROC_STACK_SIZE;
-	proc->regs.eip = header.entry;
-	proc->entry = header.entry;
+	proc->regs.eip = header.entry + rand_off;
+	proc->entry = header.entry + rand_off;
+
 	clac();
 
 	memory_switch_dir(prev);

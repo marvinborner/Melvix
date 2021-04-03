@@ -5,9 +5,9 @@
 
 #include <def.h>
 
+#define rand_range(min, max) (rand() % ((max) + 1 - (min)) + (min))
+
 void srand(u32 seed);
-u32 rdrand(void);
-u32 rdseed(void);
 u32 rand(void);
 char *randstr(u32 size);
 

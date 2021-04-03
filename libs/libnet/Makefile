@@ -5,7 +5,7 @@ CC = ccache ../../cross/opt/bin/i686-elf-gcc
 LD = ccache ../../cross/opt/bin/i686-elf-ld
 AR = ccache ../../cross/opt/bin/i686-elf-ar
 
-CFLAGS = $(CFLAGS_DEFAULT) -I../ -I../libc/inc/ -DUSER
+CFLAGS = $(CFLAGS_DEFAULT) -I../ -I../libc/inc/ -pie -fPIE -fPIC -DUSER
 
 all: libtxt
 

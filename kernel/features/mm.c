@@ -464,7 +464,7 @@ res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shar
 		return -ENOMEM;
 
 	struct memory_object *obj = zalloc(sizeof(*obj));
-	obj->id = rdrand() + 1;
+	obj->id = rand() + 1;
 	obj->prange = memory_range(virtual_to_physical(dir, vaddr), size);
 	obj->refs = 1;
 	obj->shared = shared;

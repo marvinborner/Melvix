@@ -15,44 +15,34 @@ void srand(u32 seed)
 	g_seed = seed;
 }
 
-u32 rdrand(void)
+static u32 default_rand(void)
 {
-#ifdef KERNEL
-	if (!(cpu_features.ecx & CPUID_FEAT_ECX_RDRND))
-		return rand();
-
-	u32 rd;
-	__asm__ volatile("1:\n"
-			 "rdrand %0\n"
-			 "jnc 1b\n"
-			 : "=r"(rd));
-	return rd;
-#else
-	return rand();
-#endif
-}
-
-u32 rdseed(void)
-{
-#ifdef KERNEL
-	if (!(cpu_extended_features.ebx & CPUID_EXT_FEAT_EBX_RDSEED))
-		return rand();
-
-	u32 rd;
-	__asm__ volatile("1:\n"
-			 "rdseed %0\n"
-			 "jnc 1b\n"
-			 : "=r"(rd));
-	return rd;
-#else
-	return rand();
-#endif
+	g_seed = g_seed * 1103515245 + 12345;
+	return (g_seed >> 16) & 0x7FFF;
 }
 
 u32 rand(void)
 {
-	g_seed = g_seed * 1103515245 + 12345;
-	return (g_seed >> 16) & 0x7FFF;
+#ifdef KERNEL
+	u32 rd;
+	if (cpu_extended_features.ebx & CPUID_EXT_FEAT_EBX_RDSEED) {
+		__asm__ volatile("1:\n"
+				 "rdseed %0\n"
+				 "jnc 1b\n"
+				 : "=r"(rd));
+	} else if (cpu_features.ecx & CPUID_FEAT_ECX_RDRND) {
+		__asm__ volatile("1:\n"
+				 "rdrand %0\n"
+				 "jnc 1b\n"
+				 : "=r"(rd));
+	} else {
+		rd = default_rand();
+	}
+
+	return rd;
+#else
+	return default_rand();
+#endif
 }
 
 char *randstr(u32 size)
