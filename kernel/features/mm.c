@@ -14,6 +14,18 @@
 PROTECTED static struct page_dir kernel_dir ALIGNED(PAGE_SIZE) = { 0 };
 static struct page_table kernel_tables[PAGE_KERNEL_COUNT] ALIGNED(PAGE_SIZE) = { 0 };
 
+extern u32 kernel_rw_start;
+extern u32 kernel_rw_end;
+
+extern u32 kernel_ro_start;
+extern u32 kernel_ro_end;
+
+extern u32 kernel_temp_clear_start;
+extern u32 kernel_temp_clear_end;
+
+extern u32 kernel_temp_protect_start;
+extern u32 kernel_temp_protect_end;
+
 /**
  * Lowlevel paging
  */
@@ -35,6 +47,24 @@ CLEAR void paging_enable(void)
 	cr0_set(cr0_get() | 0x80010000);
 }
 
+static const char *page_fault_section(u32 addr)
+{
+	const char *section = NULL;
+	if (addr == 0)
+		section = "NULL";
+	else if (addr >= (u32)&kernel_temp_clear_start && addr <= (u32)&kernel_temp_clear_end)
+		section = "kernel_temp_clear";
+	else if (addr >= (u32)&kernel_temp_protect_start && addr <= (u32)&kernel_temp_protect_end)
+		section = "kernel_temp_protect";
+	else if (addr >= (u32)&kernel_rw_start && addr <= (u32)&kernel_rw_end)
+		section = "kernel_rw";
+	else if (addr >= (u32)&kernel_ro_start && addr <= (u32)&kernel_ro_end)
+		section = "kernel_ro";
+	else
+		section = "UNKNOWN";
+	return section;
+}
+
 void page_fault_handler(struct regs *r)
 {
 	print("--- PAGE FAULT! ---\n");
@@ -44,24 +74,18 @@ void page_fault_handler(struct regs *r)
 	const char *operation = (r->err_code & 2) ? "write" : "read";
 	const char *super = (r->err_code & 4) ? "User" : "Super";
 
-	// Check cr2 address
+	// Check cr2 address (virtual and physical)
 	u32 vaddr;
 	__asm__ volatile("movl %%cr2, %%eax" : "=a"(vaddr));
 	struct proc *proc = proc_current();
-	struct page_dir *dir = NULL;
-	if (proc && proc->page_dir) {
-		dir = proc->page_dir;
-		/* printf("Stack is at %x, entry at %x\n", virtual_to_physical(dir, proc->regs.ebp), */
-		/*        virtual_to_physical(dir, proc->entry)); */
-	} else {
-		dir = &kernel_dir;
-	}
+	struct page_dir *dir = proc && proc->page_dir ? proc->page_dir : &kernel_dir;
+	u32 paddr = virtual_to_physical(dir, vaddr);
 
 	// Print!
-	u32 paddr = virtual_to_physical(dir, vaddr);
 	printf("%s process tried to %s a %s page at [vaddr=%x; paddr=%x]\n", super, operation, type,
 	       vaddr, paddr);
-	print_trace(5);
+	printf("Sections: [vaddr_section=%s; paddr_section=%s; eip_section=%s]\n",
+	       page_fault_section(vaddr), page_fault_section(paddr), page_fault_section(r->eip));
 
 	isr_panic(r);
 }
@@ -568,24 +592,18 @@ struct memory_range memory_range_around(u32 base, u32 size)
 	return memory_range(base, size);
 }
 
-extern u32 kernel_rw_start;
-extern u32 kernel_rw_end;
 CLEAR static struct memory_range kernel_rw_memory_range(void)
 {
 	return memory_range_around((u32)&kernel_rw_start,
 				   (u32)&kernel_rw_end - (u32)&kernel_rw_start);
 }
 
-extern u32 kernel_ro_start;
-extern u32 kernel_ro_end;
 CLEAR static struct memory_range kernel_ro_memory_range(void)
 {
 	return memory_range_around((u32)&kernel_ro_start,
 				   (u32)&kernel_ro_end - (u32)&kernel_ro_start);
 }
 
-extern u32 kernel_temp_clear_start;
-extern u32 kernel_temp_clear_end;
 static void memory_temp_clear(void)
 {
 	u8 *data = (u8 *)&kernel_temp_clear_start;
@@ -595,8 +613,6 @@ static void memory_temp_clear(void)
 	printf("Cleared %dKiB\n", size >> 10);
 }
 
-extern u32 kernel_temp_protect_start;
-extern u32 kernel_temp_protect_end;
 CLEAR static void memory_temp_protect(void)
 {
 	u32 data = (u32)&kernel_temp_protect_start;
