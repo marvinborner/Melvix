@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <cpu.h>
 #include <errno.h>
 #include <fs.h>
 #include <load.h>
@@ -8,6 +9,8 @@
 #include <str.h>
 
 #define PROC_STACK_SIZE 0x4000
+
+#include <print.h>
 
 res elf_load(const char *path, struct proc *proc)
 {
@@ -18,19 +21,23 @@ res elf_load(const char *path, struct proc *proc)
 	memory_bypass_enable();
 	res stat = vfs_stat(path, &s);
 	memory_bypass_disable();
-	if (stat != 0)
+	if (stat != EOK)
 		return stat;
 
 	struct elf_header header = { 0 };
+	stac();
 	memory_bypass_enable();
 	res read = vfs_read(path, &header, 0, sizeof(header));
 	memory_bypass_disable();
+	clac();
 	if (read < 0)
 		return read;
 	if (read != sizeof(header))
 		return -ENOEXEC;
 
+	stac();
 	strlcpy(proc->name, path, sizeof(proc->name));
+	clac();
 
 	// Valid?
 	u8 *magic = header.ident;
@@ -44,10 +51,12 @@ res elf_load(const char *path, struct proc *proc)
 
 	for (u32 i = 0; i < header.phnum; i++) {
 		struct elf_program program = { 0 };
+
 		memory_bypass_enable();
 		if (vfs_read(path, &program, header.phoff + header.phentsize * i,
 			     sizeof(program)) != sizeof(program)) {
 			memory_bypass_disable();
+			clac();
 			return -ENOEXEC;
 		}
 		memory_bypass_disable();
@@ -82,11 +91,13 @@ res elf_load(const char *path, struct proc *proc)
 	memory_backup_dir(&prev);
 	memory_switch_dir(proc->page_dir);
 
+	stac();
 	u32 stack = (u32)memory_alloc(proc->page_dir, PROC_STACK_SIZE, MEMORY_USER | MEMORY_CLEAR);
 	proc->regs.ebp = stack + PROC_STACK_SIZE;
 	proc->regs.useresp = stack + PROC_STACK_SIZE;
 	proc->regs.eip = header.entry;
 	proc->entry = header.entry;
+	clac();
 
 	memory_switch_dir(prev);
 	return EOK;

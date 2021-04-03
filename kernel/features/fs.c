@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
+#include <cpu.h>
 #include <crypto.h>
 #include <def.h>
 #include <errno.h>
@@ -65,15 +66,24 @@ static struct mount_info *vfs_recursive_find(char *path)
 
 static struct mount_info *vfs_find_mount_info(const char *path)
 {
-	if (path[0] != '/')
+	stac();
+	if (path[0] != '/') {
+		clac();
 		return NULL;
-	return vfs_recursive_find(strdup(path));
+	}
+	clac();
+	struct mount_info *ret = vfs_recursive_find(strdup_user(path));
+	return ret;
 }
 
 struct device *vfs_find_dev(const char *path)
 {
-	if (path[0] != '/')
+	stac();
+	if (path[0] != '/') {
+		clac();
 		return NULL;
+	}
+	clac();
 	struct mount_info *m = vfs_find_mount_info(path);
 	if (m->dev->vfs->type == VFS_DEVFS) // TODO: ?
 		return device_get_by_name(path + strlen(m->path) + 1);
@@ -130,7 +140,6 @@ res vfs_mount(struct device *dev, const char *path)
 
 res vfs_read(const char *path, void *buf, u32 offset, u32 count)
 {
-	/* printf("%s READ: %s\n", proc_current() ? proc_current()->name : "Unknown", path); */
 	if (!memory_valid(path))
 		return -EFAULT;
 
@@ -159,7 +168,6 @@ res vfs_read(const char *path, void *buf, u32 offset, u32 count)
 
 res vfs_write(const char *path, void *buf, u32 offset, u32 count)
 {
-	/* printf("%s WRITE: %s\n", proc_current() ? proc_current()->name : "Unknown", path); */
 	if (!memory_valid(path))
 		return -EFAULT;
 
@@ -255,21 +263,31 @@ res vfs_block(const char *path, u32 func_ptr)
 	return m->dev->vfs->block(path, func_ptr, m->dev);
 }
 
+// TODO: Reduce stac clac?
+// TODO: Fix page fault when called too often/fast
 res vfs_poll(const char **files)
 {
 	if (!memory_valid(files))
 		return -EFAULT;
 
+	stac();
 	for (const char **p = files; *p && memory_valid(*p) && **p; p++) {
 		res ready = vfs_ready(*p);
+		clac();
 		if (ready == 1)
 			return p - files;
 		else if (ready < 0)
 			return ready;
+		stac();
 	}
+	clac();
 
-	for (const char **p = files; *p && memory_valid(*p) && **p; p++)
+	stac();
+	for (const char **p = files; *p && memory_valid(*p) && **p; p++) {
 		vfs_block(*p, (u32)vfs_poll);
+		stac();
+	}
+	clac();
 
 	return PROC_MAX_BLOCK_IDS + 1;
 }
@@ -325,7 +343,7 @@ struct device *device_get_by_name(const char *name)
 {
 	struct node *iterator = devices->head;
 	while (iterator) {
-		if (!strcmp(((struct device *)iterator->data)->name, name))
+		if (!strcmp_user(((struct device *)iterator->data)->name, name))
 			return iterator->data;
 		iterator = iterator->next;
 	}
@@ -522,7 +540,7 @@ static res read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, s
 		u32 block_offset = (i == first_block) ? first_block_offset : 0;
 		u32 byte_count = MIN(BLOCK_SIZE - block_offset, remaining);
 
-		memcpy((u8 *)buf + copied, data + block_offset, byte_count);
+		memcpy_user((u8 *)buf + copied, data + block_offset, byte_count);
 
 		copied += byte_count;
 		remaining -= byte_count;
@@ -583,11 +601,13 @@ static u32 find_inode(const char *name, u32 dir_inode, struct device *dev)
 static struct ext2_inode *find_inode_by_path(const char *path, struct ext2_inode *in_buf,
 					     struct device *dev)
 {
-	if (path[0] != '/')
-		return NULL;
-
-	char *path_cp = strdup(path);
+	char *path_cp = strdup_user(path);
 	char *init = path_cp; // For freeing
+
+	if (path_cp[0] != '/') {
+		free(init);
+		return NULL;
+	}
 
 	path_cp++;
 	u32 current_inode = EXT2_ROOT;
@@ -623,9 +643,9 @@ static struct ext2_inode *find_inode_by_path(const char *path, struct ext2_inode
 res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
 	struct ext2_inode in = { 0 };
-	if (find_inode_by_path(path, &in, dev) == &in)
+	if (find_inode_by_path(path, &in, dev) == &in) {
 		return read_inode(&in, buf, offset, count, dev);
-	else
+	} else
 		return -ENOENT;
 }
 
@@ -638,8 +658,10 @@ res ext2_stat(const char *path, struct stat *buf, struct device *dev)
 	//u32 num_blocks = in.blocks / (BLOCK_SIZE / SECTOR_SIZE);
 	//u32 sz = BLOCK_SIZE * num_blocks;
 
+	stac();
 	buf->dev_id = dev->id;
 	buf->size = in.size;
+	clac();
 
 	return EOK;
 }

@@ -102,7 +102,7 @@ void *memchr(void *src, char c, u32 n)
 	return NULL;
 }
 
-int memcmp(const void *s1, const void *s2, u32 n)
+s32 memcmp(const void *s1, const void *s2, u32 n)
 {
 	const u8 *a = (const u8 *)s1;
 	const u8 *b = (const u8 *)s2;
@@ -115,7 +115,45 @@ int memcmp(const void *s1, const void *s2, u32 n)
 	return 0;
 }
 
-int mememp(const u8 *buf, u32 n)
+u8 mememp(const u8 *buf, u32 n)
 {
 	return buf[0] == 0 && !memcmp(buf, buf + 1, n - 1);
 }
+
+#ifdef KERNEL
+
+#include <cpu.h>
+
+void *memcpy_user(void *dest, const void *src, u32 n)
+{
+	stac();
+	void *ret = memcpy(dest, src, n);
+	clac();
+	return ret;
+}
+
+void *memset_user(void *dest, u32 val, u32 n)
+{
+	stac();
+	void *ret = memset(dest, val, n);
+	clac();
+	return ret;
+}
+
+void *memchr_user(void *src, char c, u32 n)
+{
+	stac();
+	void *ret = memchr(src, c, n);
+	clac();
+	return ret;
+}
+
+s32 memcmp_user(const void *s1, const void *s2, u32 n)
+{
+	stac();
+	s32 ret = memcmp(s1, s2, n);
+	clac();
+	return ret;
+}
+
+#endif

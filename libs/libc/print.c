@@ -164,6 +164,7 @@ int print(const char *str)
 
 // The kernel prints everything into the serial console
 
+#include <cpu.h>
 #include <mm.h>
 #include <proc.h>
 #include <serial.h>
@@ -211,7 +212,9 @@ int print_app(enum stream_defaults id, const char *proc_name, const char *str)
 		serial_print(YEL "[ERR] to ");
 	serial_print(proc_name);
 	serial_print(": ");
+	stac();
 	serial_print(str);
+	clac();
 	serial_print(RES);
 	return 1;
 }

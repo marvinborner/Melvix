@@ -9,7 +9,8 @@ int main(int argc, char **argv)
 
 	// Just chillin'
 	while (1)
-		__asm__ volatile("hlt");
+		;
+	/* __asm__ volatile("hlt"); */
 
 	return 0;
 }

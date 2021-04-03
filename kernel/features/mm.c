@@ -56,11 +56,12 @@ void page_fault_handler(struct regs *r)
 	} else {
 		dir = &kernel_dir;
 	}
-	u32 paddr = virtual_to_physical(dir, vaddr);
 
 	// Print!
+	u32 paddr = virtual_to_physical(dir, vaddr);
 	printf("%s process tried to %s a %s page at [vaddr=%x; paddr=%x]\n", super, operation, type,
 	       vaddr, paddr);
+	print_trace(5);
 
 	isr_panic(r);
 }
@@ -350,7 +351,7 @@ void *memory_alloc(struct page_dir *dir, u32 size, u32 flags)
 	}
 
 	if (flags & MEMORY_CLEAR)
-		memset((void *)vaddr, 0, size);
+		memset_user((void *)vaddr, 0, size);
 
 	return (void *)vaddr;
 
@@ -427,8 +428,10 @@ res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shar
 	link->vrange = memory_range(vaddr, size);
 	list_add(proc_current()->memory, link);
 
+	stac();
 	*addr = vaddr;
 	*id = obj->id;
+	clac();
 
 	return EOK;
 }
@@ -466,9 +469,6 @@ res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size)
 	if (!memory_valid(addr) || !memory_valid(size))
 		return -EFAULT;
 
-	*addr = 0;
-	*size = 0;
-
 	struct node *iterator = memory_objects->head;
 	while (iterator) {
 		struct memory_object *obj = iterator->data;
@@ -480,8 +480,10 @@ res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size)
 			struct memory_range shrange =
 				virtual_alloc(dir, obj->prange, MEMORY_CLEAR | MEMORY_USER);
 
+			stac();
 			*addr = shrange.base;
 			*size = shrange.size;
+			clac();
 
 			struct memory_proc_link *link = zalloc(sizeof(*link));
 			link->obj = obj;
@@ -492,6 +494,11 @@ res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size)
 		}
 		iterator = iterator->next;
 	}
+
+	stac();
+	*addr = 0;
+	*size = 0;
+	clac();
 
 	return -ENOENT;
 }

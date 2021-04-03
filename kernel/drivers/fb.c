@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
 #include <assert.h>
+#include <cpu.h>
 #include <def.h>
 #include <errno.h>
 #include <fb.h>
@@ -44,7 +45,9 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct devi
 		else
 			fb_owner = proc_current()->pid;
 
+		stac();
 		memcpy(arg1, info->vbe, sizeof(struct vbe_basic));
+		clac();
 		fb_map_buffer(proc_current()->page_dir, info);
 		return EOK;
 	}

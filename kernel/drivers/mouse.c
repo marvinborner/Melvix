@@ -95,7 +95,7 @@ static res mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
 		return -EINVAL;
 
 	struct event_mouse *e = stack_pop(queue);
-	memcpy(buf, (u8 *)e + offset, MIN(count, sizeof(*e)));
+	memcpy_user(buf, (u8 *)e + offset, MIN(count, sizeof(*e)));
 	free(e);
 	return MIN(count, sizeof(*e));
 }

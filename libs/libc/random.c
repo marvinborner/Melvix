@@ -18,7 +18,7 @@ void srand(u32 seed)
 u32 rdrand(void)
 {
 #ifdef KERNEL
-	if (!cpu_has_cfeature(CPUID_FEAT_ECX_RDRND))
+	if (!(cpu_features.ecx & CPUID_FEAT_ECX_RDRND))
 		return rand();
 
 	u32 rd;
@@ -35,7 +35,7 @@ u32 rdrand(void)
 u32 rdseed(void)
 {
 #ifdef KERNEL
-	if (!cpu_has_cfeature(CPUID_FEAT_ECX_RDRND))
+	if (!(cpu_extended_features.ebx & CPUID_EXT_FEAT_EBX_RDSEED))
 		return rand();
 
 	u32 rd;

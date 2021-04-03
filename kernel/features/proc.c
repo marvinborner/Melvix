@@ -305,7 +305,9 @@ void proc_stack_push(struct proc *proc, u32 data)
 	memory_switch_dir(proc->page_dir);
 
 	proc->regs.useresp -= sizeof(data);
+	stac();
 	*(u32 *)proc->regs.useresp = data;
+	clac();
 
 	memory_switch_dir(prev);
 }
@@ -314,6 +316,7 @@ void proc_stack_push(struct proc *proc, u32 data)
 
 static const char *procfs_parse_path(const char **path, u32 *pid)
 {
+	stac();
 	while (**path == '/')
 		(*path)++;
 
@@ -326,19 +329,20 @@ static const char *procfs_parse_path(const char **path, u32 *pid)
 		*pid = proc_current()->pid;
 		*path += 4;
 	}
+	clac();
 
 	return *path;
 }
 
 static enum stream_defaults procfs_stream(const char *path)
 {
-	if (!memcmp(path, "in", 3)) {
+	if (!memcmp_user(path, "in", 3)) {
 		return STREAM_IN;
-	} else if (!memcmp(path, "out", 4)) {
+	} else if (!memcmp_user(path, "out", 4)) {
 		return STREAM_OUT;
-	} else if (!memcmp(path, "err", 4)) {
+	} else if (!memcmp_user(path, "err", 4)) {
 		return STREAM_ERR;
-	} else if (!memcmp(path, "log", 4)) {
+	} else if (!memcmp_user(path, "log", 4)) {
 		return STREAM_LOG;
 	} else {
 		return STREAM_UNKNOWN;
@@ -356,20 +360,24 @@ static res procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 	procfs_parse_path(&path, &pid);
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
-		if (!p || path[0] != '/')
+		stac();
+		if (!p || path[0] != '/') {
+			clac();
 			return -ENOENT;
+		}
+		clac();
 
 		path++;
-		if (!memcmp(path, "msg", 4)) {
+		if (!memcmp_user(path, "msg", 4)) {
 			void *msg_data = malloc(count);
-			memcpy(msg_data, buf, count);
+			memcpy_user(msg_data, buf, count);
 			struct procfs_message *msg = malloc(sizeof(*msg));
 			msg->data = msg_data;
 			msg->size = count;
 			stack_push_bot(p->messages, msg); // TODO: Use offset
 			proc_unblock(pid, PROC_BLOCK_MSG);
 			return count;
-		} else if (!memcmp(path, "io/", 3)) {
+		} else if (!memcmp_user(path, "io/", 3)) {
 			path += 3;
 			enum stream_defaults id = procfs_stream(path);
 			if (id == STREAM_UNKNOWN)
@@ -381,7 +389,7 @@ static res procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 
 			struct stream *stream = &p->streams[id];
 			assert(stream->offset_write + count < STREAM_MAX_SIZE); // TODO: Resize
-			memcpy((char *)(stream->data + stream->offset_write), buf, count);
+			memcpy_user((char *)(stream->data + stream->offset_write), buf, count);
 			stream->offset_write += count;
 			proc_unblock(dev->id, PROC_BLOCK_DEV);
 			return count;
@@ -400,40 +408,46 @@ static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
-		if (!p || path[0] != '/')
+		stac();
+		if (!p || path[0] != '/') {
+			clac();
 			return -ENOENT;
+		}
+		clac();
 
 		path++;
-		if (!memcmp(path, "pid", 4)) {
-			//memcpy(buf, ((u8 *)p->pid) + offset, count);
+		if (!memcmp_user(path, "pid", 4)) {
+			/* memcpy_user(buf, ((u8 *)p->pid) + offset, count); */
+			stac();
 			*(u32 *)buf = p->pid;
+			clac();
 			return count;
-		} else if (!memcmp(path, "name", 5)) {
-			memcpy(buf, p->name + offset, count);
+		} else if (!memcmp_user(path, "name", 5)) {
+			memcpy_user(buf, p->name + offset, count);
 			return count;
-		} else if (!memcmp(path, "status", 7)) {
+		} else if (!memcmp_user(path, "status", 7)) {
 			const char *status = p->state == PROC_RUNNING ? "running" : "sleeping";
-			memcpy(buf, status + offset, count);
+			memcpy_user(buf, status + offset, count);
 			return count;
-		} else if (!memcmp(path, "msg", 4)) {
+		} else if (!memcmp_user(path, "msg", 4)) {
 			if (stack_empty(p->messages)) {
 				return -EIO; // This shouldn't happen
 			} else {
 				struct procfs_message *msg = stack_pop(p->messages);
 				if (!msg)
 					return -EIO;
-				memcpy(buf, msg->data + offset, MIN(count, msg->size));
+				memcpy_user(buf, msg->data + offset, MIN(count, msg->size));
 				free(msg->data);
 				free(msg);
 				return MIN(count, msg->size);
 			}
-		} else if (!memcmp(path, "io/", 3)) {
+		} else if (!memcmp_user(path, "io/", 3)) {
 			path += 3;
 			enum stream_defaults id = procfs_stream(path);
 			if (id == STREAM_UNKNOWN)
 				return -ENOENT;
 			struct stream *stream = &p->streams[id];
-			memcpy(buf, stream->data + stream->offset_read, count);
+			memcpy_user(buf, stream->data + stream->offset_read, count);
 			stream->offset_read += count;
 			return count;
 		}
@@ -449,11 +463,15 @@ static res procfs_block(const char *path, u32 func_ptr, struct device *dev)
 
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
-		if (!p || path[0] != '/')
+		stac();
+		if (!p || path[0] != '/') {
+			clac();
 			return -ENOENT;
+		}
+		clac();
 
 		path++;
-		if (!memcmp(path, "msg", 4)) {
+		if (!memcmp_user(path, "msg", 4)) {
 			proc_block(pid, PROC_BLOCK_MSG, func_ptr);
 			return EOK;
 		} else {
@@ -485,13 +503,17 @@ static res procfs_ready(const char *path, struct device *dev)
 
 	if (pid) {
 		struct proc *p = proc_from_pid(pid);
-		if (!p || path[0] != '/')
+		stac();
+		if (!p || path[0] != '/') {
+			clac();
 			return -ENOENT;
+		}
+		clac();
 
 		path++;
-		if (!memcmp(path, "msg", 4)) {
+		if (!memcmp_user(path, "msg", 4)) {
 			return stack_empty(p->messages) == 0;
-		} else if (!memcmp(path, "io/", 3)) {
+		} else if (!memcmp_user(path, "io/", 3)) {
 			path += 3;
 			enum stream_defaults id = procfs_stream(path);
 			if (id == STREAM_UNKNOWN)
@@ -535,7 +557,8 @@ NORETURN void proc_init(void)
 	assert(vfs_mount(dev, "/proc/") == EOK);
 
 	// Idle proc
-	struct proc *kernel_proc = proc_make(PROC_PRIV_KERNEL);
+	// TODO: Reimplement hlt privileges in idle proc (SMEP!)
+	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
 	assert(elf_load("/bin/idle", kernel_proc) == EOK);
 	kernel_proc->state = PROC_BLOCKED;
 	kernel_proc->quantum.val = 0;

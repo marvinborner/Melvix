@@ -33,7 +33,7 @@ u32 strlcpy(char *dst, const char *src, u32 size)
 	return src - orig - 1;
 }
 
-int strcmp(const char *s1, const char *s2)
+s32 strcmp(const char *s1, const char *s2)
 {
 	const u8 *c1 = (const u8 *)s1;
 	const u8 *c2 = (const u8 *)s2;
@@ -49,7 +49,7 @@ int strcmp(const char *s1, const char *s2)
 	return d;
 }
 
-int strncmp(const char *s1, const char *s2, u32 n)
+s32 strncmp(const char *s1, const char *s2, u32 n)
 {
 	const u8 *c1 = (const u8 *)s1;
 	const u8 *c2 = (const u8 *)s2;
@@ -65,9 +65,9 @@ int strncmp(const char *s1, const char *s2, u32 n)
 	return d;
 }
 
-char *strchr(char *s, int c)
+char *strchr(char *s, char c)
 {
-	while (*s != (char)c) {
+	while (*s != c) {
 		if (!*s)
 			return NULL;
 		s++;
@@ -76,7 +76,7 @@ char *strchr(char *s, int c)
 	return s;
 }
 
-char *strrchr(char *s, int c)
+char *strrchr(char *s, char c)
 {
 	char *ret = 0;
 
@@ -218,3 +218,81 @@ const char *strerror(u32 error)
 		return "Unknown error";
 	}
 }
+
+#ifdef KERNEL
+
+#include <cpu.h>
+
+u32 strlen_user(const char *str)
+{
+	stac();
+	u32 ret = strlen(str);
+	clac();
+	return ret;
+}
+
+u32 strlcpy_user(char *dst, const char *src, u32 size)
+{
+	stac();
+	u32 ret = strlcpy(dst, src, size);
+	clac();
+	return ret;
+}
+
+s32 strcmp_user(const char *s1, const char *s2)
+{
+	stac();
+	s32 ret = strcmp(s1, s2);
+	clac();
+	return ret;
+}
+
+s32 strncmp_user(const char *s1, const char *s2, u32 n)
+{
+	stac();
+	s32 ret = strncmp(s1, s2, n);
+	clac();
+	return ret;
+}
+
+char *strchr_user(char *s, char c)
+{
+	stac();
+	char *ret = strchr(s, c);
+	clac();
+	return ret;
+}
+
+char *strrchr_user(char *s, char c)
+{
+	stac();
+	char *ret = strrchr(s, c);
+	clac();
+	return ret;
+}
+
+u32 strlcat_user(char *dst, const char *src, u32 size)
+{
+	stac();
+	u32 ret = strlcat(dst, src, size);
+	clac();
+	return ret;
+}
+
+char *strinv_user(char *s)
+{
+	stac();
+	char *ret = strinv(s);
+	clac();
+	return ret;
+}
+
+char *strdup_user(const char *s)
+{
+	stac();
+	char *ret = strdup(s);
+	clac();
+	return ret;
+}
+
+#endif

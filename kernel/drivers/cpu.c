@@ -1,8 +1,10 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 // This file is a wrapper around some CPU asm calls
 
+#include <assert.h>
 #include <cpu.h>
 #include <def.h>
+#include <mem.h>
 #include <print.h>
 
 u8 inb(u16 port)
@@ -41,26 +43,6 @@ void outl(u16 port, u32 data)
 	__asm__ volatile("outl %0, %1" ::"a"(data), "Nd"(port));
 }
 
-CLEAR static void cpuid(int code, u32 *a, u32 *b, u32 *c, u32 *d)
-{
-	__asm__ volatile("cpuid" : "=a"(*a), "=b"(*b), "=c"(*c), "=d"(*d) : "a"(code));
-}
-
-CLEAR static char *cpu_string(char buf[16])
-{
-	// wtf
-	cpuid(CPUID_VENDOR_STRING, (u32 *)(buf + 12), (u32 *)(buf), (u32 *)(buf + 8),
-	      (u32 *)(buf + 4));
-
-	return buf;
-}
-
-CLEAR void cpu_print(void)
-{
-	char buf[16] = { 0 };
-	printf("CPU vendor: %s\n", cpu_string(buf));
-}
-
 CLEAR u32 cr0_get(void)
 {
 	u32 cr0;
@@ -97,18 +79,6 @@ CLEAR void cr4_set(u32 cr4)
 	__asm__ volatile("movl %%eax, %%cr4" ::"a"(cr4));
 }
 
-static u32 cpu_cfeatures = 0;
-u8 cpu_has_cfeature(enum cpuid_features feature)
-{
-	return (cpu_cfeatures & feature) != 0;
-}
-
-static u32 cpu_dfeatures = 0;
-u8 cpu_has_dfeature(enum cpuid_features feature)
-{
-	return (cpu_dfeatures & feature) != 0;
-}
-
 static void fpu_handler(struct regs *r)
 {
 	UNUSED(r);
@@ -121,13 +91,44 @@ void fpu_restore(void)
 	__asm__ volatile("fxrstor (%0)" ::"r"(fpu_state));
 }
 
-CLEAR void cpu_enable_features(void)
+CLEAR static struct cpuid cpuid(u32 code)
 {
 	u32 a, b, c, d;
-	cpuid(CPUID_FEATURES, &a, &b, &c, &d);
-	cpu_cfeatures = c;
-	cpu_dfeatures = d;
-	if (cpu_has_dfeature(CPUID_FEAT_EDX_SSE)) {
+	__asm__ volatile("cpuid" : "=a"(a), "=b"(b), "=c"(c), "=d"(d) : "a"(code), "c"(0));
+	return (struct cpuid){ a, b, c, d };
+}
+
+CLEAR static char *cpu_string(char buf[16])
+{
+	// wtf
+	struct cpuid id = cpuid(CPUID_VENDOR_STRING);
+	memcpy((u32 *)(buf + 12), &id.eax, 4);
+	memcpy((u32 *)(buf + 0), &id.ebx, 4);
+	memcpy((u32 *)(buf + 8), &id.ecx, 4);
+	memcpy((u32 *)(buf + 4), &id.edx, 4);
+	return buf;
+}
+
+CLEAR void cpu_print(void)
+{
+	char buf[16] = { 0 };
+	printf("CPU vendor: %s\n", cpu_string(buf));
+}
+
+PROTECTED struct cpuid cpu_features = { 0 };
+PROTECTED struct cpuid cpu_extended_information = { 0 };
+PROTECTED struct cpuid cpu_extended_features = { 0 };
+
+CLEAR void cpu_enable_features(void)
+{
+	cpu_features = cpuid(CPUID_FEATURES);
+	u32 max = cpuid(0x80000000).eax;
+	assert(max >= 0x80000001);
+	cpu_extended_information = cpuid(0x80000001);
+	cpu_extended_features = cpuid(0x7);
+
+	// Enable SSE
+	if (cpu_features.edx & CPUID_FEAT_EDX_SSE) {
 		cr0_set(cr0_get() & ~(1 << 2));
 		cr0_set(cr0_get() | (1 << 1));
 		cr4_set(cr4_get() | (3 << 9));
@@ -135,13 +136,48 @@ CLEAR void cpu_enable_features(void)
 		panic("No SSE support!\n");
 	}
 
-	if (cpu_has_dfeature(CPUID_FEAT_EDX_FPU)) {
+	// Enable FPU
+	if (cpu_features.edx & CPUID_FEAT_EDX_FPU) {
 		__asm__ volatile("fninit");
 		__asm__ volatile("fxsave %0" : "=m"(fpu_state));
 		irq_install_handler(7, fpu_handler);
 	} else {
 		panic("No FPU support!\n");
 	}
+
+	// Enable NX (IA32_EFER.NXE)
+	if (cpu_extended_information.edx & CPUID_EXT_INFO_EDX_NX) {
+		__asm__ volatile("movl $0xc0000080, %ecx\n"
+				 "rdmsr\n"
+				 "orl $0x800, %eax\n"
+				 "wrmsr\n");
+	} else {
+		print("No NX support :(\n");
+	}
+
+	// Enable SMEP
+	if (cpu_extended_features.ebx & CPUID_EXT_FEAT_EBX_SMEP) {
+		cr4_set(cr4_get() | 0x100000);
+	} else {
+		print("No SMEP support :(\n");
+	}
+
+	// Enable SMAP
+	if (cpu_extended_features.ebx & CPUID_EXT_FEAT_EBX_SMAP) {
+		cr4_set(cr4_get() | 0x200000);
+	} else {
+		print("No SMAP support :(\n");
+	}
+}
+
+void clac(void)
+{
+	__asm__ volatile("clac" ::: "cc");
+}
+
+void stac(void)
+{
+	__asm__ volatile("stac" ::: "cc");
 }
 
 CLEAR void cli(void)

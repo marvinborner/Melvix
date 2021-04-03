@@ -32,10 +32,27 @@ void cr3_set(u32 cr3);
 u32 cr4_get(void);
 void cr4_set(u32 cr4);
 
+void clac(void);
+void stac(void);
+
 void cli(void);
 void sti(void);
 
-enum cpuid_requests { CPUID_VENDOR_STRING, CPUID_FEATURES, CPUID_TLB, CPUID_SERIAL };
+struct cpuid {
+	u32 eax;
+	u32 ebx;
+	u32 ecx;
+	u32 edx;
+};
+
+enum cpuid_requests {
+	CPUID_VENDOR_STRING,
+	CPUID_FEATURES,
+	CPUID_TLB,
+	CPUID_SERIAL,
+	CPUID_EXT_FEATURES = 7,
+};
+
 enum cpuid_features {
 	CPUID_FEAT_ECX_SSE3 = 1u << 0,
 	CPUID_FEAT_ECX_PCLMUL = 1u << 1,
@@ -95,9 +112,17 @@ enum cpuid_features {
 	CPUID_FEAT_EDX_HTT = 1u << 28,
 	CPUID_FEAT_EDX_TM1 = 1u << 29,
 	CPUID_FEAT_EDX_IA64 = 1u << 30,
+
+	CPUID_EXT_FEAT_EBX_UMIP = 1u << 2,
+	CPUID_EXT_FEAT_EBX_SMEP = 1u << 7,
+	CPUID_EXT_FEAT_EBX_RDSEED = 1u << 18,
+	CPUID_EXT_FEAT_EBX_SMAP = 1u << 20,
+
+	CPUID_EXT_INFO_EDX_NX = 1u << 20,
 };
 
-u8 cpu_has_cfeature(enum cpuid_features feature);
-u8 cpu_has_dfeature(enum cpuid_features feature);
+extern struct cpuid cpu_features;
+extern struct cpuid cpu_extended_information;
+extern struct cpuid cpu_extended_features;
 
 #endif

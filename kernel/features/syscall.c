@@ -28,8 +28,8 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_ALLOC: {
-		r->eax = (u32)memory_sys_alloc(proc_current()->page_dir, r->ebx, (u32 *)r->ecx,
-					       (u32 *)r->edx, (u8)r->esi);
+		r->eax = memory_sys_alloc(proc_current()->page_dir, r->ebx, (u32 *)r->ecx,
+					  (u32 *)r->edx, (u8)r->esi);
 		break;
 	}
 	case SYS_FREE: {
@@ -102,7 +102,7 @@ static void syscall_handler(struct regs *r)
 		case SYS_BOOT_REBOOT:
 			print("Rebooting...\n");
 			outb(0x64, 0xfe);
-			__asm__ volatile("ud2");
+			__asm__ volatile("cli\nud2");
 			break;
 		case SYS_BOOT_SHUTDOWN:
 			print("Shutting down...\n");
@@ -110,7 +110,7 @@ static void syscall_handler(struct regs *r)
 			outw(0x604, 0x2000);
 			outw(0x4004, 0x3400);
 			outb(0x64, 0xfe);
-			__asm__ volatile("ud2");
+			__asm__ volatile("cli\nud2");
 			break;
 		default:
 			r->eax = -EINVAL;
