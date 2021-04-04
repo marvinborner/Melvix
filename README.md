@@ -35,6 +35,10 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 
 ![Melvix screenshot](screenshot.png?raw=true "Screenshot")
 
+## Documentation
+
+-   [Memory map](MMAP.md)
+
 ## Test
 
 -   Install the qemu i386 emulator
@@ -100,6 +104,7 @@ Inspiration/usage (documented in the respective files):
 Resources:
 
 -   [Spleen font](https://github.com/fcambus/spleen) - [MIT License](https://github.com/fcambus/spleen/blob/5759e9abb130b89ba192edc5324b12ef07b7dad3/LICENSE)
+-   [Material icons](https://github.com/Templarian/MaterialDesign/) - [Several Licenses (MIT compliant)](https://github.com/Templarian/MaterialDesign/blob/5772b5e293352e7feed316c4ab6bde3ba572959e/LICENSE)
 
 Libraries:
 
