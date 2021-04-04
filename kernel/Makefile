@@ -8,6 +8,7 @@ COBJS = main.o \
 	drivers/keyboard.o \
 	drivers/mouse.o \
 	drivers/pci.o \
+	drivers/rtc.o \
 	drivers/ide.o \
 	drivers/fb.o \
 	drivers/timer.o \
@@ -34,6 +35,5 @@ all: compile
 	@$(AS) $(ASFLAGS) $< -o $@
 
 compile: $(COBJS)
-	@mkdir -p ../build/
-	@$(LD) -N -z undefs -ekernel_main -Ttext 0x00009000 -o ../build/kernel.elf -L../build/ $+ -lk
-	@$(LD) -N -z max-page-size=0x1000 -Tlink.ld -o ../build/kernel.bin -L../build/ $+ -lk
+	@mkdir -p ../build/apps/
+	@$(LD) -N -z max-page-size=0x1000 -ekernel_main -Tlink.ld -o ../build/apps/kernel -L../build/ $+ -lk

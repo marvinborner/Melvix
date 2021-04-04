@@ -9,8 +9,6 @@
 #include <random.h>
 #include <str.h>
 
-#define PROC_STACK_SIZE 0x4000
-
 res elf_load(const char *path, struct proc *proc)
 {
 	if (!memory_valid(path))
@@ -50,8 +48,11 @@ res elf_load(const char *path, struct proc *proc)
 	    header.version != 1 || header.machine != ELF_MACHINE_386)
 		return -ENOEXEC;
 
+	if (!memory_valid((void *)header.entry))
+		return -ENOEXEC;
+
 	// ASLR
-	u32 rand_off = (rand() & 0xffff) * PAGE_SIZE;
+	u32 rand_off = header.type == ELF_ETYPE_DYN ? (rand() & 0xffff) * PAGE_SIZE : 0;
 
 	// Loop through programs
 	for (u32 i = 0; i < header.phnum; i++) {

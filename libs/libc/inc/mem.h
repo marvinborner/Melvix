@@ -13,8 +13,8 @@ void *realloc(void *ptr, u32 size);
 void *zalloc(u32 size);
 
 #ifdef KERNEL
-#define STACK_START 0x00500000 // Defined it bootloader
-#define STACK_SIZE 0x1000 // idk
+#define STACK_START 0x00500000 // Defined in bootloader
+#define STACK_SIZE (1 << 20) // 1MiB
 #elif defined(USER)
 #endif
 
