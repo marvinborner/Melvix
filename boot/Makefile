@@ -14,5 +14,5 @@ all: compile
 compile:
 	@mkdir -p ../build/
 	@$(CC) -c $(CFLAGS) load.c -o load.o
-	@$(LD) -N -emain -Ttext 0x00040000 -o ../build/load.bin load.o --oformat binary
+	@$(LD) -N -emain -Ttext 0x00009000 -o ../build/load.bin load.o --oformat binary
 	@$(AS) -f bin entry.asm -o ../build/boot.bin

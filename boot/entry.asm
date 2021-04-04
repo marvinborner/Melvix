@@ -93,9 +93,9 @@
 %define GDT_SIZE (0x40 | 0x00) ; Use 32 bit selectors
 %define GDT_DATA_OFFSET 0x10 ; Offset to GDT data segment
 
-; Kernel constants
+; Kernel loader constants
 %define STACK_POINTER 0x00500000 ; The initial stack pointer in kernel mode
-%define KERNEL_POSITION 0x00040000 ; Loaded kernel position in protected mode (* 0x10)
+%define LOADER_POSITION 0x00009000 ; Kernel loader position in protected mode
 
 ; ENOUGH, let's go!
 
@@ -322,11 +322,11 @@ lba:
 times SECTOR_SIZE - ($ - $$) db 0
 dw SECTOR_END
 
-; This is the second stage. It tries to load the kernel into memory.
+; This is the second stage. It tries to load the kernel loader into memory.
 ; To do this, it first checks the integrity of the ext2 fs. Then it has to find
 ; the address of the root inode (2), find the filename in it and load its contents into memory.
 ; After this is finished, the stage can jump into the protected mode, enable the
-; A20 line and finally jump to the kernel! ez
+; A20 line and finally jump to the kernel loader! ez
 stage_two:
 	; Verify signature
 	mov ax, [superblock + EXT2_SIG_OFFSET]
@@ -377,7 +377,7 @@ stage_two:
 	cmp cx, 256 + 12 ; BLOCK_SIZE / sizeof(u32) = 256
 	jge disk_error
 	lea di, [bx + EXT2_POINTER_OFFSET] ; Address of first block pointer
-	mov bx, 0x4000 ; Load to this address
+	mov bx, 0x900 ; Load to this address (LOADER_POSITION >> 4)
 	mov [dest + 2], bx
 	mov bx, 0 ; Inode location = 0xF0000
 	mov [dest], bx
@@ -454,13 +454,13 @@ protected_mode:
 	mov ax, (gdt_tss - gdt) | 0b11 ; Load TSS in ring 3
 	ltr ax
 
-	mov eax, vid_info ; Pass VBE struct to kernel
+	mov eax, vid_info ; Pass VBE struct to kernel loader
 	push eax ; Push as second kernel parameter
 
-	mov eax, mem_info ; Pass meminfo to kernel
+	mov eax, mem_info ; Pass meminfo to kernel loader
 	push eax ; Push as first kernel parameter
 
-	mov edx, KERNEL_POSITION
+	mov edx, LOADER_POSITION
 	lea eax, [edx]
 	call eax
 
