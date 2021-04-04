@@ -14,12 +14,16 @@
 #include <net.h>
 #include <pci.h>
 #include <random.h>
+#include <rtc.h>
 #include <serial.h>
 #include <syscall.h>
 #include <timer.h>
 
-void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info); // Decl
-void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
+extern u32 __stack_chk_guard;
+u32 __stack_chk_guard;
+
+int kernel_main(struct mem_info *mem_info, struct vid_info *vid_info); // Decl
+int kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 {
 	// Serial connection
 	serial_install();
@@ -31,7 +35,9 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	cpu_enable_features();
 	cpu_print();
-	srand(rand());
+
+	srand(rtc_stamp());
+	__stack_chk_guard = rand();
 
 	// Install drivers
 	vfs_install();
@@ -40,6 +46,7 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	pci_install();
 	interrupts_install();
 	timer_install();
+	rtc_install();
 	keyboard_install();
 	mouse_install();
 	fb_install(vid_info);
@@ -52,4 +59,6 @@ void kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	syscall_init();
 
 	proc_init();
+
+	return 1;
 }

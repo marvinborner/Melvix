@@ -170,11 +170,6 @@ res boot(u32 cmd)
 	return sys2(SYS_BOOT, SYS_BOOT_MAGIC, cmd);
 }
 
-u32 time(void)
-{
-	return (u32)sys0(SYS_TIME);
-}
-
 /**
  * At exit
  */

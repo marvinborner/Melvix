@@ -8,10 +8,6 @@
  * Stack protector
  */
 
-#define STACK_CHK_GUARD 0xdeadbeef
-
-u32 __stack_chk_guard = STACK_CHK_GUARD;
-
 void __stack_chk_fail(void);
 NORETURN void __stack_chk_fail(void)
 {

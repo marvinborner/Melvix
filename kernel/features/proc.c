@@ -183,6 +183,7 @@ void proc_yield(struct regs *r)
 	scheduler(r);
 }
 
+// TODO: Rewrite block/unblock mechanisms
 void proc_block(u32 id, enum proc_block_type type, u32 func_ptr)
 {
 	u8 already_exists = 0;
@@ -298,8 +299,6 @@ struct proc *proc_make(enum proc_priv priv)
 
 void proc_stack_push(struct proc *proc, u32 data)
 {
-	assert(proc->regs.useresp > sizeof(data));
-
 	struct page_dir *prev;
 	memory_backup_dir(&prev);
 	memory_switch_dir(proc->page_dir);
@@ -560,6 +559,8 @@ NORETURN void proc_init(void)
 	// TODO: Reimplement hlt privileges in idle proc (SMEP!)
 	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
 	assert(elf_load("/bin/idle", kernel_proc) == EOK);
+	proc_stack_push(kernel_proc, 0);
+	proc_stack_push(kernel_proc, 0);
 	kernel_proc->state = PROC_BLOCKED;
 	kernel_proc->quantum.val = 0;
 	kernel_proc->quantum.cnt = 0;
@@ -569,6 +570,7 @@ NORETURN void proc_init(void)
 	// Init proc (root)
 	struct proc *init = proc_make(PROC_PRIV_ROOT);
 	assert(elf_load("/bin/init", init) == EOK);
+	proc_stack_push(init, 0);
 	proc_stack_push(init, 0);
 	current = list_first_data(proc_list_running, init);
 

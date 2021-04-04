@@ -84,6 +84,9 @@ void page_fault_handler(struct regs *r)
 	// Print!
 	printf("%s process tried to %s a %s page at [vaddr=%x; paddr=%x]\n", super, operation, type,
 	       vaddr, paddr);
+	if (proc && vaddr > proc->regs.ebp - PROC_STACK_SIZE - PAGE_SIZE &&
+	    vaddr < proc->regs.ebp + PAGE_SIZE)
+		print("Probably a stack overflow\n");
 	printf("Sections: [vaddr_section=%s; paddr_section=%s; eip_section=%s]\n",
 	       page_fault_section(vaddr), page_fault_section(paddr), page_fault_section(r->eip));
 
@@ -667,10 +670,13 @@ CLEAR void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 
 		/* printf("Memory region: %x-%x\n", p->lbase, p->lbase + size); */
 		if (p->type == MEMORY_AVAILABLE) {
-			physical_set_free(memory_range_around(p->lbase, size / PAGE_SIZE));
+			physical_set_free(memory_range_around(p->lbase, size));
 			memory_total += size;
 		} else if (p->type == MEMORY_DEFECT) {
 			printf("Defect memory at 0x%x-0x%x!\n", p->lbase, p->lbase + size);
+			physical_set_used(memory_range_around(p->lbase, size));
+		} else {
+			physical_set_used(memory_range_around(p->lbase, size));
 		}
 	}
 
@@ -684,6 +690,9 @@ CLEAR void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 
 	memory_used = 0;
 	printf("Detected memory: %dKiB (%dMiB)\n", memory_total >> 10, memory_total >> 20);
+
+	// Set first MiB 'used' (bootloader(s), VESA tables, memory maps, ...)
+	physical_set_used(memory_range(0, 0x00100000));
 
 	// Map kernel
 	memory_map_identity(&kernel_dir, kernel_ro_memory_range(), MEMORY_READONLY);

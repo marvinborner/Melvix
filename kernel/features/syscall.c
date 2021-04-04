@@ -121,10 +121,6 @@ static void syscall_handler(struct regs *r)
 		proc_yield(r);
 		break;
 	}
-	case SYS_TIME: {
-		r->eax = timer_get();
-		break;
-	}
 	// TODO: Reimplement network functions using VFS
 	default: {
 		printf("Unknown syscall %d!\n", num);

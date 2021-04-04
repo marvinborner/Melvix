@@ -28,7 +28,6 @@ enum sys {
 	SYS_EXIT, // Exit current process
 	SYS_BOOT, // Boot functions (e.g. reboot/shutdown)
 	SYS_YIELD, // Switch to next process
-	SYS_TIME, // Get kernel time
 	/* SYS_NET_OPEN, // Open network socket */
 	/* SYS_NET_CLOSE, // Close network socket */
 	/* SYS_NET_CONNECT, // Connect to destination */
@@ -75,7 +74,6 @@ res poll(const char **files) NONNULL;
 res exec(const char *path, ...) ATTR((nonnull(1))) SENTINEL;
 res yield(void);
 res boot(u32 cmd);
-u32 time(void);
 
 res sys_alloc(u32 size, u32 *addr) NONNULL;
 res sys_free(void *ptr) NONNULL;

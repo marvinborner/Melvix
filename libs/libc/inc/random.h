@@ -9,6 +9,7 @@
 
 void srand(u32 seed);
 u32 rand(void);
+void rand_fill(void *buf, u32 size);
 char *randstr(u32 size);
 
 #endif
