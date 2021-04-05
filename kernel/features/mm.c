@@ -698,9 +698,13 @@ CLEAR void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 	memory_map_identity(&kernel_dir, kernel_ro_memory_range(), MEMORY_READONLY);
 	memory_map_identity(&kernel_dir, kernel_rw_memory_range(), MEMORY_NONE);
 
-	// Map kernel stack
-	memory_map_identity(&kernel_dir, memory_range_around(STACK_START - STACK_SIZE, STACK_SIZE),
+	// Map kernel stack with readonly boundaries (stack grows downwards!)
+	memory_map_identity(&kernel_dir, memory_range(STACK_START - STACK_SIZE, STACK_SIZE),
 			    MEMORY_NONE);
+	memory_map_identity(&kernel_dir,
+			    memory_range(STACK_START - STACK_SIZE - PAGE_SIZE, PAGE_SIZE),
+			    MEMORY_READONLY);
+	memory_map_identity(&kernel_dir, memory_range(STACK_START, PAGE_SIZE), MEMORY_READONLY);
 
 	// Map framebuffer
 	memory_map_identity(&kernel_dir, memory_range_around((u32)vid_info->vbe, 0x1000),

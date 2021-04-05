@@ -30,6 +30,6 @@ void serial_put(char ch)
 
 void serial_print(const char *data)
 {
-	for (u32 i = 0; i < strlen(data); i++)
-		serial_put(data[i]);
+	for (const char *p = data; p && *p; p++)
+		serial_put(*p);
 }

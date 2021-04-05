@@ -224,7 +224,7 @@ make_addr() {
 }
 
 make_cloc() {
-    cloc . --exclude-dir=build,iso,disk,res,cross
+    cloc . --exclude-dir=build,iso,disk,res,cross,icons
 }
 
 make_append_commands() {

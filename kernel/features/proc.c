@@ -65,13 +65,13 @@ void proc_print(void)
 	struct node *node = proc_list_running->head;
 	struct proc *proc = NULL;
 
-	printf("--- PROCESSES ---\n");
+	print("--- PROCESSES ---\n");
 	while (node && (proc = node->data)) {
 		printf("Process %d: %s [%s]\n", proc->pid, proc->name,
 		       proc->state == PROC_RUNNING ? "RUNNING" : "SLEEPING");
 		node = node->next;
 	}
-	printf("\n");
+	print("\n");
 }
 
 struct proc *proc_current(void)
@@ -355,6 +355,8 @@ struct procfs_message {
 
 static res procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
 {
+	UNUSED(offset);
+
 	u32 pid = 0;
 	procfs_parse_path(&path, &pid);
 	if (pid) {
@@ -395,7 +397,6 @@ static res procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 		}
 	}
 
-	printf("ERR: %s - off: %d, cnt: %d, buf: %x, dev %x\n", path, offset, count, buf, dev);
 	return -ENOENT;
 }
 
