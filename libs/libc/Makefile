@@ -15,13 +15,8 @@ COBJS = crt/crt0.o \
 	list.o \
 	stack.o \
 	random.o
-CC = ccache ../../cross/opt/bin/i686-elf-gcc
-LD = ccache ../../cross/opt/bin/i686-elf-ld
-AR = ccache ../../cross/opt/bin/i686-elf-ar
-AS = ccache nasm
 
 CFLAGS = $(CFLAGS_DEFAULT) -Iinc/
-
 ASFLAGS = -f elf32
 
 %.o: %.c
@@ -29,15 +24,15 @@ ASFLAGS = -f elf32
 
 libc: CFLAGS += -pie -fPIE -fPIC -DUSER
 libc: $(COBJS)
-	@mkdir -p ../../build/
-	@$(AS) $(ASFLAGS) crt/crti.asm -o ../../build/crti.o
-	@$(AS) $(ASFLAGS) crt/crtn.asm -o ../../build/crtn.o
-	@$(AR) rcs ../../build/libc.a ../../build/crti.o ../../build/crti.o $+
+	@mkdir -p $(BUILD)
+	@$(AS) $(ASFLAGS) crt/crti.asm -o $(BUILD)/crti.o
+	@$(AS) $(ASFLAGS) crt/crtn.asm -o $(BUILD)/crtn.o
+	@$(AR) rcs $(BUILD)/libc.a $(BUILD)/crti.o $(BUILD)/crti.o $+
 
-libk: CFLAGS += -DKERNEL -ffreestanding -I../../kernel/inc/ $(CFLAGS_EXTRA)
+libk: CFLAGS += -DKERNEL -ffreestanding -I$(KERNEL)/inc/ $(CFLAGS_EXTRA)
 libk: $(COBJS)
-	@mkdir -p ../../build/
-	@$(AR) rcs ../../build/libk.a $+
+	@mkdir -p $(BUILD)
+	@$(AR) rcs $(BUILD)/libk.a $+
 
 clean:
 	@find . -name "*.o" -type f -delete

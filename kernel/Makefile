@@ -18,12 +18,8 @@ COBJS = main.o \
 	features/proc.o \
 	features/proc_asm.o \
 	features/syscall.o
-CC = ccache ../cross/opt/bin/i686-elf-gcc
-LD = ccache ../cross/opt/bin/i686-elf-ld
-OC = ccache ../cross/opt/bin/i686-elf-objcopy
-AS = ccache nasm
 
-CFLAGS = $(CFLAGS_DEFAULT) -Wno-address-of-packed-member -ffreestanding -Wl,-ekernel_main -I../libs/libc/inc/ -Iinc/ -DKERNEL
+CFLAGS = $(CFLAGS_DEFAULT) -Wno-address-of-packed-member -ffreestanding -Wl,-ekernel_main -I$(LIBS)/libc/inc/ -Iinc/ -DKERNEL
 ASFLAGS = -f elf32
 
 all: compile
@@ -35,5 +31,5 @@ all: compile
 	@$(AS) $(ASFLAGS) $< -o $@
 
 compile: $(COBJS)
-	@mkdir -p ../build/apps/
-	@$(LD) -N -z max-page-size=0x1000 -ekernel_main -Tlink.ld -o ../build/apps/kernel -L../build/ $+ -lk
+	@mkdir -p $(BUILD)/apps/
+	@$(LD) -N -z max-page-size=0x1000 -ekernel_main -Tlink.ld -o $(BUILD)/apps/kernel -L$(BUILD) $+ -lk

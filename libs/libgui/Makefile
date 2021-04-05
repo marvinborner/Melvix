@@ -6,11 +6,8 @@ COBJS = psf.o \
 	gfx.o \
 	gui.o \
 	msg.o
-CC = ccache ../../cross/opt/bin/i686-elf-gcc
-LD = ccache ../../cross/opt/bin/i686-elf-ld
-AR = ccache ../../cross/opt/bin/i686-elf-ar
 
-CFLAGS = $(CFLAGS_DEFAULT) -I../ -I../libc/inc/ -pie -fPIE -fPIC -DUSER
+CFLAGS = $(CFLAGS_DEFAULT) -I$(LIBS) -I$(LIBS)/libc/inc/ -pie -fPIE -fPIC -DUSER
 
 all: libgui
 
@@ -18,8 +15,8 @@ all: libgui
 	@$(CC) -c $(CFLAGS) $< -o $@
 
 libgui: $(COBJS)
-	@mkdir -p ../../build/
-	@$(AR) rcs ../../build/libgui.a $+
+	@mkdir -p $(BUILD)
+	@$(AR) rcs $(BUILD)/libgui.a $+
 
 clean:
 	@find . -name "*.o" -type f -delete

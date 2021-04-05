@@ -13,8 +13,6 @@
 #include <list.h>
 #include <random.h>
 
-//#define FLUSH_TIMEOUT 6
-
 struct client {
 	u32 pid;
 };
@@ -89,7 +87,7 @@ static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 			vec2_add(win->pos, vec2(0, win->ctx.size.y)),
 		};
 
-		for (int i = 0; i < 4; i++) {
+		for (u8 i = 0; i < 4; i++) {
 			vec2 corner = corners[i];
 			if ((pos1.x <= corner.x && pos1.y <= corner.y) &&
 			    (pos2.x >= corner.x && pos2.y >= corner.y)) {
@@ -103,7 +101,7 @@ static void windows_at_rec(vec2 pos1, vec2 pos2, struct list *list)
 
 		vec2 win_pos1 = win->pos;
 		vec2 win_pos2 = vec2_add(win->pos, win->ctx.size);
-		for (int i = 0; i < 4; i++) {
+		for (u8 i = 0; i < 4; i++) {
 			vec2 corner = rec_corners[i];
 			if ((win_pos1.x <= corner.x && win_pos1.y <= corner.y) &&
 			    (win_pos2.x >= corner.x && win_pos2.y >= corner.y)) {
@@ -227,6 +225,7 @@ static struct window *window_new(struct client client, const char *name, struct 
 		win->ctx.fb = NULL;
 	} else {
 		assert(shalloc(win->ctx.bytes, (u32 *)&win->ctx.fb, &win->shid) == EOK);
+		memset(win->ctx.fb, COLOR_BLACK, win->ctx.bytes);
 	}
 	win->client = client;
 	win->flags = flags;
@@ -267,6 +266,30 @@ static struct window *window_at(vec2 pos)
 static void window_redraw(struct window *win)
 {
 	// TODO: Only redraw difference of prev/curr (difficult with negative directions)
+	/*s32 diff_x = win->pos_prev.x - win->pos.x;
+	s32 diff_y = win->pos_prev.y - win->pos.y;
+
+	if (!diff_x && !diff_y)
+		return;
+
+	vec2 pos1 = { 0 };
+	vec2 pos2 = { 0 };
+
+	if (diff_x < 0) { // Right
+		pos1.x = win->pos_prev.x;
+		pos2.x = pos1.x + -diff_x;
+	} else if (diff_x > 0) { // Left
+		pos1 = win->pos_prev;
+		pos2.x = win->pos_prev.x + diff_x;
+		pos1.x = pos1.x - diff_x;
+	}
+
+	if (diff_y < 0) { // Down
+		pos1.y = win->pos_prev.y;
+		pos2.x = pos1.x + -diff_x;
+	} else if (diff_y > 0) { // Up
+	}*/
+
 	vec2 pos1 = win->pos_prev;
 	vec2 pos2 = vec2(pos1.x + win->ctx.size.x, pos1.y + win->ctx.size.y);
 
@@ -442,10 +465,23 @@ static void handle_exit(void)
 {
 	if (keymap)
 		free(keymap);
-	if (windows)
-		list_destroy(windows);
+
 	if (screen.fb)
 		memset(screen.fb, COLOR_RED, screen.height * screen.pitch);
+
+	if (windows) {
+		struct node *iterator = windows->head;
+		while (iterator) {
+			struct window *win = iterator->data;
+			if (win->ctx.fb == screen.fb)
+				sys_free(win->ctx.fb);
+			else if (win->ctx.fb)
+				free(win->ctx.fb);
+			free(win);
+			iterator = iterator->next;
+		}
+		list_destroy(windows);
+	}
 }
 
 /**
@@ -479,6 +515,7 @@ int main(int argc, char **argv)
 
 	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */
 	gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png");
+	memset(cursor->ctx.fb, 0, cursor->ctx.bytes);
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
 	window_redraw(wallpaper);
 
@@ -502,7 +539,7 @@ int main(int argc, char **argv)
 					continue;
 				}
 			} else if (poll_ret == 2) {
-				if (msg_receive(msg, 1024) > 0) {
+				if (msg_receive(msg, sizeof(msg)) > 0) {
 					handle_message(msg);
 					continue;
 				}
@@ -511,5 +548,5 @@ int main(int argc, char **argv)
 		panic("Poll/read error: %s\n", strerror(errno));
 	}
 
-	return 0;
+	return 1;
 }
