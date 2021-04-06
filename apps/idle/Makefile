@@ -3,7 +3,8 @@
 OBJS = idle.o
 
 all: $(OBJS)
-	@$(LD) -o $(BUILD)/apps/idle $(LDFLAGS) $< -lc
+	@mkdir -p $(BUILD)/apps/idle/
+	@$(LD) -o $(BUILD)/apps/idle/exec $(LDFLAGS) $< -lc
 
 clean:
 	@$(RM) -f $(OBJS)

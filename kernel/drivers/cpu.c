@@ -145,7 +145,7 @@ CLEAR void cpu_enable_features(void)
 		panic("No FPU support!\n");
 	}
 
-	// Enable NX (IA32_EFER.NXE)
+	// Enable NX (IA32_EFER.NXE) // TODO: Use NX Bit? (only possible in PAE 64 bit paging?)
 	if (cpu_extended_information.edx & CPUID_EXT_INFO_EDX_NX) {
 		__asm__ volatile("movl $0xc0000080, %ecx\n"
 				 "rdmsr\n"

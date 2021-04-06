@@ -3,7 +3,8 @@
 OBJS = init.o
 
 all: $(OBJS)
-	@$(LD) -o $(BUILD)/apps/init $(LDFLAGS) $< -lc
+	@mkdir -p $(BUILD)/apps/init/
+	@$(LD) -o $(BUILD)/apps/init/exec $(LDFLAGS) $< -lc
 
 clean:
 	@$(RM) -f $(OBJS)

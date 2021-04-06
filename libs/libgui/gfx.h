@@ -9,7 +9,7 @@
 #include <sys.h>
 #include <vec.h>
 
-#define WM_PATH "/bin/wm"
+#define WM_PATH "wm"
 
 #define GET_ALPHA(color) ((color >> 24) & 0x000000FF)
 #define GET_RED(color) ((color >> 16) & 0x000000FF)

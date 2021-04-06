@@ -3,7 +3,8 @@
 OBJS = chess.o
 
 all: $(OBJS)
-	@$(LD) -o $(BUILD)/apps/chess $(LDFLAGS) $< -lgui -ltxt -lc
+	@mkdir -p $(BUILD)/apps/chess/
+	@$(LD) -o $(BUILD)/apps/chess/exec $(LDFLAGS) $< -lgui -ltxt -lc
 
 clean:
 	@$(RM) -f $(OBJS)

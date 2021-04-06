@@ -893,7 +893,7 @@ int main(void *first, void *second)
 	u8 drive = ata_probe();
 	assert(drive);
 
-	s32 elf = elf_load("/bin/kernel", drive);
+	s32 elf = elf_load("/apps/kernel/exec", drive);
 	assert(elf > 0);
 
 	void (*kernel)(void *, void *);

@@ -161,6 +161,6 @@ struct PACKED elf_symbol {
 	u16 shndx;
 };
 
-res elf_load(const char *path, struct proc *proc) NONNULL;
+res elf_load(const char *name, struct proc *proc) NONNULL;
 
 #endif

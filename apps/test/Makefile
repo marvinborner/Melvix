@@ -3,7 +3,8 @@
 OBJS = test.o
 
 all: $(OBJS)
-	@$(LD) -o $(BUILD)/apps/test $(LDFLAGS) $< -lc
+	@mkdir -p $(BUILD)/apps/test/
+	@$(LD) -o $(BUILD)/apps/test/exec $(LDFLAGS) $< -lc
 
 clean:
 	@$(RM) -f $(OBJS)

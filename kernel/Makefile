@@ -31,5 +31,5 @@ all: compile
 	@$(AS) $(ASFLAGS) $< -o $@
 
 compile: $(COBJS)
-	@mkdir -p $(BUILD)/apps/
-	@$(LD) -N -z max-page-size=0x1000 -ekernel_main -Tlink.ld -o $(BUILD)/apps/kernel -L$(BUILD) $+ -lk
+	@mkdir -p $(BUILD)/apps/kernel/
+	@$(LD) -N -z max-page-size=0x1000 -ekernel_main -Tlink.ld -o $(BUILD)/apps/kernel/exec -L$(BUILD) $+ -lk

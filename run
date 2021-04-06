@@ -178,7 +178,7 @@ make_build() {
     fi
     $SUDO cp -r disk/* mnt/
     $SUDO chmod -R 0 mnt/conf/
-    $SUDO cp -r build/apps/ mnt/bin/
+    $SUDO cp -r build/apps/ mnt/apps/
     $SUDO cp build/load.bin mnt/
     $SUDO umount mnt/
     rm -rf mnt/
@@ -210,7 +210,7 @@ make_disasm() {
         echo "Usage: './run disasm {kernel, wm, ...} [-S]'"
         exit 1
     fi
-    objdump -drwC "$2" -Mintel build/apps/"$1" | less -R
+    objdump -drwC "$2" -Mintel build/apps/"$1"/exec | less -R
     #hexdump -C build/kernel.bin | less -R
 }
 
@@ -220,7 +220,7 @@ make_addr() {
         echo "Usage: './run addr kernel 0x50042'"
         exit 1
     fi
-    addr2line -e build/apps/"$1" -f -p "$2"
+    addr2line -e build/apps/"$1"/exec -f -p "$2"
 }
 
 make_cloc() {

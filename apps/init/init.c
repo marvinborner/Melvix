@@ -9,8 +9,8 @@ int main(int argc, char **argv)
 	UNUSED(argc);
 	UNUSED(argv);
 
-	assert(exec("/bin/wm", "wm", NULL) == EOK);
-	/* assert(exec("/bin/chess", "chess", NULL) == EOK); */
+	assert(exec("wm", NULL) == EOK);
+	/* assert(exec("chess", NULL) == EOK); */
 
 	return 0;
 }

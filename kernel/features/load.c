@@ -9,10 +9,18 @@
 #include <random.h>
 #include <str.h>
 
-res elf_load(const char *path, struct proc *proc)
+res elf_load(const char *name, struct proc *proc)
 {
-	if (!memory_valid(path))
+	if (!memory_valid(name))
 		return -EFAULT;
+
+	stac();
+	char path[64] = { "/apps/" };
+	strlcat(path, name, sizeof(path));
+	strlcpy(proc->dir, path, sizeof(proc->dir));
+	strlcat(path, "/exec", sizeof(path));
+	strlcpy(proc->name, name, sizeof(proc->name));
+	clac();
 
 	struct stat s = { 0 };
 	memory_bypass_enable();
@@ -31,10 +39,6 @@ res elf_load(const char *path, struct proc *proc)
 		return read;
 	if (read != sizeof(header))
 		return -ENOEXEC;
-
-	stac();
-	strlcpy(proc->name, path, sizeof(proc->name));
-	clac();
 
 	// Valid?
 	u8 *magic = header.ident;
@@ -86,8 +90,8 @@ res elf_load(const char *path, struct proc *proc)
 		virtual_map(proc->page_dir, prange, vrange.base, MEMORY_CLEAR | MEMORY_USER);
 
 		memory_bypass_enable();
-		if ((u32)vfs_read(proc->name, (void *)((u32)program.vaddr + rand_off),
-				  program.offset, program.filesz) != program.filesz) {
+		if ((u32)vfs_read(path, (void *)((u32)program.vaddr + rand_off), program.offset,
+				  program.filesz) != program.filesz) {
 			memory_bypass_disable();
 			memory_switch_dir(prev);
 			return -ENOEXEC;

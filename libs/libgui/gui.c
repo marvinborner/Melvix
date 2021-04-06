@@ -8,7 +8,7 @@
 #include <list.h>
 #include <print.h>
 
-#define WM_PATH "/bin/wm"
+#define WM_PATH "wm"
 
 struct gui_widget {
 	u32 id;

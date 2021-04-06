@@ -3,7 +3,8 @@
 OBJS = wm.o
 
 all: $(OBJS)
-	@$(LD) -o $(BUILD)/apps/wm $(LDFLAGS) $< -lgui -ltxt -lc
+	@mkdir -p $(BUILD)/apps/wm/
+	@$(LD) -o $(BUILD)/apps/wm/exec $(LDFLAGS) $< -lgui -ltxt -lc
 
 clean:
 	@$(RM) -f $(OBJS)

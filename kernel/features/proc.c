@@ -559,7 +559,7 @@ NORETURN void proc_init(void)
 	// Idle proc
 	// TODO: Reimplement hlt privileges in idle proc (SMEP!)
 	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
-	assert(elf_load("/bin/idle", kernel_proc) == EOK);
+	assert(elf_load("idle", kernel_proc) == EOK);
 	proc_stack_push(kernel_proc, 0);
 	proc_stack_push(kernel_proc, 0);
 	kernel_proc->state = PROC_BLOCKED;
@@ -570,7 +570,7 @@ NORETURN void proc_init(void)
 
 	// Init proc (root)
 	struct proc *init = proc_make(PROC_PRIV_ROOT);
-	assert(elf_load("/bin/init", init) == EOK);
+	assert(elf_load("init", init) == EOK);
 	proc_stack_push(init, 0);
 	proc_stack_push(init, 0);
 	current = list_first_data(proc_list_running, init);

@@ -565,7 +565,7 @@ static res read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count, s
 
 static u32 find_inode(const char *name, u32 dir_inode, struct device *dev)
 {
-	if (!dir_inode)
+	if ((signed)dir_inode <= 0)
 		return (unsigned)-1;
 
 	struct ext2_inode i = { 0 };
@@ -624,7 +624,7 @@ static struct ext2_inode *find_inode_by_path(const char *path, struct ext2_inode
 		current_inode = find_inode(path_cp, current_inode, dev);
 		path_cp[i] = '/';
 
-		if (current_inode == 0) {
+		if ((signed)current_inode <= 0) {
 			free(init);
 			return NULL;
 		}

@@ -53,7 +53,8 @@ struct stream {
 struct proc {
 	u32 pid;
 	u32 entry;
-	char name[32];
+	char name[64];
+	char dir[64];
 	struct stream streams[4];
 	struct page_dir *page_dir;
 	struct regs regs;
