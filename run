@@ -167,7 +167,7 @@ make_build() {
 
     # Set test app as init
     if [ "$mode" = "test" ]; then
-        cp build/apps/test build/apps/init
+        cp build/apps/test/exec build/apps/init/exec
     fi
 
     mkdir -p mnt/
