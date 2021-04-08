@@ -454,6 +454,9 @@ protected_mode:
 	mov ax, (gdt_tss - gdt) | 0b11 ; Load TSS in ring 3
 	ltr ax
 
+	mov eax, drive ; Pass drive to kernel loader
+	push eax ; Push as third kernel parameter
+
 	mov eax, vid_info ; Pass VBE struct to kernel loader
 	push eax ; Push as second kernel parameter
 
