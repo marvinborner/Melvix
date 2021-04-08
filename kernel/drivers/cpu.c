@@ -168,6 +168,13 @@ CLEAR void cpu_enable_features(void)
 	} else {
 		print("No SMAP support :(\n");
 	}
+
+	// Enable UMIP // TODO: QEMU support?!
+	if (cpu_extended_features.ecx & CPUID_EXT_FEAT_ECX_UMIP) {
+		cr4_set(cr4_get() | 0x800);
+	} else {
+		print("No UMIP support :(\n");
+	}
 }
 
 void clac(void)
