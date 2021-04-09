@@ -11,7 +11,7 @@
 
 res elf_load(const char *name, struct proc *proc)
 {
-	if (!memory_valid(name))
+	if (!memory_readable(name))
 		return -EFAULT;
 
 	stac();
@@ -52,7 +52,7 @@ res elf_load(const char *name, struct proc *proc)
 	    header.version != 1 || header.machine != ELF_MACHINE_386)
 		return -ENOEXEC;
 
-	if (!memory_valid((void *)header.entry))
+	if (!memory_is_user((void *)header.entry))
 		return -ENOEXEC;
 
 	// ASLR
@@ -77,7 +77,7 @@ res elf_load(const char *name, struct proc *proc)
 		if (program.vaddr == 0 || program.type != ELF_PROGRAM_TYPE_LOAD)
 			continue;
 
-		if (!memory_is_user(program.vaddr))
+		if (!memory_is_user((void *)program.vaddr))
 			return -ENOEXEC;
 
 		struct page_dir *prev;

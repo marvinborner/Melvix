@@ -37,7 +37,7 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct devi
 		if (!info)
 			return -ENOENT;
 
-		if (!arg1 || !memory_valid(arg1))
+		if (!arg1 || !memory_writable(arg1))
 			return -EFAULT;
 
 		if (fb_owner != 0 && proc_from_pid(fb_owner))

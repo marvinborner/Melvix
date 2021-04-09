@@ -119,10 +119,10 @@ static void vfs_list_mounts()
 
 res vfs_mount(struct device *dev, const char *path)
 {
-	if (!memory_valid(path))
+	if (!memory_readable(path))
 		return -EFAULT;
 
-	if (!memory_valid(dev) || !dev->id)
+	if (!memory_readable(dev) || !dev->id)
 		return -EFAULT;
 
 	if (vfs_mounted(dev, path))
@@ -140,10 +140,10 @@ res vfs_mount(struct device *dev, const char *path)
 
 res vfs_read(const char *path, void *buf, u32 offset, u32 count)
 {
-	if (!memory_valid(path))
+	if (!memory_readable(path))
 		return -EFAULT;
 
-	if (!memory_valid(buf))
+	if (!memory_writable(buf))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -168,10 +168,10 @@ res vfs_read(const char *path, void *buf, u32 offset, u32 count)
 
 res vfs_write(const char *path, void *buf, u32 offset, u32 count)
 {
-	if (!memory_valid(path))
+	if (!memory_readable(path))
 		return -EFAULT;
 
-	if (!memory_valid(buf))
+	if (!memory_writable(buf))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -196,7 +196,7 @@ res vfs_write(const char *path, void *buf, u32 offset, u32 count)
 
 res vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3)
 {
-	if (!memory_valid(path))
+	if (!memory_readable(path))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -218,10 +218,10 @@ res vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3)
 
 res vfs_stat(const char *path, struct stat *buf)
 {
-	if (!memory_valid(path))
+	if (!memory_readable(path))
 		return -EFAULT;
 
-	if (!memory_valid(buf))
+	if (!memory_writable(buf))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -243,7 +243,7 @@ res vfs_stat(const char *path, struct stat *buf)
 
 res vfs_block(const char *path, u32 func_ptr)
 {
-	if (!func_ptr || !memory_valid(path))
+	if (!func_ptr || !memory_readable(path))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -267,11 +267,11 @@ res vfs_block(const char *path, u32 func_ptr)
 // TODO: Fix page fault when called too often/fast
 res vfs_poll(const char **files)
 {
-	if (!memory_valid(files))
+	if (!memory_readable(files))
 		return -EFAULT;
 
 	stac();
-	for (const char **p = files; *p && memory_valid(*p) && **p; p++) {
+	for (const char **p = files; *p && memory_readable(*p) && **p; p++) {
 		res ready = vfs_ready(*p);
 		clac();
 		if (ready == 1)
@@ -281,7 +281,7 @@ res vfs_poll(const char **files)
 		stac();
 	}
 
-	for (const char **p = files; *p && memory_valid(*p) && **p; p++) {
+	for (const char **p = files; *p && memory_readable(*p) && **p; p++) {
 		vfs_block(*p, (u32)vfs_poll);
 		stac();
 	}
@@ -292,7 +292,7 @@ res vfs_poll(const char **files)
 
 res vfs_ready(const char *path)
 {
-	if (!memory_valid(path))
+	if (!memory_readable(path))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);

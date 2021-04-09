@@ -82,8 +82,11 @@ struct page_dir {
 	union page_dir_entry entries[PAGE_COUNT];
 } PACKED;
 
+union page_table_entry *virtual_entry(struct page_dir *dir, u32 vaddr);
 u8 virtual_present(struct page_dir *dir, u32 vaddr) NONNULL;
 u32 virtual_to_physical(struct page_dir *dir, u32 vaddr) NONNULL;
+u8 virtual_user_readable(struct page_dir *dir, u32 vaddr) NONNULL;
+u8 virtual_user_writable(struct page_dir *dir, u32 vaddr) NONNULL;
 void virtual_map(struct page_dir *dir, struct memory_range prange, u32 vaddr, u32 flags) NONNULL;
 void virtual_remap_readonly(struct page_dir *dir, struct memory_range vrange);
 struct memory_range virtual_alloc(struct page_dir *dir, struct memory_range physical_range,
@@ -128,8 +131,9 @@ void memory_backup_dir(struct page_dir **backup) NONNULL;
 // Bypass should almost never be used
 void memory_bypass_enable(void);
 void memory_bypass_disable(void);
-u8 memory_is_user(u32 addr);
-u8 memory_valid(const void *addr) NONNULL;
+u8 memory_is_user(const void *addr) NONNULL;
+u8 memory_readable(const void *addr) NONNULL;
+u8 memory_writable(const void *addr) NONNULL;
 
 // User interface
 res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared) NONNULL;

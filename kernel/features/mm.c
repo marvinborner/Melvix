@@ -199,22 +199,7 @@ void physical_free(struct memory_range range)
 #define PDI(vaddr) ((vaddr) >> 22)
 #define PTI(vaddr) (((vaddr) >> 12) & 0x03ff)
 
-u8 virtual_present(struct page_dir *dir, u32 vaddr)
-{
-	u32 pdi = PDI(vaddr);
-	union page_dir_entry *dir_entry = &dir->entries[pdi];
-	if (!dir_entry->bits.present)
-		return 0;
-
-	struct page_table *table = (struct page_table *)(dir_entry->bits.address * PAGE_SIZE);
-
-	u32 pti = PTI(vaddr);
-	union page_table_entry *table_entry = &table->entries[pti];
-
-	return table_entry->bits.present;
-}
-
-u32 virtual_to_physical(struct page_dir *dir, u32 vaddr)
+union page_table_entry *virtual_entry(struct page_dir *dir, u32 vaddr)
 {
 	u32 pdi = PDI(vaddr);
 	union page_dir_entry *dir_entry = &dir->entries[pdi];
@@ -228,6 +213,32 @@ u32 virtual_to_physical(struct page_dir *dir, u32 vaddr)
 	if (!table_entry->bits.present)
 		return 0;
 
+	return table_entry;
+}
+
+u8 virtual_present(struct page_dir *dir, u32 vaddr)
+{
+	union page_table_entry *table_entry = virtual_entry(dir, vaddr);
+	return !!table_entry;
+}
+
+u8 virtual_user_readable(struct page_dir *dir, u32 vaddr)
+{
+	union page_table_entry *table_entry = virtual_entry(dir, vaddr);
+	return table_entry && table_entry->bits.user;
+}
+
+u8 virtual_user_writable(struct page_dir *dir, u32 vaddr)
+{
+	union page_table_entry *table_entry = virtual_entry(dir, vaddr);
+	return table_entry && table_entry->bits.user && table_entry->bits.writable;
+}
+
+u32 virtual_to_physical(struct page_dir *dir, u32 vaddr)
+{
+	union page_table_entry *table_entry = virtual_entry(dir, vaddr);
+	if (!table_entry)
+		return 0;
 	return (table_entry->bits.address * PAGE_SIZE) + (vaddr & (PAGE_SIZE - 1));
 }
 
@@ -457,7 +468,7 @@ void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 f
 static struct list *memory_objects = NULL;
 res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared)
 {
-	if (!memory_valid(addr) || !memory_valid(id))
+	if (!memory_writable(addr) || !memory_writable(id))
 		return -EFAULT;
 
 	size = PAGE_ALIGN_UP(size);
@@ -488,7 +499,7 @@ res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shar
 
 res memory_sys_free(struct page_dir *dir, u32 addr)
 {
-	if (!addr || !memory_valid((void *)addr))
+	if (!addr || !memory_readable((void *)addr))
 		return -EFAULT;
 
 	struct list *links = proc_current()->memory;
@@ -516,7 +527,7 @@ res memory_sys_free(struct page_dir *dir, u32 addr)
 
 res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size)
 {
-	if (!memory_valid(addr) || !memory_valid(size))
+	if (!memory_writable(addr) || !memory_writable(size))
 		return -EFAULT;
 
 	struct node *iterator = memory_objects->head;
@@ -576,16 +587,25 @@ void memory_bypass_disable(void)
 	memory_bypass_validity = 0;
 }
 
-u8 memory_is_user(u32 addr)
+u8 memory_is_user(const void *addr)
 {
-	return PDI(addr) >= PAGE_KERNEL_COUNT;
+	return PDI((u32)addr) >= PAGE_KERNEL_COUNT;
 }
 
-// TODO: Limit by proc stack and data range
-u8 memory_valid(const void *addr)
+u8 memory_readable(const void *addr)
 {
-	if (proc_current() && !memory_bypass_validity)
-		return memory_is_user((u32)addr);
+	struct proc *proc = proc_current();
+	if (proc && !memory_bypass_validity)
+		return memory_is_user(addr) && virtual_user_readable(proc->page_dir, (u32)addr);
+	else
+		return 1;
+}
+
+u8 memory_writable(const void *addr)
+{
+	struct proc *proc = proc_current();
+	if (proc && !memory_bypass_validity)
+		return memory_is_user(addr) && virtual_user_writable(proc->page_dir, (u32)addr);
 	else
 		return 1;
 }
