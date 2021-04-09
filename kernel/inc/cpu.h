@@ -32,6 +32,8 @@ void cr3_set(u32 cr3);
 u32 cr4_get(void);
 void cr4_set(u32 cr4);
 
+void tss_set_stack(u32 ss, u32 esp);
+
 void clac(void);
 void stac(void);
 

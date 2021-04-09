@@ -19,18 +19,24 @@
 #include <syscall.h>
 #include <timer.h>
 
-extern u32 __stack_chk_guard;
-u32 __stack_chk_guard;
+PROTECTED extern u32 __stack_chk_guard;
+PROTECTED u32 __stack_chk_guard;
 
-int kernel_main(struct mem_info *mem_info, struct vid_info *vid_info); // Decl
-int kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
+PROTECTED u32 tss_entry = 0;
+PROTECTED u32 boot_drive = 0;
+
+int kernel_main(struct boot_info *boot); // Decl
+int kernel_main(struct boot_info *boot)
 {
 	// Serial connection
 	serial_install();
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
 	serial_print("Serial connected.\n");
 
-	memory_install(mem_info, vid_info);
+	tss_entry = boot->tss;
+	boot_drive = boot->drive;
+
+	memory_install(boot);
 	memory_switch_dir(virtual_kernel_dir());
 
 	cpu_enable_features();
@@ -49,7 +55,7 @@ int kernel_main(struct mem_info *mem_info, struct vid_info *vid_info)
 	rtc_install();
 	keyboard_install();
 	mouse_install();
-	fb_install(vid_info);
+	fb_install(boot->vid);
 	/* net_install(); */
 
 	// Enable drivers

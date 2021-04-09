@@ -35,4 +35,11 @@ struct mem_info {
 	u32 size;
 };
 
+struct boot_info {
+	struct vid_info *vid;
+	struct mem_info *mem;
+	u32 tss;
+	u32 drive;
+};
+
 #endif

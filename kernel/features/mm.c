@@ -677,8 +677,11 @@ void memory_user_hook(void)
 	}
 }
 
-CLEAR void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
+CLEAR void memory_install(struct boot_info *boot)
 {
+	struct mem_info *mem_info = boot->mem;
+	struct vid_info *vid_info = boot->vid;
+
 	for (struct mmap_boot *p = mem_info->start; (u32)(p - mem_info->start) < mem_info->size;
 	     p++) {
 		if (p->hbase || !p->acpi || !p->type)
@@ -730,6 +733,9 @@ CLEAR void memory_install(struct mem_info *mem_info, struct vid_info *vid_info)
 	memory_map_identity(&kernel_dir, memory_range_around((u32)vid_info->vbe, 0x1000),
 			    MEMORY_NONE);
 	fb_map_buffer(virtual_kernel_dir(), vid_info);
+
+	// Map TSS
+	memory_map_identity(&kernel_dir, memory_range_around(boot->tss, 0x1000), MEMORY_NONE);
 
 	// Unmap NULL byte/page
 	struct memory_range zero = memory_range(0, PAGE_SIZE);

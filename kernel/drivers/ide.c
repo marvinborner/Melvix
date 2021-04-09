@@ -6,7 +6,9 @@
 #include <fs.h>
 #include <ide.h>
 #include <mem.h>
+#include <pci.h>
 #include <print.h>
+#include <str.h>
 
 PROTECTED static u8 *ide_buf = NULL;
 
@@ -130,11 +132,9 @@ CLEAR static void ata_probe(void)
 		struct ata_data *data = malloc(sizeof(*data));
 		data->drive = (bus << 1) | drive;
 
-		char *str = malloc(40);
-		for (int j = 0; j < 40; j += 2) {
-			str[j] = ide_buf[ATA_IDENT_MODEL + j + 1];
-			str[j + 1] = ide_buf[ATA_IDENT_MODEL + j];
-		}
+		char *str = zalloc(8);
+		strlcpy(str, "hd", 8);
+		str[2] = 'a' + i;
 
 		dev->name = str;
 		dev->type = DEV_BLOCK;
@@ -156,8 +156,18 @@ CLEAR static void ata_probe(void)
 	}
 }
 
+CLEAR static void ata_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
+{
+	if ((vendor_id == 0x8086) && (device_id == 0x7010)) {
+		*((u32 *)extra) = device;
+	}
+}
+
+static u32 ata_device_pci = 0;
 CLEAR void ata_install(void)
 {
+	pci_scan(&ata_find, -1, &ata_device_pci);
+	assert(ata_device_pci);
 	ide_buf = zalloc(SECTOR_SIZE);
 	ata_probe();
 }

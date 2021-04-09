@@ -145,7 +145,8 @@ res elf_load(const char *name, struct proc *proc)
 		/* } */
 
 		// Remap readonly sections
-		if (!(section.flags & ELF_SECTION_FLAG_WRITE)) {
+		if (!(section.flags & ELF_SECTION_FLAG_WRITE) && section.addr &&
+		    memory_is_user((void *)section.addr)) {
 			struct memory_range range =
 				memory_range_around(section.addr + rand_off, section.size);
 			virtual_remap_readonly(proc->page_dir, range);
@@ -158,14 +159,26 @@ res elf_load(const char *name, struct proc *proc)
 
 	stac();
 
-	// Allocate stack with readonly lower and upper page boundary
-	u32 stack = PAGE_SIZE + (u32)memory_alloc(proc->page_dir, PROC_STACK_SIZE + 2 * PAGE_SIZE,
-						  MEMORY_USER | MEMORY_CLEAR);
-	virtual_remap_readonly(proc->page_dir, memory_range(stack - PAGE_SIZE, PAGE_SIZE));
-	virtual_remap_readonly(proc->page_dir, memory_range(stack + PROC_STACK_SIZE, PAGE_SIZE));
+	// Allocate user stack with readonly lower and upper page boundary
+	u32 user_stack =
+		PAGE_SIZE + (u32)memory_alloc(proc->page_dir, PROC_STACK_SIZE + 2 * PAGE_SIZE,
+					      MEMORY_USER | MEMORY_CLEAR);
+	virtual_remap_readonly(proc->page_dir, memory_range(user_stack - PAGE_SIZE, PAGE_SIZE));
+	virtual_remap_readonly(proc->page_dir,
+			       memory_range(user_stack + PROC_STACK_SIZE, PAGE_SIZE));
 
-	proc->regs.ebp = stack + PROC_STACK_SIZE;
-	proc->regs.useresp = stack + PROC_STACK_SIZE;
+	// Allocate kernel stack with readonly lower and upper page boundary
+	u32 kernel_stack =
+		PAGE_SIZE +
+		(u32)memory_alloc(proc->page_dir, PROC_STACK_SIZE + 2 * PAGE_SIZE, MEMORY_CLEAR);
+	virtual_remap_readonly(proc->page_dir, memory_range(kernel_stack - PAGE_SIZE, PAGE_SIZE));
+	virtual_remap_readonly(proc->page_dir,
+			       memory_range(kernel_stack + PROC_STACK_SIZE, PAGE_SIZE));
+
+	proc->user_stack = user_stack + PROC_STACK_SIZE;
+	proc->kernel_stack = kernel_stack + PROC_STACK_SIZE;
+	proc->regs.ebp = proc->user_stack;
+	proc->regs.useresp = proc->user_stack;
 	proc->regs.eip = header.entry + rand_off;
 	proc->entry = header.entry + rand_off;
 

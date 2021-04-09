@@ -53,6 +53,9 @@ struct stream {
 struct proc {
 	u32 pid;
 	u32 entry;
+	u32 user_stack;
+	u32 kernel_stack;
+
 	char name[64];
 	char dir[64];
 	struct stream streams[4];

@@ -454,13 +454,12 @@ protected_mode:
 	mov ax, (gdt_tss - gdt) | 0b11 ; Load TSS in ring 3
 	ltr ax
 
-	mov eax, drive ; Pass drive to kernel loader
-	push eax ; Push as third kernel parameter
+	mov [boot_info], dword vid_info
+	mov [boot_info + 4], dword mem_info
+	mov [boot_info + 8], dword tss_entry
+	mov [boot_info + 12], dword drive
 
-	mov eax, vid_info ; Pass VBE struct to kernel loader
-	push eax ; Push as second kernel parameter
-
-	mov eax, mem_info ; Pass meminfo to kernel loader
+	mov eax, boot_info ; Pass boot_info to kernel loader
 	push eax ; Push as first kernel parameter
 
 	mov edx, LOADER_POSITION
@@ -473,6 +472,13 @@ mem_info:
 	dd 0 ; Start address
 	dd 0 ; End address
 	dd 0 ; Count
+
+align 16
+boot_info:
+    dd 0 ; VBE
+    dd 0 ; MMAP
+    dd 0 ; TSS
+    dd 0 ; Drive
 
 ; GDT
 align 32
@@ -521,6 +527,7 @@ gdt_desc:
 	dd gdt
 
 ; TSS
+align 4
 tss_entry:
 	dd 0 ; Previous TSS
 	dd STACK_POINTER ; esp0

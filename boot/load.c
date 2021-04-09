@@ -819,21 +819,28 @@ static s32 elf_load(const char *path, u8 drive)
  * Let's go!
  */
 
-int main(void *first, void *second, u8 drive)
+struct boot_info {
+	u32 vid;
+	u32 mem;
+	u32 tss;
+	u32 drive;
+};
+
+int main(struct boot_info *boot)
 {
 	serial_install();
 	print("Loaded bootloader!\n");
 
-	assert(drive);
+	assert(boot->drive);
 
-	s32 elf = elf_load("/apps/kernel/exec", drive);
+	s32 elf = elf_load("/apps/kernel/exec", boot->drive);
 	assert(elf > 0);
 
-	void (*kernel)(void *, void *);
+	void (*kernel)(void *);
 	*(void **)(&kernel) = (void *)elf;
 
 	print("Loaded kernel!\n");
-	kernel(first, second);
+	kernel(boot);
 
 	print("WTF, kernel returned!\n");
 
