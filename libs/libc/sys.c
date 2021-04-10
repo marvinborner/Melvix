@@ -100,11 +100,6 @@ res shaccess(u32 id, u32 *addr, u32 *size)
 	return sys3(SYS_SHACCESS, (int)id, (int)addr, (int)size);
 }
 
-void loop(void)
-{
-	sys0(SYS_LOOP);
-}
-
 res read(const char *path, void *buf, u32 offset, u32 count)
 {
 	return sys4(SYS_READ, (int)path, (int)buf, (int)offset, (int)count);

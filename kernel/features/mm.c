@@ -82,13 +82,18 @@ void page_fault_handler(struct regs *r)
 	u32 paddr = virtual_to_physical(dir, vaddr);
 
 	// Print!
+
 	printf("%s process tried to %s a %s page at [vaddr=%x; paddr=%x]\n", super, operation, type,
 	       vaddr, paddr);
+
 	if (proc && vaddr > proc->regs.ebp - PROC_STACK_SIZE - PAGE_SIZE &&
 	    vaddr < proc->regs.ebp + PAGE_SIZE)
 		print("Probably a stack overflow\n");
+
 	printf("Sections: [vaddr_section=%s; paddr_section=%s; eip_section=%s]\n",
 	       page_fault_section(vaddr), page_fault_section(paddr), page_fault_section(r->eip));
+
+	/* printf("%b\n", virtual_entry(dir, vaddr)->uint); */
 
 	isr_panic(r);
 }
@@ -419,6 +424,14 @@ void *memory_alloc(struct page_dir *dir, u32 size, u32 flags)
 err:
 	print("Memory allocation error!\n");
 	return NULL;
+}
+
+void *memory_alloc_with_boundary(struct page_dir *dir, u32 size, u32 flags)
+{
+	u32 mem = PAGE_SIZE + (u32)memory_alloc(dir, size + 2 * PAGE_SIZE, flags);
+	virtual_remap_readonly(dir, memory_range(mem - PAGE_SIZE, PAGE_SIZE));
+	virtual_remap_readonly(dir, memory_range(mem + size, PAGE_SIZE));
+	return (void *)mem;
 }
 
 void *memory_alloc_identity(struct page_dir *dir, u32 flags)

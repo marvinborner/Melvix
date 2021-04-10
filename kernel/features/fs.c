@@ -40,6 +40,7 @@ u8 vfs_mounted(struct device *dev, const char *path)
 	return 0;
 }
 
+// TODO: Reduce allocations in VFS find
 static struct mount_info *vfs_recursive_find(char *path)
 {
 	struct node *iterator = mount_points->head;

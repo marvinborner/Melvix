@@ -15,7 +15,6 @@
 #define SYS_BOOT_SHUTDOWN 0xdead
 
 enum sys {
-	SYS_LOOP, // To infinity and beyond (debug)!
 	SYS_ALLOC, // Allocate memory
 	SYS_SHACCESS, // Access shared memory
 	SYS_FREE, // Free memory
@@ -64,7 +63,6 @@ struct stat {
  * Syscall wrappers
  */
 
-void loop(void);
 void exit(s32 status) NORETURN;
 res read(const char *path, void *buf, u32 offset, u32 count) NONNULL;
 res write(const char *path, const void *buf, u32 offset, u32 count) NONNULL;

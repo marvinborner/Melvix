@@ -157,32 +157,20 @@ res elf_load(const char *name, struct proc *proc)
 	memory_backup_dir(&prev);
 	memory_switch_dir(proc->page_dir);
 
-	stac();
-
 	// Allocate user stack with readonly lower and upper page boundary
-	u32 user_stack =
-		PAGE_SIZE + (u32)memory_alloc(proc->page_dir, PROC_STACK_SIZE + 2 * PAGE_SIZE,
-					      MEMORY_USER | MEMORY_CLEAR);
-	virtual_remap_readonly(proc->page_dir, memory_range(user_stack - PAGE_SIZE, PAGE_SIZE));
-	virtual_remap_readonly(proc->page_dir,
-			       memory_range(user_stack + PROC_STACK_SIZE, PAGE_SIZE));
+	u32 user_stack = (u32)memory_alloc_with_boundary(proc->page_dir, PROC_STACK_SIZE,
+							 MEMORY_CLEAR | MEMORY_USER);
 
 	// Allocate kernel stack with readonly lower and upper page boundary
 	u32 kernel_stack =
-		PAGE_SIZE +
-		(u32)memory_alloc(proc->page_dir, PROC_STACK_SIZE + 2 * PAGE_SIZE, MEMORY_CLEAR);
-	virtual_remap_readonly(proc->page_dir, memory_range(kernel_stack - PAGE_SIZE, PAGE_SIZE));
-	virtual_remap_readonly(proc->page_dir,
-			       memory_range(kernel_stack + PROC_STACK_SIZE, PAGE_SIZE));
+		(u32)memory_alloc_with_boundary(proc->page_dir, PROC_STACK_SIZE, MEMORY_CLEAR);
 
-	proc->user_stack = user_stack + PROC_STACK_SIZE;
-	proc->kernel_stack = kernel_stack + PROC_STACK_SIZE;
-	proc->regs.ebp = proc->user_stack;
-	proc->regs.useresp = proc->user_stack;
+	proc->stack.user = user_stack + PROC_STACK_SIZE;
+	proc->stack.kernel = kernel_stack + PROC_STACK_SIZE;
+	proc->regs.ebp = proc->stack.user;
+	proc->regs.useresp = proc->stack.user;
 	proc->regs.eip = header.entry + rand_off;
 	proc->entry = header.entry + rand_off;
-
-	clac();
 
 	memory_switch_dir(prev);
 	return EOK;

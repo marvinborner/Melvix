@@ -181,6 +181,8 @@ void isr_panic(struct regs *r)
 	if (proc) {
 		printf("\t-> Exception occurred in %s at addr 0x%x (offset 0x%x)\n", proc->name,
 		       r->eip, r->eip - proc->entry);
+		printf("\t\t-> Process: [entry: %x, kstack: %x, ustack: %x]\n", proc->entry,
+		       proc->stack.kernel, proc->stack.user);
 		proc_exit(proc, r, 1);
 	} else {
 		__asm__ volatile("cli\nhlt");

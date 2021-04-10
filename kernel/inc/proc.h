@@ -53,8 +53,6 @@ struct stream {
 struct proc {
 	u32 pid;
 	u32 entry;
-	u32 user_stack;
-	u32 kernel_stack;
 
 	char name[64];
 	char dir[64];
@@ -66,6 +64,11 @@ struct proc {
 	enum proc_state state;
 	struct stack *messages;
 	struct list *memory;
+
+	struct {
+		u32 user;
+		u32 kernel;
+	} stack;
 
 	struct {
 		u32 user;

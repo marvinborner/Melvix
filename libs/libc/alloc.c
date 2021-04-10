@@ -403,7 +403,9 @@ void *malloc_debug(u32 size, const char *file, int line, const char *func, const
 	(void)line;
 	(void)func;
 	(void)inp;
-	/* FUNC(PREFIX "MALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp); */
+	/* #ifdef KERNEL */
+	/* 	FUNC(PREFIX "MALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp); */
+	/* #endif */
 	return ret;
 }
 
@@ -415,5 +417,7 @@ void free_debug(void *ptr, const char *file, int line, const char *func, const c
 	(void)line;
 	(void)func;
 	(void)inp;
-	/* FUNC(PREFIX "FREE\t%s:%d: %s: 0x%x (%s)\n", file, line, func, ptr, inp); */
+	/* #ifdef KERNEL */
+	/* 	FUNC(PREFIX "FREE\t%s:%d: %s: 0x%x (%s)\n", file, line, func, ptr, inp); */
+	/* #endif */
 }

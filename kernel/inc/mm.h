@@ -32,9 +32,9 @@ void physical_free(struct memory_range range);
  * Virtual
  */
 
-#define PAGE_SIZE 0x1000
-#define PAGE_COUNT 1024
-#define PAGE_KERNEL_COUNT 256
+#define PAGE_SIZE 0x1000u
+#define PAGE_COUNT 1024u
+#define PAGE_KERNEL_COUNT 256u
 #define PAGE_ALIGN(x) ((x) + PAGE_SIZE - ((x) % PAGE_SIZE))
 #define PAGE_ALIGNED(x) ((x) % PAGE_SIZE == 0)
 #define PAGE_ALIGN_UP(x) (((x) % PAGE_SIZE == 0) ? (x) : (x) + PAGE_SIZE - ((x) % PAGE_SIZE))
@@ -122,6 +122,7 @@ struct memory_range memory_range_from(u32 base, u32 size);
 struct memory_range memory_range_around(u32 base, u32 size);
 
 void *memory_alloc(struct page_dir *dir, u32 size, u32 flags) NONNULL;
+void *memory_alloc_with_boundary(struct page_dir *dir, u32 size, u32 flags) NONNULL;
 void *memory_alloc_identity(struct page_dir *dir, u32 flags) NONNULL;
 void memory_free(struct page_dir *dir, struct memory_range vrange) NONNULL;
 void memory_map_identity(struct page_dir *dir, struct memory_range prange, u32 flags) NONNULL;

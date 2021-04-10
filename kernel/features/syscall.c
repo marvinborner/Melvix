@@ -23,10 +23,6 @@ static void syscall_handler(struct regs *r)
 	/* printf("[SYSCALL] %d from %s\n", num, proc_current()->name); */
 
 	switch (num) {
-	case SYS_LOOP: {
-		panic("Loop is deprecated!\n");
-		break;
-	}
 	case SYS_ALLOC: {
 		r->eax = memory_sys_alloc(proc_current()->page_dir, r->ebx, (u32 *)r->ecx,
 					  (u32 *)r->edx, (u8)r->esi);

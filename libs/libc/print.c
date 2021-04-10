@@ -251,7 +251,7 @@ NORETURN void panic(const char *format, ...)
 #ifdef KERNEL
 	print("--- DON'T PANIC! ---\n");
 	print(buf);
-	print_trace(5);
+	print_trace(10);
 	while (1)
 		__asm__ volatile("cli\nhlt");
 #else
