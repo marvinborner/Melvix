@@ -2,7 +2,7 @@
 
 #include <def.h>
 #include <mem.h>
-#include <random.h>
+#include <rand.h>
 
 #ifdef KERNEL
 #include <cpu.h>

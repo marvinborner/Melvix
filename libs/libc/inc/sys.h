@@ -19,10 +19,12 @@ enum sys {
 	SYS_SHACCESS, // Access shared memory
 	SYS_FREE, // Free memory
 	SYS_STAT, // Get file information
-	SYS_READ, // Read file
+	SYS_READ, // Read file (non-blocking)
 	SYS_WRITE, // Write to file
-	SYS_IOCTL, // Interact with a file/device
-	SYS_POLL, // Wait for multiple files
+	SYS_IOCTL, // Interact with an I/O device
+	SYS_IOPOLL, // Block proc until I/O device is ready
+	SYS_IOREAD, // Read data from I/O device (blocking)
+	SYS_IOWRITE, // Write data to I/O device
 	SYS_EXEC, // Execute path
 	SYS_EXIT, // Exit current process
 	SYS_BOOT, // Boot functions (e.g. reboot/shutdown)
@@ -68,7 +70,6 @@ res read(const char *path, void *buf, u32 offset, u32 count) NONNULL;
 res write(const char *path, const void *buf, u32 offset, u32 count) NONNULL;
 res ioctl(const char *path, ...) NONNULL;
 res stat(const char *path, struct stat *buf) NONNULL;
-res poll(const char **files) NONNULL;
 res exec(const char *path, ...) ATTR((nonnull(1))) SENTINEL;
 res yield(void);
 res boot(u32 cmd);

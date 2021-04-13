@@ -46,7 +46,6 @@ static void mouse_handler(struct regs *r)
 		event->but3 = (mouse_byte[0] >> 2) & 1;
 		stack_push_bot(queue, event);
 		mouse_cycle = 0;
-		proc_unblock(dev_id, PROC_BLOCK_DEV);
 		break;
 	default:
 		break;
@@ -88,7 +87,7 @@ static res mouse_ready(void)
 	return !stack_empty(queue);
 }
 
-static res mouse_read(void *buf, u32 offset, u32 count, struct device *dev)
+static res mouse_read(void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
 	(void)dev;
 	if (stack_empty(queue))
@@ -186,11 +185,10 @@ CLEAR void mouse_install(void)
 	irq_install_handler(12, mouse_handler);
 
 	queue = stack_new();
-	struct device *dev = zalloc(sizeof(*dev));
+	struct vfs_dev *dev = zalloc(sizeof(*dev));
 	dev->name = strdup("mouse");
 	dev->type = DEV_CHAR;
 	dev->read = mouse_read;
-	dev->ready = mouse_ready;
-	device_add(dev);
+	/* device_add(dev); */
 	dev_id = dev->id;
 }

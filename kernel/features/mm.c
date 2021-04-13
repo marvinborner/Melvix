@@ -9,7 +9,7 @@
 #include <mem.h>
 #include <mm.h>
 #include <print.h>
-#include <random.h>
+#include <rand.h>
 
 PROTECTED static struct page_dir kernel_dir ALIGNED(PAGE_SIZE) = { 0 };
 static struct page_table kernel_tables[PAGE_KERNEL_COUNT] ALIGNED(PAGE_SIZE) = { 0 };

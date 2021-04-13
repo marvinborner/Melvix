@@ -2,7 +2,7 @@
 
 #include <assert.h>
 #include <def.h>
-#include <random.h>
+#include <rand.h>
 #include <sys.h>
 
 #ifdef USER

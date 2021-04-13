@@ -26,7 +26,7 @@ PROTECTED static u32 dev_id = 0;
 PROTECTED static struct vid_info *info = NULL;
 
 static u32 fb_owner = 0;
-static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct device *dev)
+static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct vfs_dev *dev)
 {
 	UNUSED(arg2);
 	UNUSED(arg3);
@@ -56,11 +56,6 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct devi
 	}
 }
 
-static res fb_ready(void)
-{
-	return 1;
-}
-
 void fb_map_buffer(struct page_dir *dir, struct vid_info *boot)
 {
 	struct vbe_basic *vbe = (struct vbe_basic *)boot->vbe;
@@ -72,11 +67,10 @@ CLEAR void fb_install(struct vid_info *boot)
 {
 	info = boot;
 
-	struct device *dev = zalloc(sizeof(*dev));
+	struct vfs_dev *dev = zalloc(sizeof(*dev));
 	dev->name = strdup("fb");
 	dev->type = DEV_CHAR;
 	dev->ioctl = fb_ioctl;
-	dev->ready = fb_ready;
-	device_add(dev);
+	/* device_add(dev); */
 	dev_id = dev->id;
 }

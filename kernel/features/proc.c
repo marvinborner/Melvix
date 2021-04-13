@@ -184,92 +184,6 @@ void proc_yield(struct regs *r)
 	scheduler(r);
 }
 
-// TODO: Rewrite block/unblock mechanisms
-void proc_block(u32 id, enum proc_block_type type, u32 func_ptr)
-{
-	u8 already_exists = 0;
-	struct proc *p = proc_current();
-
-	// Check if already exists
-	for (u32 i = 0; i < p->block.id_cnt; i++) {
-		if (p->block.ids[i].id == id && p->block.ids[i].type == type) {
-			assert(p->block.ids[i].func_ptr == func_ptr);
-			already_exists = 1;
-		}
-	}
-
-	if (already_exists)
-		goto end;
-
-	assert(p->block.id_cnt + 1 < PROC_MAX_BLOCK_IDS);
-
-	// Find slot
-	struct proc_block_identifier *slot = NULL;
-	for (u32 i = 0; i < PROC_MAX_BLOCK_IDS; i++) {
-		if (p->block.ids[i].magic != PROC_BLOCK_MAGIC) {
-			slot = &p->block.ids[i];
-			break;
-		}
-	}
-	assert(slot);
-
-	slot->magic = PROC_BLOCK_MAGIC;
-	slot->id = id;
-	slot->type = type;
-	slot->func_ptr = func_ptr;
-	p->block.id_cnt++;
-
-end:
-	proc_state(p, PROC_BLOCKED);
-}
-
-// TODO: Rewrite block/unblock mechanisms
-void proc_unblock(u32 id, enum proc_block_type type)
-{
-	struct page_dir *dir_bak;
-	memory_backup_dir(&dir_bak);
-
-	struct node *proc_bak = current;
-	if (!proc_bak)
-		return;
-
-	struct node *iterator = proc_list_blocked->head;
-	while (iterator) {
-		struct proc *p = iterator->data;
-		struct proc_block *w = &p->block;
-
-		if (!p || !w || w->id_cnt == 0) {
-			iterator = iterator->next;
-			continue;
-		}
-
-		current = list_first_data(proc_list_blocked, p);
-		assert(w->id_cnt < PROC_MAX_BLOCK_IDS);
-		for (u32 i = 0; i < w->id_cnt; i++) {
-			if (w->ids[i].magic == PROC_BLOCK_MAGIC && w->ids[i].id == id &&
-			    w->ids[i].type == type) {
-				struct regs *r = &p->regs;
-				u32 (*func)(u32, u32, u32, u32) =
-					(u32(*)(u32, u32, u32, u32))w->ids[i].func_ptr;
-				if (w->ids[i].func_ptr) {
-					memory_switch_dir(p->page_dir);
-					r->eax = func(r->ebx, r->ecx, r->edx, r->esi);
-					memory_switch_dir(dir_bak);
-				}
-				memset(&w->ids[i], 0, sizeof(w->ids[i]));
-				p->block.id_cnt--;
-				proc_state(p, PROC_RUNNING);
-				break;
-			}
-		}
-
-		iterator = iterator->next;
-	}
-
-	if (current != proc_bak)
-		current = proc_bak;
-}
-
 struct proc *proc_make(enum proc_priv priv)
 {
 	struct proc *proc = zalloc(sizeof(*proc));
@@ -355,9 +269,10 @@ struct procfs_message {
 	u32 size;
 };
 
-static res procfs_write(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+static res procfs_write(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
 	UNUSED(offset);
+	UNUSED(dev);
 
 	u32 pid = 0;
 	procfs_parse_path(&path, &pid);
@@ -378,7 +293,6 @@ static res procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 			msg->data = msg_data;
 			msg->size = count;
 			stack_push_bot(p->messages, msg); // TODO: Use offset
-			proc_unblock(pid, PROC_BLOCK_MSG);
 			return count;
 		} else if (!memcmp_user(path, "io/", 3)) {
 			path += 3;
@@ -394,7 +308,6 @@ static res procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 			assert(stream->offset_write + count < STREAM_MAX_SIZE); // TODO: Resize
 			memcpy_user((char *)(stream->data + stream->offset_write), buf, count);
 			stream->offset_write += count;
-			proc_unblock(dev->id, PROC_BLOCK_DEV);
 			return count;
 		}
 	}
@@ -402,7 +315,7 @@ static res procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 	return -ENOENT;
 }
 
-static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
 	(void)dev;
 	u32 pid = 0;
@@ -458,34 +371,7 @@ static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 	return -ENOENT;
 }
 
-static res procfs_block(const char *path, u32 func_ptr, struct device *dev)
-{
-	u32 pid = 0;
-	procfs_parse_path(&path, &pid);
-
-	if (pid) {
-		struct proc *p = proc_from_pid(pid);
-		stac();
-		if (!p || path[0] != '/') {
-			clac();
-			return -ENOENT;
-		}
-		clac();
-
-		path++;
-		if (!memcmp_user(path, "msg", 4)) {
-			proc_block(pid, PROC_BLOCK_MSG, func_ptr);
-			return EOK;
-		} else {
-			proc_block(dev->id, PROC_BLOCK_DEV, func_ptr);
-			return EOK;
-		}
-	}
-
-	return -ENOENT;
-}
-
-static res procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
+static res procfs_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev)
 {
 	(void)path;
 	(void)dev;
@@ -494,38 +380,6 @@ static res procfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
 		return -EACCES;
 	else
 		return EOK;
-}
-
-static res procfs_ready(const char *path, struct device *dev)
-{
-	(void)dev;
-
-	u32 pid = 0;
-	procfs_parse_path(&path, &pid);
-
-	if (pid) {
-		struct proc *p = proc_from_pid(pid);
-		stac();
-		if (!p || path[0] != '/') {
-			clac();
-			return -ENOENT;
-		}
-		clac();
-
-		path++;
-		if (!memcmp_user(path, "msg", 4)) {
-			return stack_empty(p->messages) == 0;
-		} else if (!memcmp_user(path, "io/", 3)) {
-			path += 3;
-			enum stream_defaults id = procfs_stream(path);
-			if (id == STREAM_UNKNOWN)
-				return -ENOENT;
-			struct stream *stream = &p->streams[id];
-			return stream->data[stream->offset_read] != 0;
-		}
-	}
-
-	return 1;
 }
 
 extern void proc_jump_userspace(void);
@@ -547,15 +401,13 @@ NORETURN void proc_init(void)
 	vfs->type = VFS_PROCFS;
 	vfs->read = procfs_read;
 	vfs->write = procfs_write;
-	vfs->block = procfs_block;
 	vfs->perm = procfs_perm;
-	vfs->ready = procfs_ready;
 	vfs->data = NULL;
-	struct device *dev = zalloc(sizeof(*dev));
+	struct vfs_dev *dev = zalloc(sizeof(*dev));
 	dev->name = "proc";
 	dev->type = DEV_CHAR;
 	dev->vfs = vfs;
-	device_add(dev);
+	vfs_add_dev(dev);
 	assert(vfs_mount(dev, "/proc/") == EOK);
 
 	// Idle proc

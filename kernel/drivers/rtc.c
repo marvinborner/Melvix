@@ -70,7 +70,7 @@ u32 rtc_stamp(void)
 	       rtc.year * 360 * 24 * 365;
 }
 
-static res rtc_dev_read(void *buf, u32 offset, u32 count, struct device *dev)
+static res rtc_dev_read(void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
 	UNUSED(offset);
 	UNUSED(dev);
@@ -83,9 +83,9 @@ static res rtc_dev_read(void *buf, u32 offset, u32 count, struct device *dev)
 
 CLEAR void rtc_install(void)
 {
-	struct device *dev = zalloc(sizeof(*dev));
+	struct vfs_dev *dev = zalloc(sizeof(*dev));
 	dev->name = strdup("rtc");
 	dev->type = DEV_CHAR;
 	dev->read = rtc_dev_read;
-	device_add(dev);
+	/* device_add(dev); */
 }

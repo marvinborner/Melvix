@@ -44,8 +44,6 @@ static void keyboard_handler(struct regs *r)
 
 	state = 0;
 	merged = 0;
-
-	proc_unblock(dev_id, PROC_BLOCK_DEV);
 }
 
 /*static void keyboard_acknowledge(void)
@@ -61,7 +59,7 @@ static void keyboard_rate(void)
 	outb(0x60, 0x0); // Rate{00000} Delay{00} 0
 }*/
 
-static res keyboard_read(void *buf, u32 offset, u32 count, struct device *dev)
+static res keyboard_read(void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
 	UNUSED(dev);
 	if (stack_empty(queue))
@@ -89,11 +87,10 @@ CLEAR void keyboard_install(void)
 	irq_install_handler(1, keyboard_handler);
 
 	queue = stack_new();
-	struct device *dev = zalloc(sizeof(*dev));
+	struct vfs_dev *dev = zalloc(sizeof(*dev));
 	dev->name = strdup("kbd");
 	dev->type = DEV_CHAR;
 	dev->read = keyboard_read;
-	dev->ready = keyboard_ready;
-	device_add(dev);
+	/* device_add(dev); */
 	dev_id = dev->id;
 }

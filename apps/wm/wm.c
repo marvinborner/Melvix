@@ -11,7 +11,7 @@
 #include <libgui/vesa.h>
 #include <libtxt/keymap.h>
 #include <list.h>
-#include <random.h>
+#include <rand.h>
 
 struct client {
 	u32 pid;
@@ -519,33 +519,33 @@ int main(int argc, char **argv)
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
 	window_redraw(wallpaper);
 
-	u8 msg[1024] = { 0 };
-	struct event_keyboard event_keyboard = { 0 };
-	struct event_mouse event_mouse = { 0 };
-	const char *listeners[] = { "/dev/kbd", "/dev/mouse", "/proc/self/msg", NULL };
+	/* u8 msg[1024] = { 0 }; */
+	/* struct event_keyboard event_keyboard = { 0 }; */
+	/* struct event_mouse event_mouse = { 0 }; */
+	/* const char *listeners[] = { "/dev/kbd", "/dev/mouse", "/proc/self/msg", NULL }; */
 	while (1) {
-		int poll_ret = 0;
-		if ((poll_ret = poll(listeners)) >= 0) {
-			if (poll_ret == 0) {
-				if (read(listeners[poll_ret], &event_keyboard, 0,
-					 sizeof(event_keyboard)) > 0) {
-					handle_event_keyboard(&event_keyboard);
-					continue;
-				}
-			} else if (poll_ret == 1) {
-				if (read(listeners[poll_ret], &event_mouse, 0,
-					 sizeof(event_mouse)) > 0) {
-					handle_event_mouse(&event_mouse);
-					continue;
-				}
-			} else if (poll_ret == 2) {
-				if (msg_receive(msg, sizeof(msg)) > 0) {
-					handle_message(msg);
-					continue;
-				}
-			}
-		}
-		panic("Poll/read error: %s\n", strerror(errno));
+		/* int poll_ret = 0; */
+		/* if (1) { */
+		/* 	if (poll_ret == 0) { */
+		/* 		if (read(listeners[poll_ret], &event_keyboard, 0, */
+		/* 			 sizeof(event_keyboard)) > 0) { */
+		/* 			handle_event_keyboard(&event_keyboard); */
+		/* 			continue; */
+		/* 		} */
+		/* 	} else if (poll_ret == 1) { */
+		/* 		if (read(listeners[poll_ret], &event_mouse, 0, */
+		/* 			 sizeof(event_mouse)) > 0) { */
+		/* 			handle_event_mouse(&event_mouse); */
+		/* 			continue; */
+		/* 		} */
+		/* 	} else if (poll_ret == 2) { */
+		/* 		if (msg_receive(msg, sizeof(msg)) > 0) { */
+		/* 			handle_message(msg); */
+		/* 			continue; */
+		/* 		} */
+		/* 	} */
+		/* } */
+		/* panic("Poll/read error: %s\n", strerror(errno)); */
 	}
 
 	return 1;

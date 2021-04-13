@@ -13,7 +13,7 @@
 #include <mouse.h>
 #include <net.h>
 #include <pci.h>
-#include <random.h>
+#include <rand.h>
 #include <rtc.h>
 #include <serial.h>
 #include <syscall.h>
@@ -47,7 +47,6 @@ int kernel_main(struct boot_info *boot)
 
 	// Install drivers
 	vfs_install();
-	device_install();
 	ata_install();
 	pci_install();
 	interrupts_install();

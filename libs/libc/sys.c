@@ -128,11 +128,6 @@ res stat(const char *path, struct stat *buf)
 	return sys2(SYS_STAT, (int)path, (int)buf);
 }
 
-res poll(const char **files)
-{
-	return sys1(SYS_POLL, (int)files);
-}
-
 res exec(const char *path, ...)
 {
 	va_list ap;

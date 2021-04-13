@@ -85,7 +85,7 @@ static void ide_poll(u16 io)
 	} while (!(status & ATA_SR_DRQ));
 }
 
-static u8 ata_read_one(u8 *buf, u32 lba, struct device *dev)
+static u8 ata_read_one(u8 *buf, u32 lba, struct vfs_dev *dev)
 {
 	u8 drive = ((struct ata_data *)dev->data)->drive;
 	u16 io = (drive & ATA_PRIMARY << 1) == ATA_PRIMARY ? ATA_PRIMARY_IO : ATA_SECONDARY_IO;
@@ -108,7 +108,7 @@ static u8 ata_read_one(u8 *buf, u32 lba, struct device *dev)
 	return 1;
 }
 
-static res ata_read(void *buf, u32 lba, u32 sector_count, struct device *dev)
+static res ata_read(void *buf, u32 lba, u32 sector_count, struct vfs_dev *dev)
 {
 	u8 *b = buf; // I love bytes, yk
 	for (u32 i = 0; i < sector_count; i++) {
@@ -128,7 +128,7 @@ CLEAR static void ata_probe(void)
 		if (!ide_find(bus, drive))
 			continue;
 
-		struct device *dev = zalloc(sizeof(*dev));
+		struct vfs_dev *dev = zalloc(sizeof(*dev));
 		struct ata_data *data = malloc(sizeof(*data));
 		data->drive = (bus << 1) | drive;
 
@@ -139,7 +139,7 @@ CLEAR static void ata_probe(void)
 		dev->name = str;
 		dev->type = DEV_BLOCK;
 		dev->read = ata_read;
-		device_add(dev);
+		vfs_add_dev(dev);
 		if (vfs_mounted(dev, "/"))
 			continue;
 
@@ -149,7 +149,6 @@ CLEAR static void ata_probe(void)
 		vfs->read = ext2_read;
 		vfs->stat = ext2_stat;
 		vfs->perm = ext2_perm;
-		vfs->ready = ext2_ready;
 		dev->vfs = vfs;
 		dev->data = data;
 		vfs_mount(dev, "/");

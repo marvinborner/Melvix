@@ -10,7 +10,7 @@
 #include <mem.h>
 #include <mm.h>
 #include <print.h>
-#include <random.h>
+#include <rand.h>
 #include <str.h>
 
 /**
@@ -28,7 +28,7 @@ static char *vfs_normalize_path(const char *path)
 	return fixed;
 }
 
-u8 vfs_mounted(struct device *dev, const char *path)
+u8 vfs_mounted(struct vfs_dev *dev, const char *path)
 {
 	struct node *iterator = mount_points->head;
 	while (iterator) {
@@ -77,7 +77,12 @@ static struct mount_info *vfs_find_mount_info(const char *path)
 	return ret;
 }
 
-struct device *vfs_find_dev(const char *path)
+CLEAR void vfs_add_dev(struct vfs_dev *dev)
+{
+	dev->id = rand() + 1;
+}
+
+struct vfs_dev *vfs_find_dev(const char *path)
 {
 	stac();
 	if (path[0] != '/') {
@@ -86,8 +91,6 @@ struct device *vfs_find_dev(const char *path)
 	}
 	clac();
 	struct mount_info *m = vfs_find_mount_info(path);
-	if (m->dev->vfs->type == VFS_DEVFS) // TODO: ?
-		return device_get_by_name(path + strlen(m->path) + 1);
 	return m && m->dev ? m->dev : NULL;
 }
 
@@ -118,7 +121,7 @@ static void vfs_list_mounts()
 	}
 }*/
 
-res vfs_mount(struct device *dev, const char *path)
+res vfs_mount(struct vfs_dev *dev, const char *path)
 {
 	if (!memory_readable(path))
 		return -EFAULT;
@@ -242,172 +245,9 @@ res vfs_stat(const char *path, struct stat *buf)
 	return m->dev->vfs->stat(path, buf, m->dev);
 }
 
-res vfs_block(const char *path, u32 func_ptr)
-{
-	if (!func_ptr || !memory_readable(path))
-		return -EFAULT;
-
-	struct mount_info *m = vfs_find_mount_info(path);
-	if (!m || !m->dev || !m->dev->vfs)
-		return -ENOENT;
-
-	// Default block
-	if (!m->dev->vfs->block) {
-		proc_block(vfs_find_dev(path)->id, PROC_BLOCK_DEV, func_ptr);
-		return EOK;
-	}
-
-	u32 len = strlen(m->path);
-	if (len > 1)
-		path += len;
-
-	return m->dev->vfs->block(path, func_ptr, m->dev);
-}
-
-// TODO: Reduce stac clac?
-// TODO: Fix page fault when called too often/fast
-res vfs_poll(const char **files)
-{
-	if (!memory_readable(files))
-		return -EFAULT;
-
-	stac();
-	for (const char **p = files; *p && memory_readable(*p) && **p; p++) {
-		res ready = vfs_ready(*p);
-		clac();
-		if (ready == 1)
-			return p - files;
-		else if (ready < 0)
-			return ready;
-		stac();
-	}
-
-	for (const char **p = files; *p && memory_readable(*p) && **p; p++) {
-		vfs_block(*p, (u32)vfs_poll);
-		stac();
-	}
-	clac();
-
-	return PROC_MAX_BLOCK_IDS + 1;
-}
-
-res vfs_ready(const char *path)
-{
-	if (!memory_readable(path))
-		return -EFAULT;
-
-	struct mount_info *m = vfs_find_mount_info(path);
-	if (!m || !m->dev || !m->dev->vfs)
-		return -ENOENT;
-
-	if (!m->dev->vfs->ready)
-		return -EINVAL;
-
-	u32 len = strlen(m->path);
-	if (len > 1)
-		path += len;
-
-	return m->dev->vfs->ready(path, m->dev);
-}
-
 CLEAR void vfs_install(void)
 {
 	mount_points = list_new();
-}
-
-/**
- * Device
- */
-
-PROTECTED static struct list *devices = NULL;
-
-CLEAR void device_add(struct device *dev)
-{
-	dev->id = rand() + 1;
-	list_add(devices, dev);
-}
-
-struct device *device_get_by_id(u32 id)
-{
-	struct node *iterator = devices->head;
-	while (iterator) {
-		if (((struct device *)iterator->data)->id == id)
-			return iterator->data;
-		iterator = iterator->next;
-	}
-	return NULL;
-}
-
-struct device *device_get_by_name(const char *name)
-{
-	struct node *iterator = devices->head;
-	while (iterator) {
-		if (!strcmp_user(((struct device *)iterator->data)->name, name))
-			return iterator->data;
-		iterator = iterator->next;
-	}
-	return NULL;
-}
-
-static res devfs_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
-{
-	struct device *target = device_get_by_name(path + 1);
-	if (!target)
-		return -ENOENT;
-	if (!target->read)
-		return -EINVAL;
-	return target->read(buf, offset, count, dev);
-}
-
-static res devfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3,
-		       struct device *dev)
-{
-	struct device *target = device_get_by_name(path + 1);
-	if (!target)
-		return -ENOENT;
-	if (!target->ioctl)
-		return -EINVAL;
-	return target->ioctl(request, arg1, arg2, arg3, dev);
-}
-
-static res devfs_perm(const char *path, enum vfs_perm perm, struct device *dev)
-{
-	UNUSED(path);
-	UNUSED(perm);
-	UNUSED(dev);
-	return EOK;
-}
-
-static res devfs_ready(const char *path, struct device *dev)
-{
-	UNUSED(dev);
-
-	struct device *target = device_get_by_name(path + 1);
-	if (!target)
-		return -ENOENT;
-	if (!target->ready)
-		return -EINVAL;
-	return target->ready();
-}
-
-CLEAR void device_install(void)
-{
-	devices = list_new();
-
-	struct vfs *vfs = zalloc(sizeof(*vfs));
-	vfs->type = VFS_DEVFS;
-	vfs->read = devfs_read;
-	vfs->ioctl = devfs_ioctl;
-	vfs->perm = devfs_perm;
-	vfs->ready = devfs_ready;
-	struct device *dev = zalloc(sizeof(*dev));
-	dev->name = "dev";
-	dev->type = DEV_CHAR;
-	dev->vfs = vfs;
-	device_add(dev);
-	vfs_mount(dev, "/dev/");
-
-	/* vfs_list_mounts(); */
 }
 
 /**
@@ -415,14 +255,14 @@ CLEAR void device_install(void)
  */
 
 // TODO: Remove malloc from ext2_buffer_read (attempt in #56cd63f199)
-static void *ext2_buffer_read(u32 block, struct device *dev)
+static void *ext2_buffer_read(u32 block, struct vfs_dev *dev)
 {
 	void *buf = zalloc(BLOCK_SIZE);
 	dev->read(buf, block * SECTOR_COUNT, SECTOR_COUNT, dev);
 	return buf;
 }
 
-static struct ext2_superblock *ext2_get_superblock(struct device *dev)
+static struct ext2_superblock *ext2_get_superblock(struct vfs_dev *dev)
 {
 	struct ext2_superblock *sb = ext2_buffer_read(EXT2_SUPER, dev);
 
@@ -430,12 +270,12 @@ static struct ext2_superblock *ext2_get_superblock(struct device *dev)
 	return sb;
 }
 
-static struct ext2_bgd *ext2_get_bgd(struct device *dev)
+static struct ext2_bgd *ext2_get_bgd(struct vfs_dev *dev)
 {
 	return ext2_buffer_read(EXT2_SUPER + 1, dev);
 }
 
-static struct ext2_inode *ext2_get_inode(u32 i, struct ext2_inode *in_buf, struct device *dev)
+static struct ext2_inode *ext2_get_inode(u32 i, struct ext2_inode *in_buf, struct vfs_dev *dev)
 {
 	struct ext2_superblock *s = ext2_get_superblock(dev);
 	assert(s);
@@ -465,7 +305,7 @@ struct indirect_cache {
 	u8 data[BLOCK_SIZE];
 };
 static struct list *indirect_cache = NULL;
-static u32 ext2_read_indirect(u32 indirect, u32 block_num, struct device *dev)
+static u32 ext2_read_indirect(u32 indirect, u32 block_num, struct vfs_dev *dev)
 {
 	void *data = NULL;
 	if (indirect_cache) {
@@ -496,7 +336,7 @@ static u32 ext2_read_indirect(u32 indirect, u32 block_num, struct device *dev)
 }
 
 static res ext2_read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 count,
-			   struct device *dev)
+			   struct vfs_dev *dev)
 {
 	if (!in || !buf)
 		return -EINVAL;
@@ -563,7 +403,7 @@ static res ext2_read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 cou
 	return copied;
 }
 
-static u32 ext2_find_inode(const char *name, u32 dir_inode, struct device *dev)
+static u32 ext2_find_inode(const char *name, u32 dir_inode, struct vfs_dev *dev)
 {
 	if ((signed)dir_inode <= 0)
 		return (unsigned)-1;
@@ -599,7 +439,7 @@ static u32 ext2_find_inode(const char *name, u32 dir_inode, struct device *dev)
 }
 
 static struct ext2_inode *ext2_find_inode_by_path(const char *path, struct ext2_inode *in_buf,
-						  struct device *dev)
+						  struct vfs_dev *dev)
 {
 	char *path_cp = strdup_user(path);
 	char *init = path_cp; // For freeing
@@ -640,7 +480,7 @@ static struct ext2_inode *ext2_find_inode_by_path(const char *path, struct ext2_
 	return ext2_get_inode(inode, in_buf, dev);
 }
 
-res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device *dev)
+res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
 	struct ext2_inode in = { 0 };
 	if (ext2_find_inode_by_path(path, &in, dev) == &in) {
@@ -649,7 +489,7 @@ res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct device 
 		return -ENOENT;
 }
 
-res ext2_stat(const char *path, struct stat *buf, struct device *dev)
+res ext2_stat(const char *path, struct stat *buf, struct vfs_dev *dev)
 {
 	struct ext2_inode in = { 0 };
 	if (ext2_find_inode_by_path(path, &in, dev) != &in)
@@ -666,7 +506,7 @@ res ext2_stat(const char *path, struct stat *buf, struct device *dev)
 	return EOK;
 }
 
-res ext2_perm(const char *path, enum vfs_perm perm, struct device *dev)
+res ext2_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev)
 {
 	struct ext2_inode in = { 0 };
 	if (ext2_find_inode_by_path(path, &in, dev) != &in)
@@ -682,11 +522,4 @@ res ext2_perm(const char *path, enum vfs_perm perm, struct device *dev)
 	default:
 		return -EINVAL;
 	}
-}
-
-res ext2_ready(const char *path, struct device *dev)
-{
-	UNUSED(path);
-	UNUSED(dev);
-	return 1;
 }

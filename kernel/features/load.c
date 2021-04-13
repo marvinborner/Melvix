@@ -6,7 +6,7 @@
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
-#include <random.h>
+#include <rand.h>
 #include <str.h>
 
 res elf_load(const char *name, struct proc *proc)

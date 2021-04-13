@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <fs.h>
 #include <interrupts.h>
+#include <io.h>
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
@@ -23,6 +24,7 @@ static void syscall_handler(struct regs *r)
 	/* printf("[SYSCALL] %d from %s\n", num, proc_current()->name); */
 
 	switch (num) {
+	// Memory operations
 	case SYS_ALLOC: {
 		r->eax = memory_sys_alloc(proc_current()->page_dir, r->ebx, (u32 *)r->ecx,
 					  (u32 *)r->edx, (u8)r->esi);
@@ -37,20 +39,14 @@ static void syscall_handler(struct regs *r)
 					     (u32 *)r->edx);
 		break;
 	}
+
+	// File operations
 	case SYS_STAT: {
 		r->eax = vfs_stat((char *)r->ebx, (struct stat *)r->ecx);
 		break;
 	}
 	case SYS_READ: {
-		if (vfs_ready((char *)r->ebx)) {
-			r->eax = (u32)vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
-		} else {
-			res wait = vfs_block((char *)r->ebx, (u32)vfs_read);
-			if (wait != 0)
-				r->eax = wait;
-			else
-				proc_yield(r);
-		}
+		r->eax = vfs_read((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		break;
 	}
 	case SYS_WRITE: {
@@ -62,13 +58,22 @@ static void syscall_handler(struct regs *r)
 				   (void *)r->edi);
 		break;
 	}
-	case SYS_POLL: {
-		res ret = vfs_poll((const char **)r->ebx);
-		r->eax = ret;
-		if (ret == PROC_MAX_BLOCK_IDS + 1)
-			proc_yield(r);
+
+	// I/O operations
+	case SYS_IOPOLL: {
+		r->eax = io_poll((void *)r->ebx);
 		break;
 	}
+	case SYS_IOREAD: {
+		r->eax = io_read(r->ebx, (void *)r->ecx, r->edx, r->esi);
+		break;
+	}
+	case SYS_IOWRITE: {
+		r->eax = io_write(r->ebx, (void *)r->ecx, r->edx, r->esi);
+		break;
+	}
+
+	// Process operations
 	case SYS_EXEC: {
 		char *path = (char *)r->ebx;
 		struct proc *proc = proc_make(PROC_PRIV_NONE);
@@ -86,6 +91,12 @@ static void syscall_handler(struct regs *r)
 		proc_exit(proc_current(), r, (s32)r->ebx);
 		break;
 	}
+	case SYS_YIELD: {
+		proc_yield(r);
+		break;
+	}
+
+	// System operations
 	case SYS_BOOT: { // TODO: Move
 		if (r->ebx != SYS_BOOT_MAGIC) {
 			r->eax = -EINVAL;
@@ -113,10 +124,7 @@ static void syscall_handler(struct regs *r)
 		}
 		break;
 	}
-	case SYS_YIELD: {
-		proc_yield(r);
-		break;
-	}
+
 	// TODO: Reimplement network functions using VFS
 	default: {
 		printf("Unknown syscall %d!\n", num);
