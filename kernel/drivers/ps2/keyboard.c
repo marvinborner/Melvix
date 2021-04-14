@@ -3,8 +3,8 @@
 #include <cpu.h>
 #include <def.h>
 #include <errno.h>
-#include <fs.h>
 #include <interrupts.h>
+#include <io.h>
 #include <mem.h>
 #include <print.h>
 #include <proc.h>
@@ -14,7 +14,6 @@
 #include <sys.h>
 
 PROTECTED static struct stack *queue = NULL;
-PROTECTED static u32 dev_id = 0;
 
 static struct event_keyboard *event = NULL;
 static int state = 0;
@@ -46,9 +45,8 @@ static void keyboard_handler(struct regs *r)
 	merged = 0;
 }
 
-static res keyboard_read(void *buf, u32 offset, u32 count, struct vfs_dev *dev)
+static res keyboard_read(void *buf, u32 offset, u32 count)
 {
-	UNUSED(dev);
 	if (stack_empty(queue))
 		return -EINVAL;
 
@@ -68,16 +66,15 @@ CLEAR void ps2_keyboard_reset(void)
 	stack_clear(queue);
 }
 
-CLEAR void ps2_keyboard_install(void)
+CLEAR void ps2_keyboard_install(u8 device)
 {
-	//keyboard_rate(); TODO: Fix keyboard rate?
+	UNUSED(device);
+
 	irq_install_handler(1, keyboard_handler);
 
 	queue = stack_new();
-	struct vfs_dev *dev = zalloc(sizeof(*dev));
-	dev->name = strdup("kbd");
-	dev->type = DEV_CHAR;
+	struct io_dev *dev = zalloc(sizeof(*dev));
 	dev->read = keyboard_read;
-	/* device_add(dev); */
-	dev_id = dev->id;
+	dev->ready = keyboard_ready;
+	io_add(IO_KEYBOARD, dev);
 }

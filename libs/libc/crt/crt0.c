@@ -16,7 +16,7 @@ int _start(int argc, char **argv);
 int _start(int argc, char **argv)
 {
 	u32 stamp = 0;
-	assert(read("/dev/rtc", &stamp, 0, sizeof(stamp)) == sizeof(stamp) && stamp);
+	assert(io_read(IO_TIMER, &stamp, 0, sizeof(stamp)) == sizeof(stamp) && stamp);
 	srand(stamp);
 	__stack_chk_guard = rand();
 

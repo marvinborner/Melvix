@@ -5,7 +5,7 @@
 #include <def.h>
 #include <errno.h>
 #include <fb.h>
-#include <fs.h>
+#include <io.h>
 #include <mem.h>
 #include <mm.h>
 #include <str.h>
@@ -21,15 +21,13 @@ struct vbe_basic {
 	u8 stuff3[212];
 };
 
-PROTECTED static u32 dev_id = 0;
 PROTECTED static struct vid_info *info = NULL;
 
 static u32 fb_owner = 0;
-static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct vfs_dev *dev)
+static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3)
 {
 	UNUSED(arg2);
 	UNUSED(arg3);
-	UNUSED(dev);
 
 	switch (request) {
 	case 0: {
@@ -66,10 +64,7 @@ CLEAR void fb_install(struct vid_info *boot)
 {
 	info = boot;
 
-	struct vfs_dev *dev = zalloc(sizeof(*dev));
-	dev->name = strdup("fb");
-	dev->type = DEV_CHAR;
-	dev->ioctl = fb_ioctl;
-	/* device_add(dev); */
-	dev_id = dev->id;
+	struct io_dev *dev = zalloc(sizeof(*dev));
+	dev->control = fb_ioctl;
+	io_add(IO_FRAMEBUFFER, dev);
 }

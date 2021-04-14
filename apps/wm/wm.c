@@ -494,7 +494,7 @@ int main(int argc, char **argv)
 
 	atexit(handle_exit);
 
-	assert(ioctl("/dev/fb", 0, &screen) == 0);
+	assert(io_control(IO_FRAMEBUFFER, 0, &screen) == EOK);
 	log("WM loaded: %dx%d\n", screen.width, screen.height);
 	wm_client = (struct client){ .pid = getpid() };
 	bypp = (screen.bpp >> 3);

@@ -3,7 +3,10 @@
 #include <cpu.h>
 #include <def.h>
 #include <interrupts.h>
+#include <io.h>
+#include <mem.h>
 #include <proc.h>
+#include <rtc.h>
 #include <timer.h>
 
 static u32 timer_ticks = 0;
@@ -42,15 +45,6 @@ void timer_wait(u32 ticks)
 	}
 }
 
-// Install timer handler into IRQ0
-CLEAR void timer_install(void)
-{
-	/* hpet_install(10000); // TODO: Find optimal femtosecond period */
-	/* if (!hpet) */
-	timer_phase(1000);
-	irq_install_handler(0, timer_handler);
-}
-
 CLEAR void scheduler_enable(void)
 {
 	call_scheduler = 1;
@@ -61,4 +55,27 @@ CLEAR void scheduler_disable(void)
 {
 	call_scheduler = 0;
 	irq_install_handler(0, timer_handler);
+}
+
+static res timer_read(void *buf, u32 offset, u32 count)
+{
+	UNUSED(offset);
+
+	u32 stamp = rtc_stamp();
+	memcpy_user(buf, &stamp, MIN(count, sizeof(stamp)));
+
+	return MIN(count, sizeof(stamp));
+}
+
+// Install timer handler into IRQ0
+CLEAR void timer_install(void)
+{
+	/* hpet_install(10000); // TODO: Find optimal femtosecond period */
+	/* if (!hpet) */
+	timer_phase(1000);
+	irq_install_handler(0, timer_handler);
+
+	struct io_dev *dev = zalloc(sizeof(*dev));
+	dev->read = timer_read;
+	io_add(IO_TIMER, dev);
 }

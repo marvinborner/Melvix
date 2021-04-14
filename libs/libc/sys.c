@@ -110,19 +110,6 @@ res write(const char *path, const void *buf, u32 offset, u32 count)
 	return sys4(SYS_WRITE, (int)path, (int)buf, (int)offset, (int)count);
 }
 
-res ioctl(const char *path, ...)
-{
-	va_list ap;
-	int args[4] = { 0 };
-
-	va_start(ap, path);
-	for (int i = 0; i < 4; i++)
-		args[i] = va_arg(ap, int);
-	va_end(ap);
-
-	return sys5(SYS_IOCONTROL, (int)path, args[0], args[1], args[2], args[3]);
-}
-
 res stat(const char *path, struct stat *buf)
 {
 	return sys2(SYS_STAT, (int)path, (int)buf);
@@ -139,6 +126,34 @@ res exec(const char *path, ...)
 	va_end(ap);
 
 	return sys5(SYS_EXEC, (int)path, args[0], args[1], args[2], args[3]);
+}
+
+res io_poll(u32 *devs)
+{
+	return sys1(SYS_IOPOLL, (int)devs);
+}
+
+res io_read(enum io_type io, void *buf, u32 offset, u32 count)
+{
+	return sys4(SYS_IOREAD, (int)io, (int)buf, (int)offset, (int)count);
+}
+
+res io_write(enum io_type io, void *buf, u32 offset, u32 count)
+{
+	return sys4(SYS_IOWRITE, (int)io, (int)buf, (int)offset, (int)count);
+}
+
+res io_control(enum io_type io, ...)
+{
+	va_list ap;
+	int args[4] = { 0 };
+
+	va_start(ap, io);
+	for (int i = 0; i < 4; i++)
+		args[i] = va_arg(ap, int);
+	va_end(ap);
+
+	return sys5(SYS_IOCONTROL, (int)io, args[0], args[1], args[2], args[3]);
 }
 
 res yield(void)

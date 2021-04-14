@@ -33,14 +33,15 @@ u8 ps2_read_data(void);
 u8 ps2_write_data(u8 byte);
 struct ps2_status ps2_read_status(void);
 u8 ps2_write_command(u8 byte);
+u8 ps2_write_device(u8 device, u8 data);
 
 void ps2_detect(void);
-u8 ps2_keyboard_support(void);
-u8 ps2_mouse_support(void);
+u8 ps2_keyboard_detect(void);
+u8 ps2_mouse_detect(void);
 
-void ps2_keyboard_install(void);
+void ps2_keyboard_install(u8 device);
 void ps2_keyboard_reset(void);
 
-void ps2_mouse_install(void);
+void ps2_mouse_install(u8 device);
 
 #endif

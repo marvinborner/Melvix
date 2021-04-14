@@ -86,6 +86,13 @@ CLEAR static u8 ps2_write_config(struct ps2_config config)
 #define PS2_TYPE_TRANSLATION_KEYBOARD2 0xabc1
 #define PS2_TYPE_STANDARD_KEYBOARD 0xab83
 
+#define PS2_KEYBOARD(type)                                                                         \
+	((type) == PS2_TYPE_TRANSLATION_KEYBOARD1 || (type) == PS2_TYPE_TRANSLATION_KEYBOARD2 ||   \
+	 (type) == PS2_TYPE_STANDARD_KEYBOARD)
+#define PS2_MOUSE(type)                                                                            \
+	((type) == PS2_TYPE_STANDARD_MOUSE || (type) == PS2_TYPE_WHEEL_MOUSE ||                    \
+	 (type) == PS2_TYPE_BUTTON_MOUSE)
+
 PROTECTED static struct {
 	u8 detected : 1;
 	struct {
@@ -98,7 +105,7 @@ PROTECTED static struct {
 	} second;
 } info = { 0 };
 
-CLEAR static u8 ps2_write_device(u8 device, u8 data)
+CLEAR u8 ps2_write_device(u8 device, u8 data)
 {
 	u8 resp = PS2_RESEND;
 	for (u8 i = 0; resp == PS2_RESEND && i < 3; i++) {
@@ -114,44 +121,62 @@ CLEAR static u8 ps2_write_device(u8 device, u8 data)
 	return 1;
 }
 
-CLEAR static u8 ps2_device_keyboard(u16 type)
-{
-	return type == PS2_TYPE_TRANSLATION_KEYBOARD1 || type == PS2_TYPE_TRANSLATION_KEYBOARD2 ||
-	       type == PS2_TYPE_STANDARD_KEYBOARD;
-}
-
-CLEAR static u8 ps2_device_mouse(u16 type)
-{
-	return type == PS2_TYPE_STANDARD_MOUSE || type == PS2_TYPE_WHEEL_MOUSE ||
-	       type == PS2_TYPE_BUTTON_MOUSE;
-}
-
-CLEAR u8 ps2_keyboard_support(void)
+CLEAR static u8 ps2_device_keyboard(void)
 {
 	if (!info.detected)
+		return U8_MAX;
+
+	if (info.first.exists && PS2_KEYBOARD(info.first.type))
 		return 0;
+	else if (info.second.exists && PS2_KEYBOARD(info.second.type))
+		return 1;
 
-	// Find, reset and self-test
-	if ((info.first.exists && ps2_device_keyboard(info.first.type) &&
-	     ps2_write_device(0, 0xff)) ||
-	    (info.second.exists && ps2_device_keyboard(info.second.type) &&
-	     ps2_write_device(1, 0xff)))
-		return ps2_read_data() == 0xaa;
-
-	return 0;
+	return U8_MAX;
 }
 
-CLEAR u8 ps2_mouse_support(void)
+CLEAR static u8 ps2_device_mouse(void)
 {
 	if (!info.detected)
+		return U8_MAX;
+
+	if (info.first.exists && PS2_MOUSE(info.first.type))
 		return 0;
+	else if (info.second.exists && PS2_MOUSE(info.second.type))
+		return 1;
 
-	// Find, reset and self-test
-	if ((info.first.exists && ps2_device_mouse(info.first.type) && ps2_write_device(0, 0xff)) ||
-	    (info.second.exists && ps2_device_mouse(info.second.type) && ps2_write_device(1, 0xff)))
-		return ps2_read_data() == 0xaa;
+	return U8_MAX;
+}
 
-	return 0;
+CLEAR u8 ps2_keyboard_detect(void)
+{
+	if (!info.detected)
+		return U8_MAX;
+
+	u8 device = ps2_device_keyboard();
+	if (device == U8_MAX)
+		return device;
+
+	ps2_write_device(device, 0xff);
+	if (ps2_read_data() == 0xaa)
+		return device;
+
+	return U8_MAX;
+}
+
+CLEAR u8 ps2_mouse_detect(void)
+{
+	if (!info.detected)
+		return U8_MAX;
+
+	u8 device = ps2_device_mouse();
+	if (device == U8_MAX)
+		return device;
+
+	ps2_write_device(device, 0xff);
+	if (ps2_read_data() == 0xaa)
+		return device;
+
+	return U8_MAX;
 }
 
 CLEAR void ps2_detect(void)

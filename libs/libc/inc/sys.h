@@ -18,14 +18,14 @@ enum sys {
 	SYS_ALLOC, // Allocate memory
 	SYS_SHACCESS, // Access shared memory
 	SYS_FREE, // Free memory
-	SYS_STAT, // Get file information
 	SYS_READ, // Read file (non-blocking)
 	SYS_WRITE, // Write to file
+	SYS_STAT, // Get file information
+	SYS_EXEC, // Execute path
 	SYS_IOPOLL, // Block proc until I/O device is ready
 	SYS_IOREAD, // Read data from I/O device (blocking)
 	SYS_IOWRITE, // Write data to I/O device
 	SYS_IOCONTROL, // Interact with an I/O device
-	SYS_EXEC, // Execute path
 	SYS_EXIT, // Exit current process
 	SYS_BOOT, // Boot functions (e.g. reboot/shutdown)
 	SYS_YIELD, // Switch to next process
@@ -79,9 +79,12 @@ struct stat {
 void exit(s32 status) NORETURN;
 res read(const char *path, void *buf, u32 offset, u32 count) NONNULL;
 res write(const char *path, const void *buf, u32 offset, u32 count) NONNULL;
-res ioctl(const char *path, ...) NONNULL;
 res stat(const char *path, struct stat *buf) NONNULL;
 res exec(const char *path, ...) ATTR((nonnull(1))) SENTINEL;
+res io_poll(u32 *devs);
+res io_read(enum io_type io, void *buf, u32 offset, u32 count);
+res io_write(enum io_type io, void *buf, u32 offset, u32 count);
+res io_control(enum io_type io, ...);
 res yield(void);
 res boot(u32 cmd);
 

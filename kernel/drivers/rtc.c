@@ -69,23 +69,3 @@ u32 rtc_stamp(void)
 	return timer_get() + rtc.second + rtc.minute * 60 + rtc.hour * 360 + rtc.day * 360 * 24 +
 	       rtc.year * 360 * 24 * 365;
 }
-
-static res rtc_dev_read(void *buf, u32 offset, u32 count, struct vfs_dev *dev)
-{
-	UNUSED(offset);
-	UNUSED(dev);
-
-	u32 stamp = rtc_stamp();
-	memcpy_user(buf, &stamp, MIN(count, sizeof(stamp)));
-
-	return MIN(count, sizeof(stamp));
-}
-
-CLEAR void rtc_install(void)
-{
-	struct vfs_dev *dev = zalloc(sizeof(*dev));
-	dev->name = strdup("rtc");
-	dev->type = DEV_CHAR;
-	dev->read = rtc_dev_read;
-	/* device_add(dev); */
-}

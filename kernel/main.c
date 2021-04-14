@@ -2,7 +2,6 @@
 
 #include <boot.h>
 #include <cpu.h>
-#include <fb.h>
 #include <fs.h>
 #include <ide.h>
 #include <interrupts.h>
@@ -16,7 +15,6 @@
 #include <rtc.h>
 #include <serial.h>
 #include <syscall.h>
-#include <timer.h>
 
 PROTECTED extern u32 __stack_chk_guard;
 PROTECTED u32 __stack_chk_guard;
@@ -49,11 +47,7 @@ int kernel_main(struct boot_info *boot)
 	ata_install();
 	pci_install();
 	interrupts_install();
-	timer_install();
-	rtc_install();
-	io_install();
-	fb_install(boot->vid);
-	/* net_install(); */
+	io_install(boot);
 
 	// Enable drivers
 	sti();
