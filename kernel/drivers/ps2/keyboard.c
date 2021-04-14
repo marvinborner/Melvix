@@ -5,10 +5,10 @@
 #include <errno.h>
 #include <fs.h>
 #include <interrupts.h>
-#include <keyboard.h>
 #include <mem.h>
 #include <print.h>
 #include <proc.h>
+#include <ps2.h>
 #include <stack.h>
 #include <str.h>
 #include <sys.h>
@@ -22,7 +22,7 @@ static int merged = 0;
 static void keyboard_handler(struct regs *r)
 {
 	UNUSED(r);
-	int scancode = inb(0x60);
+	u8 scancode = ps2_read_data();
 
 	// TODO: Support more than two-byte scancodes
 	if (scancode == 0xe0) {
@@ -46,19 +46,6 @@ static void keyboard_handler(struct regs *r)
 	merged = 0;
 }
 
-/*static void keyboard_acknowledge(void)
-{
-	while (inb(0x60) != 0xfa)
-		;
-}
-
-static void keyboard_rate(void)
-{
-	outb(0x60, 0xF3);
-	keyboard_acknowledge();
-	outb(0x60, 0x0); // Rate{00000} Delay{00} 0
-}*/
-
 static res keyboard_read(void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
 	UNUSED(dev);
@@ -76,12 +63,12 @@ static res keyboard_ready(void)
 	return !stack_empty(queue);
 }
 
-CLEAR void keyboard_reset(void)
+CLEAR void ps2_keyboard_reset(void)
 {
 	stack_clear(queue);
 }
 
-CLEAR void keyboard_install(void)
+CLEAR void ps2_keyboard_install(void)
 {
 	//keyboard_rate(); TODO: Fix keyboard rate?
 	irq_install_handler(1, keyboard_handler);

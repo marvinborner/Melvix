@@ -21,10 +21,10 @@ enum sys {
 	SYS_STAT, // Get file information
 	SYS_READ, // Read file (non-blocking)
 	SYS_WRITE, // Write to file
-	SYS_IOCTL, // Interact with an I/O device
 	SYS_IOPOLL, // Block proc until I/O device is ready
 	SYS_IOREAD, // Read data from I/O device (blocking)
 	SYS_IOWRITE, // Write data to I/O device
+	SYS_IOCONTROL, // Interact with an I/O device
 	SYS_EXEC, // Execute path
 	SYS_EXIT, // Exit current process
 	SYS_BOOT, // Boot functions (e.g. reboot/shutdown)
@@ -34,6 +34,17 @@ enum sys {
 	/* SYS_NET_CONNECT, // Connect to destination */
 	/* SYS_NET_SEND, // Send to socket */
 	/* SYS_NET_RECEIVE, // Receive data from socket */
+};
+
+enum io_type {
+	IO_MIN,
+	IO_FRAMEBUFFER,
+	IO_NETWORK,
+	IO_KEYBOARD,
+	IO_MOUSE,
+	IO_TIMER,
+	IO_BUS,
+	IO_MAX,
 };
 
 struct event_keyboard {

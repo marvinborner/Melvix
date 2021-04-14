@@ -53,15 +53,10 @@ static void syscall_handler(struct regs *r)
 		r->eax = vfs_write((char *)r->ebx, (void *)r->ecx, r->edx, r->esi);
 		break;
 	}
-	case SYS_IOCTL: {
-		r->eax = vfs_ioctl((char *)r->ebx, r->ecx, (void *)r->edx, (void *)r->esi,
-				   (void *)r->edi);
-		break;
-	}
 
 	// I/O operations
 	case SYS_IOPOLL: {
-		r->eax = io_poll((void *)r->ebx);
+		r->eax = io_poll((u32 *)r->ebx);
 		break;
 	}
 	case SYS_IOREAD: {
@@ -70,6 +65,10 @@ static void syscall_handler(struct regs *r)
 	}
 	case SYS_IOWRITE: {
 		r->eax = io_write(r->ebx, (void *)r->ecx, r->edx, r->esi);
+		break;
+	}
+	case SYS_IOCONTROL: {
+		r->eax = io_control(r->ebx, r->ecx, (void *)r->edx, (void *)r->esi, (void *)r->edi);
 		break;
 	}
 

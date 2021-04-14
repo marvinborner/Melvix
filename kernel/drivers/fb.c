@@ -6,7 +6,6 @@
 #include <errno.h>
 #include <fb.h>
 #include <fs.h>
-#include <ioctl.h>
 #include <mem.h>
 #include <mm.h>
 #include <str.h>
@@ -33,7 +32,7 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3, struct vfs_
 	UNUSED(dev);
 
 	switch (request) {
-	case IO_FB_GET: {
+	case 0: {
 		if (!info)
 			return -ENOENT;
 

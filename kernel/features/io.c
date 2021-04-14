@@ -5,6 +5,7 @@
 #include <io.h>
 #include <list.h>
 #include <mm.h>
+#include <ps2.h>
 #include <rand.h>
 #include <str.h>
 
@@ -29,12 +30,13 @@ CLEAR void io_add(enum io_type io, struct io_dev *dev)
 	io_mappings[io] = dev;
 }
 
-res io_control(enum io_type io)
+res io_control(enum io_type io, u32 request, void *arg1, void *arg2, void *arg3)
 {
-	if (!io_get(io))
+	struct io_dev *dev;
+	if (!(dev = io_get(io)) || !dev->control)
 		return -ENOENT;
 
-	return -ENOENT;
+	return dev->control(request, arg1, arg2, arg3);
 }
 
 res io_write(enum io_type io, void *buf, u32 offset, u32 count)
@@ -42,8 +44,11 @@ res io_write(enum io_type io, void *buf, u32 offset, u32 count)
 	if (!memory_readable(buf))
 		return -EFAULT;
 
-	if (!io_get(io))
+	struct io_dev *dev;
+	if (!(dev = io_get(io)) || !dev->write)
 		return -ENOENT;
+
+	return dev->write(buf, offset, count);
 }
 
 res io_read(enum io_type io, void *buf, u32 offset, u32 count)
@@ -51,17 +56,35 @@ res io_read(enum io_type io, void *buf, u32 offset, u32 count)
 	if (!memory_readable(buf))
 		return -EFAULT;
 
-	if (!io_get(io))
+	struct io_dev *dev;
+	if (!(dev = io_get(io)) || !dev->read)
 		return -ENOENT;
+
+	return dev->read(buf, offset, count);
 }
 
-res io_poll(enum io_type io)
+res io_poll(u32 *devs)
 {
-	if (!io_get(io))
-		return -ENOENT;
+	if (!memory_readable(devs))
+		return -EFAULT;
+
+	for (u32 *p = devs; p && memory_readable(p) && *p; p++) {
+		if (!io_get(*p))
+			return -ENOENT;
+	}
+
+	return -EFAULT;
 }
 
 CLEAR void io_install(void)
 {
-	// TODO: Install I/O devices by selecting best working driver
+	ps2_detect();
+
+	if (ps2_keyboard_support()) {
+		print("KBD!\n");
+	}
+
+	if (ps2_mouse_support()) {
+		print("MOUSE!\n");
+	}
 }

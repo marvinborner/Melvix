@@ -6,25 +6,18 @@
 #include <def.h>
 #include <sys.h>
 
-enum io_type {
-	IO_MIN,
-	IO_FRAMEBUFFER,
-	IO_NETWORK,
-	IO_KEYBOARD,
-	IO_MOUSE,
-	IO_BUS,
-	IO_MAX,
-};
-
 struct io_dev {
 	const char *name;
+	res (*read)(void *buf, u32 offset, u32 count) NONNULL;
+	res (*write)(void *buf, u32 offset, u32 count) NONNULL;
+	res (*control)(u32 request, void *arg1, void *arg2, void *arg3);
 };
 
 void io_install(void);
 
-res io_control();
+res io_control(enum io_type io, u32 request, void *arg1, void *arg2, void *arg3);
 res io_write(enum io_type io, void *buf, u32 offset, u32 count);
 res io_read(enum io_type io, void *buf, u32 offset, u32 count);
-res io_poll();
+res io_poll(u32 *devs);
 
 #endif

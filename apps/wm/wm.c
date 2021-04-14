@@ -4,7 +4,6 @@
 #include <def.h>
 #include <errno.h>
 #include <input.h>
-#include <ioctl.h>
 #include <libgui/gfx.h>
 #include <libgui/gui.h>
 #include <libgui/msg.h>
@@ -495,7 +494,7 @@ int main(int argc, char **argv)
 
 	atexit(handle_exit);
 
-	assert(ioctl("/dev/fb", IO_FB_GET, &screen) == 0);
+	assert(ioctl("/dev/fb", 0, &screen) == 0);
 	log("WM loaded: %dx%d\n", screen.width, screen.height);
 	wm_client = (struct client){ .pid = getpid() };
 	bypp = (screen.bpp >> 3);

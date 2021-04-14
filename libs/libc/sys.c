@@ -120,7 +120,7 @@ res ioctl(const char *path, ...)
 		args[i] = va_arg(ap, int);
 	va_end(ap);
 
-	return sys5(SYS_IOCTL, (int)path, args[0], args[1], args[2], args[3]);
+	return sys5(SYS_IOCONTROL, (int)path, args[0], args[1], args[2], args[3]);
 }
 
 res stat(const char *path, struct stat *buf)

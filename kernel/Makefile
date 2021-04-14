@@ -5,13 +5,14 @@ COBJS = main.o \
 	drivers/interrupts_asm.o \
 	drivers/cpu.o \
 	drivers/serial.o \
-	drivers/keyboard.o \
-	drivers/mouse.o \
 	drivers/pci.o \
 	drivers/rtc.o \
 	drivers/ide.o \
 	drivers/fb.o \
 	drivers/timer.o \
+	drivers/ps2/ps2.o \
+	drivers/ps2/mouse.o \
+	drivers/ps2/keyboard.o \
 	features/mm.o \
 	features/fs.o \
 	features/io.o \

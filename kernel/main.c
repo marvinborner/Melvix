@@ -6,11 +6,10 @@
 #include <fs.h>
 #include <ide.h>
 #include <interrupts.h>
-#include <keyboard.h>
+#include <io.h>
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
-#include <mouse.h>
 #include <net.h>
 #include <pci.h>
 #include <rand.h>
@@ -52,14 +51,12 @@ int kernel_main(struct boot_info *boot)
 	interrupts_install();
 	timer_install();
 	rtc_install();
-	keyboard_install();
-	mouse_install();
+	io_install();
 	fb_install(boot->vid);
 	/* net_install(); */
 
 	// Enable drivers
 	sti();
-	keyboard_reset();
 
 	syscall_init();
 
