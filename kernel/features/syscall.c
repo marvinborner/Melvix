@@ -60,7 +60,12 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_IOREAD: {
-		r->eax = io_read(r->ebx, (void *)r->ecx, r->edx, r->esi);
+		res ret = io_read(r->ebx, (void *)r->ecx, r->edx, r->esi);
+		if (ret == -EAGAIN) {
+			io_block(r->ebx, proc_current(), r);
+		} else {
+			r->eax = ret;
+		}
 		break;
 	}
 	case SYS_IOWRITE: {
@@ -87,10 +92,12 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 	case SYS_EXIT: {
+		r->eax = EOK;
 		proc_exit(proc_current(), r, (s32)r->ebx);
 		break;
 	}
 	case SYS_YIELD: {
+		r->eax = EOK;
 		proc_yield(r);
 		break;
 	}
@@ -126,6 +133,7 @@ static void syscall_handler(struct regs *r)
 
 	// TODO: Reimplement network functions using VFS
 	default: {
+		r->eax = -EINVAL;
 		printf("Unknown syscall %d!\n", num);
 		break;
 	}

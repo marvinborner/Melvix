@@ -124,6 +124,8 @@ void proc_reset_quantum(struct proc *proc)
 
 void proc_state(struct proc *proc, enum proc_state state)
 {
+	assert(proc != idle_proc->data);
+
 	if (state == PROC_RUNNING && !list_first_data(proc_list_running, proc)) {
 		assert(list_remove(proc_list_blocked, list_first_data(proc_list_blocked, proc)));
 		assert(list_add(proc_list_running, proc));

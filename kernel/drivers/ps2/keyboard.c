@@ -43,6 +43,8 @@ static void keyboard_handler(struct regs *r)
 
 	state = 0;
 	merged = 0;
+
+	io_unblock(IO_KEYBOARD);
 }
 
 static res keyboard_read(void *buf, u32 offset, u32 count)
@@ -63,7 +65,8 @@ static res keyboard_ready(void)
 
 CLEAR void ps2_keyboard_reset(void)
 {
-	stack_clear(queue);
+	if (queue)
+		stack_clear(queue);
 }
 
 CLEAR void ps2_keyboard_install(u8 device)

@@ -5,6 +5,8 @@
 
 #include <boot.h>
 #include <def.h>
+#include <interrupts.h>
+#include <proc.h>
 #include <sys.h>
 
 struct io_dev {
@@ -21,5 +23,8 @@ res io_control(enum io_type io, u32 request, void *arg1, void *arg2, void *arg3)
 res io_write(enum io_type io, void *buf, u32 offset, u32 count);
 res io_read(enum io_type io, void *buf, u32 offset, u32 count);
 res io_poll(u32 *devs) NONNULL;
+
+void io_block(enum io_type io, struct proc *proc, struct regs *r) NONNULL;
+void io_unblock(enum io_type io);
 
 #endif
