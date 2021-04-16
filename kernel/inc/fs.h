@@ -60,10 +60,10 @@ res vfs_mount(struct vfs_dev *dev, const char *path) NONNULL;
 struct vfs_dev *vfs_find_dev(const char *path) NONNULL;
 void vfs_add_dev(struct vfs_dev *dev) NONNULL;
 
-res vfs_read(const char *path, void *buf, u32 offset, u32 count) NONNULL;
-res vfs_write(const char *path, void *buf, u32 offset, u32 count) NONNULL;
-res vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3) ATTR((nonnull(1)));
-res vfs_stat(const char *path, struct stat *buf) NONNULL;
+// No NONNULL on syscalls
+res vfs_read(const char *path, void *buf, u32 offset, u32 count);
+res vfs_write(const char *path, void *buf, u32 offset, u32 count);
+res vfs_stat(const char *path, struct stat *buf);
 
 struct vfs_dev *device_get_by_name(const char *name) NONNULL;
 struct vfs_dev *device_get_by_id(u32 id) NONNULL;

@@ -11,6 +11,7 @@
 #include <ps2.h>
 #include <rand.h>
 #include <str.h>
+#include <syscall.h>
 #include <timer.h>
 
 PROTECTED static struct io_dev *io_mappings[IO_MAX] = { 0 };
@@ -40,6 +41,7 @@ res io_poll(u32 *devs)
 	if (!memory_readable(devs))
 		return -EFAULT;
 
+	io_block(IO_BUS, proc_current()); // TODO!
 	for (u32 *p = devs; p && memory_readable(p) && *p; p++) {
 		if (!io_get(*p))
 			return -ENOENT;
@@ -84,30 +86,32 @@ res io_read(enum io_type io, void *buf, u32 offset, u32 count)
 	return dev->read(buf, offset, count);
 }
 
-void io_block(enum io_type io, struct proc *proc, struct regs *r)
+res io_ready(enum io_type io)
 {
-	assert(r->eax == SYS_IOREAD);
+	struct io_dev *dev;
+	if (!(dev = io_get(io)))
+		return -ENOENT;
+
+	if (dev->ready && !dev->ready())
+		return -EAGAIN;
+
+	return EOK;
+}
+
+void io_block(enum io_type io, struct proc *proc)
+{
 	assert(io_type_valid(io));
 	list_add(io_listeners[io], proc);
 	proc_state(proc_current(), PROC_BLOCKED);
-	proc_yield(r);
+	proc_yield();
 }
 
 void io_unblock(enum io_type io)
 {
-	struct page_dir *dir_bak;
-	memory_backup_dir(&dir_bak);
-
 	assert(io_type_valid(io));
 	struct node *iterator = io_listeners[io]->head;
 	while (iterator) {
 		struct proc *proc = iterator->data;
-		struct regs *r = &proc->regs;
-
-		memory_switch_dir(proc->page_dir);
-		r->eax = io_read(r->ebx, (void *)r->ecx, r->edx, r->esi);
-		memory_switch_dir(dir_bak);
-
 		proc_state(proc, PROC_RUNNING);
 		struct node *next = iterator->next;
 		list_remove(io_listeners[io], iterator);

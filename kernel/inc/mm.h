@@ -132,14 +132,16 @@ void memory_backup_dir(struct page_dir **backup) NONNULL;
 // Bypass should almost never be used
 void memory_bypass_enable(void);
 void memory_bypass_disable(void);
-u8 memory_is_user(const void *addr) NONNULL;
-u8 memory_readable(const void *addr) NONNULL;
-u8 memory_writable(const void *addr) NONNULL;
 
-// User interface
-res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared) NONNULL;
-res memory_sys_free(struct page_dir *dir, u32 addr) NONNULL;
-res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size) NONNULL;
+// No NONNULL on verification (for syscalls etc)
+u8 memory_is_user(const void *addr);
+u8 memory_readable(const void *addr);
+u8 memory_writable(const void *addr);
+
+// User interface - No NONNULL on syscalls
+res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared);
+res memory_sys_free(struct page_dir *dir, u32 addr);
+res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size);
 
 void memory_user_hook(void);
 void memory_install(struct boot_info *boot) NONNULL;

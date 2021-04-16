@@ -233,7 +233,7 @@ void print_trace(u32 count)
 	} * stk;
 	__asm__ volatile("movl %%ebp, %0;" : "=r"(stk));
 	print("EBP\tEIP\n");
-	for (u32 i = 0; stk && i < count; i++) {
+	for (u32 i = 0; stk && memory_readable(stk) && i < count; i++) {
 		printf("0x%x\t0x%x\n", stk->ebp, stk->eip);
 		stk = stk->ebp;
 	}

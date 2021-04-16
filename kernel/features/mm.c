@@ -602,11 +602,17 @@ void memory_bypass_disable(void)
 
 u8 memory_is_user(const void *addr)
 {
+	if (!addr)
+		return 0;
+
 	return PDI((u32)addr) >= PAGE_KERNEL_COUNT;
 }
 
 u8 memory_readable(const void *addr)
 {
+	if (!addr)
+		return 0;
+
 	struct proc *proc = proc_current();
 	if (proc && !memory_bypass_validity)
 		return memory_is_user(addr) && virtual_user_readable(proc->page_dir, (u32)addr);
@@ -616,6 +622,9 @@ u8 memory_readable(const void *addr)
 
 u8 memory_writable(const void *addr)
 {
+	if (!addr)
+		return 0;
+
 	struct proc *proc = proc_current();
 	if (proc && !memory_bypass_validity)
 		return memory_is_user(addr) && virtual_user_writable(proc->page_dir, (u32)addr);

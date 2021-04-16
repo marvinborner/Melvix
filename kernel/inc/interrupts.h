@@ -70,6 +70,7 @@ extern void isr28(struct regs *r);
 extern void isr29(struct regs *r);
 extern void isr30(struct regs *r);
 extern void isr31(struct regs *r);
+extern void isr127(struct regs *r);
 extern void isr128(struct regs *r);
 
 extern void irq0(struct regs *r);
@@ -88,6 +89,7 @@ extern void irq12(struct regs *r);
 extern void irq13(struct regs *r);
 extern void irq14(struct regs *r);
 extern void irq15(struct regs *r);
+extern void irq127(struct regs *r);
 extern void irq128(struct regs *r);
 
 #endif

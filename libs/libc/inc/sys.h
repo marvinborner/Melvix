@@ -81,10 +81,12 @@ res read(const char *path, void *buf, u32 offset, u32 count) NONNULL;
 res write(const char *path, const void *buf, u32 offset, u32 count) NONNULL;
 res stat(const char *path, struct stat *buf) NONNULL;
 res exec(const char *path, ...) ATTR((nonnull(1))) SENTINEL;
-res io_poll(u32 *devs);
-res io_read(enum io_type io, void *buf, u32 offset, u32 count);
-res io_write(enum io_type io, void *buf, u32 offset, u32 count);
+
+res io_poll(u32 *devs) NONNULL;
+res io_read(enum io_type io, void *buf, u32 offset, u32 count) NONNULL;
+res io_write(enum io_type io, void *buf, u32 offset, u32 count) NONNULL;
 res io_control(enum io_type io, ...);
+
 res yield(void);
 res boot(u32 cmd);
 

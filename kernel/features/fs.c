@@ -198,28 +198,6 @@ res vfs_write(const char *path, void *buf, u32 offset, u32 count)
 	return m->dev->vfs->write(path, buf, offset, count, m->dev);
 }
 
-res vfs_ioctl(const char *path, u32 request, void *arg1, void *arg2, void *arg3)
-{
-	if (!memory_readable(path))
-		return -EFAULT;
-
-	struct mount_info *m = vfs_find_mount_info(path);
-	if (!m || !m->dev || !m->dev->vfs)
-		return -ENOENT;
-
-	if (!m->dev->vfs->ioctl || !m->dev->vfs->perm)
-		return -EINVAL;
-
-	u32 len = strlen(m->path);
-	if (len > 1)
-		path += len;
-
-	if (m->dev->vfs->perm(path, VFS_WRITE, m->dev) != EOK && !proc_super())
-		return -EACCES;
-
-	return m->dev->vfs->ioctl(path, request, arg1, arg2, arg3, m->dev);
-}
-
 res vfs_stat(const char *path, struct stat *buf)
 {
 	if (!memory_readable(path))

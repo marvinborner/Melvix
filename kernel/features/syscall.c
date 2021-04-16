@@ -19,7 +19,6 @@
 static void syscall_handler(struct regs *r)
 {
 	enum sys num = r->eax;
-	r->eax = EOK;
 
 	/* printf("[SYSCALL] %d from %s\n", num, proc_current()->name); */
 
@@ -56,16 +55,18 @@ static void syscall_handler(struct regs *r)
 
 	// I/O operations
 	case SYS_IOPOLL: {
-		r->eax = io_poll((u32 *)r->ebx);
+		r->eax = io_poll((void *)r->ebx);
 		break;
 	}
 	case SYS_IOREAD: {
-		res ret = io_read(r->ebx, (void *)r->ecx, r->edx, r->esi);
-		if (ret == -EAGAIN) {
-			io_block(r->ebx, proc_current(), r);
-		} else {
-			r->eax = ret;
+		res ready = io_ready(r->ebx);
+		if (ready == -EAGAIN) {
+			io_block(r->ebx, proc_current());
+		} else if (ready != EOK) {
+			r->eax = ready;
+			break;
 		}
+		r->eax = io_read(r->ebx, (void *)r->ecx, r->edx, r->esi);
 		break;
 	}
 	case SYS_IOWRITE: {
@@ -87,7 +88,7 @@ static void syscall_handler(struct regs *r)
 		} else {
 			// TODO: Reimplement argc,argv
 			proc_stack_push(proc, 0);
-			proc_yield(r);
+			proc_yield();
 		}
 		break;
 	}
@@ -98,7 +99,7 @@ static void syscall_handler(struct regs *r)
 	}
 	case SYS_YIELD: {
 		r->eax = EOK;
-		proc_yield(r);
+		proc_yield();
 		break;
 	}
 
@@ -140,8 +141,19 @@ static void syscall_handler(struct regs *r)
 	}
 }
 
+// For kernel syscalls (internal)
+static void syscall_special_handler(struct regs *r)
+{
+	if (RING(r) != 0)
+		return;
+
+	scheduler(r);
+}
+
 CLEAR void syscall_init(void)
 {
-	idt_set_gate(0x80, (u32)isr128, 0x08, 0x8E);
+	idt_set_gate(0x7f, (u32)isr127, 0x08, 0x8e);
+	idt_set_gate(0x80, (u32)isr128, 0x08, 0xee);
+	isr_install_handler(0x7f, syscall_special_handler);
 	isr_install_handler(0x80, syscall_handler);
 }

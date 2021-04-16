@@ -53,7 +53,6 @@ int kernel_main(struct boot_info *boot)
 	sti();
 
 	syscall_init();
-
 	proc_init();
 
 	return 1;

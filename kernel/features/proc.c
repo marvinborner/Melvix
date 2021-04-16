@@ -177,13 +177,13 @@ void proc_exit(struct proc *proc, struct regs *r, s32 status)
 
 	free(proc);
 
-	proc_yield(r);
+	proc_yield();
 }
 
-void proc_yield(struct regs *r)
+void proc_yield(void)
 {
 	proc_reset_quantum(PROC(current));
-	scheduler(r);
+	__asm__ volatile("int $127");
 }
 
 struct proc *proc_make(enum proc_priv priv)
