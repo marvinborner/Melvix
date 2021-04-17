@@ -29,11 +29,6 @@ enum sys {
 	SYS_EXIT, // Exit current process
 	SYS_BOOT, // Boot functions (e.g. reboot/shutdown)
 	SYS_YIELD, // Switch to next process
-	/* SYS_NET_OPEN, // Open network socket */
-	/* SYS_NET_CLOSE, // Close network socket */
-	/* SYS_NET_CONNECT, // Connect to destination */
-	/* SYS_NET_SEND, // Send to socket */
-	/* SYS_NET_RECEIVE, // Receive data from socket */
 };
 
 enum io_type {

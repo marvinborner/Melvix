@@ -45,6 +45,7 @@ static void mouse_handler(struct regs *r)
 		event->but3 = (mouse_byte[0] >> 2) & 1;
 		stack_push_bot(queue, event);
 		mouse_cycle = 0;
+		io_unblock(IO_MOUSE);
 		break;
 	default:
 		break;
@@ -53,7 +54,7 @@ static void mouse_handler(struct regs *r)
 
 static res mouse_ready(void)
 {
-	return !stack_empty(queue);
+	return !stack_empty(queue) ? EOK : -EAGAIN;
 }
 
 static res mouse_read(void *buf, u32 offset, u32 count)

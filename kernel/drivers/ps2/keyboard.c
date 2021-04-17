@@ -60,7 +60,7 @@ static res keyboard_read(void *buf, u32 offset, u32 count)
 
 static res keyboard_ready(void)
 {
-	return !stack_empty(queue);
+	return !stack_empty(queue) ? EOK : -EAGAIN;
 }
 
 CLEAR void ps2_keyboard_reset(void)

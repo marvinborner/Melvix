@@ -521,24 +521,23 @@ int main(int argc, char **argv)
 	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
 	struct event_mouse event_mouse = { 0 };
-	u32 listeners[] = { IO_KEYBOARD, IO_MOUSE, IO_BUS, 0 };
+	u32 listeners[] = { IO_KEYBOARD, IO_MOUSE, 0 };
 
 	while (1) {
 		res poll_ret = 0;
 		if ((poll_ret = io_poll(listeners)) >= 0) {
-			if (poll_ret == 0) {
-				if (io_read(listeners[poll_ret], &event_keyboard, 0,
+			if (poll_ret == IO_KEYBOARD) {
+				if (io_read(IO_KEYBOARD, &event_keyboard, 0,
 					    sizeof(event_keyboard)) > 0) {
 					handle_event_keyboard(&event_keyboard);
 					continue;
 				}
-			} else if (poll_ret == 1) {
-				if (io_read(listeners[poll_ret], &event_mouse, 0,
-					    sizeof(event_mouse)) > 0) {
+			} else if (poll_ret == IO_MOUSE) {
+				if (io_read(IO_MOUSE, &event_mouse, 0, sizeof(event_mouse)) > 0) {
 					handle_event_mouse(&event_mouse);
 					continue;
 				}
-			} else if (poll_ret == 2) {
+			} else if (poll_ret == IO_BUS) {
 				if (msg_receive(msg, sizeof(msg)) > 0) {
 					handle_message(msg);
 					continue;

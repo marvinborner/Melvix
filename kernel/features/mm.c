@@ -512,7 +512,7 @@ res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shar
 
 res memory_sys_free(struct page_dir *dir, u32 addr)
 {
-	if (!addr || !memory_readable((void *)addr))
+	if (!memory_readable((void *)addr))
 		return -EFAULT;
 
 	struct list *links = proc_current()->memory;
