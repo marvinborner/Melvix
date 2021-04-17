@@ -48,6 +48,8 @@ struct proc {
 	struct stack *messages;
 	struct list *memory;
 
+	u32 bus_conn;
+
 	struct {
 		u32 user;
 		u32 kernel;

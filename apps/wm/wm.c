@@ -494,7 +494,7 @@ int main(int argc, char **argv)
 
 	atexit(handle_exit);
 
-	assert(io_control(IO_FRAMEBUFFER, 0, &screen) == EOK);
+	assert(io_control(IO_FRAMEBUFFER, IOCTL_FB_GET, &screen) == EOK);
 	log("WM loaded: %dx%d\n", screen.width, screen.height);
 	wm_client = (struct client){ .pid = getpid() };
 	bypp = (screen.bpp >> 3);
@@ -513,15 +513,17 @@ int main(int argc, char **argv)
 			    WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 
 	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */
-	gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png");
+	/* gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png"); */
 	memset(cursor->ctx.fb, 0, cursor->ctx.bytes);
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
 	window_redraw(wallpaper);
 
+	assert(io_control(IO_BUS, IOCTL_BUS_REGISTER, "wm") == EOK);
+
 	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
 	struct event_mouse event_mouse = { 0 };
-	u32 listeners[] = { IO_KEYBOARD, IO_MOUSE, 0 };
+	enum io_type listeners[] = { IO_KEYBOARD, IO_MOUSE, IO_BUS, 0 };
 
 	while (1) {
 		res poll_ret = 0;
@@ -538,7 +540,7 @@ int main(int argc, char **argv)
 					continue;
 				}
 			} else if (poll_ret == IO_BUS) {
-				if (msg_receive(msg, sizeof(msg)) > 0) {
+				if (io_read(IO_BUS, msg, 0, sizeof(msg)) > 0) {
 					handle_message(msg);
 					continue;
 				}

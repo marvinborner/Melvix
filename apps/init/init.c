@@ -10,7 +10,6 @@ int main(int argc, char **argv)
 	UNUSED(argv);
 
 	assert(exec("wm", NULL) == EOK);
-	/* assert(exec("chess", NULL) == EOK); */
 
 	return 0;
 }

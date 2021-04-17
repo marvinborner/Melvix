@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
 #include <assert.h>
+#include <bus.h>
 #include <cpu.h>
 #include <def.h>
 #include <fb.h>
@@ -83,16 +84,23 @@ res io_poll(u32 *devs)
 			io_remove_group(group);
 			group--;
 			return -ENOENT;
-		} else if (dev->ready && dev->ready() == EOK) {
-			io_remove_group(group);
-			group--;
-			return io;
-		} else {
-			struct io_listener *listener = zalloc(sizeof(*listener));
-			listener->group = group;
-			listener->proc = proc_current();
-			list_add(io_listeners[io], listener);
 		}
+
+		if (dev->ready) {
+			res ready = dev->ready();
+			if (ready == EOK) {
+				io_remove_group(group);
+				group--;
+				return io;
+			} else if (ready != -EAGAIN) {
+				return ready;
+			}
+		}
+
+		struct io_listener *listener = zalloc(sizeof(*listener));
+		listener->group = group;
+		listener->proc = proc_current();
+		list_add(io_listeners[io], listener);
 	}
 
 	proc_state(proc_current(), PROC_BLOCKED);
@@ -161,7 +169,6 @@ void io_block(enum io_type io, struct proc *proc)
 
 void io_unblock(enum io_type io)
 {
-	printf("%d\n", group_id);
 	assert(io_type_valid(io));
 	struct node *iterator = io_listeners[io]->head;
 	while (iterator) {
@@ -194,4 +201,5 @@ CLEAR void io_install(struct boot_info *boot)
 
 	timer_install();
 	fb_install(boot->vid);
+	bus_install();
 }

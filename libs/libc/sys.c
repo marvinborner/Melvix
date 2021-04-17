@@ -128,7 +128,7 @@ res exec(const char *path, ...)
 	return sys5(SYS_EXEC, (int)path, args[0], args[1], args[2], args[3]);
 }
 
-res io_poll(u32 *devs)
+res io_poll(enum io_type *devs)
 {
 	return sys1(SYS_IOPOLL, (int)devs);
 }

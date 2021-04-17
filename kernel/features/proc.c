@@ -288,15 +288,7 @@ static res procfs_write(const char *path, void *buf, u32 offset, u32 count, stru
 		clac();
 
 		path++;
-		if (!memcmp_user(path, "msg", 4)) {
-			void *msg_data = malloc(count);
-			memcpy_user(msg_data, buf, count);
-			struct procfs_message *msg = malloc(sizeof(*msg));
-			msg->data = msg_data;
-			msg->size = count;
-			stack_push_bot(p->messages, msg); // TODO: Use offset
-			return count;
-		} else if (!memcmp_user(path, "io/", 3)) {
+		if (!memcmp_user(path, "io/", 3)) {
 			path += 3;
 			enum stream_defaults id = procfs_stream(path);
 			if (id == STREAM_UNKNOWN)
@@ -346,18 +338,6 @@ static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 			const char *status = p->state == PROC_RUNNING ? "running" : "sleeping";
 			memcpy_user(buf, status + offset, count);
 			return count;
-		} else if (!memcmp_user(path, "msg", 4)) {
-			if (stack_empty(p->messages)) {
-				return -EIO; // This shouldn't happen
-			} else {
-				struct procfs_message *msg = stack_pop(p->messages);
-				if (!msg)
-					return -EIO;
-				memcpy_user(buf, msg->data + offset, MIN(count, msg->size));
-				free(msg->data);
-				free(msg);
-				return MIN(count, msg->size);
-			}
 		} else if (!memcmp_user(path, "io/", 3)) {
 			path += 3;
 			enum stream_defaults id = procfs_stream(path);

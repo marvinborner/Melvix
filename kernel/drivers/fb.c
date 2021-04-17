@@ -30,7 +30,7 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3)
 	UNUSED(arg3);
 
 	switch (request) {
-	case 0: {
+	case IOCTL_FB_GET: {
 		if (!info)
 			return -ENOENT;
 

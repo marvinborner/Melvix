@@ -42,6 +42,11 @@ enum io_type {
 	IO_MAX,
 };
 
+// I/O control declarations
+#define IOCTL_FB_GET 0
+#define IOCTL_BUS_CONNECT 0
+#define IOCTL_BUS_REGISTER 1
+
 struct event_keyboard {
 	u32 magic;
 	u32 scancode;
@@ -77,7 +82,7 @@ res write(const char *path, const void *buf, u32 offset, u32 count) NONNULL;
 res stat(const char *path, struct stat *buf) NONNULL;
 res exec(const char *path, ...) ATTR((nonnull(1))) SENTINEL;
 
-res io_poll(u32 *devs) NONNULL;
+res io_poll(enum io_type *devs) NONNULL;
 res io_read(enum io_type io, void *buf, u32 offset, u32 count) NONNULL;
 res io_write(enum io_type io, void *buf, u32 offset, u32 count) NONNULL;
 res io_control(enum io_type io, ...);

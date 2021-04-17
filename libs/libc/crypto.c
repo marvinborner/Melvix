@@ -164,3 +164,16 @@ u32 crc32(u32 crc, const void *buf, u32 size)
 
 	return crc ^ ~0UL;
 }
+
+#ifdef KERNEL
+
+#include <cpu.h>
+u32 crc32_user(u32 crc, const void *buf, u32 size)
+{
+	stac();
+	u32 ret = crc32(crc, buf, size);
+	clac();
+	return ret;
+}
+
+#endif
