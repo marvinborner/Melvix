@@ -59,6 +59,16 @@ static void load_font(enum font_type font_type)
 	assert(fonts[font_type]);
 }
 
+static void free_fonts(void)
+{
+	for (u8 i = 0; i < FONT_COUNT; i++) {
+		if (fonts[i]) {
+			free(fonts[i]->raw);
+			free(fonts[i]);
+		}
+	}
+}
+
 static void write_char(struct context *ctx, vec2 pos, struct font *font, u32 c, char ch)
 {
 	int bypp = ctx->bpp >> 3;
@@ -107,8 +117,14 @@ struct context *gfx_new_ctx(struct context *ctx, vec2 size, u8 bpp)
 }
 
 // On-demand font loading
+static u8 fonts_loaded = 0;
 struct font *gfx_resolve_font(enum font_type font_type)
 {
+	if (!fonts_loaded) {
+		fonts_loaded = 1;
+		atexit(free_fonts);
+	}
+
 	if (!fonts[font_type])
 		load_font(font_type);
 	return fonts[font_type];
@@ -187,6 +203,7 @@ void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter
 		srcfb += bmp.pitch - diff;
 		destfb += ctx->pitch - diff;
 	}
+	free(bmp.data);
 }
 
 void gfx_load_image(struct context *ctx, vec2 pos, const char *path)

@@ -53,6 +53,7 @@ enum gfx_filter {
 
 // Generalized font struct
 struct font {
+	void *raw;
 	char *chars;
 	vec2 size;
 	int char_size;

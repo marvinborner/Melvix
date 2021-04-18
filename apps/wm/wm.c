@@ -462,6 +462,7 @@ static void handle_message(void *msg)
 
 static void handle_exit(void)
 {
+	log("Handle\n");
 	if (keymap)
 		free(keymap);
 
@@ -472,10 +473,8 @@ static void handle_exit(void)
 		struct node *iterator = windows->head;
 		while (iterator) {
 			struct window *win = iterator->data;
-			if (win->ctx.fb == screen.fb)
+			if (win->ctx.fb)
 				sys_free(win->ctx.fb);
-			else if (win->ctx.fb)
-				free(win->ctx.fb);
 			free(win);
 			iterator = iterator->next;
 		}

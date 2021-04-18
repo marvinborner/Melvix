@@ -84,6 +84,7 @@ struct keymap *keymap_parse(const char *path)
 		map(keymap, line, ch, ch_index);
 		index++;
 	}
+	free(keymap_src);
 
 	return keymap;
 }

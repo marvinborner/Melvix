@@ -48,6 +48,7 @@ struct font *psf_parse(char *data)
 	}
 
 	struct font *font = malloc(sizeof(*font));
+	font->raw = data;
 	font->chars = chars;
 	font->size.x = width;
 	font->size.y = height;
