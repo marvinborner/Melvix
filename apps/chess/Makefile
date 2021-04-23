@@ -4,7 +4,7 @@ OBJS = chess.o
 
 all: $(OBJS)
 	@mkdir -p $(BUILD)/apps/chess/
-	@$(LD) -o $(BUILD)/apps/chess/exec $(LDFLAGS) $< -lgui -ltxt -lc
+	@$(LD) -o $(BUILD)/apps/chess/exec $(LDFLAGS) $^ -lgui -ltxt -lc
 
 clean:
 	@$(RM) -f $(OBJS)

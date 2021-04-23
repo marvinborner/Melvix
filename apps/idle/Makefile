@@ -4,7 +4,7 @@ OBJS = idle.o
 
 all: $(OBJS)
 	@mkdir -p $(BUILD)/apps/idle/
-	@$(LD) -o $(BUILD)/apps/idle/exec $(LDFLAGS) $< -lc
+	@$(LD) -o $(BUILD)/apps/idle/exec $(LDFLAGS) $^ -lc
 
 clean:
 	@$(RM) -f $(OBJS)

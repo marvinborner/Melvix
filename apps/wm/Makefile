@@ -4,7 +4,7 @@ OBJS = wm.o
 
 all: $(OBJS)
 	@mkdir -p $(BUILD)/apps/wm/
-	@$(LD) -o $(BUILD)/apps/wm/exec $(LDFLAGS) $< -lgui -ltxt -lc
+	@$(LD) -o $(BUILD)/apps/wm/exec $(LDFLAGS) $^ -lgui -ltxt -lc
 
 clean:
 	@$(RM) -f $(OBJS)

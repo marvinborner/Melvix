@@ -4,7 +4,7 @@ OBJS = test.o
 
 all: $(OBJS)
 	@mkdir -p $(BUILD)/apps/test/
-	@$(LD) -o $(BUILD)/apps/test/exec $(LDFLAGS) $< -lc
+	@$(LD) -o $(BUILD)/apps/test/exec $(LDFLAGS) $^ -lc
 
 clean:
 	@$(RM) -f $(OBJS)

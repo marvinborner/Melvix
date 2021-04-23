@@ -14,7 +14,7 @@ COBJS = crt/crt0.o \
 	sys.o \
 	list.o \
 	stack.o \
-	random.o
+	rand.o
 
 CFLAGS = $(CFLAGS_DEFAULT) -Iinc/
 ASFLAGS = -f elf32
