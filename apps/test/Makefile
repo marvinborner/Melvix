@@ -1,6 +1,6 @@
 # MIT License, Copyright (c) 2021 Marvin Borner
 
-OBJS = test.o
+OBJS = test.o fuzz.o
 
 all: $(OBJS)
 	@mkdir -p $(BUILD)/apps/test/

@@ -1,5 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include "test.h"
+
 #include <conv.h>
 #include <crypto.h>
 #include <math.h>
@@ -92,6 +94,8 @@ int main(void)
 	test_crypto();
 	test_conv();
 	test_mem();
+
+	/* fuzz(); */
 
 	if (failed)
 		log("%d tests failed\n", failed);
