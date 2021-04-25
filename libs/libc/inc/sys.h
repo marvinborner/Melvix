@@ -15,6 +15,7 @@
 #define SYS_BOOT_SHUTDOWN 0xdead
 
 enum sys {
+	SYS_MIN,
 	SYS_ALLOC, // Allocate memory
 	SYS_SHACCESS, // Access shared memory
 	SYS_FREE, // Free memory
@@ -29,10 +30,12 @@ enum sys {
 	SYS_EXIT, // Exit current process
 	SYS_BOOT, // Boot functions (e.g. reboot/shutdown)
 	SYS_YIELD, // Switch to next process
+	SYS_MAX,
 };
 
 enum io_type {
 	IO_MIN,
+	IO_LOGGER,
 	IO_FRAMEBUFFER,
 	IO_NETWORK,
 	IO_KEYBOARD,
@@ -44,8 +47,14 @@ enum io_type {
 
 // I/O control declarations
 #define IOCTL_FB_GET 0
-#define IOCTL_BUS_CONNECT 0
-#define IOCTL_BUS_REGISTER 1
+#define IOCTL_BUS_CONNECT_BUS 0
+#define IOCTL_BUS_CONNECT_CONN 1
+#define IOCTL_BUS_REGISTER 2
+
+struct bus_header {
+	u32 conn;
+	// Data starts here
+};
 
 struct event_keyboard {
 	u32 magic;
@@ -84,7 +93,7 @@ res exec(const char *path, ...) ATTR((nonnull(1))) SENTINEL;
 
 res io_poll(enum io_type *devs) NONNULL;
 res io_read(enum io_type io, void *buf, u32 offset, u32 count) NONNULL;
-res io_write(enum io_type io, void *buf, u32 offset, u32 count) NONNULL;
+res io_write(enum io_type io, const void *buf, u32 offset, u32 count) NONNULL;
 res io_control(enum io_type io, ...);
 
 res yield(void);

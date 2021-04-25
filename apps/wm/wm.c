@@ -13,7 +13,7 @@
 #include <rand.h>
 
 struct client {
-	u32 pid;
+	u32 conn; // Bus conn
 };
 
 struct window {
@@ -385,7 +385,11 @@ static void handle_event_mouse(struct event_mouse *event)
 	msg.id = win->id;
 	msg.pos = vec2_sub(mouse.pos, win->pos);
 	msg.bits.click = event->but1;
-	msg_send(win->client.pid, GUI_MOUSE, &msg, sizeof(msg));
+
+	if (msg_connect_conn(win->client.conn) == EOK)
+		msg_send(GUI_MOUSE, &msg, sizeof(msg));
+	else
+		log("Failed to connect to window\n");
 }
 
 /**
@@ -394,50 +398,56 @@ static void handle_event_mouse(struct event_mouse *event)
 
 static void handle_message_new_window(struct message_new_window *msg)
 {
-	struct window *win = window_new((struct client){ .pid = msg->header.src }, "idk",
+	struct window *win = window_new((struct client){ .conn = msg->header.bus.conn }, "idk",
 					vec2(500, 600), vec2(600, 400), 0);
 	msg->ctx = win->ctx;
 	msg->shid = win->shid;
 	msg->id = win->id;
 
-	if (msg->header.state == MSG_NEED_ANSWER)
-		msg_send(msg->header.src, GUI_NEW_WINDOW | MSG_SUCCESS, msg, sizeof(*msg));
+	if (msg->header.state == MSG_NEED_ANSWER) {
+		msg_connect_conn(msg->header.bus.conn);
+		msg_send(GUI_NEW_WINDOW | MSG_SUCCESS, msg, sizeof(*msg));
+	}
 }
 
 static void handle_message_redraw_window(struct message_redraw_window *msg)
 {
 	u32 id = msg->id;
 	struct window *win = window_find(id);
-	if (!win || win->client.pid != msg->header.src) {
-		if (msg->header.state == MSG_NEED_ANSWER)
-			msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_FAILURE, msg,
-				 sizeof(msg->header));
+	if (!win || win->client.conn != msg->header.bus.conn) {
+		if (msg->header.state == MSG_NEED_ANSWER) {
+			msg_connect_conn(msg->header.bus.conn);
+			msg_send(GUI_REDRAW_WINDOW | MSG_FAILURE, msg, sizeof(msg->header));
+		}
 		return;
 	}
 
 	window_redraw(win);
 
-	if (msg->header.state == MSG_NEED_ANSWER)
-		msg_send(msg->header.src, GUI_REDRAW_WINDOW | MSG_SUCCESS, msg,
-			 sizeof(msg->header));
+	if (msg->header.state == MSG_NEED_ANSWER) {
+		msg_connect_conn(msg->header.bus.conn);
+		msg_send(GUI_REDRAW_WINDOW | MSG_SUCCESS, msg, sizeof(msg->header));
+	}
 }
 
 static void handle_message_destroy_window(struct message_destroy_window *msg)
 {
 	u32 id = msg->id;
 	struct window *win = window_find(id);
-	if (!win || win->client.pid != msg->header.src) {
-		if (msg->header.state == MSG_NEED_ANSWER)
-			msg_send(msg->header.src, GUI_DESTROY_WINDOW | MSG_FAILURE, msg,
-				 sizeof(msg->header));
+	if (!win || win->client.conn != msg->header.bus.conn) {
+		if (msg->header.state == MSG_NEED_ANSWER) {
+			msg_connect_conn(msg->header.bus.conn);
+			msg_send(GUI_DESTROY_WINDOW | MSG_FAILURE, msg, sizeof(msg->header));
+		}
 		return;
 	}
 
 	window_destroy(win);
 
-	if (msg->header.state == MSG_NEED_ANSWER)
-		msg_send(msg->header.src, GUI_DESTROY_WINDOW | MSG_SUCCESS, msg,
-			 sizeof(msg->header));
+	if (msg->header.state == MSG_NEED_ANSWER) {
+		msg_connect_conn(msg->header.bus.conn);
+		msg_send(GUI_DESTROY_WINDOW | MSG_SUCCESS, msg, sizeof(msg->header));
+	}
 }
 
 static void handle_message(void *msg)
@@ -456,13 +466,13 @@ static void handle_message(void *msg)
 		break;
 	default:
 		log("Message type %d not implemented!\n", header->type);
-		msg_send(header->src, header->type | MSG_FAILURE, msg, sizeof(*header));
+		msg_connect_conn(header->bus.conn);
+		msg_send(GUI_DESTROY_WINDOW | MSG_SUCCESS, msg, sizeof(header));
 	}
 }
 
 static void handle_exit(void)
 {
-	log("Handle\n");
 	if (keymap)
 		free(keymap);
 
@@ -495,7 +505,7 @@ int main(int argc, char **argv)
 
 	assert(io_control(IO_FRAMEBUFFER, IOCTL_FB_GET, &screen) == EOK);
 	log("WM loaded: %dx%d\n", screen.width, screen.height);
-	wm_client = (struct client){ .pid = getpid() };
+	wm_client = (struct client){ .conn = 0 };
 	bypp = (screen.bpp >> 3);
 
 	windows = list_new();
@@ -519,6 +529,8 @@ int main(int argc, char **argv)
 
 	assert(io_control(IO_BUS, IOCTL_BUS_REGISTER, "wm") == EOK);
 
+	assert(exec("chess", NULL) == EOK);
+
 	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
 	struct event_mouse event_mouse = { 0 };
@@ -539,7 +551,7 @@ int main(int argc, char **argv)
 					continue;
 				}
 			} else if (poll_ret == IO_BUS) {
-				if (io_read(IO_BUS, msg, 0, sizeof(msg)) > 0) {
+				if (msg_receive(msg, sizeof(msg)) > 0) {
 					handle_message(msg);
 					continue;
 				}

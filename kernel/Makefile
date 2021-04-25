@@ -17,6 +17,7 @@ COBJS = main.o \
 	features/fs.o \
 	features/io.o \
 	features/bus.o \
+	features/logger.o \
 	features/load.o \
 	features/proc.o \
 	features/proc_asm.o \

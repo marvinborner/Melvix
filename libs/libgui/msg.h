@@ -5,6 +5,7 @@
 
 #include <def.h>
 #include <libgui/gfx.h>
+#include <sys.h>
 
 #define MSG_PING_SEND 0x07734
 #define MSG_PING_RECV 0x7474
@@ -19,8 +20,8 @@ enum message_state {
 };
 
 struct message_header {
+	struct bus_header bus;
 	u32 magic;
-	u32 src;
 	u32 type;
 	enum message_state state;
 };
@@ -66,7 +67,9 @@ enum message_type {
 	GUI_KEYBOARD,
 };
 
-res msg_send(u32 pid, enum message_type type, void *data, u32 size) NONNULL;
+res msg_connect_bus(const char *bus, u32 *conn);
+res msg_connect_conn(u32 conn);
+res msg_send(enum message_type type, void *data, u32 size) NONNULL;
 res msg_receive(void *buf, u32 size) NONNULL;
 
 #endif

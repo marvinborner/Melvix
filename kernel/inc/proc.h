@@ -22,17 +22,8 @@
 
 #define RING(regs) ((regs->cs) & 3)
 
-#define STREAM_MAX_SIZE 4096
-enum stream_defaults { STREAM_IN, STREAM_OUT, STREAM_ERR, STREAM_LOG, STREAM_UNKNOWN = -1 };
-
 enum proc_priv { PROC_PRIV_NONE, PROC_PRIV_ROOT, PROC_PRIV_KERNEL };
 enum proc_state { PROC_RUNNING, PROC_BLOCKED };
-
-struct stream {
-	u32 offset_read;
-	u32 offset_write;
-	char data[STREAM_MAX_SIZE];
-};
 
 struct proc {
 	u32 pid;
@@ -40,7 +31,6 @@ struct proc {
 
 	char name[64];
 	char dir[64];
-	struct stream streams[4];
 	struct page_dir *page_dir;
 	struct regs regs;
 	enum proc_priv priv;

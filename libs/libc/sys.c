@@ -138,7 +138,7 @@ res io_read(enum io_type io, void *buf, u32 offset, u32 count)
 	return sys4(SYS_IOREAD, (int)io, (int)buf, (int)offset, (int)count);
 }
 
-res io_write(enum io_type io, void *buf, u32 offset, u32 count)
+res io_write(enum io_type io, const void *buf, u32 offset, u32 count)
 {
 	return sys4(SYS_IOWRITE, (int)io, (int)buf, (int)offset, (int)count);
 }

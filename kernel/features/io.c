@@ -8,6 +8,7 @@
 #include <interrupts.h>
 #include <io.h>
 #include <list.h>
+#include <logger.h>
 #include <mem.h>
 #include <mm.h>
 #include <proc.h>
@@ -117,7 +118,7 @@ res io_control(enum io_type io, u32 request, void *arg1, void *arg2, void *arg3)
 	return dev->control(request, arg1, arg2, arg3);
 }
 
-res io_write(enum io_type io, void *buf, u32 offset, u32 count)
+res io_write(enum io_type io, const void *buf, u32 offset, u32 count)
 {
 	if (!memory_readable(buf))
 		return -EFAULT;
@@ -182,6 +183,24 @@ void io_unblock(enum io_type io)
 	}
 }
 
+void io_unblock_pid(u32 pid)
+{
+	for (u32 io = IO_MIN; io < IO_MAX; io++) {
+		struct node *iterator = io_listeners[io]->head;
+		while (iterator) {
+			struct io_listener *listener = iterator->data;
+			struct proc *proc = listener->proc;
+			proc_state(proc, PROC_RUNNING);
+			struct node *next = iterator->next;
+			if (proc->pid == pid) {
+				list_remove(io_listeners[io], iterator);
+				free(listener);
+			}
+			iterator = next;
+		}
+	}
+}
+
 CLEAR void io_install(struct boot_info *boot)
 {
 	for (u32 i = 0; i < IO_MAX; i++)
@@ -200,6 +219,7 @@ CLEAR void io_install(struct boot_info *boot)
 	}
 
 	timer_install();
+	logger_install();
 	fb_install(boot->vid);
 	bus_install();
 }

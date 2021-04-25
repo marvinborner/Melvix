@@ -241,7 +241,7 @@ static void draw_board(void)
 
 int main(void)
 {
-	assert((win = gui_new_window()) > 0);
+	assert(gui_new_window(&win) == EOK);
 	fen_parse(START_FEN);
 	draw_board();
 

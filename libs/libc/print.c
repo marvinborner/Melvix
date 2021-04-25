@@ -7,6 +7,15 @@
 #include <mem.h>
 #include <str.h>
 
+#define RED "\x1B[1;31m"
+#define GRN "\x1B[1;32m"
+#define YEL "\x1B[1;33m"
+#define BLU "\x1B[1;34m"
+#define MAG "\x1B[1;35m"
+#define CYN "\x1B[1;36m"
+#define WHT "\x1B[1;37m"
+#define RES "\x1B[0m"
+
 static void append(char *dest, char *src, int index)
 {
 	for (u32 i = index; i < strlen(src) + index; i++)
@@ -98,13 +107,10 @@ int snprintf(char *str, u32 size, const char *format, ...)
 #ifdef USER
 
 #include <sys.h>
-#define PATH_OUT "/proc/self/io/out"
-#define PATH_LOG "/proc/self/io/log"
-#define PATH_ERR "/proc/self/io/err"
 
 int vprintf(const char *format, va_list ap)
 {
-	return vfprintf(PATH_OUT, format, ap);
+	return viprintf(IO_LOGGER, format, ap);
 }
 
 int vfprintf(const char *path, const char *format, va_list ap)
@@ -114,11 +120,28 @@ int vfprintf(const char *path, const char *format, va_list ap)
 	return write(path, buf, 0, len);
 }
 
+int viprintf(enum io_type io, const char *format, va_list ap)
+{
+	char buf[1024] = { 0 };
+	int len = vsnprintf(buf, sizeof(buf), format, ap);
+	return io_write(io, buf, 0, len);
+}
+
 int fprintf(const char *path, const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
 	int len = vfprintf(path, format, ap);
+	va_end(ap);
+
+	return len;
+}
+
+int iprintf(enum io_type io, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	int len = viprintf(io, format, ap);
 	va_end(ap);
 
 	return len;
@@ -138,7 +161,7 @@ int log(const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	int len = vfprintf(PATH_LOG, format, ap);
+	int len = viprintf(IO_LOGGER, format, ap);
 	va_end(ap);
 
 	return len;
@@ -150,14 +173,14 @@ NORETURN void err(int code, const char *format, ...)
 		log("ERRNO: %d (%s)\n", errno, strerror(errno));
 	va_list ap;
 	va_start(ap, format);
-	vfprintf(PATH_ERR, format, ap);
+	viprintf(IO_LOGGER, format, ap);
 	va_end(ap);
 	exit(code);
 }
 
 int print(const char *str)
 {
-	return write(PATH_OUT, str, 0, strlen(str));
+	return io_write(IO_LOGGER, str, 0, strlen(str));
 }
 
 #else
@@ -168,15 +191,6 @@ int print(const char *str)
 #include <mm.h>
 #include <proc.h>
 #include <serial.h>
-
-#define RED "\x1B[1;31m"
-#define GRN "\x1B[1;32m"
-#define YEL "\x1B[1;33m"
-#define BLU "\x1B[1;34m"
-#define MAG "\x1B[1;35m"
-#define CYN "\x1B[1;36m"
-#define WHT "\x1B[1;37m"
-#define RES "\x1B[0m"
 
 static void print_kernel(const char *str)
 {
@@ -204,18 +218,11 @@ int printf(const char *format, ...)
 	return len;
 }
 
-int print_app(enum stream_defaults id, const char *proc_name, const char *str)
+int print_prefix(void)
 {
-	if (id == STREAM_LOG)
-		serial_print(CYN "[LOG] to ");
-	else if (id == STREAM_ERR)
-		serial_print(YEL "[ERR] to ");
-	serial_print(proc_name);
+	serial_print(CYN "[LOG] to ");
+	serial_print(proc_current()->name);
 	serial_print(": ");
-	stac();
-	serial_print(str);
-	clac();
-	serial_print(RES);
 	return 1;
 }
 

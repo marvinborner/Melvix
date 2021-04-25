@@ -132,6 +132,11 @@ static void syscall_handler(struct regs *r)
 		break;
 	}
 
+	case SYS_MIN:
+	case SYS_MAX:
+		r->eax = -EINVAL;
+		break;
+
 	// TODO: Reimplement network functions using VFS
 	default: {
 		r->eax = -EINVAL;

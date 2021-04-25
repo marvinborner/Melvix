@@ -19,6 +19,7 @@
 struct bus_conn {
 	u32 bus; // Bus name hash
 	u32 conn;
+	u32 pid; // Client pid
 	struct stack *in; // Queue of bus owner
 	struct stack *out; // Queue of other client
 };
@@ -85,6 +86,7 @@ static void bus_add_conn(u32 hash, u32 conn)
 {
 	struct bus_conn *bus_conn = zalloc(sizeof(*bus_conn));
 	bus_conn->bus = hash;
+	bus_conn->pid = proc_current()->pid;
 	bus_conn->conn = conn;
 	bus_conn->in = stack_new();
 	bus_conn->out = stack_new();
@@ -113,7 +115,7 @@ static res bus_register(const char *name)
 	return EOK;
 }
 
-static res bus_connect(const char *bus, u32 *conn)
+static res bus_connect_bus(const char *bus, u32 *conn)
 {
 	if (!memory_readable(bus) || !memory_writable(conn))
 		return -EFAULT;
@@ -137,7 +139,25 @@ static res bus_connect(const char *bus, u32 *conn)
 	return EOK;
 }
 
-static res bus_send(u32 conn, void *buf, u32 count)
+static res bus_connect_conn(u32 conn)
+{
+	struct bus_conn *bus_conn = bus_find_conn(conn);
+	if (!bus_conn)
+		return -ENOENT;
+
+	struct bus *bus = bus_find_bus(bus_conn->bus);
+	if (!bus)
+		return -ENOENT;
+
+	if (bus_conn->pid != proc_current()->pid && bus->pid != proc_current()->pid)
+		return -EACCES;
+
+	proc_current()->bus_conn = conn;
+
+	return EOK;
+}
+
+static res bus_send(u32 conn, const void *buf, u32 count)
 {
 	if (!count)
 		return EOK;
@@ -160,10 +180,13 @@ static res bus_send(u32 conn, void *buf, u32 count)
 	msg->conn = conn;
 	msg->size = count;
 
-	if (bus->pid == proc_current()->pid)
-		stack_push_bot(bus_conn->in, msg);
-	else
+	if (bus->pid == proc_current()->pid) {
 		stack_push_bot(bus_conn->out, msg);
+		io_unblock_pid(bus_conn->pid);
+	} else {
+		stack_push_bot(bus_conn->in, msg);
+		io_unblock_pid(bus->pid);
+	}
 
 	return count;
 }
@@ -176,16 +199,20 @@ static res bus_conn_receive(struct bus_conn *bus_conn, void *buf, u32 offset, u3
 
 	struct bus_message *msg = NULL;
 	if (bus->pid == proc_current()->pid)
-		msg = stack_pop(bus_conn->out);
+		msg = stack_pop(bus_conn->in);
 	else
 		msg = stack_pop(bus_conn->out);
 
 	if (!msg)
 		return -EIO;
 
-	memcpy_user(buf, (u8 *)msg->data + offset, MIN(count, msg->size));
+	struct bus_header h = { .conn = bus_conn->conn };
+	memcpy_user(buf, &h, sizeof(h));
+	memcpy_user((u8 *)buf + sizeof(h), (u8 *)msg->data + offset, MIN(count, msg->size));
+
 	free(msg->data);
 	free(msg);
+
 	return MIN(count, msg->size);
 }
 
@@ -230,8 +257,11 @@ static res bus_control(u32 request, void *arg1, void *arg2, void *arg3)
 	UNUSED(arg3);
 
 	switch (request) {
-	case IOCTL_BUS_CONNECT: {
-		return bus_connect(arg1, arg2);
+	case IOCTL_BUS_CONNECT_BUS: {
+		return bus_connect_bus(arg1, arg2);
+	}
+	case IOCTL_BUS_CONNECT_CONN: {
+		return bus_connect_conn((u32)arg1);
 	}
 	case IOCTL_BUS_REGISTER: {
 		return bus_register(arg1);
@@ -242,7 +272,7 @@ static res bus_control(u32 request, void *arg1, void *arg2, void *arg3)
 	}
 }
 
-static res bus_write(void *buf, u32 offset, u32 count)
+static res bus_write(const void *buf, u32 offset, u32 count)
 {
 	if (offset)
 		return -EINVAL;
@@ -263,7 +293,7 @@ static res bus_conn_ready(struct bus_conn *bus_conn)
 
 	u8 ready = 0;
 	if (bus->pid == proc_current()->pid)
-		ready = !stack_empty(bus_conn->out);
+		ready = !stack_empty(bus_conn->in);
 	else
 		ready = !stack_empty(bus_conn->out);
 

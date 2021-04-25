@@ -251,21 +251,6 @@ static const char *procfs_parse_path(const char **path, u32 *pid)
 	return *path;
 }
 
-static enum stream_defaults procfs_stream(const char *path)
-{
-	if (!memcmp_user(path, "in", 3)) {
-		return STREAM_IN;
-	} else if (!memcmp_user(path, "out", 4)) {
-		return STREAM_OUT;
-	} else if (!memcmp_user(path, "err", 4)) {
-		return STREAM_ERR;
-	} else if (!memcmp_user(path, "log", 4)) {
-		return STREAM_LOG;
-	} else {
-		return STREAM_UNKNOWN;
-	}
-}
-
 struct procfs_message {
 	u8 *data;
 	u32 size;
@@ -273,38 +258,11 @@ struct procfs_message {
 
 static res procfs_write(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
+	UNUSED(path);
+	UNUSED(buf);
 	UNUSED(offset);
+	UNUSED(count);
 	UNUSED(dev);
-
-	u32 pid = 0;
-	procfs_parse_path(&path, &pid);
-	if (pid) {
-		struct proc *p = proc_from_pid(pid);
-		stac();
-		if (!p || path[0] != '/') {
-			clac();
-			return -ENOENT;
-		}
-		clac();
-
-		path++;
-		if (!memcmp_user(path, "io/", 3)) {
-			path += 3;
-			enum stream_defaults id = procfs_stream(path);
-			if (id == STREAM_UNKNOWN)
-				return -ENOENT;
-
-			// Put proc log/err messages to serial console for debugging
-			if (id == STREAM_LOG || id == STREAM_ERR)
-				print_app(id, p->name, (char *)buf);
-
-			struct stream *stream = &p->streams[id];
-			assert(stream->offset_write + count < STREAM_MAX_SIZE); // TODO: Resize
-			memcpy_user((char *)(stream->data + stream->offset_write), buf, count);
-			stream->offset_write += count;
-			return count;
-		}
-	}
 
 	return -ENOENT;
 }
@@ -337,15 +295,6 @@ static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 		} else if (!memcmp_user(path, "status", 7)) {
 			const char *status = p->state == PROC_RUNNING ? "running" : "sleeping";
 			memcpy_user(buf, status + offset, count);
-			return count;
-		} else if (!memcmp_user(path, "io/", 3)) {
-			path += 3;
-			enum stream_defaults id = procfs_stream(path);
-			if (id == STREAM_UNKNOWN)
-				return -ENOENT;
-			struct stream *stream = &p->streams[id];
-			memcpy_user(buf, stream->data + stream->offset_read, count);
-			stream->offset_read += count;
 			return count;
 		}
 	}

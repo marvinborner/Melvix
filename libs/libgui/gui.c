@@ -8,8 +8,6 @@
 #include <list.h>
 #include <print.h>
 
-#define WM_PATH "wm"
-
 struct gui_widget {
 	u32 id;
 	vec2 pos;
@@ -102,6 +100,21 @@ static struct gui_widget *gui_widget_by_id(u32 win_id, u32 widget_id)
 {
 	struct gui_window *win = gui_window_by_id(win_id);
 	return gui_widget_in_win(win, widget_id);
+}
+
+/**
+ * Bus stuff
+ */
+
+static u32 wm_conn = 0;
+static void gui_connect_wm(void)
+{
+	if (wm_conn) {
+		// TODO: Fix
+		assert(msg_connect_conn(wm_conn) == EOK);
+	} else {
+		assert(msg_connect_bus("wm", &wm_conn) == EOK);
+	}
 }
 
 /**
@@ -398,7 +411,7 @@ vec2 gui_window_size(u32 win_id)
  * Window manager interfaces
  */
 
-res gui_new_window(void)
+res gui_new_window(u32 *id)
 {
 	if (!windows)
 		windows = list_new();
@@ -406,8 +419,8 @@ res gui_new_window(void)
 	struct gui_window *win = zalloc(sizeof(*win));
 
 	struct message_new_window msg = { .header.state = MSG_NEED_ANSWER };
-	if (msg_send(pidof(WM_PATH), GUI_NEW_WINDOW, &msg, sizeof(msg)) > 0 &&
-	    msg_receive(&msg, sizeof(msg)) > 0 &&
+	gui_connect_wm();
+	if (msg_send(GUI_NEW_WINDOW, &msg, sizeof(msg)) > 0 && msg_receive(&msg, sizeof(msg)) > 0 &&
 	    msg.header.type == (GUI_NEW_WINDOW | MSG_SUCCESS)) {
 		win->id = msg.id;
 		win->ctx = msg.ctx;
@@ -418,7 +431,8 @@ res gui_new_window(void)
 		list_add(windows, win);
 		win->widgets = list_new();
 
-		return win->id;
+		*id = win->id;
+		return_errno(EOK);
 	}
 
 	return_errno(EINVAL);
@@ -431,7 +445,8 @@ res gui_redraw_window(u32 id)
 		return_errno(ENOENT);
 
 	struct message_redraw_window msg = { .id = id, .header.state = MSG_NEED_ANSWER };
-	if (msg_send(pidof(WM_PATH), GUI_REDRAW_WINDOW, &msg, sizeof(msg)) > 0 &&
+	gui_connect_wm();
+	if (msg_send(GUI_REDRAW_WINDOW, &msg, sizeof(msg)) > 0 &&
 	    msg_receive(&msg, sizeof(msg)) > 0 &&
 	    msg.header.type == (GUI_REDRAW_WINDOW | MSG_SUCCESS))
 		return EOK;
@@ -456,17 +471,20 @@ static res gui_handle_ping(struct message_ping *msg)
 
 	msg->header.type |= MSG_SUCCESS;
 	msg->ping = MSG_PING_RECV;
-	msg_send(msg->header.src, GUI_PING, &msg, sizeof(msg));
-
-	return errno;
+	if (msg_connect_conn(msg->header.bus.conn) == EOK &&
+	    msg_send(GUI_PING, msg, sizeof(msg)) == EOK)
+		return EOK;
+	else
+		return errno;
 }
 
 static res gui_handle_mouse(struct message_mouse *msg)
 {
 	if (msg->header.state == MSG_NEED_ANSWER) {
-		msg_send(msg->header.src, msg->header.type | MSG_SUCCESS, msg, sizeof(*msg));
-
-		if (errno != EOK)
+		if (msg_connect_conn(msg->header.bus.conn) == EOK &&
+		    msg_send(msg->header.type | MSG_SUCCESS, msg, sizeof(msg)) == EOK)
+			return EOK;
+		else
 			return errno;
 	}
 
@@ -495,7 +513,8 @@ static void gui_handle_exit(void)
 	while (iterator) {
 		struct gui_window *win = iterator->data;
 		struct message_destroy_window msg = { .id = win->id };
-		msg_send(pidof(WM_PATH), GUI_DESTROY_WINDOW, &msg, sizeof(msg));
+		gui_connect_wm();
+		msg_send(GUI_DESTROY_WINDOW, &msg, sizeof(msg));
 		iterator = iterator->next;
 	}
 
@@ -514,7 +533,7 @@ void gui_loop(void)
 		err(1, "Create some windows first\n");
 
 	void *msg = zalloc(4096);
-	while (msg_receive(msg, 4096)) {
+	while (gui_connect_wm(), msg_receive(msg, 4096) > 0) {
 		struct message_header *head = msg;
 		switch (head->type) {
 		case GUI_PING:
@@ -528,4 +547,7 @@ void gui_loop(void)
 			gui_handle_error("loop", EINVAL);
 		}
 	}
+
+	free(msg);
+	err(1, "Gui loop failed\n");
 }

@@ -18,7 +18,7 @@ enum gui_layer {
 	GUI_LAYER_FG,
 };
 
-res gui_new_window(void);
+res gui_new_window(u32 *id);
 res gui_redraw_window(u32 id);
 
 res gui_fill(u32 win_id, u32 widget_id, enum gui_layer layer, u32 c);
