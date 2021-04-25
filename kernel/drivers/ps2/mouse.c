@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <assert.h>
 #include <boot.h>
 #include <cpu.h>
 #include <errno.h>
@@ -15,9 +16,27 @@
 
 PROTECTED static struct stack *queue = NULL;
 
-static struct event_mouse *event = NULL;
+PROTECTED static u8 wheel = 0;
+PROTECTED static u8 extra_buttons = 0;
+
 static char mouse_cycle = 0;
-static char mouse_byte[3] = { 0 };
+static char mouse_byte[4] = { 0 };
+static void mouse_finish(void)
+{
+	struct event_mouse *event = zalloc(sizeof(*event));
+	event->magic = MOUSE_MAGIC;
+	event->pos = vec2(mouse_byte[1], mouse_byte[2]);
+	event->rel = 1;
+	event->scroll = mouse_byte[3] & 0x0f;
+	event->scroll = event->scroll == 0x0f ? -1 : event->scroll; // Weird nibble stuff
+	event->but.left = mouse_byte[0] & 1;
+	event->but.right = (mouse_byte[0] >> 1) & 1;
+	event->but.middle = (mouse_byte[0] >> 2) & 1;
+	stack_push_bot(queue, event);
+	mouse_cycle = 0;
+	io_unblock(IO_MOUSE);
+}
+
 static void mouse_handler(struct regs *r)
 {
 	UNUSED(r);
@@ -35,19 +54,18 @@ static void mouse_handler(struct regs *r)
 		break;
 	case 2:
 		mouse_byte[2] = ps2_read_data();
-
-		event = malloc(sizeof(*event));
-		event->magic = MOUSE_MAGIC;
-		event->diff_x = mouse_byte[1];
-		event->diff_y = mouse_byte[2];
-		event->but1 = mouse_byte[0] & 1;
-		event->but2 = (mouse_byte[0] >> 1) & 1;
-		event->but3 = (mouse_byte[0] >> 2) & 1;
-		stack_push_bot(queue, event);
-		mouse_cycle = 0;
-		io_unblock(IO_MOUSE);
+		if (wheel) {
+			mouse_cycle++;
+			break;
+		}
+		mouse_finish();
+		break;
+	case 3:
+		mouse_byte[3] = ps2_read_data();
+		mouse_finish();
 		break;
 	default:
+		panic("Unknown mouse state\n");
 		break;
 	}
 }
@@ -68,26 +86,52 @@ static res mouse_read(void *buf, u32 offset, u32 count)
 	return MIN(count, sizeof(*e));
 }
 
+CLEAR static u8 mouse_id(u8 device)
+{
+	ps2_write_device(device, 0xf2);
+	return ps2_read_data();
+}
+
+CLEAR static void mouse_rate(u8 device, u8 rate)
+{
+	ps2_write_device(device, 0xf3);
+	ps2_write_device(device, rate);
+}
+
 CLEAR void ps2_mouse_install(u8 device)
 {
-	u8 status;
-
 	// Enable auxiliary mouse device
 	ps2_write_device(device, 0xa8);
 
-	// Enable interrupts
-	ps2_write_command(0x20);
-	status = ps2_read_data() | 3;
-	ps2_write_command(0x60);
-	ps2_write_data(status);
-
 	// Use default settings
 	ps2_write_device(device, 0xf6);
-	ps2_read_data();
 
 	// Enable mouse
 	ps2_write_device(device, 0xf4);
-	ps2_read_data();
+
+	// Verify ID
+	u8 id = mouse_id(device);
+	assert(PS2_MOUSE(id));
+
+	// Enable wheel
+	if (id != PS2_TYPE_WHEEL_MOUSE) {
+		mouse_rate(device, 200);
+		mouse_rate(device, 100);
+		mouse_rate(device, 80);
+		id = mouse_id(device);
+		if (id == PS2_TYPE_WHEEL_MOUSE)
+			wheel = 1;
+	}
+
+	// Enable extra buttons
+	if (id == PS2_TYPE_WHEEL_MOUSE) {
+		mouse_rate(device, 200);
+		mouse_rate(device, 200);
+		mouse_rate(device, 80);
+		id = mouse_id(device);
+		if (id == PS2_TYPE_BUTTON_MOUSE)
+			extra_buttons = 1;
+	}
 
 	// Setup the mouse handler
 	irq_install_handler(12, mouse_handler);

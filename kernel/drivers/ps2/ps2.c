@@ -8,7 +8,7 @@
 
 #define PS2_TIMEOUT 100000
 
-struct ps2_status ps2_read_status(void)
+static struct ps2_status ps2_read_status(void)
 {
 	u8 byte = inb(0x64);
 	return *(struct ps2_status *)&byte;
@@ -53,7 +53,7 @@ u8 ps2_write_data(u8 byte)
 	}
 }
 
-u8 ps2_write_command(u8 byte)
+CLEAR static u8 ps2_write_command(u8 byte)
 {
 	if (ps2_wait_writable()) {
 		outb(0x64, byte);
@@ -78,20 +78,6 @@ CLEAR static u8 ps2_write_config(struct ps2_config config)
 
 	return ps2_write_data(*(u8 *)&config);
 }
-
-#define PS2_TYPE_STANDARD_MOUSE 0x0000
-#define PS2_TYPE_WHEEL_MOUSE 0x0003
-#define PS2_TYPE_BUTTON_MOUSE 0x0004
-#define PS2_TYPE_TRANSLATION_KEYBOARD1 0xab41
-#define PS2_TYPE_TRANSLATION_KEYBOARD2 0xabc1
-#define PS2_TYPE_STANDARD_KEYBOARD 0xab83
-
-#define PS2_KEYBOARD(type)                                                                         \
-	((type) == PS2_TYPE_TRANSLATION_KEYBOARD1 || (type) == PS2_TYPE_TRANSLATION_KEYBOARD2 ||   \
-	 (type) == PS2_TYPE_STANDARD_KEYBOARD)
-#define PS2_MOUSE(type)                                                                            \
-	((type) == PS2_TYPE_STANDARD_MOUSE || (type) == PS2_TYPE_WHEEL_MOUSE ||                    \
-	 (type) == PS2_TYPE_BUTTON_MOUSE)
 
 PROTECTED static struct {
 	u8 detected : 1;

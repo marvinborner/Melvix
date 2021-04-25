@@ -293,6 +293,7 @@ static void window_redraw(struct window *win)
 	vec2 pos2 = vec2(pos1.x + win->ctx.size.x, pos1.y + win->ctx.size.y);
 
 	rectangle_redraw(pos1, pos2);
+	gfx_ctx_on_ctx(&direct->ctx, &win->ctx, win->pos);
 }
 
 // TODO: Fix strange artifacts after destroying
@@ -347,8 +348,14 @@ static void handle_event_mouse(struct event_mouse *event)
 
 	cursor->pos_prev = mouse.pos;
 
-	mouse.pos.x += event->diff_x;
-	mouse.pos.y -= event->diff_y;
+	if (event->rel) {
+		mouse.pos.x += (s32)event->pos.x;
+		mouse.pos.y -= (s32)event->pos.y;
+	} else {
+		// TODO: Support other absolute scaling than 0xffff (VMWare default)
+		mouse.pos.x = event->pos.x * screen.width / 0xffff;
+		mouse.pos.y = event->pos.y * screen.height / 0xffff;
+	}
 
 	// Fix x overflow
 	if ((signed)mouse.pos.x < 0)
@@ -365,10 +372,11 @@ static void handle_event_mouse(struct event_mouse *event)
 	cursor->pos = mouse.pos;
 
 	struct window *win = window_at(mouse.pos);
-	if (win && !(win->flags & WF_NO_FOCUS) && !event->but1 && !event->but2 && !event->but3)
+	if (win && !(win->flags & WF_NO_FOCUS) && !event->but.left && !event->but.right &&
+	    !event->but.middle)
 		focused = win;
 
-	if (focused && !(focused->flags & WF_NO_DRAG) && event->but1 && special_keys.alt) {
+	if (focused && !(focused->flags & WF_NO_DRAG) && event->but.left && special_keys.alt) {
 		focused->pos_prev = focused->pos;
 		focused->pos = mouse.pos;
 		window_redraw(focused);
@@ -384,7 +392,7 @@ static void handle_event_mouse(struct event_mouse *event)
 	msg.header.state = MSG_GO_ON;
 	msg.id = win->id;
 	msg.pos = vec2_sub(mouse.pos, win->pos);
-	msg.bits.click = event->but1;
+	msg.bits.click = event->but.left;
 
 	if (msg_connect_conn(win->client.conn) == EOK)
 		msg_send(GUI_MOUSE, &msg, sizeof(msg));

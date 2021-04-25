@@ -10,6 +10,7 @@ COBJS = main.o \
 	drivers/ide.o \
 	drivers/fb.o \
 	drivers/timer.o \
+	drivers/vmware.o \
 	drivers/ps2/ps2.o \
 	drivers/ps2/mouse.o \
 	drivers/ps2/keyboard.o \

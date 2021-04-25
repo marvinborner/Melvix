@@ -17,6 +17,7 @@
 #include <str.h>
 #include <syscall.h>
 #include <timer.h>
+#include <vmware.h>
 
 struct io_listener {
 	u32 group;
@@ -215,7 +216,10 @@ CLEAR void io_install(struct boot_info *boot)
 
 	u8 ps2_mouse = ps2_mouse_detect();
 	if (ps2_mouse != U8_MAX) {
-		ps2_mouse_install(ps2_mouse);
+		if (vmware_detect() && vmware_mouse_detect())
+			vmware_mouse_install(ps2_mouse);
+		else
+			ps2_mouse_install(ps2_mouse);
 	}
 
 	timer_install();

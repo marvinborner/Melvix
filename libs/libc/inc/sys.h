@@ -6,6 +6,7 @@
 
 #include <def.h>
 #include <errno.h>
+#include <vec.h>
 
 #define KEYBOARD_MAGIC 0x555555
 #define MOUSE_MAGIC 0xaaaaaa
@@ -64,11 +65,14 @@ struct event_keyboard {
 
 struct event_mouse {
 	u32 magic;
-	s32 diff_x;
-	s32 diff_y;
-	u8 but1;
-	u8 but2;
-	u8 but3;
+	vec2 pos;
+	u8 rel; // 1 rel, 0 abs
+	s8 scroll; // Dir: -1 neg, +1 pos
+	struct {
+		u8 left : 1;
+		u8 right : 1;
+		u8 middle : 1;
+	} but;
 };
 
 struct stat {
