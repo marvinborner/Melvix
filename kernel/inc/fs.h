@@ -20,7 +20,7 @@ struct vfs_dev {
 	struct vfs *vfs;
 	void *data;
 	res (*read)(void *buf, u32 offset, u32 count, struct vfs_dev *dev) NONNULL;
-	res (*write)(void *buf, u32 offset, u32 count, struct vfs_dev *dev) NONNULL;
+	res (*write)(const void *buf, u32 offset, u32 count, struct vfs_dev *dev) NONNULL;
 	res (*ioctl)(u32 request, void *arg1, void *arg2, void *arg3, struct vfs_dev *dev)
 		ATTR((nonnull(5)));
 };
@@ -38,7 +38,7 @@ struct vfs {
 	void *data;
 	res (*read)(const char *path, void *buf, u32 offset, u32 count,
 		    struct vfs_dev *dev) NONNULL;
-	res (*write)(const char *path, void *buf, u32 offset, u32 count,
+	res (*write)(const char *path, const void *buf, u32 offset, u32 count,
 		     struct vfs_dev *dev) NONNULL;
 	res (*ioctl)(const char *path, u32 request, void *arg1, void *arg2, void *arg3,
 		     struct vfs_dev *dev) ATTR((nonnull(1, 6)));
@@ -62,7 +62,7 @@ void vfs_add_dev(struct vfs_dev *dev) NONNULL;
 
 // No NONNULL on syscalls
 res vfs_read(const char *path, void *buf, u32 offset, u32 count);
-res vfs_write(const char *path, void *buf, u32 offset, u32 count);
+res vfs_write(const char *path, const void *buf, u32 offset, u32 count);
 res vfs_stat(const char *path, struct stat *buf);
 
 struct vfs_dev *device_get_by_name(const char *name) NONNULL;

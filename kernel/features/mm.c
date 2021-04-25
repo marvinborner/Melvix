@@ -608,28 +608,48 @@ u8 memory_is_user(const void *addr)
 	return PDI((u32)addr) >= PAGE_KERNEL_COUNT;
 }
 
-u8 memory_readable(const void *addr)
+u8 memory_readable_range(struct memory_range vrange)
 {
-	if (!addr)
+	if (!vrange.base)
 		return 0;
 
 	struct proc *proc = proc_current();
-	if (proc && !memory_bypass_validity)
-		return memory_is_user(addr) && virtual_user_readable(proc->page_dir, (u32)addr);
-	else
+	if (memory_bypass_validity || !proc)
 		return 1;
+
+	u32 offset = 0;
+	do {
+		u8 valid = memory_is_user((void *)(vrange.base + offset)) &&
+			   virtual_user_readable(proc->page_dir, vrange.base + offset);
+		if (!valid)
+			return 0;
+
+		offset += PAGE_SIZE;
+	} while (offset < vrange.size);
+
+	return 1;
 }
 
-u8 memory_writable(const void *addr)
+u8 memory_writable_range(struct memory_range vrange)
 {
-	if (!addr)
+	if (!vrange.base)
 		return 0;
 
 	struct proc *proc = proc_current();
-	if (proc && !memory_bypass_validity)
-		return memory_is_user(addr) && virtual_user_writable(proc->page_dir, (u32)addr);
-	else
+	if (memory_bypass_validity || !proc)
 		return 1;
+
+	u32 offset = 0;
+	do {
+		u8 valid = memory_is_user((void *)(vrange.base + offset)) &&
+			   virtual_user_writable(proc->page_dir, vrange.base + offset);
+		if (!valid)
+			return 0;
+
+		offset += PAGE_SIZE;
+	} while (offset < vrange.size);
+
+	return 1;
 }
 
 struct memory_range memory_range_from(u32 base, u32 size)

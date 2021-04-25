@@ -256,17 +256,6 @@ struct procfs_message {
 	u32 size;
 };
 
-static res procfs_write(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev)
-{
-	UNUSED(path);
-	UNUSED(buf);
-	UNUSED(offset);
-	UNUSED(count);
-	UNUSED(dev);
-
-	return -ENOENT;
-}
-
 static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
 	(void)dev;
@@ -331,7 +320,6 @@ NORETURN void proc_init(void)
 	struct vfs *vfs = zalloc(sizeof(*vfs));
 	vfs->type = VFS_PROCFS;
 	vfs->read = procfs_read;
-	vfs->write = procfs_write;
 	vfs->perm = procfs_perm;
 	vfs->data = NULL;
 	struct vfs_dev *dev = zalloc(sizeof(*dev));

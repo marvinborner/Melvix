@@ -34,7 +34,7 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3)
 		if (!info)
 			return -ENOENT;
 
-		if (!memory_writable(arg1))
+		if (!memory_writable_range(memory_range(arg1, sizeof(struct vbe_basic))))
 			return -EFAULT;
 
 		if (fb_owner != 0 && proc_from_pid(fb_owner))

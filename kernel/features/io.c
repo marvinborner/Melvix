@@ -120,7 +120,7 @@ res io_control(enum io_type io, u32 request, void *arg1, void *arg2, void *arg3)
 
 res io_write(enum io_type io, const void *buf, u32 offset, u32 count)
 {
-	if (!memory_readable(buf))
+	if (!memory_readable_range(memory_range(buf, count)))
 		return -EFAULT;
 
 	struct io_dev *dev;
@@ -132,7 +132,7 @@ res io_write(enum io_type io, const void *buf, u32 offset, u32 count)
 
 res io_read(enum io_type io, void *buf, u32 offset, u32 count)
 {
-	if (!memory_readable(buf))
+	if (!memory_writable_range(memory_range(buf, count)))
 		return -EFAULT;
 
 	struct io_dev *dev;

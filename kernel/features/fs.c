@@ -147,7 +147,7 @@ res vfs_read(const char *path, void *buf, u32 offset, u32 count)
 	if (!memory_readable(path))
 		return -EFAULT;
 
-	if (!memory_writable(buf))
+	if (!memory_writable_range(memory_range(buf, count)))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -170,12 +170,12 @@ res vfs_read(const char *path, void *buf, u32 offset, u32 count)
 	return m->dev->vfs->read(path, buf, offset, count, m->dev);
 }
 
-res vfs_write(const char *path, void *buf, u32 offset, u32 count)
+res vfs_write(const char *path, const void *buf, u32 offset, u32 count)
 {
 	if (!memory_readable(path))
 		return -EFAULT;
 
-	if (!memory_writable(buf))
+	if (!memory_readable_range(memory_range(buf, count)))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);
@@ -203,7 +203,7 @@ res vfs_stat(const char *path, struct stat *buf)
 	if (!memory_readable(path))
 		return -EFAULT;
 
-	if (!memory_writable(buf))
+	if (!memory_writable_range(memory_range(buf, sizeof(*buf))))
 		return -EFAULT;
 
 	struct mount_info *m = vfs_find_mount_info(path);

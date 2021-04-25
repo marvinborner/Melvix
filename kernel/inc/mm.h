@@ -116,7 +116,7 @@ struct memory_proc_link {
 #define MEMORY_USER (1 << 0)
 #define MEMORY_CLEAR (1 << 1)
 #define MEMORY_READONLY (1 << 2)
-#define memory_range(base, size) ((struct memory_range){ (base), (size) })
+#define memory_range(base, size) ((struct memory_range){ (u32)(base), (size) })
 
 struct memory_range memory_range_from(u32 base, u32 size);
 struct memory_range memory_range_around(u32 base, u32 size);
@@ -135,8 +135,10 @@ void memory_bypass_disable(void);
 
 // No NONNULL on verification (for syscalls etc)
 u8 memory_is_user(const void *addr);
-u8 memory_readable(const void *addr);
-u8 memory_writable(const void *addr);
+u8 memory_readable_range(struct memory_range vrange);
+u8 memory_writable_range(struct memory_range vrange);
+#define memory_readable(addr) memory_readable_range(memory_range((addr), 1))
+#define memory_writable(addr) memory_writable_range(memory_range((addr), 1))
 
 // User interface - No NONNULL on syscalls
 res memory_sys_alloc(struct page_dir *dir, u32 size, u32 *addr, u32 *id, u8 shared);
