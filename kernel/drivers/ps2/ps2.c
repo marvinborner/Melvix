@@ -6,7 +6,7 @@
 #include <print.h>
 #include <ps2.h>
 
-#define PS2_TIMEOUT 100000
+#define PS2_TIMEOUT 100
 
 static struct ps2_status ps2_read_status(void)
 {
@@ -24,7 +24,7 @@ static u8 ps2_wait_readable(void)
 	return 0;
 }
 
-static u8 ps2_wait_writable(void)
+CLEAR static u8 ps2_wait_writable(void)
 {
 	u32 time_out = PS2_TIMEOUT;
 	while (time_out--)
@@ -43,7 +43,7 @@ u8 ps2_read_data(void)
 	}
 }
 
-u8 ps2_write_data(u8 byte)
+CLEAR u8 ps2_write_data(u8 byte)
 {
 	if (ps2_wait_writable()) {
 		outb(0x60, byte);

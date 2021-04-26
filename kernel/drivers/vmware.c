@@ -147,14 +147,7 @@ static res vmware_mouse_read(void *buf, u32 offset, u32 count)
 
 CLEAR void vmware_mouse_install(u8 device)
 {
-	// Enable auxiliary mouse device
-	ps2_write_device(device, 0xa8);
-
-	// Use default settings
-	ps2_write_device(device, 0xf6);
-
-	// Enable mouse
-	ps2_write_device(device, 0xf4);
+	ps2_mouse_enable(device);
 
 	vmware_mouse_enable();
 	irq_install_handler(12, vmware_mouse_handler);

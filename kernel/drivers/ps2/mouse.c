@@ -98,7 +98,7 @@ CLEAR static void mouse_rate(u8 device, u8 rate)
 	ps2_write_device(device, rate);
 }
 
-CLEAR void ps2_mouse_install(u8 device)
+CLEAR void ps2_mouse_enable(u8 device)
 {
 	// Enable auxiliary mouse device
 	ps2_write_device(device, 0xa8);
@@ -133,7 +133,13 @@ CLEAR void ps2_mouse_install(u8 device)
 			extra_buttons = 1;
 	}
 
-	// Setup the mouse handler
+	mouse_rate(device, 20);
+}
+
+CLEAR void ps2_mouse_install(u8 device)
+{
+	ps2_mouse_enable(device);
+
 	irq_install_handler(12, mouse_handler);
 
 	queue = stack_new();

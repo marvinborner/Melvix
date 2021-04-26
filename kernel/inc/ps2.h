@@ -50,10 +50,10 @@ u8 ps2_write_device(u8 device, u8 data);
 void ps2_detect(void);
 u8 ps2_keyboard_detect(void);
 u8 ps2_mouse_detect(void);
-
-void ps2_keyboard_install(u8 device);
-void ps2_keyboard_reset(void);
-
+void ps2_mouse_enable(u8 device);
 void ps2_mouse_install(u8 device);
+
+void ps2_keyboard_reset(void);
+void ps2_keyboard_install(u8 device);
 
 #endif
