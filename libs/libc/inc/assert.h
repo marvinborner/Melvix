@@ -18,9 +18,10 @@
 #elif defined(USER)
 #define assert(exp)                                                                                \
 	{                                                                                          \
-		if (!(exp))                                                                        \
+		if (!(exp)) {                                                                      \
 			err(1, "%s:%d: %s: Assertion '%s' failed\n", __FILE__, __LINE__, __func__, \
 			    #exp);                                                                 \
+		}                                                                                  \
 	}
 #endif
 

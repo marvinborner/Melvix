@@ -35,6 +35,7 @@ typedef unsigned long long u64;
 #define NOINLINE ATTR((noinline))
 #define DEPRECATED ATTR((deprecated))
 #define NONNULL ATTR((nonnull))
+#define RET_NONNULL ATTR((returns_nonnull))
 #define PURE ATTR((pure))
 #define CONST ATTR((const))
 #define FLATTEN ATTR((flatten))
