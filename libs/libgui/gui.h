@@ -21,6 +21,7 @@ enum gui_layer {
 res gui_new_window(u32 *id);
 res gui_redraw_window(u32 id);
 
+res gui_clear(u32 win_id, u32 widget_id, enum gui_layer layer);
 res gui_fill(u32 win_id, u32 widget_id, enum gui_layer layer, u32 c);
 res gui_load_image(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
 		   const char *path) NONNULL;

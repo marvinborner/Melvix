@@ -266,6 +266,11 @@ void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
 	draw_rectangle(ctx, pos1, pos2, c);
 }
 
+void gfx_clear(struct context *ctx)
+{
+	memset(ctx->fb, 0, ctx->bytes);
+}
+
 void gfx_fill(struct context *ctx, u32 c)
 {
 	draw_rectangle(ctx, vec2(0, 0), vec2(ctx->size.x, ctx->size.y), c);

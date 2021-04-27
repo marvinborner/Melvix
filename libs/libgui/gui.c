@@ -120,6 +120,22 @@ static void gui_connect_wm(void)
  * GFX wrappers
  */
 
+res gui_clear(u32 win_id, u32 widget_id, enum gui_layer layer)
+{
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
+	if (!widget)
+		return_errno(ENOENT);
+
+	if (layer == GUI_LAYER_BG)
+		gfx_clear(&widget->bg);
+	else if (layer == GUI_LAYER_FG)
+		gfx_clear(&widget->fg);
+	else
+		return_errno(EINVAL);
+
+	return_errno(EOK);
+}
+
 res gui_fill(u32 win_id, u32 widget_id, enum gui_layer layer, u32 c)
 {
 	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
@@ -243,8 +259,8 @@ static res gui_sync_sub_widgets(struct gui_widget *widget)
 	struct node *iterator = widget->children->head;
 	while (iterator) {
 		struct gui_widget *w = iterator->data;
-		gfx_ctx_on_ctx(&widget->bg, &w->bg, w->pos, GFX_ALPHA);
-		gfx_ctx_on_ctx(&widget->fg, &w->fg, w->pos, GFX_ALPHA);
+		gfx_ctx_on_ctx(&widget->bg, &w->bg, w->pos, GFX_NON_ALPHA);
+		gfx_ctx_on_ctx(&widget->fg, &w->fg, w->pos, GFX_NON_ALPHA);
 		iterator = iterator->next;
 	}
 

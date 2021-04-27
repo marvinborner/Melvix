@@ -57,6 +57,8 @@ static vec2 selected = { -1, -1 }; // Selected tile
 
 static void load_image(struct piece *tile)
 {
+	assert(gui_clear(win, tile->widget, GUI_LAYER_FG) == EOK);
+
 	char icon[48] = { 0 };
 	snprintf(icon, sizeof(icon), "/icons/chess-%s-%d.png", tile->name, TILE);
 	enum gfx_filter filter = IS_COLOR(tile->piece, BLACK) ? GFX_FILTER_NONE : GFX_FILTER_INVERT;
@@ -90,7 +92,7 @@ static void mouseclick(u32 widget_id, vec2 pos)
 		strlcpy(clicked_piece->name, selected_piece->name, sizeof(clicked_piece->name));
 		selected_piece->name[0] = '\0';
 
-		/* assert(gui_fill(win, selected_piece->widget, GUI_LAYER_FG, 0) == EOK); */
+		assert(gui_clear(win, selected_piece->widget, GUI_LAYER_FG) == EOK);
 		load_image(clicked_piece);
 
 		assert(gui_redraw_window(win) == EOK);

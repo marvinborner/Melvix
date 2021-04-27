@@ -83,6 +83,7 @@ void gfx_load_wallpaper(struct context *ctx, const char *path) NONNULL;
 void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size) NONNULL;
 void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos, u8 alpha) NONNULL;
 void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c) NONNULL;
+void gfx_clear(struct context *ctx);
 void gfx_fill(struct context *ctx, u32 c) NONNULL;
 void gfx_border(struct context *ctx, u32 c, u32 width) NONNULL;
 
