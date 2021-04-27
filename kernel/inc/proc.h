@@ -61,6 +61,7 @@ void proc_init(void);
 void proc_print(void);
 struct proc *proc_current(void);
 u8 proc_super(void);
+u8 proc_idle(void);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(struct proc *proc, struct regs *r, s32 status) NONNULL;
 void proc_yield(void);

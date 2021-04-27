@@ -1,4 +1,5 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
+// Window manager / compositor (does everything basically)
 
 #include <assert.h>
 #include <def.h>
@@ -12,6 +13,8 @@
 #include <list.h>
 #include <rand.h>
 
+#define WINDOW_MOVE_TIMEOUT 20
+
 struct client {
 	u32 conn; // Bus conn
 };
@@ -19,7 +22,6 @@ struct client {
 struct window {
 	u32 id;
 	u32 shid;
-	const char *name;
 	struct context ctx;
 	struct client client;
 	u32 flags;
@@ -33,6 +35,7 @@ struct rectangle {
 	void *data;
 };
 
+// Global vars ftw!
 static u8 bypp = 4;
 static struct vbe screen = { 0 };
 static struct list *windows = NULL; // THIS LIST SHALL BE SORTED BY Z-INDEX!
@@ -187,12 +190,14 @@ static struct rectangle rectangle_at(vec2 pos1, vec2 pos2)
 
 static void rectangle_redraw(vec2 pos1, vec2 pos2)
 {
+	assert(pos1.x <= pos2.x && pos1.y <= pos2.y);
 	struct rectangle rec = rectangle_at(pos1, pos2);
 
 	u32 width = ABS(pos2.x - pos1.x);
 	u32 height = ABS(pos2.y - pos1.y);
 
-	/* log("REDR at %d %d: %d %d\n", pos1.x, pos1.y, width, height); */
+	if (!width || !height)
+		return;
 
 	u8 *srcfb = rec.data;
 	u8 *destfb = &direct->ctx.fb[rec.pos1.x * bypp + rec.pos1.y * direct->ctx.pitch];
@@ -209,13 +214,11 @@ static void rectangle_redraw(vec2 pos1, vec2 pos2)
  * Window operations
  */
 
-static struct window *window_new(struct client client, const char *name, struct vec2 pos,
-				 struct vec2 size, u32 flags)
+static struct window *window_new(struct client client, struct vec2 pos, struct vec2 size, u32 flags)
 {
 	struct window *win = malloc(sizeof(*win));
 	static u32 id = 0;
 	win->id = id++;
-	win->name = name; // strdup?
 	win->ctx.size = size;
 	win->ctx.bpp = screen.bpp;
 	win->ctx.pitch = size.x * bypp;
@@ -262,44 +265,89 @@ static struct window *window_at(vec2 pos)
 	return ret;
 }
 
-static void window_redraw(struct window *win)
+// Transparent windows can't use efficient rectangle-based redrawing (I think!)
+static void window_redraw_alpha(struct window *win)
 {
-	// TODO: Only redraw difference of prev/curr (difficult with negative directions)
-	/*s32 diff_x = win->pos_prev.x - win->pos.x;
-	s32 diff_y = win->pos_prev.y - win->pos.y;
-
-	if (!diff_x && !diff_y)
-		return;
-
-	vec2 pos1 = { 0 };
-	vec2 pos2 = { 0 };
-
-	if (diff_x < 0) { // Right
-		pos1.x = win->pos_prev.x;
-		pos2.x = pos1.x + -diff_x;
-	} else if (diff_x > 0) { // Left
-		pos1 = win->pos_prev;
-		pos2.x = win->pos_prev.x + diff_x;
-		pos1.x = pos1.x - diff_x;
-	}
-
-	if (diff_y < 0) { // Down
-		pos1.y = win->pos_prev.y;
-		pos2.x = pos1.x + -diff_x;
-	} else if (diff_y > 0) { // Up
-	}*/
-
 	vec2 pos1 = win->pos_prev;
 	vec2 pos2 = vec2(pos1.x + win->ctx.size.x, pos1.y + win->ctx.size.y);
 
 	rectangle_redraw(pos1, pos2);
-	gfx_ctx_on_ctx(&direct->ctx, &win->ctx, win->pos);
+	gfx_ctx_on_ctx(&direct->ctx, &win->ctx, win->pos, GFX_ALPHA);
+}
+
+// TODO: Make more efficient...
+static void window_redraw_non_alpha(struct window *win)
+{
+	s32 diff_x = win->pos_prev.x - win->pos.x;
+	s32 diff_y = win->pos_prev.y - win->pos.y;
+
+	if (!diff_x && !diff_y) {
+		gfx_ctx_on_ctx(&direct->ctx, &win->ctx, win->pos, GFX_NON_ALPHA);
+		return;
+	}
+
+	vec2 pos1 = { 0 };
+	vec2 pos2 = { 0 };
+
+	/**
+	 * Redraw left/right diff rectangle (only one!)
+	 */
+
+	if (diff_x <= 0) { // Right
+		pos1.x = win->pos_prev.x;
+		pos2.x = pos1.x - diff_x + 2;
+	} else if (diff_x > 0) { // Left
+		pos1.x = win->pos.x + win->ctx.size.x;
+		pos2.x = pos1.x + diff_x + 2; // TODO: Why +2?
+	}
+
+	if (diff_y <= 0) { // Down
+		pos1.y = win->pos_prev.y;
+		pos2.y = win->pos.y + win->ctx.size.y;
+	} else if (diff_y > 0) { // Up
+		pos1.y = win->pos.y;
+		pos2.y = win->pos_prev.y + win->ctx.size.y;
+	}
+
+	rectangle_redraw(pos1, pos2);
+
+	/**
+	 * Redraw bottom/top diff rectangle (only one!)
+	 */
+
+	if (diff_y <= 0) { // Down
+		pos1.y = win->pos_prev.y;
+		pos2.y = pos1.y - diff_y;
+	} else if (diff_y > 0) { // Up
+		pos1.y = win->pos.y + win->ctx.size.y;
+		pos2.y = pos1.y + diff_y;
+	}
+
+	if (diff_x <= 0) { // Right
+		pos1.x = win->pos_prev.x;
+		pos2.x = win->pos.x + win->ctx.size.x;
+	} else if (diff_x > 0) { // Left
+		pos1.x = win->pos.x;
+		pos2.x = win->pos_prev.x + win->ctx.size.x;
+	}
+
+	rectangle_redraw(pos1, pos2);
+
+	// Redraw window on top of everything
+	gfx_ctx_on_ctx(&direct->ctx, &win->ctx, win->pos, GFX_NON_ALPHA);
+}
+
+static void window_redraw(struct window *win)
+{
+	if (win->flags & WF_ALPHA)
+		window_redraw_alpha(win);
+	else
+		window_redraw_non_alpha(win);
 }
 
 // TODO: Fix strange artifacts after destroying
 static void window_destroy(struct window *win)
 {
-	//free(win->name);
 	memset(win->ctx.fb, 0, win->ctx.bytes);
 	rectangle_redraw(win->pos, vec2_add(win->pos, win->ctx.size));
 	list_remove(windows, list_first_data(windows, win));
@@ -339,6 +387,7 @@ static void handle_event_keyboard(struct event_keyboard *event)
 	UNUSED(ch);
 }
 
+static struct timer mouse_timer = { 0 };
 static void handle_event_mouse(struct event_mouse *event)
 {
 	if (event->magic != MOUSE_MAGIC) {
@@ -377,9 +426,14 @@ static void handle_event_mouse(struct event_mouse *event)
 		focused = win;
 
 	if (focused && !(focused->flags & WF_NO_DRAG) && event->but.left && special_keys.alt) {
-		focused->pos_prev = focused->pos;
-		focused->pos = mouse.pos;
-		window_redraw(focused);
+		struct timer timer = { 0 };
+		io_read(IO_TIMER, &timer, 0, sizeof(timer));
+		if (timer.time - mouse_timer.time > WINDOW_MOVE_TIMEOUT) {
+			focused->pos_prev = focused->pos;
+			focused->pos = mouse.pos;
+			window_redraw(focused);
+			mouse_timer = timer;
+		}
 		return;
 	} else if (!vec2_eq(cursor->pos, cursor->pos_prev)) {
 		window_redraw(cursor);
@@ -406,7 +460,7 @@ static void handle_event_mouse(struct event_mouse *event)
 
 static void handle_message_new_window(struct message_new_window *msg)
 {
-	struct window *win = window_new((struct client){ .conn = msg->header.bus.conn }, "idk",
+	struct window *win = window_new((struct client){ .conn = msg->header.bus.conn },
 					vec2(500, 600), vec2(600, 400), 0);
 	msg->ctx = win->ctx;
 	msg->shid = win->shid;
@@ -519,18 +573,17 @@ int main(int argc, char **argv)
 	windows = list_new();
 	keymap = keymap_parse("/res/keymaps/en.keymap");
 
-	direct = window_new(wm_client, "direct", vec2(0, 0), vec2(screen.width, screen.height),
+	direct = window_new(wm_client, vec2(0, 0), vec2(screen.width, screen.height),
 			    WF_NO_WINDOW | WF_NO_FB | WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
 	direct->ctx.fb = screen.fb;
 	direct->flags ^= WF_NO_FB;
-	wallpaper =
-		window_new(wm_client, "wallpaper", vec2(0, 0), vec2(screen.width, screen.height),
-			   WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
-	cursor = window_new(wm_client, "cursor", vec2(0, 0), vec2(32, 32),
-			    WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+	wallpaper = window_new(wm_client, vec2(0, 0), vec2(screen.width, screen.height),
+			       WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE);
+	cursor = window_new(wm_client, vec2(0, 0), vec2(32, 32),
+			    WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE | WF_ALPHA);
 
 	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */
-	/* gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png"); */
+	gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png");
 	memset(cursor->ctx.fb, 0, cursor->ctx.bytes);
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
 	window_redraw(wallpaper);

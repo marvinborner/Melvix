@@ -91,6 +91,15 @@ u8 proc_super(void)
 		return 0; // Should never happen
 }
 
+u8 proc_idle(void)
+{
+	struct proc *proc = proc_current();
+	if (proc)
+		return proc == idle_proc->data;
+	else
+		return 0;
+}
+
 struct proc *proc_from_pid(u32 pid)
 {
 	struct node *iterator = NULL;
@@ -144,7 +153,6 @@ void proc_exit(struct proc *proc, struct regs *r, s32 status)
 	if (!running || !list_remove(proc_list_running, running)) {
 		struct node *blocked = list_first_data(proc_list_blocked, proc);
 		assert(blocked && list_remove(proc_list_blocked, blocked));
-		// Idle procs can't be killed -> assertion failure.
 	}
 
 	if (current->data == proc) {
@@ -182,6 +190,7 @@ void proc_exit(struct proc *proc, struct regs *r, s32 status)
 
 void proc_yield(void)
 {
+	// TODO: Fix yielding without debug mode (File size?! Regs?! IDK?!)
 	proc_reset_quantum(PROC(current));
 	__asm__ volatile("int $127");
 }

@@ -43,7 +43,10 @@
 #define WF_NO_RESIZE (1 << 2)
 #define WF_NO_FB (1 << 3)
 #define WF_NO_WINDOW (1 << 4)
-/* #define WF_RELATIVE (1 << 4) */
+#define WF_ALPHA (1 << 5)
+
+#define GFX_NON_ALPHA 0
+#define GFX_ALPHA 1
 
 enum font_type { FONT_8, FONT_12, FONT_16, FONT_24, FONT_32, FONT_64 };
 enum gfx_filter {
@@ -78,7 +81,7 @@ void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter
 			   const char *path) NONNULL;
 void gfx_load_wallpaper(struct context *ctx, const char *path) NONNULL;
 void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size) NONNULL;
-void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos) NONNULL;
+void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos, u8 alpha) NONNULL;
 void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c) NONNULL;
 void gfx_fill(struct context *ctx, u32 c) NONNULL;
 void gfx_border(struct context *ctx, u32 c, u32 width) NONNULL;

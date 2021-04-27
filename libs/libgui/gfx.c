@@ -93,6 +93,7 @@ static void write_char(struct context *ctx, vec2 pos, struct font *font, u32 c, 
 
 static void draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
 {
+	assert(pos1.x <= pos2.x && pos1.y <= pos2.y);
 	int bypp = ctx->bpp >> 3;
 	u8 *draw = &ctx->fb[pos1.x * bypp + pos1.y * ctx->pitch];
 	for (u32 i = 0; i < pos2.y - pos1.y; i++) {
@@ -230,13 +231,13 @@ void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size)
 
 // TODO: Support alpha values other than 0x0 and 0xff (blending)
 // TODO: Optimize!
-void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos)
+void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos, u8 alpha)
 {
 	// TODO: Some kind of alpha-acknowledging memcpy?
-	/* if (src->size.x == dest->size.x && src->size.y == dest->size.y) { */
-	/* 	memcpy(dest->fb, src->fb, dest->pitch * dest->size.y); */
-	/* 	return; */
-	/* } */
+	if (!alpha && src->size.x == dest->size.x && src->size.y == dest->size.y) {
+		memcpy(dest->fb, src->fb, dest->pitch * dest->size.y);
+		return;
+	}
 
 	if (src->size.x > dest->size.x || src->size.y > dest->size.y)
 		return;
@@ -248,7 +249,7 @@ void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos)
 	for (u32 cy = 0; cy < src->size.y && cy + pos.y < dest->size.y; cy++) {
 		int diff = 0;
 		for (u32 cx = 0; cx < src->size.x && cx + pos.x < dest->size.x; cx++) {
-			if (srcfb[bypp - 1])
+			if (!alpha || srcfb[bypp - 1])
 				memcpy(destfb, srcfb, bypp);
 
 			srcfb += bypp;

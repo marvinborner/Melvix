@@ -57,14 +57,26 @@ CLEAR void scheduler_disable(void)
 	irq_install_handler(0, timer_handler);
 }
 
+static struct timer timer_struct(void)
+{
+	struct proc *proc = proc_current();
+	struct timer timer = {
+		.rtc = rtc_stamp(),
+		.ticks.user = proc->ticks.user,
+		.ticks.kernel = proc->ticks.kernel,
+		.time = timer_get(),
+	};
+	return timer;
+}
+
 static res timer_read(void *buf, u32 offset, u32 count)
 {
 	UNUSED(offset);
 
-	u32 stamp = rtc_stamp();
-	memcpy_user(buf, &stamp, MIN(count, sizeof(stamp)));
+	struct timer timer = timer_struct();
+	memcpy_user(buf, &timer, MIN(count, sizeof(timer)));
 
-	return MIN(count, sizeof(stamp));
+	return MIN(count, sizeof(timer));
 }
 
 // Install timer handler into IRQ0

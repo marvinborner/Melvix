@@ -15,9 +15,9 @@ int main(int, char **);
 int _start(int argc, char **argv);
 int _start(int argc, char **argv)
 {
-	u32 stamp = 0;
-	assert(io_read(IO_TIMER, &stamp, 0, sizeof(stamp)) == sizeof(stamp) && stamp);
-	srand(stamp);
+	struct timer timer = { 0 };
+	assert(io_read(IO_TIMER, &timer, 0, sizeof(timer)) == sizeof(timer));
+	srand(timer.rtc + timer.time);
 	__stack_chk_guard = rand();
 
 	exit(main(argc, argv));

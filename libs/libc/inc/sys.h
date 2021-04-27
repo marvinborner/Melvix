@@ -75,6 +75,15 @@ struct event_mouse {
 	} but;
 };
 
+struct timer {
+	u32 rtc;
+	struct {
+		u32 user;
+		u32 kernel;
+	} ticks;
+	u32 time;
+};
+
 struct stat {
 	u32 dev_id;
 	u32 mode;

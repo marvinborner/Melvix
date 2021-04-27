@@ -110,7 +110,6 @@ static u32 wm_conn = 0;
 static void gui_connect_wm(void)
 {
 	if (wm_conn) {
-		// TODO: Fix
 		assert(msg_connect_conn(wm_conn) == EOK);
 	} else {
 		assert(msg_connect_bus("wm", &wm_conn) == EOK);
@@ -244,8 +243,8 @@ static res gui_sync_sub_widgets(struct gui_widget *widget)
 	struct node *iterator = widget->children->head;
 	while (iterator) {
 		struct gui_widget *w = iterator->data;
-		gfx_ctx_on_ctx(&widget->bg, &w->bg, w->pos);
-		gfx_ctx_on_ctx(&widget->fg, &w->fg, w->pos);
+		gfx_ctx_on_ctx(&widget->bg, &w->bg, w->pos, GFX_ALPHA);
+		gfx_ctx_on_ctx(&widget->fg, &w->fg, w->pos, GFX_ALPHA);
 		iterator = iterator->next;
 	}
 
@@ -260,8 +259,8 @@ static res gui_sync_widget(u32 win_id, u32 widget_id)
 		return_errno(ENOENT);
 
 	gui_sync_sub_widgets(widget);
-	gfx_ctx_on_ctx(&win->ctx, &widget->bg, widget->pos);
-	gfx_ctx_on_ctx(&win->ctx, &widget->fg, widget->pos);
+	gfx_ctx_on_ctx(&win->ctx, &widget->bg, widget->pos, GFX_ALPHA);
+	gfx_ctx_on_ctx(&win->ctx, &widget->fg, widget->pos, GFX_ALPHA);
 
 	return_errno(EOK);
 }
@@ -279,8 +278,8 @@ static res gui_sync_widgets(u32 win_id)
 	while (iterator) {
 		struct gui_widget *widget = iterator->data;
 		gui_sync_sub_widgets(widget);
-		gfx_ctx_on_ctx(&win->ctx, &widget->bg, widget->pos);
-		gfx_ctx_on_ctx(&win->ctx, &widget->fg, widget->pos);
+		gfx_ctx_on_ctx(&win->ctx, &widget->bg, widget->pos, GFX_ALPHA);
+		gfx_ctx_on_ctx(&win->ctx, &widget->fg, widget->pos, GFX_ALPHA);
 		iterator = iterator->next;
 	}
 

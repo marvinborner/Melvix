@@ -182,6 +182,9 @@ void io_unblock(enum io_type io)
 		free(listener);
 		iterator = next;
 	}
+
+	if (proc_idle())
+		proc_yield();
 }
 
 void io_unblock_pid(u32 pid)
@@ -200,6 +203,9 @@ void io_unblock_pid(u32 pid)
 			iterator = next;
 		}
 	}
+
+	if (proc_idle())
+		proc_yield();
 }
 
 CLEAR void io_install(struct boot_info *boot)

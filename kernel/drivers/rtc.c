@@ -66,6 +66,6 @@ struct rtc rtc_read(void)
 u32 rtc_stamp(void)
 {
 	struct rtc rtc = rtc_read();
-	return timer_get() + rtc.second + rtc.minute * 60 + rtc.hour * 360 + rtc.day * 360 * 24 +
+	return rtc.second + rtc.minute * 60 + rtc.hour * 360 + rtc.day * 360 * 24 +
 	       rtc.year * 360 * 24 * 365;
 }
