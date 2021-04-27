@@ -14,10 +14,11 @@ BUILD = $(PWD)/build/
 KERNEL = $(PWD)/kernel/
 LIBS = $(PWD)/libs/
 
-all: compile
+ifeq ($(DEBUG), 1)
+	CFLAGS_DEFAULT += -Wno-error -ggdb3 -s -fsanitize=undefined -fstack-protector-all
+endif
 
-debug: CFLAGS_DEFAULT += -Wno-error -ggdb3 -s -fsanitize=undefined -fstack-protector-all
-debug: compile
+all: compile
 
 export
 

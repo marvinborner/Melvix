@@ -4,6 +4,10 @@ CFLAGS = $(CFLAGS_DEFAULT) -I$(LIBS)/ -I$(LIBS)/libc/inc/ -pie -fPIE -fPIC -DUSE
 LDFLAGS = --section-start=.text=0x42000000 -L$(BUILD)
 DIRS = $(wildcard */.)
 
+ifneq ($(DEBUG), 1)
+	LDFLAGS += -pie -no-dynamic-linker
+endif
+
 export
 
 all: $(DIRS)

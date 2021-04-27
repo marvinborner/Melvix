@@ -140,9 +140,9 @@ make_build() {
 
     printf "\nBuilding...\n"
     if [ "$mode" = "debug" ] || [ "$MELVIX_DEBUG" = "1" ]; then
-        $MAKE -j $($NPROC) debug
+        $MAKE -j $($NPROC) DEBUG=1
     else
-        $MAKE -j $($NPROC)
+        $MAKE -j $($NPROC) DEBUG=0
     fi
 
     # Create disk image
