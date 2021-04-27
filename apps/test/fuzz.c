@@ -7,6 +7,7 @@
 #include <rand.h>
 #include <sys.h>
 
+// TODO: Make syscall fuzzer actually useful
 #define FUZZ_COUNT 1000
 
 static res syscall(enum sys num, int d1, int d2, int d3, int d4, int d5)
@@ -19,17 +20,17 @@ static res syscall(enum sys num, int d1, int d2, int d3, int d4, int d5)
 	return a;
 }
 
-static u8 deadly_call(enum sys num)
+static u8 sys_bad_call(enum sys num)
 {
-	return num == SYS_EXIT;
+	return num == SYS_EXIT || num == SYS_EXEC;
 }
 
-static enum sys random_call(void)
+static enum sys sys_random_call(void)
 {
 	u32 num;
 	do {
 		num = rand_range(SYS_MIN, SYS_MAX);
-	} while (deadly_call(num));
+	} while (sys_bad_call(num));
 	return num;
 }
 
@@ -37,14 +38,14 @@ void fuzz(void)
 {
 	u32 cnt = FUZZ_COUNT;
 	while (cnt) {
-		enum sys num = random_call();
+		enum sys num = sys_random_call();
 		u32 d1 = rand();
 		u32 d2 = rand();
 		u32 d3 = rand();
 		u32 d4 = rand();
 		u32 d5 = rand();
 
-		log("%d\n", syscall(num, d1, d2, d3, d4, d5));
+		log("%d: %d\n", num, syscall(num, d1, d2, d3, d4, d5));
 
 		cnt--;
 	}
