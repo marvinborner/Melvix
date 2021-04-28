@@ -16,7 +16,7 @@ struct io_dev {
 	res (*ready)(void);
 };
 
-void io_install(struct boot_info *boot);
+void io_install(void);
 void io_add(enum io_type io, struct io_dev *dev) NONNULL;
 
 // No NONNULL on syscalls

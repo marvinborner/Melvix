@@ -35,8 +35,6 @@ compile:
 	@echo "Compiled libtxt"
 	@$(MAKE) --no-print-directory -C kernel/
 	@echo "Compiled kernel"
-	@$(MAKE) --no-print-directory -C boot/
-	@echo "Compiled boot"
 	@$(MAKE) --no-print-directory -C apps/
 	@echo "Compiled apps"
 

@@ -60,9 +60,9 @@ void fb_map_buffer(struct page_dir *dir, struct vid_info *boot)
 	memory_map_identity(dir, memory_range_around((u32)vbe->fb, size), MEMORY_USER);
 }
 
-CLEAR void fb_install(struct vid_info *boot)
+CLEAR void fb_install(void)
 {
-	info = boot;
+	//info = boot;
 
 	struct io_dev *dev = zalloc(sizeof(*dev));
 	dev->control = fb_ioctl;

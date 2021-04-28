@@ -158,11 +158,8 @@ make_build() {
             echo "quit"
         ) | $SUDO fdisk -e $VND >/dev/null
         $SUDO mkfs.ext2 -F /dev/${VND}i >/dev/null
-
-        $SUDO dd if=build/boot.bin of=/dev/${VND}i conv=notrunc status=none
     else
         $SUDO mke2fs -b 1024 -q build/disk.img
-        dd if=build/boot.bin of=build/disk.img conv=notrunc status=none
     fi
 
     # Set test app as init
@@ -179,9 +176,13 @@ make_build() {
     $SUDO cp -r disk/* mnt/
     $SUDO chmod -R 0 mnt/conf/
     $SUDO cp -r build/apps/ mnt/apps/
-    $SUDO cp build/load.bin mnt/
     $SUDO umount mnt/
     rm -rf mnt/
+
+    mkdir -p iso/boot/grub/
+    cp build/apps/kernel/exec iso/boot/melvix
+    cp boot/grub.cfg iso/boot/grub/
+    grub-mkrescue -o build/melvix.iso iso/
 
     if [ "$(uname -s)" = "OpenBSD" ]; then
         $SUDO vnconfig -u $VND
@@ -192,17 +193,17 @@ make_build() {
 
 make_test() {
     if [ "$mode" = "test" ]; then
-        qemu_with_flags -serial file:test.log -nographic -drive file=build/disk.img,format=raw,index=1,media=disk
+        qemu_with_flags -serial file:test.log -nographic -cdrom build/melvix.iso -drive file=build/disk.img,format=raw,index=1,media=disk
         echo
         grep -E 'PASS|FAIL' test.log
         if grep -q "All tests passed" test.log; then exit 0; else exit 1; fi
     else
-        qemu_with_flags -serial stdio -drive file=build/disk.img,format=raw,index=1,media=disk
+        qemu_with_flags -serial stdio -cdrom build/melvix.iso -drive file=build/disk.img,format=raw,index=1,media=disk
     fi
 }
 
 make_debug() {
-    qemu_with_flags -serial stdio -drive file=build/disk.img,format=raw,index=1,media=disk -s -S
+    qemu_with_flags -serial stdio -cdrom build/melvix.iso -drive file=build/disk.img,format=raw,index=1,media=disk -s -S
 }
 
 make_disasm() {
@@ -251,8 +252,7 @@ make_sync() {
     echo "$output" | make_append_commands libk libgui libs/libgui
     echo "$output" | make_append_commands libgui libtxt libs/libtxt
     echo "$output" | make_append_commands libtxt kernel kernel
-    echo "$output" | make_append_commands kernel boot boot
-    echo "$output" | make_append_commands boot apps apps
+    echo "$output" | make_append_commands kernel apps apps
     tr <compile_commands.json '\n' '\r' | sed -e 's/\r]\r\[/,/g' | tr '\r' '\n' >tmp
     mv tmp compile_commands.json
 }

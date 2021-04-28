@@ -7,6 +7,6 @@
 #include <mm.h>
 
 void fb_map_buffer(struct page_dir *dir, struct vid_info *boot) NONNULL;
-void fb_install(struct vid_info *boot) NONNULL;
+void fb_install(void) NONNULL;
 
 #endif

@@ -1,6 +1,8 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 # acpi.o fpu.o
-COBJS = main.o \
+COBJS = entry_asm.o \
+	main.o \
+	multiboot.o \
 	drivers/interrupts.o \
 	drivers/interrupts_asm.o \
 	drivers/cpu.o \
@@ -37,4 +39,4 @@ all: compile
 
 compile: $(COBJS)
 	@mkdir -p $(BUILD)/apps/kernel/
-	@$(LD) -N -z max-page-size=0x1000 -ekernel_main -Tlink.ld -o $(BUILD)/apps/kernel/exec -L$(BUILD) $+ -lk
+	@$(LD) -N -z max-page-size=0x1000 -eboot_entry -Tlink.ld -o $(BUILD)/apps/kernel/exec -L$(BUILD) $+ -lk

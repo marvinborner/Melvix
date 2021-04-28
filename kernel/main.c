@@ -9,6 +9,7 @@
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
+#include <multiboot.h>
 #include <net.h>
 #include <pci.h>
 #include <rand.h>
@@ -19,21 +20,19 @@
 PROTECTED extern u32 __stack_chk_guard;
 PROTECTED u32 __stack_chk_guard;
 
-PROTECTED u32 tss_entry = 0;
-PROTECTED u32 boot_drive = 0;
-
-int kernel_main(struct boot_info *boot); // Decl
-int kernel_main(struct boot_info *boot)
+int kernel_main(u32 magic, u32 addr); // Decl
+int kernel_main(u32 magic, u32 addr)
 {
 	// Serial connection
 	serial_install();
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
-	serial_print("Serial connected.\n");
+	serial_print("Serial connected. LOOPING!\n");
 
-	tss_entry = boot->tss;
-	boot_drive = boot->drive;
+	multiboot_init(magic, addr);
+	while (1)
+		;
 
-	memory_install(boot);
+	memory_install();
 	memory_switch_dir(virtual_kernel_dir());
 
 	cpu_enable_features();
@@ -47,7 +46,7 @@ int kernel_main(struct boot_info *boot)
 	ata_install();
 	pci_install();
 	interrupts_install();
-	io_install(boot);
+	io_install();
 
 	// Enable drivers
 	sti();

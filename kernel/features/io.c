@@ -208,7 +208,7 @@ void io_unblock_pid(u32 pid)
 		proc_yield();
 }
 
-CLEAR void io_install(struct boot_info *boot)
+CLEAR void io_install(void)
 {
 	for (u32 i = 0; i < IO_MAX; i++)
 		io_listeners[i] = list_new();
@@ -230,6 +230,6 @@ CLEAR void io_install(struct boot_info *boot)
 
 	timer_install();
 	logger_install();
-	fb_install(boot->vid);
+	fb_install();
 	bus_install();
 }

@@ -1,5 +1,5 @@
 OUTPUT_ARCH(i386)
-ENTRY(kernel_main)
+ENTRY(boot_entry)
 phys = 0x00100000;
 
 SECTIONS

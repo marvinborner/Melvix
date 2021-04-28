@@ -146,6 +146,6 @@ res memory_sys_free(struct page_dir *dir, u32 addr);
 res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size);
 
 void memory_user_hook(void);
-void memory_install(struct boot_info *boot) NONNULL;
+void memory_install(void) NONNULL;
 
 #endif
