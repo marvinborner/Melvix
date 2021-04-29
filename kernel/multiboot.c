@@ -18,9 +18,16 @@ CLEAR void multiboot_init(u32 magic, u32 addr)
 	}
 }
 
+CLEAR u32 multiboot_vbe(void)
+{
+	assert(info->flags & MULTIBOOT_INFO_VBE_INFO);
+
+	return info->vbe_mode_info;
+}
+
 CLEAR void multiboot_mmap(void)
 {
-	assert(info->flags & MULTIBOOT_INFO_MEMORY);
+	assert(info->flags & MULTIBOOT_INFO_MEM_MAP);
 
 	struct multiboot_mmap_entry *mmap = (void *)info->mmap_addr;
 	u32 length = info->mmap_length;

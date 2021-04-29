@@ -122,6 +122,7 @@ struct multiboot_mod_list {
 };
 
 void multiboot_mmap(void);
+u32 multiboot_vbe(void);
 void multiboot_init(u32 magic, u32 addr);
 
 #endif

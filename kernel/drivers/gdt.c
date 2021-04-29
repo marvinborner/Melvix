@@ -56,7 +56,7 @@ void tss_set_stack(u32 ss, u32 esp)
 	tss.ss0 = ss;
 }
 
-CLEAR void gdt_install(void)
+CLEAR void gdt_install(u32 esp)
 {
 	// Set GDT pointer and limit
 	gp.limit = (sizeof(struct gdt_entry) * 6) - 1;
@@ -78,7 +78,7 @@ CLEAR void gdt_install(void)
 	gdt_set_gate(4, 0, 0xffffffff, 0xf2, 0xcf);
 
 	// Write TSS
-	tss_write(5, GDT_SUPER_DATA_OFFSET, STACK_START);
+	tss_write(5, GDT_SUPER_DATA_OFFSET, esp);
 
 	// Remove old GDT and install the new changes!
 	gdt_flush();

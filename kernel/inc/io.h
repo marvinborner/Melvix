@@ -3,7 +3,6 @@
 #ifndef IO_H
 #define IO_H
 
-#include <boot.h>
 #include <def.h>
 #include <interrupts.h>
 #include <proc.h>

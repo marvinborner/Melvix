@@ -54,7 +54,7 @@ struct tss_entry {
 	u16 iomap_base;
 } PACKED;
 
-void gdt_install(void);
+void gdt_install(u32 esp);
 void tss_set_stack(u32 ss, u32 esp);
 
 #endif

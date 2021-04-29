@@ -1,6 +1,5 @@
 bits 32
 
-%define STACK_POINTER 0x00500000 ; The initial stack pointer in kernel mode
 %define MULTIBOOT_MAGIC 0x1badb002
 %define MULTIBOOT_PAGE_ALIGN 0x1
 %define MULTIBOOT_MEMORY_INFO 0x2
@@ -24,18 +23,24 @@ dd 0x00000000
 
 ; MULTIBOOT_VIDEO_MODE
 dd 0x00000000
-dd 1280
-dd 1024
+dd 1920
+dd 1200
 dd 32
 
 global boot_entry
 extern kernel_main
 boot_entry:
-	mov esp, STACK_POINTER
+	mov esp, stack_top
+	push esp
 	push ebx
 	push eax
-
 	cli
 	call kernel_main
 	hlt
 	jmp $
+
+section .bss
+align 32
+stack_bottom:
+	resb 0x4000
+stack_top:

@@ -17,7 +17,6 @@ void free_debug(void *ptr, const char *file, int line, const char *func, const c
 #define free(ptr) free_debug((void *)(ptr), __FILE__, __LINE__, __func__, #ptr)
 
 #ifdef KERNEL
-#define STACK_START 0x00500000 // Defined in bootloader
 #define STACK_SIZE (1 << 20) // 1MiB
 #elif defined(USER)
 #endif

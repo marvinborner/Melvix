@@ -565,7 +565,7 @@ int main(int argc, char **argv)
 
 	atexit(handle_exit);
 
-	assert(io_control(IO_FRAMEBUFFER, IOCTL_FB_GET, &screen) == EOK);
+	assert(io_control(IO_FRAMEBUFFER, IOCTL_FB_GET, &screen, sizeof(screen)) == EOK);
 	log("WM loaded: %dx%d\n", screen.width, screen.height);
 	wm_client = (struct client){ .conn = 0 };
 	bypp = (screen.bpp >> 3);
@@ -583,6 +583,8 @@ int main(int argc, char **argv)
 			    WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE | WF_ALPHA);
 
 	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */
+	while (1)
+		;
 	gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png");
 	memset(cursor->ctx.fb, 0, cursor->ctx.bytes);
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");

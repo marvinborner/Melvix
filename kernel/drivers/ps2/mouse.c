@@ -1,7 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
-#include <boot.h>
 #include <cpu.h>
 #include <errno.h>
 #include <interrupts.h>
