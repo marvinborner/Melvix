@@ -104,9 +104,11 @@ struct multiboot_info {
 };
 
 struct multiboot_mmap_entry {
-	u32 size;
-	u64 addr;
-	u64 len;
+	u32 struct_size;
+	u32 addr;
+	u32 addr_high;
+	u32 len;
+	u32 len_high;
 	u32 type;
 } PACKED;
 
@@ -119,6 +121,7 @@ struct multiboot_mod_list {
 	u32 pad;
 };
 
+void multiboot_mmap(void);
 void multiboot_init(u32 magic, u32 addr);
 
 #endif

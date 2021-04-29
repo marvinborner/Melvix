@@ -3,6 +3,7 @@
 #include <boot.h>
 #include <cpu.h>
 #include <fs.h>
+#include <gdt.h>
 #include <ide.h>
 #include <interrupts.h>
 #include <io.h>
@@ -26,11 +27,11 @@ int kernel_main(u32 magic, u32 addr)
 	// Serial connection
 	serial_install();
 	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
-	serial_print("Serial connected. LOOPING!\n");
+	serial_print("Serial connected!\n");
+
+	gdt_install();
 
 	multiboot_init(magic, addr);
-	while (1)
-		;
 
 	memory_install();
 	memory_switch_dir(virtual_kernel_dir());

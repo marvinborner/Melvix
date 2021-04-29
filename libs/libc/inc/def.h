@@ -30,6 +30,9 @@ typedef unsigned long long u64;
 
 #define ABS(a) ((u32)(((s32)(a) < 0) ? -(a) : (a)))
 
+#define __STRINGIFY(a) #a
+#define STRINGIFY(a) __STRINGIFY(a)
+
 #define ATTR __attribute__
 #define NORETURN ATTR((noreturn))
 #define NOINLINE ATTR((noinline))

@@ -27,6 +27,9 @@ void page_fault_handler(struct regs *r) NONNULL;
 
 struct memory_range physical_alloc(u32 size);
 void physical_free(struct memory_range range);
+void physical_set_used(struct memory_range range);
+void physical_set_free(struct memory_range range);
+void physical_set_total(u32 total);
 
 /**
  * Virtual

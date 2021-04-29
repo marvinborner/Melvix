@@ -8,6 +8,7 @@
 #include <fb.h>
 #include <mem.h>
 #include <mm.h>
+#include <multiboot.h>
 #include <print.h>
 #include <rand.h>
 
@@ -133,7 +134,12 @@ static void physical_page_set_free(u32 address)
 	memory[page / 8] &= ~(1 << (page % 8));
 }
 
-static void physical_set_used(struct memory_range range)
+CLEAR void physical_set_total(u32 total)
+{
+	memory_total = total;
+}
+
+void physical_set_used(struct memory_range range)
 {
 	assert(PAGE_ALIGNED(range.base) && PAGE_ALIGNED(range.size));
 
@@ -146,7 +152,7 @@ static void physical_set_used(struct memory_range range)
 	}
 }
 
-static void physical_set_free(struct memory_range range)
+void physical_set_free(struct memory_range range)
 {
 	assert(PAGE_ALIGNED(range.base) && PAGE_ALIGNED(range.size));
 
@@ -721,29 +727,7 @@ void memory_user_hook(void)
 
 CLEAR void memory_install(void)
 {
-	struct mem_info *mem_info = NULL;
-	struct vid_info *vid_info = NULL;
-
-	for (struct mmap_boot *p = mem_info->start; (u32)(p - mem_info->start) < mem_info->size;
-	     p++) {
-		if (p->hbase || !p->acpi || !p->type)
-			continue;
-
-		u32 size = p->lsize;
-		if (p->hsize)
-			size = U32_MAX - p->lbase;
-
-		/* printf("Memory region: %x-%x\n", p->lbase, p->lbase + size); */
-		if (p->type == MEMORY_AVAILABLE) {
-			physical_set_free(memory_range_around(p->lbase, size));
-			memory_total += size;
-		} else if (p->type == MEMORY_DEFECT) {
-			printf("Defect memory at 0x%x-0x%x!\n", p->lbase, p->lbase + size);
-			physical_set_used(memory_range_around(p->lbase, size));
-		} else {
-			physical_set_used(memory_range_around(p->lbase, size));
-		}
-	}
+	multiboot_mmap();
 
 	for (u32 i = 0; i < PAGE_KERNEL_COUNT; i++) {
 		union page_dir_entry *dir_entry = &kernel_dir.entries[i];
@@ -757,7 +741,7 @@ CLEAR void memory_install(void)
 	printf("Detected memory: %dKiB (%dMiB)\n", memory_total >> 10, memory_total >> 20);
 
 	// Set first MiB 'used' (bootloader(s), VESA tables, memory maps, ...)
-	physical_set_used(memory_range(0, 0x00100000));
+	//physical_set_used(memory_range(0, 0x00100000));
 
 	// Map kernel
 	memory_map_identity(&kernel_dir, kernel_ro_memory_range(), MEMORY_READONLY);
@@ -772,12 +756,9 @@ CLEAR void memory_install(void)
 	memory_map_identity(&kernel_dir, memory_range(STACK_START, PAGE_SIZE), MEMORY_READONLY);
 
 	// Map framebuffer
-	memory_map_identity(&kernel_dir, memory_range_around((u32)vid_info->vbe, 0x1000),
-			    MEMORY_NONE);
+	/* memory_map_identity(&kernel_dir, memory_range_around((u32)vid_info->vbe, 0x1000), */
+	/* 		    MEMORY_NONE); */
 	/* fb_map_buffer(virtual_kernel_dir(), vid_info); */
-
-	// Map TSS
-	//memory_map_identity(&kernel_dir, memory_range_around(boot->tss, 0x1000), MEMORY_NONE);
 
 	// Unmap NULL byte/page
 	struct memory_range zero = memory_range(0, PAGE_SIZE);

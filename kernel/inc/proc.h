@@ -15,11 +15,6 @@
 #define EFLAGS_ALWAYS 0x2 // Always one
 #define EFLAGS_INTERRUPTS 0x200 // Enable interrupts
 
-#define GDT_SUPER_CODE_OFFSET 0x08 // Super (kernel) code segment offset in GDT
-#define GDT_SUPER_DATA_OFFSET 0x10 // Super (kernel) data segment offset in GDT
-#define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
-#define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
-
 #define RING(regs) ((regs->cs) & 3)
 
 enum proc_priv { PROC_PRIV_NONE, PROC_PRIV_ROOT, PROC_PRIV_KERNEL };

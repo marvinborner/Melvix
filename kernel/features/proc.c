@@ -5,6 +5,7 @@
 #include <cpu.h>
 #include <errno.h>
 #include <fs.h>
+#include <gdt.h>
 #include <load.h>
 #include <mem.h>
 #include <mm.h>

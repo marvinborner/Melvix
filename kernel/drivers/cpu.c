@@ -91,21 +91,6 @@ void fpu_restore(void)
 	__asm__ volatile("fxrstor (%0)" ::"r"(fpu_state));
 }
 
-void tss_set_stack(u32 ss, u32 esp)
-{
-	UNUSED(ss);
-	UNUSED(esp);
-	return;
-	/* assert(tss_entry && ss && esp); */
-	/* struct { */
-	/* 	u32 prev; */
-	/* 	u32 esp0; */
-	/* 	u32 ss0; */
-	/* } *tss = (void *)tss_entry; */
-	/* tss->esp0 = esp; */
-	/* tss->ss0 = ss; */
-}
-
 CLEAR static struct cpuid cpuid(u32 code)
 {
 	u32 a, b, c, d;
