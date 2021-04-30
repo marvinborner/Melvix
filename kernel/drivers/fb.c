@@ -24,12 +24,11 @@ struct vbe_basic {
 
 PROTECTED static struct vbe_basic *vbe = NULL;
 
-static void fb_map_buffer(struct page_dir *dir)
+static u32 fb_map_buffer(struct page_dir *dir)
 {
-	// TODO: Return virtual mapped address
 	assert(vbe);
 	u32 size = vbe->height * vbe->pitch;
-	memory_map_identity(dir, memory_range_around((u32)vbe->fb, size), MEMORY_USER);
+	return virtual_alloc(dir, memory_range_around((u32)vbe->fb, size), MEMORY_USER).base;
 }
 
 static u32 fb_owner = 0;
@@ -52,8 +51,9 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3)
 		else
 			fb_owner = proc_current()->pid;
 
+		u32 fb = fb_map_buffer(proc_current()->page_dir);
+		vbe->fb = (u8 *)fb;
 		memcpy_user(arg1, vbe, size);
-		fb_map_buffer(proc_current()->page_dir);
 		return EOK;
 	}
 	default:
@@ -69,5 +69,8 @@ CLEAR void fb_install(void)
 	dev->control = fb_ioctl;
 	io_add(IO_FRAMEBUFFER, dev);
 
-	fb_map_buffer(virtual_kernel_dir());
+	// Identity map framebuffer to kernel to prevent unwanted writing
+	u32 size = vbe->height * vbe->pitch;
+	memory_map_identity(virtual_kernel_dir(), memory_range_around((u32)vbe->fb, size),
+			    MEMORY_CLEAR);
 }

@@ -185,7 +185,7 @@ void proc_exit(struct proc *proc, struct regs *r, s32 status)
 
 	free(proc);
 
-	proc_yield();
+	proc_yield_regs(r);
 }
 
 void proc_yield(void)
@@ -193,6 +193,12 @@ void proc_yield(void)
 	// TODO: Fix yielding without debug mode (File size?! Regs?! IDK?!)
 	proc_reset_quantum(PROC(current));
 	__asm__ volatile("int $127");
+}
+
+void proc_yield_regs(struct regs *r)
+{
+	proc_reset_quantum(PROC(current));
+	scheduler(r);
 }
 
 struct proc *proc_make(enum proc_priv priv)

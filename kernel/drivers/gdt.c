@@ -5,6 +5,17 @@
 #include <gdt.h>
 #include <mem.h>
 
+#define GDT_MAX_LIMIT 0xffff
+#define GDT_PRESENT (1 << 7)
+#define GDT_RING3 (3 << 5)
+#define GDT_DESCRIPTOR (1 << 4)
+#define GDT_EXECUTABLE (1 << 3)
+#define GDT_READWRITE (1 << 1)
+#define GDT_ACCESSED (1 << 0)
+#define GDT_GRANULARITY (0x80 | 0x00)
+#define GDT_SIZE (0x40 | 0x00)
+#define GDT_DATA_OFFSET 0x10
+
 static struct gdt_entry gdt[6] = { 0 };
 static struct tss_entry tss = { 0 };
 
@@ -24,12 +35,14 @@ CLEAR static void gdt_set_gate(u32 num, u32 base, u32 limit, u8 access, u8 gran)
 	gdt[num].access = access;
 }
 
+// TODO: Fix GPF for in/out operations in userspace (not necessarily a TSS problem)
 CLEAR static void tss_write(u32 num, u16 ss0, u32 esp0)
 {
 	u32 base = (u32)&tss;
 	u32 limit = base + sizeof(tss);
 
-	gdt_set_gate(num, base, limit, 0xe9, 0x00);
+	gdt_set_gate(num, base, limit, GDT_PRESENT | GDT_RING3 | GDT_EXECUTABLE | GDT_ACCESSED,
+		     GDT_SIZE);
 
 	memset(&tss, 0, sizeof(tss));
 
@@ -41,7 +54,7 @@ CLEAR static void tss_write(u32 num, u16 ss0, u32 esp0)
 
 CLEAR static void tss_flush(void)
 {
-	__asm__ volatile("ltr %0" ::"r"((u16)0x2b));
+	__asm__ volatile("ltr %0" ::"r"((u16)((u32)&gdt[5] - (u32)gdt)));
 }
 
 CLEAR static void gdt_flush(void)
@@ -59,23 +72,29 @@ void tss_set_stack(u32 ss, u32 esp)
 CLEAR void gdt_install(u32 esp)
 {
 	// Set GDT pointer and limit
-	gp.limit = (sizeof(struct gdt_entry) * 6) - 1;
+	gp.limit = sizeof(gdt) - 1;
 	gp.base = &gdt;
 
 	// NULL descriptor
 	gdt_set_gate(0, 0, 0, 0, 0);
 
 	// Code segment
-	gdt_set_gate(1, 0, 0xffffffff, 0x9a, 0xcf);
+	gdt_set_gate(1, 0, 0xffffffff,
+		     GDT_PRESENT | GDT_DESCRIPTOR | GDT_EXECUTABLE | GDT_READWRITE,
+		     GDT_GRANULARITY | GDT_SIZE);
 
 	// Data segment
-	gdt_set_gate(2, 0, 0xffffffff, 0x92, 0xcf);
+	gdt_set_gate(2, 0, 0xffffffff, GDT_PRESENT | GDT_DESCRIPTOR | GDT_READWRITE,
+		     GDT_GRANULARITY | GDT_SIZE);
 
 	// User mode code segment
-	gdt_set_gate(3, 0, 0xffffffff, 0xfa, 0xcf);
+	gdt_set_gate(3, 0, 0xffffffff,
+		     GDT_PRESENT | GDT_RING3 | GDT_DESCRIPTOR | GDT_EXECUTABLE | GDT_READWRITE,
+		     GDT_GRANULARITY | GDT_SIZE);
 
 	// User mode data segment
-	gdt_set_gate(4, 0, 0xffffffff, 0xf2, 0xcf);
+	gdt_set_gate(4, 0, 0xffffffff, GDT_PRESENT | GDT_RING3 | GDT_DESCRIPTOR | GDT_READWRITE,
+		     GDT_GRANULARITY | GDT_SIZE);
 
 	// Write TSS
 	tss_write(5, GDT_SUPER_DATA_OFFSET, esp);

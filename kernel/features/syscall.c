@@ -88,7 +88,7 @@ static void syscall_handler(struct regs *r)
 		} else {
 			// TODO: Reimplement argc,argv
 			proc_stack_push(proc, 0);
-			proc_yield();
+			proc_yield_regs(r);
 		}
 		break;
 	}
@@ -99,7 +99,7 @@ static void syscall_handler(struct regs *r)
 	}
 	case SYS_YIELD: {
 		r->eax = EOK;
-		proc_yield();
+		proc_yield_regs(r);
 		break;
 	}
 

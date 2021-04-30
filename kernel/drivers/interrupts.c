@@ -188,7 +188,7 @@ void isr_panic(struct regs *r)
 	} else {
 		__asm__ volatile("cli\nhlt");
 	}
-	proc_yield();
+	proc_yield_regs(r);
 }
 
 void isr_handler(struct regs *r);
