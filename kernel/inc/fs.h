@@ -15,7 +15,7 @@ enum dev_type { DEV_BLOCK, DEV_CHAR };
 
 struct vfs_dev {
 	u32 id;
-	const char *name;
+	char name[8];
 	enum dev_type type;
 	struct vfs *vfs;
 	void *data;
@@ -64,6 +64,8 @@ void vfs_add_dev(struct vfs_dev *dev) NONNULL;
 res vfs_read(const char *path, void *buf, u32 offset, u32 count);
 res vfs_write(const char *path, const void *buf, u32 offset, u32 count);
 res vfs_stat(const char *path, struct stat *buf);
+
+void vfs_load(struct vfs_dev *dev) NONNULL;
 
 struct vfs_dev *device_get_by_name(const char *name) NONNULL;
 struct vfs_dev *device_get_by_id(u32 id) NONNULL;
@@ -170,8 +172,6 @@ struct ext2_file {
 	u32 curr_block_pos;
 };
 
-res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev) NONNULL;
-res ext2_stat(const char *path, struct stat *buf, struct vfs_dev *dev) NONNULL;
-res ext2_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev) NONNULL;
+u8 ext2_load(struct vfs_dev *dev) NONNULL;
 
 #endif

@@ -332,7 +332,7 @@ NORETURN void proc_init(void)
 	vfs->perm = procfs_perm;
 	vfs->data = NULL;
 	struct vfs_dev *dev = zalloc(sizeof(*dev));
-	dev->name = "proc";
+	strlcpy(dev->name, "proc", sizeof(dev->name));
 	dev->type = DEV_CHAR;
 	dev->vfs = vfs;
 	vfs_add_dev(dev);

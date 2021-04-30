@@ -10,6 +10,7 @@ COBJS = entry_asm.o \
 	drivers/serial.o \
 	drivers/pci.o \
 	drivers/rtc.o \
+	drivers/mbr.o \
 	drivers/ide.o \
 	drivers/fb.o \
 	drivers/timer.o \

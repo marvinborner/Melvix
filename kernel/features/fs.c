@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <fs.h>
 #include <ide.h>
+#include <mbr.h>
 #include <mem.h>
 #include <mm.h>
 #include <print.h>
@@ -93,33 +94,6 @@ struct vfs_dev *vfs_find_dev(const char *path)
 	struct mount_info *m = vfs_find_mount_info(path);
 	return m && m->dev ? m->dev : NULL;
 }
-
-/*static const char *vfs_resolve_type(enum vfs_type type)
-{
-	switch (type) {
-	case VFS_DEVFS:
-		return "devfs";
-	case VFS_TMPFS:
-		return "tmpfs";
-	case VFS_PROCFS:
-		return "procfs";
-	case VFS_EXT2:
-		return "ext2";
-	default:
-		return "unknown";
-	}
-}
-
-static void vfs_list_mounts()
-{
-	struct node *iterator = mount_points->head;
-	while (iterator) {
-		struct mount_info *m = iterator->data;
-		printf("%s on %s type %s\n", m->dev->name, m->path,
-		       vfs_resolve_type(m->dev->vfs->type));
-		iterator = iterator->next;
-	}
-}*/
 
 res vfs_mount(struct vfs_dev *dev, const char *path)
 {
@@ -221,6 +195,14 @@ res vfs_stat(const char *path, struct stat *buf)
 		return -EACCES;
 
 	return m->dev->vfs->stat(path, buf, m->dev);
+}
+
+CLEAR void vfs_load(struct vfs_dev *dev)
+{
+	if (!mbr_load(dev)) {
+		assert(ext2_load(dev));
+		// TODO: Add GPT support
+	}
 }
 
 CLEAR void vfs_install(void)
@@ -458,7 +440,7 @@ static struct ext2_inode *ext2_find_inode_by_path(const char *path, struct ext2_
 	return ext2_get_inode(inode, in_buf, dev);
 }
 
-res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev)
+static res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
 	struct ext2_inode in = { 0 };
 	if (ext2_find_inode_by_path(path, &in, dev) == &in) {
@@ -467,7 +449,7 @@ res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev
 		return -ENOENT;
 }
 
-res ext2_stat(const char *path, struct stat *buf, struct vfs_dev *dev)
+static res ext2_stat(const char *path, struct stat *buf, struct vfs_dev *dev)
 {
 	struct ext2_inode in = { 0 };
 	if (ext2_find_inode_by_path(path, &in, dev) != &in)
@@ -484,7 +466,7 @@ res ext2_stat(const char *path, struct stat *buf, struct vfs_dev *dev)
 	return EOK;
 }
 
-res ext2_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev)
+static res ext2_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev)
 {
 	struct ext2_inode in = { 0 };
 	if (ext2_find_inode_by_path(path, &in, dev) != &in)
@@ -500,4 +482,32 @@ res ext2_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev)
 	default:
 		return -EINVAL;
 	}
+}
+
+CLEAR u8 ext2_load(struct vfs_dev *dev)
+{
+	struct ext2_superblock *sb = ext2_buffer_read(EXT2_SUPER, dev);
+	if (sb->magic != EXT2_MAGIC) {
+		free(sb);
+		return 0;
+	}
+
+	struct vfs *vfs = zalloc(sizeof(*vfs));
+	vfs->type = VFS_EXT2;
+	vfs->read = ext2_read;
+	vfs->stat = ext2_stat;
+	vfs->perm = ext2_perm;
+	dev->vfs = vfs;
+
+	// Verify that '/' is unmounted
+	struct mount_info *m = vfs_find_mount_info("/");
+	if (m && m->dev)
+		panic("Found multiple ext2 disks!\n");
+
+	// TODO: Mount other ext2 disks somewhere else
+	printf("Mounting disk %s to '/'\n", dev->name);
+	vfs_mount(dev, "/");
+
+	free(sb);
+	return 1;
 }

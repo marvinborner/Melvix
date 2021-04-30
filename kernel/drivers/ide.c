@@ -5,6 +5,7 @@
 #include <def.h>
 #include <fs.h>
 #include <ide.h>
+#include <mbr.h>
 #include <mem.h>
 #include <pci.h>
 #include <print.h>
@@ -128,30 +129,17 @@ CLEAR static void ata_probe(void)
 		if (!ide_find(bus, drive))
 			continue;
 
-		struct vfs_dev *dev = zalloc(sizeof(*dev));
-		struct ata_data *data = malloc(sizeof(*data));
+		struct ata_data *data = zalloc(sizeof(*data));
 		data->drive = (bus << 1) | drive;
 
-		char *str = zalloc(8);
-		strlcpy(str, "hd", 8);
-		str[2] = 'a' + i;
-
-		dev->name = str;
+		struct vfs_dev *dev = zalloc(sizeof(*dev));
+		strlcpy(dev->name, "hd", 3);
+		dev->name[2] = 'a' + i;
 		dev->type = DEV_BLOCK;
 		dev->read = ata_read;
-		vfs_add_dev(dev);
-		if (vfs_mounted(dev, "/"))
-			continue;
-
-		// TODO: Check if ext2 first
-		struct vfs *vfs = zalloc(sizeof(*vfs));
-		vfs->type = VFS_EXT2;
-		vfs->read = ext2_read;
-		vfs->stat = ext2_stat;
-		vfs->perm = ext2_perm;
-		dev->vfs = vfs;
 		dev->data = data;
-		vfs_mount(dev, "/");
+		vfs_add_dev(dev);
+		vfs_load(dev);
 	}
 }
 
