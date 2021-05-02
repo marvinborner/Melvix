@@ -5,10 +5,17 @@
 
 #include <def.h>
 
-#define GDT_SUPER_CODE_OFFSET 0x08 // Super (kernel) code segment offset in GDT
-#define GDT_SUPER_DATA_OFFSET 0x10 // Super (kernel) data segment offset in GDT
-#define GDT_USER_CODE_OFFSET 0x1b // User code segment offset in GDT (with ring3 mask)
-#define GDT_USER_DATA_OFFSET 0x23 // User data segment offset in GDT (with ring3 mask)
+#define GDT_ROOT_CODE_GATE 1
+#define GDT_ROOT_DATA_GATE 2
+#define GDT_USER_CODE_GATE 3
+#define GDT_USER_DATA_GATE 4
+#define GDT_TSS_GATE 5
+
+#define GDT_SUPER_CODE_OFFSET (gdt_offset(GDT_ROOT_CODE_GATE))
+#define GDT_SUPER_DATA_OFFSET (gdt_offset(GDT_ROOT_DATA_GATE))
+#define GDT_USER_CODE_OFFSET (gdt_offset(GDT_USER_CODE_GATE) | 3)
+#define GDT_USER_DATA_OFFSET (gdt_offset(GDT_USER_DATA_GATE) | 3)
+#define GDT_TSS_OFFSET (gdt_offset(GDT_TSS_GATE))
 
 struct gdt_entry {
 	u16 limit_low;
@@ -54,6 +61,7 @@ struct tss_entry {
 	u16 iomap_base;
 } PACKED;
 
+u8 gdt_offset(u8 gate);
 void gdt_install(u32 esp);
 void tss_set_stack(u32 ss, u32 esp);
 

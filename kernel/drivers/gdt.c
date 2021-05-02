@@ -21,6 +21,12 @@ static struct tss_entry tss = { 0 };
 
 PROTECTED static struct gdt_ptr gp = { 0 };
 
+CONST u8 gdt_offset(u8 gate)
+{
+	assert(gate && gate < COUNT(gdt));
+	return ((u32)&gdt[gate] - (u32)gdt) & 0xff;
+}
+
 CLEAR static void gdt_set_gate(u32 num, u32 base, u32 limit, u8 access, u8 gran)
 {
 	// Set descriptor base address
@@ -48,13 +54,14 @@ CLEAR static void tss_write(u32 num, u16 ss0, u32 esp0)
 
 	tss.ss0 = ss0;
 	tss.esp0 = esp0;
-	tss.cs = 0x0b;
-	tss.ss = tss.ds = tss.es = tss.fs = tss.gs = 0x13;
+	tss.cs = GDT_SUPER_CODE_OFFSET | 3;
+	tss.ss = tss.ds = tss.es = tss.fs = tss.gs = GDT_SUPER_DATA_OFFSET | 3;
+	tss.iomap_base = U16_MAX;
 }
 
 CLEAR static void tss_flush(void)
 {
-	__asm__ volatile("ltr %0" ::"r"((u16)((u32)&gdt[5] - (u32)gdt)));
+	__asm__ volatile("ltr %0" ::"r"((u16)(GDT_TSS_OFFSET | 3)));
 }
 
 CLEAR static void gdt_flush(void)
@@ -73,36 +80,35 @@ CLEAR void gdt_install(u32 esp)
 {
 	// Set GDT pointer and limit
 	gp.limit = sizeof(gdt) - 1;
-	gp.base = &gdt;
+	gp.base = gdt;
 
 	// NULL descriptor
 	gdt_set_gate(0, 0, 0, 0, 0);
 
 	// Code segment
-	gdt_set_gate(1, 0, 0xffffffff,
+	gdt_set_gate(GDT_ROOT_CODE_GATE, 0, U32_MAX,
 		     GDT_PRESENT | GDT_DESCRIPTOR | GDT_EXECUTABLE | GDT_READWRITE,
 		     GDT_GRANULARITY | GDT_SIZE);
 
 	// Data segment
-	gdt_set_gate(2, 0, 0xffffffff, GDT_PRESENT | GDT_DESCRIPTOR | GDT_READWRITE,
+	gdt_set_gate(GDT_ROOT_DATA_GATE, 0, U32_MAX, GDT_PRESENT | GDT_DESCRIPTOR | GDT_READWRITE,
 		     GDT_GRANULARITY | GDT_SIZE);
 
 	// User mode code segment
-	gdt_set_gate(3, 0, 0xffffffff,
+	gdt_set_gate(GDT_USER_CODE_GATE, 0, U32_MAX,
 		     GDT_PRESENT | GDT_RING3 | GDT_DESCRIPTOR | GDT_EXECUTABLE | GDT_READWRITE,
 		     GDT_GRANULARITY | GDT_SIZE);
 
 	// User mode data segment
-	gdt_set_gate(4, 0, 0xffffffff, GDT_PRESENT | GDT_RING3 | GDT_DESCRIPTOR | GDT_READWRITE,
+	gdt_set_gate(GDT_USER_DATA_GATE, 0, U32_MAX,
+		     GDT_PRESENT | GDT_RING3 | GDT_DESCRIPTOR | GDT_READWRITE,
 		     GDT_GRANULARITY | GDT_SIZE);
 
 	// Write TSS
-	tss_write(5, GDT_SUPER_DATA_OFFSET, esp);
+	tss_write(GDT_TSS_GATE, GDT_SUPER_DATA_OFFSET, esp);
 
 	// Remove old GDT and install the new changes!
 	gdt_flush();
-	tss_flush();
-
 	__asm__ volatile("mov %%ax, %%ds\n"
 			 "mov %%ax, %%es\n"
 			 "mov %%ax, %%fs\n"
@@ -110,6 +116,8 @@ CLEAR void gdt_install(u32 esp)
 			 "mov %%ax, %%ss\n" ::"a"(GDT_SUPER_DATA_OFFSET)
 			 : "memory");
 
-	__asm__ volatile("ljmpl $" STRINGIFY(GDT_SUPER_CODE_OFFSET) ", $code\n"
-								    "code:\n");
+	__asm__ volatile("ljmpl $0x08 , $code\n"
+			 "code:\n");
+
+	tss_flush();
 }

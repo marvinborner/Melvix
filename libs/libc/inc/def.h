@@ -33,6 +33,8 @@ typedef unsigned long long u64;
 #define __STRINGIFY(a) #a
 #define STRINGIFY(a) __STRINGIFY(a)
 
+#define COUNT(a) (sizeof(a) / sizeof 0 [a])
+
 #define ATTR __attribute__
 #define NORETURN ATTR((noreturn))
 #define NOINLINE ATTR((noinline))
