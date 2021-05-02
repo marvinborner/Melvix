@@ -61,7 +61,7 @@ struct tss_entry {
 	u16 iomap_base;
 } PACKED;
 
-u8 gdt_offset(u8 gate);
+CONST u8 gdt_offset(u8 gate);
 void gdt_install(u32 esp);
 void tss_set_stack(u32 ss, u32 esp);
 

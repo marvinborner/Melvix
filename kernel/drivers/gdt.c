@@ -21,7 +21,7 @@ static struct tss_entry tss = { 0 };
 
 PROTECTED static struct gdt_ptr gp = { 0 };
 
-CONST u8 gdt_offset(u8 gate)
+u8 gdt_offset(u8 gate)
 {
 	assert(gate && gate < COUNT(gdt));
 	return ((u32)&gdt[gate] - (u32)gdt) & 0xff;
