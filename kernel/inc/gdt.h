@@ -63,6 +63,6 @@ struct tss_entry {
 
 CONST u8 gdt_offset(u8 gate);
 void gdt_install(u32 esp);
-void tss_set_stack(u32 ss, u32 esp);
+void tss_set_stack(u32 esp);
 
 #endif

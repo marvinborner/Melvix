@@ -54,7 +54,7 @@ HOT FLATTEN void scheduler(struct regs *regs)
 		current = idle_proc;
 	}
 
-	tss_set_stack(GDT_SUPER_DATA_OFFSET, PROC(current)->stack.kernel);
+	tss_set_stack(PROC(current)->stack.kernel);
 	memory_switch_dir(PROC(current)->page_dir);
 	memcpy(regs, &PROC(current)->regs, sizeof(*regs));
 
@@ -369,7 +369,7 @@ NORETURN void proc_init(void)
 	// We'll shortly jump to usermode. Clear and protect every secret!
 	memory_user_hook();
 
-	tss_set_stack(GDT_SUPER_DATA_OFFSET, init->stack.kernel);
+	tss_set_stack(init->stack.kernel);
 	memory_switch_dir(init->page_dir);
 	printf("Jumping to userspace!\n");
 

@@ -41,11 +41,10 @@ CLEAR static void gdt_set_gate(u32 num, u32 base, u32 limit, u8 access, u8 gran)
 	gdt[num].access = access;
 }
 
-// TODO: Fix GPF for in/out operations in userspace (not necessarily a TSS problem)
 CLEAR static void tss_write(u32 num, u16 ss0, u32 esp0)
 {
 	u32 base = (u32)&tss;
-	u32 limit = base + sizeof(tss);
+	u32 limit = sizeof(tss) - 1;
 
 	gdt_set_gate(num, base, limit, GDT_PRESENT | GDT_RING3 | GDT_EXECUTABLE | GDT_ACCESSED,
 		     GDT_SIZE);
@@ -56,7 +55,7 @@ CLEAR static void tss_write(u32 num, u16 ss0, u32 esp0)
 	tss.esp0 = esp0;
 	tss.cs = GDT_SUPER_CODE_OFFSET | 3;
 	tss.ss = tss.ds = tss.es = tss.fs = tss.gs = GDT_SUPER_DATA_OFFSET | 3;
-	tss.iomap_base = U16_MAX;
+	tss.iomap_base = sizeof(tss);
 }
 
 CLEAR static void tss_flush(void)
@@ -69,11 +68,9 @@ CLEAR static void gdt_flush(void)
 	__asm__ volatile("lgdt %0" ::"m"(gp) : "memory");
 }
 
-void tss_set_stack(u32 ss, u32 esp)
+void tss_set_stack(u32 esp)
 {
-	assert(ss && esp);
 	tss.esp0 = esp;
-	tss.ss0 = ss;
 }
 
 CLEAR void gdt_install(u32 esp)
