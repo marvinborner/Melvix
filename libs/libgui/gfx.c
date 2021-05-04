@@ -4,12 +4,14 @@
 // TODO: Use efficient redrawing
 
 #include <assert.h>
+#include <crypto.h>
 #include <libgui/bmp.h>
 #include <libgui/gfx.h>
 #include <libgui/msg.h>
 #include <libgui/png.h>
 #include <libgui/psf.h>
 #include <libgui/vesa.h>
+#include <list.h>
 #include <mem.h>
 #include <str.h>
 #include <sys.h>
@@ -162,30 +164,92 @@ void gfx_write(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, c
 	}
 }
 
+struct gfx_image_cache {
+	u32 hash;
+	struct bmp *bmp;
+};
+
+struct list *gfx_image_cache_list = NULL;
+
+static void gfx_image_cache_clear(void)
+{
+	struct node *iterator = gfx_image_cache_list->head;
+	while (iterator) {
+		struct gfx_image_cache *cache = iterator->data;
+		free(cache->bmp->data);
+		free(cache->bmp);
+		free(cache);
+		iterator = iterator->next;
+	}
+
+	list_destroy(gfx_image_cache_list);
+}
+
+static void gfx_image_cache_init(void)
+{
+	if (!gfx_image_cache_list) {
+		gfx_image_cache_list = list_new();
+		atexit(gfx_image_cache_clear);
+	}
+}
+
+static struct bmp *gfx_image_cache_get(const char *path)
+{
+	gfx_image_cache_init();
+
+	u32 hash = crc32(0, path, strlen(path));
+
+	struct node *iterator = gfx_image_cache_list->head;
+	while (iterator) {
+		struct gfx_image_cache *cache = iterator->data;
+		if (cache->hash == hash) {
+			return cache->bmp;
+		}
+		iterator = iterator->next;
+	}
+
+	return NULL;
+}
+
+static void gfx_image_cache_save(const char *path, struct bmp *bmp)
+{
+	gfx_image_cache_init();
+
+	struct gfx_image_cache *cache = zalloc(sizeof(*cache));
+	cache->hash = crc32(0, path, strlen(path));
+	cache->bmp = bmp;
+	list_add(gfx_image_cache_list, cache);
+}
+
 void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter, const char *path)
 {
 	// TODO: Support x, y
 	// TODO: Detect image type
-	struct bmp bmp = { 0 };
 
-	u32 error = png_decode32_file(&bmp.data, &bmp.size.x, &bmp.size.y, path);
-	if (error)
-		err(1, "error %u: %s\n", error, png_error_text(error));
+	struct bmp *bmp = gfx_image_cache_get(path);
 
-	assert(bmp.size.x + pos.x <= ctx->size.x);
-	assert(bmp.size.y + pos.y <= ctx->size.y);
+	if (!bmp) {
+		bmp = zalloc(sizeof(*bmp));
+		u32 error = png_decode32_file(&bmp->data, &bmp->size.x, &bmp->size.y, path);
+		if (error)
+			err(1, "error %u: %s\n", error, png_error_text(error));
 
-	bmp.bpp = 32;
-	bmp.pitch = bmp.size.x * (bmp.bpp >> 3);
+		bmp->bpp = 32;
+		bmp->pitch = bmp->size.x * (bmp->bpp >> 3);
+		gfx_image_cache_save(path, bmp);
+	}
+
+	assert(bmp->size.x + pos.x <= ctx->size.x);
+	assert(bmp->size.y + pos.y <= ctx->size.y);
 
 	// TODO: Fix reversed png in decoder
-	u8 bypp = bmp.bpp >> 3;
+	u8 bypp = bmp->bpp >> 3;
 	/* u8 *srcfb = &bmp->data[bypp + (bmp->size.y - 1) * bmp->pitch]; */
-	u8 *srcfb = bmp.data;
+	u8 *srcfb = bmp->data;
 	u8 *destfb = &ctx->fb[bypp];
-	for (u32 cy = 0; cy < bmp.size.y && cy + pos.y < ctx->size.y; cy++) {
+	for (u32 cy = 0; cy < bmp->size.y && cy + pos.y < ctx->size.y; cy++) {
 		int diff = 0;
-		for (u32 cx = 0; cx < bmp.size.x && cx + pos.x < ctx->size.x; cx++) {
+		for (u32 cx = 0; cx < bmp->size.x && cx + pos.x < ctx->size.x; cx++) {
 			if (srcfb[bypp - 1]) {
 				if (filter == GFX_FILTER_NONE) {
 					memcpy(destfb, srcfb, bypp);
@@ -201,10 +265,9 @@ void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter
 			destfb += bypp;
 			diff += bypp;
 		}
-		srcfb += bmp.pitch - diff;
+		srcfb += bmp->pitch - diff;
 		destfb += ctx->pitch - diff;
 	}
-	free(bmp.data);
 }
 
 void gfx_load_image(struct context *ctx, vec2 pos, const char *path)
