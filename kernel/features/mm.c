@@ -136,6 +136,7 @@ static void physical_page_set_free(u32 address)
 
 CLEAR void physical_set_total(u32 total)
 {
+	assert(total > 0);
 	memory_total = total;
 }
 

@@ -10,7 +10,7 @@
 #include <sys.h>
 
 #define PROC_QUANTUM 42 // Milliseconds or something // TODO
-#define PROC_STACK_SIZE (1 << 20) // 1MiB
+#define PROC_STACK_SIZE 0x4000 // 16KiB
 
 #define EFLAGS_ALWAYS 0x2 // Always one
 #define EFLAGS_INTERRUPTS 0x200 // Enable interrupts

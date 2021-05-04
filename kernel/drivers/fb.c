@@ -12,6 +12,8 @@
 #include <str.h>
 #include <sys.h>
 
+#define FB_SIZE (vbe->height * vbe->pitch)
+
 struct vbe_basic {
 	u8 stuff1[16];
 	u16 pitch;
@@ -27,8 +29,7 @@ PROTECTED static struct vbe_basic *vbe = NULL;
 static u32 fb_map_buffer(struct page_dir *dir)
 {
 	assert(vbe);
-	u32 size = vbe->height * vbe->pitch;
-	return virtual_alloc(dir, memory_range_around((u32)vbe->fb, size), MEMORY_USER).base;
+	return virtual_alloc(dir, memory_range_around((u32)vbe->fb, FB_SIZE), MEMORY_USER).base;
 }
 
 static u32 fb_owner = 0;
@@ -48,8 +49,7 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3)
 
 		if (fb_owner != 0 && proc_from_pid(fb_owner))
 			return -EBUSY;
-		else
-			fb_owner = proc_current()->pid;
+		fb_owner = proc_current()->pid;
 
 		u32 fb = fb_map_buffer(proc_current()->page_dir);
 		vbe->fb = (u8 *)fb;
@@ -69,8 +69,6 @@ CLEAR void fb_install(void)
 	dev->control = fb_ioctl;
 	io_add(IO_FRAMEBUFFER, dev);
 
-	// Identity map framebuffer to kernel to prevent unwanted writing
-	u32 size = vbe->height * vbe->pitch;
-	memory_map_identity(virtual_kernel_dir(), memory_range_around((u32)vbe->fb, size),
-			    MEMORY_CLEAR);
+	// Set framebuffer range used to prevent unwanted writing
+	physical_set_used(memory_range_around((u32)vbe->fb, FB_SIZE));
 }

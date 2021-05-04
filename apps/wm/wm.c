@@ -582,11 +582,6 @@ int main(int argc, char **argv)
 	cursor = window_new(wm_client, vec2(0, 0), vec2(32, 32),
 			    WF_NO_DRAG | WF_NO_FOCUS | WF_NO_RESIZE | WF_ALPHA);
 
-	for (u32 i = 0; i < direct->ctx.bytes; i++)
-		direct->ctx.fb[i] = 0x42;
-	/* gfx_write(&direct->ctx, vec2(0, 0), FONT_32, COLOR_FG, "Loading Melvix..."); */
-	while (1)
-		;
 	gfx_load_wallpaper(&wallpaper->ctx, "/res/wall.png");
 	memset(cursor->ctx.fb, 0, cursor->ctx.bytes);
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
@@ -594,7 +589,7 @@ int main(int argc, char **argv)
 
 	assert(io_control(IO_BUS, IOCTL_BUS_REGISTER, "wm") == EOK);
 
-	assert(exec("chess", NULL) == EOK);
+	/* assert(exec("chess", NULL) == EOK); */
 
 	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
