@@ -167,6 +167,7 @@ res elf_load(const char *name, struct proc *proc)
 
 	proc->stack.user = user_stack + PROC_STACK_SIZE;
 	proc->stack.kernel = kernel_stack + PROC_STACK_SIZE;
+	proc->regs.esp = proc->stack.kernel;
 	proc->regs.ebp = proc->stack.user;
 	proc->regs.useresp = proc->stack.user;
 	proc->regs.eip = header.entry + rand_off;
