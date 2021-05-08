@@ -1,31 +1,55 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <assert.h>
 #include <cpu.h>
 #include <def.h>
 #include <serial.h>
 #include <str.h>
 
+#define PORT 0x3f8
+
+PROTECTED static u8 serial_enabled = 0;
+
+CLEAR void serial_disable(void)
+{
+	outb(PORT + 4, 0x1e); // Enable loopback
+	serial_enabled = 0;
+}
+
+CLEAR void serial_enable(void)
+{
+	outb(PORT + 4, 0x0f);
+	serial_enabled = 1;
+}
+
 CLEAR void serial_install(void)
 {
-	outb(0x3f8 + 1, 0x00);
-	outb(0x3f8 + 3, 0x80);
-	outb(0x3f8 + 0, 0x03);
-	outb(0x3f8 + 1, 0x00);
-	outb(0x3f8 + 3, 0x03);
-	outb(0x3f8 + 2, 0xC7);
-	outb(0x3f8 + 4, 0x0B);
+	outb(PORT + 1, 0x00);
+	outb(PORT + 3, 0x80);
+	outb(PORT + 0, 0x03);
+	outb(PORT + 1, 0x00);
+	outb(PORT + 3, 0x03);
+	outb(PORT + 2, 0xc7);
+
+	// Test serial chip
+	outb(PORT + 4, 0x1e); // Enable loopback
+	outb(PORT + 0, 0xae); // Write
+	assert(inb(PORT + 0) == 0xae); // Verify receive
 }
 
 static int is_transmit_empty(void)
 {
-	return inb(0x3f8 + 5) & 0x20;
+	return inb(PORT + 5) & 0x20;
 }
 
 void serial_put(char ch)
 {
+	if (!serial_enabled)
+		return;
+
 	while (is_transmit_empty() == 0)
 		;
-	outb(0x3f8, (u8)ch);
+	outb(PORT, (u8)ch);
 }
 
 void serial_print(const char *data)

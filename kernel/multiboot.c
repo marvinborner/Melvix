@@ -2,20 +2,34 @@
 
 #include <assert.h>
 #include <def.h>
+#include <mem.h>
 #include <mm.h>
 #include <multiboot.h>
+#include <serial.h>
 
 PROTECTED static struct multiboot_info *info = NULL;
+
+CLEAR static void multiboot_parse_cmdline(const char *line)
+{
+	const char *start = line;
+	for (const char *p = line; p && *p; p++) {
+		if (*p == ' ')
+			start = p + 1;
+
+		if (memcmp(start, "log", 3) == 0) {
+			serial_enable();
+			start += 3;
+		}
+	}
+}
 
 CLEAR void multiboot_init(u32 magic, u32 addr)
 {
 	assert(magic == MULTIBOOT_MAGIC);
 	info = (void *)addr;
 
-	if (info->flags & MULTIBOOT_INFO_CMDLINE) {
-		// TODO: Do something useful with grub cmdline?
-		/* printf("CMDLINE: '%s'\n", info->cmdline); */
-	}
+	if (info->flags & MULTIBOOT_INFO_CMDLINE)
+		multiboot_parse_cmdline((const char *)info->cmdline);
 }
 
 CLEAR u32 multiboot_vbe(void)
