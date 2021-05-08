@@ -20,6 +20,8 @@ CLEAR void serial_enable(void)
 {
 	outb(PORT + 4, 0x0f);
 	serial_enabled = 1;
+
+	serial_print("Serial connected!\n");
 }
 
 CLEAR void serial_install(void)

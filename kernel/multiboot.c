@@ -16,7 +16,7 @@ CLEAR static void multiboot_parse_cmdline(const char *line)
 		if (*p == ' ')
 			start = p + 1;
 
-		if (memcmp(start, "log", 3) == 0) {
+		if (memcmp(start, "log", 3) == 0 && !ALPHANUMERIC(start[3])) {
 			serial_enable();
 			start += 3;
 		}
@@ -30,6 +30,8 @@ CLEAR void multiboot_init(u32 magic, u32 addr)
 
 	if (info->flags & MULTIBOOT_INFO_CMDLINE)
 		multiboot_parse_cmdline((const char *)info->cmdline);
+
+	serial_print("Kernel was compiled at " __TIME__ " on " __DATE__ "\n");
 }
 
 CLEAR u32 multiboot_vbe(void)

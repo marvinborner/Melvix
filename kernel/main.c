@@ -23,13 +23,9 @@ PROTECTED u32 __stack_chk_guard;
 int kernel_main(u32 magic, u32 addr, u32 esp); // Decl
 int kernel_main(u32 magic, u32 addr, u32 esp)
 {
-	// Serial connection
 	serial_install();
-	serial_print("\nKernel was compiled at " __TIME__ " on " __DATE__ "\n");
-	serial_print("Serial connected!\n");
 
 	gdt_install(esp);
-
 	multiboot_init(magic, addr);
 
 	memory_install();

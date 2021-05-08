@@ -20,7 +20,7 @@ typedef signed long long s64;
 typedef unsigned long long u64;
 
 /**
- * Macros
+ * Useful macros
  */
 
 #define UNUSED(a) ((void)(a))
@@ -30,10 +30,20 @@ typedef unsigned long long u64;
 
 #define ABS(a) ((u32)(((s32)(a) < 0) ? -(a) : (a)))
 
+#define COUNT(a) (sizeof(a) / sizeof 0 [a])
+
+#define UPPER(a) ((a) >= 'A' && ((a) <= 'Z'))
+#define LOWER(a) ((a) >= 'a' && ((a) <= 'z'))
+#define ALPHA(a) (UPPER(a) || LOWER(a))
+#define NUMERIC(a) ((a) >= '0' && ((a) <= '9'))
+#define ALPHANUMERIC(a) (ALPHA(a) || NUMERIC(a))
+
 #define __STRINGIFY(a) #a
 #define STRINGIFY(a) __STRINGIFY(a)
 
-#define COUNT(a) (sizeof(a) / sizeof 0 [a])
+/**
+ * Compiler attribute wrappers
+ */
 
 #define ATTR __attribute__
 #define NORETURN ATTR((noreturn))
@@ -52,10 +62,18 @@ typedef unsigned long long u64;
 #define NO_SANITIZE ATTR((no_sanitize("undefined")))
 #define ALIGNED(align) ATTR((aligned(align)))
 
+/**
+ * Kernel section macros
+ */
+
 #ifdef KERNEL
 #define CLEAR NOINLINE ATTR((section(".temp_clear")))
 #define PROTECTED ATTR((section(".temp_protect")))
 #endif
+
+/**
+ * General macro numbers
+ */
 
 #define EOF (-1)
 #define NULL ((void *)0)
