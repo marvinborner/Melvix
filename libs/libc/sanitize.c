@@ -183,7 +183,7 @@ void __ubsan_handle_type_mismatch_v1(struct type_mismatch *data, u32 ptr)
 	};
 
 	struct source_location *loc = &data->location;
-	const char *msg = "";
+	const char *msg;
 	if (ptr == 0) {
 		msg = "null pointer";
 	} else if (data->alignment != 0 && is_aligned(ptr, data->alignment))

@@ -52,7 +52,7 @@ struct proc {
 };
 
 void scheduler(struct regs *regs) NONNULL;
-void proc_init(void);
+NORETURN void proc_init(void);
 void proc_print(void);
 struct proc *proc_current(void);
 u8 proc_super(void);

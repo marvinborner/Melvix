@@ -12,13 +12,12 @@ int ip_pton(const char *src, u32 *dst)
 {
 	const char *end = src + strlen(src);
 	u8 tmp[4], *tp;
-	int ch = 0;
 	int saw_digit = 0;
 	int octets = 0;
 	*(tp = tmp) = 0;
 
 	while (src < end) {
-		ch = *src++;
+		int ch = *src++;
 		if (ch >= '0' && ch <= '9') {
 			u32 new = *tp * 10 + (ch - '0');
 

@@ -22,11 +22,12 @@ void list_destroy(struct list *list)
 			break;
 		}
 		iterator = iterator->next;
-		free(iterator->prev);
+
+		if (iterator && iterator->prev)
+			free(iterator->prev);
 	}
-	list->head = NULL;
+	memset(list, 0, sizeof(*list));
 	free(list);
-	list = NULL;
 }
 
 static struct node *list_new_node(void)

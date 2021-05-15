@@ -216,6 +216,8 @@ static void rectangle_redraw(vec2 pos1, vec2 pos2)
 
 static struct window *window_new(struct client client, struct vec2 pos, struct vec2 size, u32 flags)
 {
+	assert(windows);
+
 	struct window *win = malloc(sizeof(*win));
 	static u32 id = 0;
 	win->id = id++;

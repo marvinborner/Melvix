@@ -66,7 +66,6 @@ res elf_load(const char *name, struct proc *proc)
 		if (vfs_read(path, &program, header.phoff + header.phentsize * i,
 			     sizeof(program)) != sizeof(program)) {
 			memory_bypass_disable();
-			clac();
 			return -ENOEXEC;
 		}
 		memory_bypass_disable();
@@ -107,7 +106,6 @@ res elf_load(const char *name, struct proc *proc)
 	if (vfs_read(path, &section_strings, header.shoff + header.shentsize * header.shstrndx,
 		     sizeof(section_strings)) != sizeof(section_strings)) {
 		memory_bypass_disable();
-		clac();
 		return -ENOEXEC;
 	}
 	memory_bypass_disable();
@@ -122,7 +120,6 @@ res elf_load(const char *name, struct proc *proc)
 		if (vfs_read(path, &section, header.shoff + header.shentsize * i,
 			     sizeof(section)) != sizeof(section)) {
 			memory_bypass_disable();
-			clac();
 			return -ENOEXEC;
 		}
 		memory_bypass_disable();
@@ -135,7 +132,6 @@ res elf_load(const char *name, struct proc *proc)
 		/* char name[64] = { 0 }; // Max length? */
 		/* if (vfs_read(path, &name, offset, sizeof(name)) != sizeof(name)) { */
 		/* 	memory_bypass_disable(); */
-		/* 	clac(); */
 		/* 	return -ENOEXEC; */
 		/* } */
 		/* memory_bypass_disable(); */

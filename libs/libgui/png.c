@@ -381,8 +381,10 @@ static long png_filesize(const char *filename)
 /* load file into buffer that already has the correct allocated size. Returns error code.*/
 static u32 png_buffer_file(u8 *out, u32 size, const char *filename)
 {
-	u32 readsize;
-	readsize = read(filename, out, 0, size);
+	if (!out)
+		return 78;
+
+	u32 readsize = read(filename, out, 0, size);
 
 	if (readsize != size)
 		return 78;
@@ -3730,7 +3732,12 @@ static void getPixelColorRGBA8(u8 *r, u8 *g, u8 *b, u8 *a, const u8 *in, u32 i,
 				       1U); /*highest possible value for this bit depth*/
 			u32 j = i * mode->bitdepth;
 			u32 value = readBitsFromReversedStream(&j, in, mode->bitdepth);
-			*r = *g = *b = (value * 255) / highest;
+
+			if (highest)
+				*r = *g = *b = (value * 255) / highest;
+			else
+				*r = *g = *b = value;
+
 			if (mode->key_defined && value == mode->key_r)
 				*a = 0;
 			else

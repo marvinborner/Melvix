@@ -320,7 +320,7 @@ static res procfs_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev
 extern void proc_jump_userspace(void);
 
 u32 _esp, _eip;
-NORETURN void proc_init(void)
+void proc_init(void)
 {
 	if (proc_list_running)
 		panic("Already initialized processes!");

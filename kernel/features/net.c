@@ -8,7 +8,7 @@
 #include <net.h>
 #include <pci.h>
 #include <print.h>
-#include <random.h>
+#include <rand.h>
 #include <rtl8139.h>
 #include <socket.h>
 #include <str.h>

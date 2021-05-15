@@ -240,12 +240,12 @@ static struct ext2_inode *ext2_get_inode(u32 i, struct ext2_inode *in_buf, struc
 	struct ext2_superblock *s = ext2_get_superblock(dev);
 	assert(s);
 	struct ext2_bgd *b = ext2_get_bgd(dev);
-	assert(b);
 
 	u32 block_group = (i - 1) / s->inodes_per_group;
 	u32 index = (i - 1) % s->inodes_per_group;
 	u32 block = (index * EXT2_INODE_SIZE) / BLOCK_SIZE;
 	b += block_group;
+	assert(b);
 
 	u32 *buf = ext2_buffer_read(b->inode_table + block, dev);
 	struct ext2_inode *in =

@@ -123,7 +123,7 @@ char *conv_base(int value, char *result, int base, int is_signed)
 		return result;
 	}
 
-	char *ptr = result, *ptr1 = result, tmp_char;
+	char *ptr = result, *ptr1 = result;
 	int tmp_value;
 
 	do {
@@ -137,7 +137,7 @@ char *conv_base(int value, char *result, int base, int is_signed)
 		*ptr++ = '-';
 	*ptr-- = '\0';
 	while (ptr1 < ptr) {
-		tmp_char = *ptr;
+		char tmp_char = *ptr;
 		*ptr-- = *ptr1;
 		*ptr1++ = tmp_char;
 	}

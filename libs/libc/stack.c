@@ -22,11 +22,12 @@ void stack_destroy(struct stack *stack)
 			break;
 		}
 		iterator = iterator->prev;
-		free(iterator->next);
+
+		if (iterator && iterator->prev)
+			free(iterator->prev);
 	}
-	stack->tail = NULL;
+	memset(stack, 0, sizeof(*stack));
 	free(stack);
-	stack = NULL;
 }
 
 static struct stack_node *stack_new_node(void)
