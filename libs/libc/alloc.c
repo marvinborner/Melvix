@@ -125,7 +125,7 @@ void *_malloc(u32 req_size)
 
 	if (size == 0) {
 		liballoc_unlock();
-		return malloc(1);
+		return _malloc(1);
 	}
 
 	if (l_mem_root == NULL) {
@@ -338,12 +338,12 @@ void *_realloc(void *ptr, u32 size)
 	size = ALIGN_UP(size, 16);
 
 	if (size == 0) {
-		free(ptr);
+		_free(ptr);
 		return NULL;
 	}
 
 	if (ptr == NULL)
-		return malloc(size);
+		return _malloc(size);
 
 	liballoc_lock();
 	struct liballoc_minor *min = (struct liballoc_minor *)((u32)ptr - MINOR_SIZE);
@@ -361,9 +361,9 @@ void *_realloc(void *ptr, u32 size)
 
 	liballoc_unlock();
 
-	void *new_ptr = malloc(size);
+	void *new_ptr = _malloc(size);
 	memcpy(new_ptr, ptr, min->req_size);
-	free(ptr);
+	_free(ptr);
 
 	return new_ptr;
 }

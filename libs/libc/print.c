@@ -241,6 +241,8 @@ void print_trace(u32 count)
 	__asm__ volatile("movl %%ebp, %0;" : "=r"(stk));
 	print("EBP\tEIP\n");
 	for (u32 i = 0; stk && memory_readable(stk) && i < count; i++) {
+		if (!stk->ebp || !stk->eip)
+			break;
 		printf("0x%x\t0x%x\n", stk->ebp, stk->eip);
 		stk = stk->ebp;
 	}

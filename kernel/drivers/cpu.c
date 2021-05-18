@@ -179,12 +179,14 @@ CLEAR void cpu_enable_features(void)
 
 void clac(void)
 {
-	__asm__ volatile("clac" ::: "cc");
+	if (cpu_extended_features.ebx & CPUID_EXT_FEAT_EBX_SMAP)
+		__asm__ volatile("clac" ::: "cc");
 }
 
 void stac(void)
 {
-	__asm__ volatile("stac" ::: "cc");
+	if (cpu_extended_features.ebx & CPUID_EXT_FEAT_EBX_SMAP)
+		__asm__ volatile("stac" ::: "cc");
 }
 
 CLEAR void cli(void)

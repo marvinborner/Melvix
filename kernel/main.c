@@ -29,7 +29,6 @@ int kernel_main(u32 magic, u32 addr, u32 esp)
 	multiboot_init(magic, addr);
 
 	memory_install();
-	memory_switch_dir(virtual_kernel_dir());
 
 	cpu_enable_features();
 	cpu_print();
