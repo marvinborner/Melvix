@@ -48,37 +48,38 @@ make_cross() {
         # Get sources
         mkdir "${DIR}/src" && cd "${DIR}/src"
         echo "Downloading..."
-        curl "https://ftp.gnu.org/gnu/binutils/binutils-2.33.1.tar.gz" >binutils.tar.gz
+        curl "https://ftp.gnu.org/gnu/binutils/binutils-2.36.1.tar.gz" >binutils.tar.gz
         tar xzf binutils.tar.gz
-        curl "https://ftp.gnu.org/gnu/gcc/gcc-9.2.0/gcc-9.2.0.tar.gz" >gcc.tar.gz
+        curl "https://ftp.gnu.org/gnu/gcc/gcc-11.1.0/gcc-11.1.0.tar.gz" >gcc.tar.gz
         tar xzf gcc.tar.gz
 
         # Prepare compiling
         mkdir -p "${DIR}/opt/bin"
+        export CFLAGS="-g0 -O2"
         export PREFIX="${DIR}/opt"
         export TARGET=i686-elf
         export PATH="$PREFIX/bin:$PATH"
 
         if [ "$(uname -s)" = "OpenBSD" ]; then
             export with_gmp=/usr/local
-            sed -i 's/-no-pie/-nopie/g' "${DIR}/src/gcc-9.2.0/gcc/configure"
+            sed -i 's/-no-pie/-nopie/g' "${DIR}/src/gcc-11.1.0/gcc/configure"
         fi
 
         # Compile binutils
         mkdir "${DIR}/src/build-binutils" && cd "${DIR}/src/build-binutils"
-        ../binutils-2.33.1/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
+        ../binutils-2.36.1/configure --target="$TARGET" --prefix="$PREFIX" --with-sysroot --disable-nls --disable-werror
         $MAKE -j $($NPROC)
         $MAKE install
 
         # Compile GCC
         mkdir "${DIR}/src/build-gcc" && cd "${DIR}/src/build-gcc"
-        ../gcc-9.2.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c --without-headers
+        ../gcc-11.1.0/configure --target="$TARGET" --prefix="$PREFIX" --disable-nls --enable-languages=c --without-headers
         $MAKE -j $($NPROC) all-gcc all-target-libgcc
         $MAKE install-gcc install-target-libgcc
 
         # Fix things
         if [ "$(uname -s)" = "OpenBSD" ]; then
-            cd "${DIR}/opt/libexec/gcc/i686-elf/9.2.0/" && ln -sf liblto_plugin.so.0.0 liblto_plugin.so
+            cd "${DIR}/opt/libexec/gcc/i686-elf/11.1.0/" && ln -sf liblto_plugin.so.0.0 liblto_plugin.so
         fi
 
         cd "${DIR}/.."
