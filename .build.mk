@@ -5,10 +5,11 @@ ALL_PREPROCESSOR_FLAGS = \
     DEBUG_ALLOC \
     DEBUG_SCHEDULER
 
-# Default configs
-CONFIG_CACHE ?=
-CONFIG_EXTRA_CFLAGS ?=
-CONFIG_USE_PIE ?=
+# All config options
+ALL_CONFIGS = \
+	CONFIG_CACHE \
+	CONFIG_EXTRA_CFLAGS \
+	CONFIG_USE_PIE
 
 # Specific config groups
 ifeq ($(CONFIG), debug)
