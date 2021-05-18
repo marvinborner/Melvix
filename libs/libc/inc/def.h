@@ -47,6 +47,7 @@ typedef unsigned long long u64;
 
 #define ATTR __attribute__
 #define NORETURN ATTR((noreturn))
+#define INLINE ATTR((gnu_inline)) inline
 #define NOINLINE ATTR((noinline))
 #define DEPRECATED ATTR((deprecated))
 #define NONNULL ATTR((nonnull))

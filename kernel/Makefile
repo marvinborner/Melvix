@@ -42,3 +42,6 @@ all: compile
 compile: $(COBJS)
 	@mkdir -p $(BUILD)/apps/kernel/
 	@$(LD) -N -z max-page-size=0x1000 -eboot_entry -Tlink.ld -o $(BUILD)/apps/kernel/exec -L$(BUILD) $+ -lk
+ifeq ($(CONFIG_STRIP), true)
+	@$(ST) --strip-all $(BUILD)/apps/kernel/exec
+endif

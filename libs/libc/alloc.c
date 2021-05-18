@@ -382,16 +382,38 @@ static void *_realloc(void *ptr, u32 size)
 #define FUNC log
 #endif
 
-void *zalloc(u32 size)
+void *realloc_debug(void *ptr, u32 size, const char *file, int line, const char *func,
+		    const char *inp)
 {
-	void *ret = malloc(size);
-	memset(ret, 0, size);
+	assert(size < (100 << 20)); // Don't brag with memory pls
+	void *ret = _realloc(ptr, size);
+
+#if DEBUG_ALLOC
+	FUNC(PREFIX "REALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp);
+#else
+	UNUSED(file);
+	UNUSED(line);
+	UNUSED(func);
+	UNUSED(inp);
+#endif
 	return ret;
 }
 
-void *realloc(void *ptr, u32 size)
+void *zalloc_debug(u32 size, const char *file, int line, const char *func, const char *inp)
 {
-	return _realloc(ptr, size);
+	assert(size < (100 << 20)); // Don't brag with memory pls
+	void *ret = _malloc(size);
+	memset(ret, 0, size);
+
+#if DEBUG_ALLOC
+	FUNC(PREFIX "ZALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp);
+#else
+	UNUSED(file);
+	UNUSED(line);
+	UNUSED(func);
+	UNUSED(inp);
+#endif
+	return ret;
 }
 
 void *malloc_debug(u32 size, const char *file, int line, const char *func, const char *inp)
@@ -399,13 +421,14 @@ void *malloc_debug(u32 size, const char *file, int line, const char *func, const
 	assert(size < (100 << 20)); // Don't brag with memory pls
 	void *ret = _malloc(size);
 
-	(void)file;
-	(void)line;
-	(void)func;
-	(void)inp;
-	/* #ifdef KERNEL */
-	/* 	FUNC(PREFIX "MALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp); */
-	/* #endif */
+#if DEBUG_ALLOC
+	FUNC(PREFIX "MALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp);
+#else
+	UNUSED(file);
+	UNUSED(line);
+	UNUSED(func);
+	UNUSED(inp);
+#endif
 	return ret;
 }
 
@@ -413,11 +436,12 @@ void free_debug(void *ptr, const char *file, int line, const char *func, const c
 {
 	_free(ptr);
 
-	(void)file;
-	(void)line;
-	(void)func;
-	(void)inp;
-	/* #ifdef KERNEL */
-	/* 	FUNC(PREFIX "FREE\t%s:%d: %s: 0x%x (%s)\n", file, line, func, ptr, inp); */
-	/* #endif */
+#if DEBUG_ALLOC
+	FUNC(PREFIX "FREE\t%s:%d: %s: 0x%x (%s)\n", file, line, func, ptr, inp);
+#else
+	UNUSED(file);
+	UNUSED(line);
+	UNUSED(func);
+	UNUSED(inp);
+#endif
 }

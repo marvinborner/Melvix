@@ -16,18 +16,18 @@ jobs:
         uses: actions/cache@v1
         with:
           path: cross
-          key: toller-compiler
+          key: toolchain
       - name: Build cross compiler
         if: steps.cache-cross.outputs.cache-hit != 'true'
         run: sh run cross -y
       - name: Build
-        run: sh run build -y
+        run: MELVIX_CONFIG=release sh run build -y
       - name: Upload as artifact
         uses: actions/upload-artifact@v2
         with:
           name: disk-img
           path: build/disk.img
-      - name: Test without debug mode
-        run: MELVIX_DEBUG=0 sh run test -y
+      - name: Test with release mode
+        run: MELVIX_CONFIG=release sh run test -y
       - name: Test with debug mode
-        run: MELVIX_DEBUG=1 sh run test -y
+        run: MELVIX_CONFIG=debug sh run test -y

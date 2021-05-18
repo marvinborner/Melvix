@@ -5,6 +5,8 @@ set -e
 
 cd "$(dirname "$0")"
 
+MELVIX_CONFIG="${MELVIX_CONFIG:-dev}"
+
 MAKE=make
 NPROC=nproc
 SUDO=sudo
@@ -140,11 +142,7 @@ make_build() {
     rm -rf build/*
 
     printf "\nBuilding...\n"
-    if [ "$mode" = "debug" ] || [ "$MELVIX_DEBUG" = "1" ]; then
-        $MAKE -j $($NPROC) DEBUG=1
-    else
-        $MAKE -j $($NPROC) DEBUG=0
-    fi
+    $MAKE -j $($NPROC) CONFIG="$MELVIX_CONFIG" $MELVIX_MAKE
 
     # Prepare Grub
     mkdir -p disk/boot/grub/
@@ -223,7 +221,7 @@ make_disasm() {
 }
 
 make_addr() {
-    printf "Info: Make sure that you've turned the debug build on (e.g. with MELVIX_DEBUG=1)\n\n"
+    printf "Info: Make sure that you've turned the debug build on (e.g. with MELVIX_CONFIG=debug)\n\n"
     if [ -z "$2" ]; then
         echo "Usage: './run addr kernel 0x50042'"
         exit 1
@@ -318,5 +316,6 @@ else
     printf "disk\t\tPrepares the userspace disk (e.g. fonts)\n"
     printf "*\t\tAnything else prints this help\n"
     printf "\t\tWhen no option is set, Melvix gets built and emulated using QEMU (cross+clean+build)\n\n"
-    echo "Set the environment variable 'MELVIX_DEBUG=1' for persistent debug builds"
+    echo "You can set the environment variable 'MELVIX_CONFIG' to a config group defined in '.build.mk'"
+    echo "Set the environment variable 'MELVIX_MAKE=\"CONFIG_FOO=bar\"' to override build configs"
 fi

@@ -58,6 +58,12 @@ HOT FLATTEN void scheduler(struct regs *regs)
 	memory_switch_dir(PROC(current)->page_dir);
 	memcpy(regs, &PROC(current)->regs, sizeof(*regs));
 
+#if DEBUG_SCHEDULER
+	if (current != idle_proc)
+		printf("%s (%d): eip %x esp %x useresp %x\n", PROC(current)->name,
+		       PROC(current)->pid, regs->eip, regs->esp, regs->useresp);
+#endif
+
 	locked = 0;
 }
 

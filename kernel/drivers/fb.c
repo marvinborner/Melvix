@@ -29,7 +29,10 @@ PROTECTED static struct vbe_basic *vbe = NULL;
 static u32 fb_map_buffer(struct page_dir *dir)
 {
 	assert(vbe);
-	return virtual_alloc(dir, memory_range_around((u32)vbe->fb, FB_SIZE), MEMORY_USER).base;
+	struct memory_range r =
+		virtual_alloc(dir, memory_range_around((u32)vbe->fb, FB_SIZE), MEMORY_USER);
+	printf("FB: %x+%x\n", r.base, r.size);
+	return r.base;
 }
 
 static u32 fb_owner = 0;
