@@ -114,7 +114,7 @@ static struct liballoc_major *allocate_new_page(u32 size)
 	return maj;
 }
 
-static void *_malloc(u32 req_size)
+void *_malloc(u32 req_size)
 {
 	req_size = ALIGN_UP(req_size, 16);
 
@@ -289,15 +289,10 @@ static void *_malloc(u32 req_size)
 	liballoc_unlock();
 
 	panic("Malloc failed!\n");
-	return NULL;
 }
 
-static void _free(void *ptr)
+void _free(void *ptr)
 {
-	if (ptr == NULL) {
-		return;
-	}
-
 	liballoc_lock();
 
 	struct liballoc_minor *min = (struct liballoc_minor *)((u32)ptr - MINOR_SIZE);
@@ -338,7 +333,7 @@ static void _free(void *ptr)
 	liballoc_unlock();
 }
 
-static void *_realloc(void *ptr, u32 size)
+void *_realloc(void *ptr, u32 size)
 {
 	size = ALIGN_UP(size, 16);
 
@@ -356,7 +351,6 @@ static void *_realloc(void *ptr, u32 size)
 	if (min->magic != LIBALLOC_MAGIC) {
 		liballoc_unlock();
 		panic("Malloc failed!\n");
-		return NULL;
 	}
 
 	if (min->size >= size) {
@@ -374,6 +368,13 @@ static void *_realloc(void *ptr, u32 size)
 	return new_ptr;
 }
 
+void *_zalloc(u32 size)
+{
+	void *ret = _malloc(size);
+	memset(ret, 0, size);
+	return ret;
+}
+
 #ifdef KERNEL
 #define PREFIX "K"
 #define FUNC printf
@@ -382,53 +383,34 @@ static void *_realloc(void *ptr, u32 size)
 #define FUNC log
 #endif
 
+#define LIMIT(size) assert(size < (100 << 20)) // Don't brag with memory pls
+
 void *realloc_debug(void *ptr, u32 size, const char *file, int line, const char *func,
-		    const char *inp)
+		    const char *inp0, const char *inp1)
 {
-	assert(size < (100 << 20)); // Don't brag with memory pls
+	LIMIT(size);
 	void *ret = _realloc(ptr, size);
 
-#if DEBUG_ALLOC
-	FUNC(PREFIX "REALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp);
-#else
-	UNUSED(file);
-	UNUSED(line);
-	UNUSED(func);
-	UNUSED(inp);
-#endif
+	FUNC(PREFIX "REALLOC\t%s:%d: %s: 0x%x %dB (%s; %s)\n", file, line, func, ret, size, inp0,
+	     inp1);
 	return ret;
 }
 
 void *zalloc_debug(u32 size, const char *file, int line, const char *func, const char *inp)
 {
-	assert(size < (100 << 20)); // Don't brag with memory pls
-	void *ret = _malloc(size);
-	memset(ret, 0, size);
+	LIMIT(size);
+	void *ret = _zalloc(size);
 
-#if DEBUG_ALLOC
 	FUNC(PREFIX "ZALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp);
-#else
-	UNUSED(file);
-	UNUSED(line);
-	UNUSED(func);
-	UNUSED(inp);
-#endif
 	return ret;
 }
 
 void *malloc_debug(u32 size, const char *file, int line, const char *func, const char *inp)
 {
-	assert(size < (100 << 20)); // Don't brag with memory pls
+	LIMIT(size);
 	void *ret = _malloc(size);
 
-#if DEBUG_ALLOC
 	FUNC(PREFIX "MALLOC\t%s:%d: %s: 0x%x %dB (%s)\n", file, line, func, ret, size, inp);
-#else
-	UNUSED(file);
-	UNUSED(line);
-	UNUSED(func);
-	UNUSED(inp);
-#endif
 	return ret;
 }
 
@@ -436,12 +418,5 @@ void free_debug(void *ptr, const char *file, int line, const char *func, const c
 {
 	_free(ptr);
 
-#if DEBUG_ALLOC
 	FUNC(PREFIX "FREE\t%s:%d: %s: 0x%x (%s)\n", file, line, func, ptr, inp);
-#else
-	UNUSED(file);
-	UNUSED(line);
-	UNUSED(func);
-	UNUSED(inp);
-#endif
 }

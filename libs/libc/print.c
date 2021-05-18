@@ -248,7 +248,7 @@ void print_trace(u32 count)
 
 #endif
 
-NORETURN void panic(const char *format, ...)
+void panic(const char *format, ...)
 {
 	char buf[1024] = { 0 };
 	va_list ap;
