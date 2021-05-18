@@ -9,7 +9,7 @@ ALL_PREPROCESSOR_FLAGS = \
 ALL_CONFIGS = \
 	CONFIG_CACHE \
 	CONFIG_EXTRA_CFLAGS \
-	CONFIG_USE_PIE
+	CONFIG_USER_PIE
 
 # Specific config groups
 ifeq ($(CONFIG), debug)

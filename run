@@ -84,6 +84,9 @@ make_cross() {
             cd "${DIR}/opt/libexec/gcc/i686-elf/11.1.0/" && ln -sf liblto_plugin.so.0.0 liblto_plugin.so
         fi
 
+        # Remove sources
+        rm -rf "${dir}/src/"
+
         cd "${DIR}/.."
     fi
 }

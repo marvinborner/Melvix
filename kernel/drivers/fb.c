@@ -31,14 +31,12 @@ static u32 fb_map_buffer(struct page_dir *dir)
 	assert(vbe);
 	struct memory_range r =
 		virtual_alloc(dir, memory_range_around((u32)vbe->fb, FB_SIZE), MEMORY_USER);
-	printf("FB: %x+%x\n", r.base, r.size);
 	return r.base;
 }
 
 static u32 fb_owner = 0;
 static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3)
 {
-	UNUSED(arg2);
 	UNUSED(arg3);
 
 	switch (request) {
@@ -55,8 +53,12 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3)
 		fb_owner = proc_current()->pid;
 
 		u32 fb = fb_map_buffer(proc_current()->page_dir);
-		vbe->fb = (u8 *)fb;
-		memcpy_user(arg1, vbe, size);
+
+		stac();
+		memcpy(arg1, vbe, size);
+		((struct vbe_basic *)arg1)->fb = (u8 *)fb;
+		clac();
+
 		return EOK;
 	}
 	default:

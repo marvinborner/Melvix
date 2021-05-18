@@ -279,7 +279,7 @@ struct procfs_message {
 
 static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev)
 {
-	(void)dev;
+	UNUSED(dev);
 	u32 pid = 0;
 	procfs_parse_path(&path, &pid);
 
@@ -314,8 +314,8 @@ static res procfs_read(const char *path, void *buf, u32 offset, u32 count, struc
 
 static res procfs_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev)
 {
-	(void)path;
-	(void)dev;
+	UNUSED(path);
+	UNUSED(dev);
 
 	if (perm == VFS_EXEC)
 		return -EACCES;

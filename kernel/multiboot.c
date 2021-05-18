@@ -8,6 +8,7 @@
 #include <serial.h>
 
 PROTECTED static struct multiboot_info *info = NULL;
+PROTECTED static char vbe[256] = { 0 };
 
 CLEAR static void multiboot_parse_cmdline(const char *line)
 {
@@ -21,6 +22,9 @@ CLEAR static void multiboot_parse_cmdline(const char *line)
 			start += 3;
 		}
 	}
+
+	assert(info->flags & MULTIBOOT_INFO_VBE_INFO);
+	memcpy(vbe, (void *)info->vbe_mode_info, sizeof(vbe));
 }
 
 CLEAR void multiboot_init(u32 magic, u32 addr)
@@ -36,9 +40,7 @@ CLEAR void multiboot_init(u32 magic, u32 addr)
 
 CLEAR u32 multiboot_vbe(void)
 {
-	assert(info->flags & MULTIBOOT_INFO_VBE_INFO);
-
-	return info->vbe_mode_info;
+	return (u32)vbe;
 }
 
 CLEAR void multiboot_mmap(void)
@@ -55,12 +57,11 @@ CLEAR void multiboot_mmap(void)
 		/* printf("Memory region 0x%x-0x%x\n", mmap->addr, mmap->addr + mmap->len); */
 		if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
 			total += mmap->len;
-			physical_set_free(memory_range_around(mmap->addr, mmap->len));
+			physical_set_free(memory_range_from(mmap->addr, mmap->len));
 		} else if (mmap->type == MULTIBOOT_MEMORY_BADRAM) {
 			printf("Defect memory at 0x%x-0x%x\n", mmap->addr, mmap->addr + mmap->len);
-			physical_set_used(memory_range_around(mmap->addr, mmap->len));
 		} else {
-			physical_set_used(memory_range_around(mmap->addr, mmap->len));
+			// Memory is set to 'used' by default
 		}
 
 		mmap++;

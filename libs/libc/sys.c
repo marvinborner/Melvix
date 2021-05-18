@@ -186,6 +186,9 @@ static void (*funcs[ATEXIT_MAX])(void) = { 0 };
 
 static void atexit_trigger(void)
 {
+	if (!slot)
+		return;
+
 	while (slot-- > 0) {
 		if (funcs[slot]) {
 			funcs[slot]();

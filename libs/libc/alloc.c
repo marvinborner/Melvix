@@ -50,8 +50,6 @@ static int liballoc_unlock(void)
 }
 
 #define ALIGNMENT 16
-#define ALIGN_UP(__addr, __align) (((__addr) + (__align)-1) & ~((__align)-1))
-#define ALIGN_DOWN(__addr, __align) ((__addr) & ~((__align)-1))
 
 #define USE_CASE1
 #define USE_CASE2

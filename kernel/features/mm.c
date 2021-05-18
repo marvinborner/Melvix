@@ -137,6 +137,7 @@ static void physical_page_set_free(u32 address)
 CLEAR void physical_set_total(u32 total)
 {
 	assert(total > 0);
+	memory_used = 0;
 	memory_total = total;
 }
 
@@ -670,7 +671,7 @@ struct memory_range memory_range_from(u32 base, u32 size)
 	base += align;
 	size -= align;
 
-	size -= size % PAGE_SIZE;
+	size = ALIGN_DOWN(size, PAGE_SIZE);
 
 	return memory_range(base, size);
 }
@@ -682,7 +683,7 @@ struct memory_range memory_range_around(u32 base, u32 size)
 	base -= align;
 	size += align;
 
-	size += PAGE_SIZE - size % PAGE_SIZE;
+	size = ALIGN_UP(size, PAGE_SIZE);
 
 	return memory_range(base, size);
 }
@@ -728,8 +729,15 @@ void memory_user_hook(void)
 
 CLEAR void memory_install(void)
 {
+	// Set all memory 'used'
+	for (u32 i = 0; i < 1024 * 1024 / 8; i++) {
+		memory[i] = 0xff;
+	}
+
+	// Free memory using mmap
 	multiboot_mmap();
 
+	// Initialize kernel page directory
 	for (u32 i = 0; i < PAGE_KERNEL_COUNT; i++) {
 		union page_dir_entry *dir_entry = &kernel_dir.entries[i];
 		dir_entry->bits.present = 1;
@@ -738,15 +746,11 @@ CLEAR void memory_install(void)
 		dir_entry->bits.address = (u32)&kernel_tables[i] / PAGE_SIZE;
 	}
 
-	memory_used = 0;
 	printf("Detected memory: %dKiB (%dMiB)\n", memory_total >> 10, memory_total >> 20);
 
 	// Map kernel
 	memory_map_identity(&kernel_dir, kernel_ro_memory_range(), MEMORY_READONLY);
 	memory_map_identity(&kernel_dir, kernel_rw_memory_range(), MEMORY_NONE);
-
-	// Map framebuffer
-	memory_map_identity(&kernel_dir, memory_range_around(multiboot_vbe(), 0x1000), MEMORY_NONE);
 
 	// Unmap NULL byte/page
 	struct memory_range zero = memory_range(0, PAGE_SIZE);

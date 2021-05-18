@@ -41,6 +41,9 @@ typedef unsigned long long u64;
 #define __STRINGIFY(a) #a
 #define STRINGIFY(a) __STRINGIFY(a)
 
+#define ALIGN_UP(addr, align) (((addr) + (align)-1) & ~((align)-1))
+#define ALIGN_DOWN(addr, align) ((addr) & ~((align)-1))
+
 /**
  * Compiler attribute wrappers
  */
