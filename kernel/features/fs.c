@@ -214,48 +214,41 @@ CLEAR void vfs_install(void)
  * EXT2
  */
 
-// TODO: Remove malloc from ext2_buffer_read (attempt in #56cd63f199)
-static void *ext2_buffer_read(u32 block, struct vfs_dev *dev)
+static void ext2_buffer_read(u32 block, void *buf, struct vfs_dev *dev)
 {
-	void *buf = zalloc(BLOCK_SIZE);
 	dev->read(buf, block * SECTOR_COUNT, SECTOR_COUNT, dev);
-	return buf;
 }
 
-static struct ext2_superblock *ext2_get_superblock(struct vfs_dev *dev)
+static void ext2_get_superblock(struct ext2_superblock *buf, struct vfs_dev *dev)
 {
-	struct ext2_superblock *sb = ext2_buffer_read(EXT2_SUPER, dev);
+	u8 data[BLOCK_SIZE] = { 0 };
+	ext2_buffer_read(EXT2_SUPER, data, dev);
+	memcpy(buf, data, sizeof(*buf));
 
-	assert(sb->magic == EXT2_MAGIC);
-	return sb;
-}
-
-static struct ext2_bgd *ext2_get_bgd(struct vfs_dev *dev)
-{
-	return ext2_buffer_read(EXT2_SUPER + 1, dev);
+	assert(buf->magic == EXT2_MAGIC);
 }
 
 static struct ext2_inode *ext2_get_inode(u32 i, struct ext2_inode *in_buf, struct vfs_dev *dev)
 {
-	struct ext2_superblock *s = ext2_get_superblock(dev);
-	assert(s);
-	struct ext2_bgd *b = ext2_get_bgd(dev);
+	struct ext2_superblock sb = { 0 };
+	ext2_get_superblock(&sb, dev);
 
-	u32 block_group = (i - 1) / s->inodes_per_group;
-	u32 index = (i - 1) % s->inodes_per_group;
+	u8 data[BLOCK_SIZE] = { 0 };
+	ext2_buffer_read(EXT2_SUPER + 1, data, dev);
+	struct ext2_bgd *bgd = (struct ext2_bgd *)data;
+
+	u32 block_group = (i - 1) / sb.inodes_per_group;
+	u32 index = (i - 1) % sb.inodes_per_group;
 	u32 block = (index * EXT2_INODE_SIZE) / BLOCK_SIZE;
-	b += block_group;
-	assert(b);
+	bgd += block_group;
 
-	u32 *buf = ext2_buffer_read(b->inode_table + block, dev);
+	u8 buf[BLOCK_SIZE] = { 0 };
+	ext2_buffer_read(bgd->inode_table + block, buf, dev);
 	struct ext2_inode *in =
 		(struct ext2_inode *)((u32)buf +
 				      (index % (BLOCK_SIZE / EXT2_INODE_SIZE)) * EXT2_INODE_SIZE);
 
 	memcpy(in_buf, in, sizeof(*in_buf));
-	free(buf);
-	free(s);
-	free(b - block_group);
 
 	return in_buf;
 }
@@ -281,13 +274,13 @@ static u32 ext2_read_indirect(u32 indirect, u32 block_num, struct vfs_dev *dev)
 	}
 
 	if (!data) {
-		data = ext2_buffer_read(indirect, dev);
+		u8 buf[BLOCK_SIZE] = { 0 };
+		ext2_buffer_read(indirect, buf, dev);
 		struct indirect_cache *cache = malloc(sizeof(*cache));
 		cache->block = indirect;
-		memcpy(cache->data, data, BLOCK_SIZE);
+		memcpy(cache->data, buf, BLOCK_SIZE);
 		list_add(indirect_cache, cache);
-		u32 ind = *(u32 *)((u32)data + block_num * sizeof(u32));
-		free(data);
+		u32 ind = *(u32 *)((u32)buf + block_num * sizeof(u32));
 		return ind;
 	}
 
@@ -335,7 +328,8 @@ static res ext2_read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 cou
 						      (i - (BLOCK_COUNT + 12)) % BLOCK_COUNT, dev);
 		}
 
-		char *data = ext2_buffer_read(blocknum, dev);
+		u8 data[BLOCK_SIZE] = { 0 };
+		ext2_buffer_read(blocknum, data, dev);
 		u32 block_offset = (i == first_block) ? first_block_offset : 0;
 		u32 byte_count = MIN(BLOCK_SIZE - block_offset, remaining);
 
@@ -344,7 +338,6 @@ static res ext2_read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 cou
 		copied += byte_count;
 		remaining -= byte_count;
 
-		free(data);
 		/* printf("Loaded %d of %d\n", i + 1, last_block); */
 	}
 
@@ -370,13 +363,12 @@ static u32 ext2_find_inode(const char *name, u32 dir_inode, struct vfs_dev *dev)
 	struct ext2_inode i = { 0 };
 	ext2_get_inode(dir_inode, &i, dev);
 
-	char *buf = malloc(BLOCK_SIZE * i.blocks / 2);
-	memset(buf, 0, BLOCK_SIZE * i.blocks / 2);
+	char *buf = zalloc(BLOCK_SIZE * i.blocks / 2);
 
+	u8 data[BLOCK_SIZE] = { 0 };
 	for (u32 q = 0; q < i.blocks / 2; q++) {
-		char *data = ext2_buffer_read(i.block[q], dev);
+		ext2_buffer_read(i.block[q], data, dev);
 		memcpy((u32 *)((u32)buf + q * BLOCK_SIZE), data, BLOCK_SIZE);
-		free(data);
 	}
 
 	struct ext2_dirent *d = (struct ext2_dirent *)buf;
@@ -485,11 +477,10 @@ static res ext2_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev)
 
 CLEAR u8 ext2_load(struct vfs_dev *dev)
 {
-	struct ext2_superblock *sb = ext2_buffer_read(EXT2_SUPER, dev);
-	if (sb->magic != EXT2_MAGIC) {
-		free(sb);
+	struct ext2_superblock sb = { 0 };
+	ext2_get_superblock(&sb, dev);
+	if (sb.magic != EXT2_MAGIC)
 		return 0;
-	}
 
 	struct vfs *vfs = zalloc(sizeof(*vfs));
 	vfs->type = VFS_EXT2;
@@ -507,6 +498,5 @@ CLEAR u8 ext2_load(struct vfs_dev *dev)
 	printf("Mounting disk %s to '/'\n", dev->name);
 	vfs_mount(dev, "/");
 
-	free(sb);
 	return 1;
 }
