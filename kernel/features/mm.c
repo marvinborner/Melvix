@@ -2,10 +2,10 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
 #include <assert.h>
-#include <drivers/cpu.h>
 #include <def.h>
-#include <errno.h>
+#include <drivers/cpu.h>
 #include <drivers/vbe.h>
+#include <errno.h>
 #include <mem.h>
 #include <mm.h>
 #include <multiboot.h>

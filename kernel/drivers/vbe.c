@@ -5,14 +5,13 @@
 #include <drivers/cpu.h>
 #include <drivers/vbe.h>
 #include <errno.h>
+#include <fb.h>
 #include <io.h>
 #include <mem.h>
 #include <mm.h>
 #include <multiboot.h>
 #include <str.h>
 #include <sys.h>
-
-#define FB_SIZE (vbe->height * vbe->pitch)
 
 struct vbe_basic {
 	u8 stuff1[16];
@@ -24,15 +23,7 @@ struct vbe_basic {
 	u8 stuff3[212];
 };
 
-PROTECTED static struct vbe_basic *vbe = NULL;
-
-static u32 vbe_map_buffer(struct page_dir *dir)
-{
-	assert(vbe);
-	struct memory_range r =
-		virtual_alloc(dir, memory_range_around((u32)vbe->fb, FB_SIZE), MEMORY_USER);
-	return r.base;
-}
+PROTECTED static struct fb_generic generic = { 0 };
 
 static u32 fb_owner = 0;
 static res vbe_control(u32 request, void *arg1, void *arg2, void *arg3)
@@ -41,10 +32,10 @@ static res vbe_control(u32 request, void *arg1, void *arg2, void *arg3)
 
 	switch (request) {
 	case IOCTL_FB_GET: {
-		if (!vbe)
+		if (!generic.fb)
 			return -ENOENT;
 
-		u32 size = MIN(sizeof(*vbe), (u32)arg2);
+		u32 size = MIN(sizeof(generic), (u32)arg2);
 		if (!memory_writable_range(memory_range(arg1, size)))
 			return -EFAULT;
 
@@ -52,11 +43,11 @@ static res vbe_control(u32 request, void *arg1, void *arg2, void *arg3)
 			return -EBUSY;
 		fb_owner = proc_current()->pid;
 
-		u32 fb = vbe_map_buffer(proc_current()->page_dir);
+		u32 fb = fb_map_buffer(proc_current()->page_dir, &generic);
 
 		stac();
-		memcpy(arg1, vbe, size);
-		((struct vbe_basic *)arg1)->fb = (u8 *)fb;
+		memcpy(arg1, &generic, size);
+		((struct fb_generic *)arg1)->fb = (u8 *)fb;
 		clac();
 
 		return EOK;
@@ -68,12 +59,15 @@ static res vbe_control(u32 request, void *arg1, void *arg2, void *arg3)
 
 CLEAR void vbe_install(u32 data)
 {
-	vbe = (void *)data;
+	struct vbe_basic *vbe = (void *)data;
+	generic.bpp = (vbe->pitch / vbe->width) << 3;
+	generic.pitch = vbe->pitch;
+	generic.width = vbe->width;
+	generic.height = vbe->height;
+	generic.fb = vbe->fb;
+	fb_protect(&generic);
 
 	struct io_dev *dev = zalloc(sizeof(*dev));
 	dev->control = vbe_control;
 	io_add(IO_FRAMEBUFFER, dev);
-
-	// Set framebuffer range used to prevent unwanted writing
-	physical_set_used(memory_range_around((u32)vbe->fb, FB_SIZE));
 }

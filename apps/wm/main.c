@@ -8,10 +8,10 @@
 #include <libgui/gfx.h>
 #include <libgui/gui.h>
 #include <libgui/msg.h>
-#include <libgui/vesa.h>
 #include <libtxt/keymap.h>
 #include <list.h>
 #include <rand.h>
+#include <sys.h>
 
 #define WINDOW_MOVE_TIMEOUT 20
 
@@ -37,7 +37,7 @@ struct rectangle {
 
 // Global vars ftw!
 static u8 bypp = 4;
-static struct vbe screen = { 0 };
+static struct fb_generic screen = { 0 };
 static struct list *windows = NULL; // THIS LIST SHALL BE SORTED BY Z-INDEX!
 static struct window *direct = NULL;
 static struct window *wallpaper = NULL;

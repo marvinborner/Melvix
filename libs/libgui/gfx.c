@@ -10,7 +10,6 @@
 #include <libgui/msg.h>
 #include <libgui/png.h>
 #include <libgui/psf.h>
-#include <libgui/vesa.h>
 #include <list.h>
 #include <mem.h>
 #include <str.h>

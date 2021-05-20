@@ -1,13 +1,13 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
-#include <drivers/cpu.h>
 #include <def.h>
-#include <fs.h>
+#include <drivers/cpu.h>
 #include <drivers/ide.h>
 #include <drivers/mbr.h>
-#include <mem.h>
 #include <drivers/pci.h>
+#include <fs.h>
+#include <mem.h>
 #include <print.h>
 #include <str.h>
 

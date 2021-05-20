@@ -2,14 +2,14 @@
 // Uses parts of the ToAruOS Project, released under the terms of the NCSA
 // Copyright (C) 2011-2018 K. Lange
 
-#include <drivers/cpu.h>
 #include <def.h>
+#include <drivers/cpu.h>
 #include <drivers/interrupts.h>
+#include <drivers/pci.h>
+#include <drivers/rtl8139.h>
 #include <mem.h>
 #include <net.h>
-#include <drivers/pci.h>
 #include <print.h>
-#include <drivers/rtl8139.h>
 
 static int rtl_irq = 0;
 static u8 mac[6] = { 0 };
@@ -77,9 +77,8 @@ void rtl8139_send_packet(void *data, u32 len)
 
 static void rtl8139_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
 {
-	if ((vendor_id == 0x10ec) && (device_id == 0x8139)) {
+	if ((vendor_id == 0x10ec) && (device_id == 0x8139))
 		*((u32 *)extra) = device;
-	}
 }
 
 static void rtl8139_irq_handler(struct regs *r)

@@ -3,12 +3,14 @@
 #include <assert.h>
 #include <bus.h>
 #include <def.h>
+#include <drivers/bga.h>
 #include <drivers/cpu.h>
 #include <drivers/interrupts.h>
 #include <drivers/ps2.h>
 #include <drivers/timer.h>
 #include <drivers/vbe.h>
 #include <drivers/vmware.h>
+#include <fb.h>
 #include <io.h>
 #include <list.h>
 #include <logger.h>
@@ -232,17 +234,10 @@ CLEAR void io_install(void)
 	}
 
 	/**
-	 * Framebuffer detection
-	 */
-
-	u32 vbe = multiboot_vbe();
-	if (vbe)
-		vbe_install(vbe);
-
-	/**
 	 * Other devices
 	 */
 
+	fb_install();
 	timer_install();
 	logger_install();
 	bus_install();

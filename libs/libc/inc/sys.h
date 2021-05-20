@@ -52,6 +52,14 @@ enum io_type {
 #define IOCTL_BUS_CONNECT_CONN 1
 #define IOCTL_BUS_REGISTER 2
 
+struct fb_generic {
+	u16 bpp;
+	u16 pitch;
+	u16 width;
+	u16 height;
+	u8 *fb;
+};
+
 struct bus_header {
 	u32 conn;
 	// Data starts here

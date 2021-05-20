@@ -13,6 +13,7 @@ COBJS = entry_asm.o \
 	drivers/mbr.o \
 	drivers/ide.o \
 	drivers/vbe.o \
+	drivers/bga.o \
 	drivers/timer.o \
 	drivers/vmware.o \
 	drivers/ps2/ps2.o \
@@ -22,6 +23,7 @@ COBJS = entry_asm.o \
 	features/fs.o \
 	features/io.o \
 	features/bus.o \
+	features/fb.o \
 	features/logger.o \
 	features/load.o \
 	features/proc.o \

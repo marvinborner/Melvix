@@ -5,7 +5,6 @@
 #define GFX_H
 
 #include <def.h>
-#include <libgui/vesa.h>
 #include <sys.h>
 #include <vec.h>
 
