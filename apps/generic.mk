@@ -7,7 +7,7 @@ all: $(OBJS)
 	@mkdir -p $(BUILD)/apps/$(NAME)/
 	@$(LD) -o $(BUILD)/apps/$(NAME)/exec $(LDFLAGS) $^ $(LIBS)
 ifeq ($(CONFIG_STRIP), true)
-	@$(ST) --strip-all $(BUILD)/apps/wm/exec
+	@$(ST) --strip-all $(BUILD)/apps/$(NAME)/exec
 endif
 
 clean:
