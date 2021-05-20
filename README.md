@@ -7,7 +7,7 @@
         <img src="https://img.shields.io/github/workflow/status/marvinborner/Melvix/Project%20build?style=for-the-badge" />
     </a>
     <a href="https://app.codacy.com/manual/marvin-borner/Melvix/dashboard" target="_blank">
-        <img src="https://img.shields.io/codacy/grade/4ae29e218d7c439eaa549ea828ffcaac?style=for-the-badge" />
+        <img src="https://img.shields.io/codacy/grade/e68699c7f9314476a52acf9819a0a386/dev?style=for-the-badge" />
     </a>
     <a href="https://www.buymeacoffee.com/marvinborner" target="_blank">
         <img src="https://img.shields.io/static/v1?label=Support&message=buymeacoffee&color=brightgreen&style=for-the-badge" />
