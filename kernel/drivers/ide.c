@@ -72,50 +72,36 @@ static void ide_delay(u16 io) // 400ns
 
 static void ide_poll(u16 io)
 {
-	for (int i = 0; i < 4; i++)
-		inb(io + ATA_REG_ALTSTATUS);
+	while (inb(io + ATA_REG_STATUS) & ATA_SR_BSY)
+		;
 
-	u8 status;
-	do {
-		status = inb(io + ATA_REG_STATUS);
-	} while (status & ATA_SR_BSY);
-
-	do {
-		status = inb(io + ATA_REG_STATUS);
-		assert(!(status & ATA_SR_ERR))
-	} while (!(status & ATA_SR_DRQ));
+	assert(!(inb(io + ATA_REG_STATUS) & ATA_SR_ERR));
 }
 
-static u8 ata_read_one(u8 *buf, u32 lba, struct vfs_dev *dev)
+static res ata_read(void *buf, u32 lba, u32 sector_count, struct vfs_dev *dev)
 {
 	u8 drive = ((struct ata_data *)dev->data)->drive;
 	u16 io = (drive & ATA_PRIMARY << 1) == ATA_PRIMARY ? ATA_PRIMARY_IO : ATA_SECONDARY_IO;
 	drive = (drive & ATA_SLAVE) == ATA_SLAVE ? ATA_SLAVE : ATA_MASTER;
 	u8 cmd = drive == ATA_MASTER ? 0xe0 : 0xf0;
+
 	outb(io + ATA_REG_HDDEVSEL, (cmd | (u8)((lba >> 24 & 0x0f))));
-	outb(io + 1, 0x00);
-	outb(io + ATA_REG_SECCOUNT0, 1);
+	outb(io + ATA_REG_FEATURES, 0);
+	outb(io + ATA_REG_SECCOUNT0, sector_count);
 	outb(io + ATA_REG_LBA0, (u8)lba);
 	outb(io + ATA_REG_LBA1, (u8)(lba >> 8));
 	outb(io + ATA_REG_LBA2, (u8)(lba >> 16));
 	outb(io + ATA_REG_COMMAND, ATA_CMD_READ_PIO);
-	ide_poll(io);
 
-	for (int i = 0; i < BLOCK_COUNT; i++) {
-		u16 data = inw(io + ATA_REG_DATA);
-		*(u16 *)(buf + i * 2) = data;
+	u16 *b = buf;
+	u32 count = sector_count;
+	while (count-- > 0) {
+		ide_poll(io);
+		__asm__ volatile("rep insw" ::"c"(BLOCK_COUNT), "d"(io + ATA_REG_DATA),
+				 "D"((u32)b));
 	}
+
 	ide_delay(io);
-	return 1;
-}
-
-static res ata_read(void *buf, u32 lba, u32 sector_count, struct vfs_dev *dev)
-{
-	u8 *b = buf; // I love bytes, yk
-	for (u32 i = 0; i < sector_count; i++) {
-		ata_read_one(b, lba + i, dev);
-		b += SECTOR_SIZE;
-	}
 	return sector_count;
 }
 
@@ -145,9 +131,8 @@ CLEAR static void ata_probe(void)
 
 CLEAR static void ata_find(u32 device, u16 vendor_id, u16 device_id, void *extra)
 {
-	if ((vendor_id == 0x8086) && (device_id == 0x7010)) {
+	if ((vendor_id == 0x8086) && (device_id == 0x7010))
 		*((u32 *)extra) = device;
-	}
 }
 
 static u32 ata_device_pci = 0;

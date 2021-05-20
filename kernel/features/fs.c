@@ -214,7 +214,7 @@ CLEAR void vfs_install(void)
  * EXT2
  */
 
-static void ext2_buffer_read(u32 block, void *buf, struct vfs_dev *dev)
+INLINE static void ext2_buffer_read(u32 block, void *buf, struct vfs_dev *dev)
 {
 	dev->read(buf, block * SECTOR_COUNT, SECTOR_COUNT, dev);
 }
@@ -445,9 +445,6 @@ static res ext2_stat(const char *path, struct stat *buf, struct vfs_dev *dev)
 	struct ext2_inode in = { 0 };
 	if (ext2_find_inode_by_path(path, &in, dev) != &in)
 		return -ENOENT;
-
-	//u32 num_blocks = in.blocks / (BLOCK_SIZE / SECTOR_SIZE);
-	//u32 sz = BLOCK_SIZE * num_blocks;
 
 	stac();
 	buf->dev_id = dev->id;
