@@ -318,8 +318,7 @@ static res ext2_read_inode(struct ext2_inode *in, void *buf, u32 offset, u32 cou
 	u32 remaining = MIN(count, in->size - offset);
 	u32 copied = 0;
 
-	u32 indirect = 0;
-	u32 blocknum = 0;
+	u32 indirect, blocknum;
 
 	// TODO: Support triply indirect pointers
 	for (u32 i = first_block; i <= last_block; i++) {
@@ -412,8 +411,8 @@ static struct ext2_inode *ext2_find_inode_by_path(const char *path, struct ext2_
 	path_cp++;
 	u32 current_inode = EXT2_ROOT;
 
-	u32 i = 0;
 	while (1) {
+		u32 i;
 		for (i = 0; path_cp[i] != '/' && path_cp[i] != '\0'; i++)
 			;
 

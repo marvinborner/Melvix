@@ -84,7 +84,6 @@ res io_poll(u32 *devs)
 		struct io_dev *dev = io_get(io);
 		if (!dev || !dev->read) {
 			io_remove_group(group);
-			group--;
 			return -ENOENT;
 		}
 
@@ -92,7 +91,6 @@ res io_poll(u32 *devs)
 			res ready = dev->ready();
 			if (ready == EOK) {
 				io_remove_group(group);
-				group--;
 				return io;
 			} else if (ready != -EAGAIN) {
 				return ready;

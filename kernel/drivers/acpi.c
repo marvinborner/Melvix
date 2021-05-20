@@ -88,7 +88,7 @@ void hpet_install(u32 period)
 			r->config |= hpet_enable;
 			assert(r->tick_period + period < HPET_MAX_PERIOD);
 			r->timer_comparator0 = r->tick_period + period;
-			r->timer_comparator0 = period;
+			/* r->timer_comparator0 = period; */
 		} else {
 			hpet = NULL;
 		}

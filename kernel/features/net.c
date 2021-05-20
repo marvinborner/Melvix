@@ -259,12 +259,12 @@ static void ip_send_packet(u32 dst, void *data, int len, u8 prot)
 	if (data)
 		memcpy(packet->data, data, (u32)len);
 
-	int arp_sent = 3;
 	u8 zero_hardware_addr[] = { 0, 0, 0, 0, 0, 0 };
 	u8 dst_mac[6];
 	if (same_net(dst)) {
 		scheduler_disable();
 		sti();
+		int arp_sent = 3;
 		while (!arp_lookup(dst_mac, dst)) {
 			if (arp_sent) {
 				arp_sent--;
@@ -321,7 +321,7 @@ static void tcp_send_packet(struct socket *socket, u16 flags, void *data, int le
 	packet->src_port = (u16)htons(socket->src_port);
 	packet->dst_port = (u16)htons(socket->dst_port);
 	packet->seq_number = htonl(socket->prot.tcp.seq_no);
-	packet->ack_number = flags & TCP_FLAG_ACK ? htonl(socket->prot.tcp.ack_no) : 0;
+	packet->ack_number = (flags & TCP_FLAG_ACK) ? htonl(socket->prot.tcp.ack_no) : 0;
 	packet->flags = (u16)htons(0x5000 ^ (flags & 0xff));
 	packet->window_size = htons(U16_MAX); // TODO: Support TCP windows
 	packet->urgent = 0;

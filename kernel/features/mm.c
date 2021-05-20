@@ -730,9 +730,8 @@ void memory_user_hook(void)
 CLEAR void memory_install(void)
 {
 	// Set all memory 'used'
-	for (u32 i = 0; i < 1024 * 1024 / 8; i++) {
+	for (u32 i = 0; i < sizeof(memory); i++)
 		memory[i] = 0xff;
-	}
 
 	// Free memory using mmap
 	multiboot_mmap();
