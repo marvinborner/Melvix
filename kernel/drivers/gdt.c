@@ -2,7 +2,7 @@
 
 #include <assert.h>
 #include <def.h>
-#include <gdt.h>
+#include <drivers/gdt.h>
 #include <mem.h>
 
 #define GDT_MAX_LIMIT 0xffff

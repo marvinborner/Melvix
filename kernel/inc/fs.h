@@ -21,8 +21,6 @@ struct vfs_dev {
 	void *data;
 	res (*read)(void *buf, u32 offset, u32 count, struct vfs_dev *dev) NONNULL;
 	res (*write)(const void *buf, u32 offset, u32 count, struct vfs_dev *dev) NONNULL;
-	res (*ioctl)(u32 request, void *arg1, void *arg2, void *arg3, struct vfs_dev *dev)
-		ATTR((nonnull(5)));
 };
 
 /**
@@ -40,8 +38,6 @@ struct vfs {
 		    struct vfs_dev *dev) NONNULL;
 	res (*write)(const char *path, const void *buf, u32 offset, u32 count,
 		     struct vfs_dev *dev) NONNULL;
-	res (*ioctl)(const char *path, u32 request, void *arg1, void *arg2, void *arg3,
-		     struct vfs_dev *dev) ATTR((nonnull(1, 6)));
 	res (*stat)(const char *path, struct stat *buf, struct vfs_dev *dev) NONNULL;
 	res (*block)(const char *path, u32 func_ptr, struct vfs_dev *dev) NONNULL;
 	res (*perm)(const char *path, enum vfs_perm perm, struct vfs_dev *dev) NONNULL;

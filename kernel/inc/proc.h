@@ -4,7 +4,7 @@
 #define PROC_H
 
 #include <def.h>
-#include <interrupts.h>
+#include <drivers/interrupts.h>
 #include <list.h>
 #include <stack.h>
 #include <sys.h>

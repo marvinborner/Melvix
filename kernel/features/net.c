@@ -1,18 +1,18 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <def.h>
 #include <list.h>
 #include <mem.h>
 #include <net.h>
-#include <pci.h>
+#include <drivers/pci.h>
 #include <print.h>
 #include <rand.h>
-#include <rtl8139.h>
+#include <drivers/rtl8139.h>
 #include <socket.h>
 #include <str.h>
-#include <timer.h>
+#include <drivers/timer.h>
 
 static u32 current_ip_addr = 0;
 static u32 gateway_addr = 0;

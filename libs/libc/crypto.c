@@ -167,7 +167,7 @@ u32 crc32(u32 crc, const void *buf, u32 size)
 
 #ifdef KERNEL
 
-#include <cpu.h>
+#include <drivers/cpu.h>
 u32 crc32_user(u32 crc, const void *buf, u32 size)
 {
 	stac();

@@ -4,7 +4,7 @@
 #define TIMER_H
 
 #include <def.h>
-#include <interrupts.h>
+#include <drivers/interrupts.h>
 
 u32 timer_get(void);
 void timer_wait(u32 ticks);

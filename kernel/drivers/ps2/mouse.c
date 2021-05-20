@@ -1,14 +1,14 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <errno.h>
-#include <interrupts.h>
+#include <drivers/interrupts.h>
 #include <io.h>
 #include <mem.h>
 #include <print.h>
 #include <proc.h>
-#include <ps2.h>
+#include <drivers/ps2.h>
 #include <stack.h>
 #include <str.h>
 #include <sys.h>

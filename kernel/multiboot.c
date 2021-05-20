@@ -2,12 +2,13 @@
 
 #include <assert.h>
 #include <def.h>
+#include <drivers/serial.h>
 #include <mem.h>
 #include <mm.h>
 #include <multiboot.h>
-#include <serial.h>
 
 PROTECTED static struct multiboot_info *info = NULL;
+PROTECTED static u8 vbe_available = 0;
 PROTECTED static char vbe[256] = { 0 };
 
 CLEAR static void multiboot_parse_cmdline(const char *line)
@@ -22,25 +23,11 @@ CLEAR static void multiboot_parse_cmdline(const char *line)
 			start += 3;
 		}
 	}
-
-	assert(info->flags & MULTIBOOT_INFO_VBE_INFO);
-	memcpy(vbe, (void *)info->vbe_mode_info, sizeof(vbe));
-}
-
-CLEAR void multiboot_init(u32 magic, u32 addr)
-{
-	assert(magic == MULTIBOOT_MAGIC);
-	info = (void *)addr;
-
-	if (info->flags & MULTIBOOT_INFO_CMDLINE)
-		multiboot_parse_cmdline((const char *)info->cmdline);
-
-	serial_print("Kernel was compiled at " __TIME__ " on " __DATE__ "\n");
 }
 
 CLEAR u32 multiboot_vbe(void)
 {
-	return (u32)vbe;
+	return vbe_available ? (u32)vbe : 0;
 }
 
 CLEAR void multiboot_mmap(void)
@@ -68,4 +55,20 @@ CLEAR void multiboot_mmap(void)
 	}
 
 	physical_set_total(total);
+}
+
+CLEAR void multiboot_init(u32 magic, u32 addr)
+{
+	assert(magic == MULTIBOOT_MAGIC);
+	info = (void *)addr;
+
+	if (info->flags & MULTIBOOT_INFO_CMDLINE)
+		multiboot_parse_cmdline((const char *)info->cmdline);
+
+	if (info->flags & MULTIBOOT_INFO_VBE_INFO) {
+		memcpy(vbe, (void *)info->vbe_mode_info, sizeof(vbe));
+		vbe_available = 1;
+	}
+
+	serial_print("Kernel was compiled at " __TIME__ " on " __DATE__ "\n");
 }

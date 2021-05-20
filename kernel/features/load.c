@@ -1,6 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <errno.h>
 #include <fs.h>
 #include <load.h>

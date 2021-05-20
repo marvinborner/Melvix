@@ -2,14 +2,14 @@
 // Uses parts of the ToAruOS Project, released under the terms of the NCSA
 // Copyright (C) 2011-2018 K. Lange
 
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <def.h>
-#include <interrupts.h>
+#include <drivers/interrupts.h>
 #include <mem.h>
 #include <net.h>
-#include <pci.h>
+#include <drivers/pci.h>
 #include <print.h>
-#include <rtl8139.h>
+#include <drivers/rtl8139.h>
 
 static int rtl_irq = 0;
 static u8 mac[6] = { 0 };

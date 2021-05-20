@@ -5,7 +5,7 @@
 #include <rand.h>
 
 #ifdef KERNEL
-#include <cpu.h>
+#include <drivers/cpu.h>
 #endif
 
 static u32 g_seed = 1;

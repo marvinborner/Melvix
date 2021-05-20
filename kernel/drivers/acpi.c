@@ -1,8 +1,8 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include <acpi.h>
+#include <drivers/acpi.h>
 #include <assert.h>
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <def.h>
 #include <mem.h>
 #include <print.h>

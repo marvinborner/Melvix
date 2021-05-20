@@ -12,7 +12,7 @@ COBJS = entry_asm.o \
 	drivers/rtc.o \
 	drivers/mbr.o \
 	drivers/ide.o \
-	drivers/fb.o \
+	drivers/vbe.o \
 	drivers/timer.o \
 	drivers/vmware.o \
 	drivers/ps2/ps2.o \

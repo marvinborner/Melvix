@@ -1,20 +1,20 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <fs.h>
-#include <gdt.h>
-#include <ide.h>
-#include <interrupts.h>
+#include <drivers/gdt.h>
+#include <drivers/ide.h>
+#include <drivers/interrupts.h>
 #include <io.h>
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
 #include <multiboot.h>
 #include <net.h>
-#include <pci.h>
+#include <drivers/pci.h>
 #include <rand.h>
-#include <rtc.h>
-#include <serial.h>
+#include <drivers/rtc.h>
+#include <drivers/serial.h>
 #include <syscall.h>
 
 PROTECTED extern u32 __stack_chk_guard;

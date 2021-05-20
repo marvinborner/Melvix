@@ -1,9 +1,9 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <def.h>
-#include <serial.h>
+#include <drivers/serial.h>
 #include <str.h>
 
 #define PORT 0x3f8

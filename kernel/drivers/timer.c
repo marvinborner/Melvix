@@ -1,13 +1,13 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <def.h>
-#include <interrupts.h>
+#include <drivers/interrupts.h>
 #include <io.h>
 #include <mem.h>
 #include <proc.h>
-#include <rtc.h>
-#include <timer.h>
+#include <drivers/rtc.h>
+#include <drivers/timer.h>
 
 static u32 timer_ticks = 0;
 PROTECTED static u8 call_scheduler = 0;

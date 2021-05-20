@@ -1,10 +1,10 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
-#ifndef FB_H
-#define FB_H
+#ifndef VBE_H
+#define VBE_H
 
 #include <mm.h>
 
-void fb_install(void) NONNULL;
+void vbe_install(u32 data) NONNULL;
 
 #endif

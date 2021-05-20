@@ -1,9 +1,9 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <errno.h>
 #include <fs.h>
-#include <interrupts.h>
+#include <drivers/interrupts.h>
 #include <io.h>
 #include <load.h>
 #include <mem.h>
@@ -14,7 +14,7 @@
 #include <str.h>
 #include <sys.h>
 #include <syscall.h>
-#include <timer.h>
+#include <drivers/timer.h>
 
 static void syscall_handler(struct regs *r)
 {

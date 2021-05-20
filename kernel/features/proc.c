@@ -1,10 +1,10 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <errno.h>
 #include <fs.h>
-#include <gdt.h>
+#include <drivers/gdt.h>
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
@@ -12,7 +12,7 @@
 #include <proc.h>
 #include <stack.h>
 #include <str.h>
-#include <timer.h>
+#include <drivers/timer.h>
 
 #define PROC(node) ((struct proc *)node->data)
 

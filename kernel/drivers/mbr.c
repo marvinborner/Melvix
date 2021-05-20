@@ -2,8 +2,8 @@
 
 #include <def.h>
 #include <fs.h>
-#include <ide.h>
-#include <mbr.h>
+#include <drivers/ide.h>
+#include <drivers/mbr.h>
 #include <mem.h>
 #include <print.h>
 #include <str.h>

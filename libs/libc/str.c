@@ -231,7 +231,7 @@ const char *strerror(u32 error)
 
 #ifdef KERNEL
 
-#include <cpu.h>
+#include <drivers/cpu.h>
 
 u32 strlen_user(const char *str)
 {

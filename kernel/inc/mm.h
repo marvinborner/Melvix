@@ -5,7 +5,7 @@
 
 #include <def.h>
 #include <errno.h>
-#include <interrupts.h>
+#include <drivers/interrupts.h>
 
 struct memory_range {
 	u32 base;

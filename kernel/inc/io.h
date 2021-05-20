@@ -4,7 +4,7 @@
 #define IO_H
 
 #include <def.h>
-#include <interrupts.h>
+#include <drivers/interrupts.h>
 #include <proc.h>
 #include <sys.h>
 

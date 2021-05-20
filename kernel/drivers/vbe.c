@@ -1,10 +1,10 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
 #include <assert.h>
-#include <cpu.h>
 #include <def.h>
+#include <drivers/cpu.h>
+#include <drivers/vbe.h>
 #include <errno.h>
-#include <fb.h>
 #include <io.h>
 #include <mem.h>
 #include <mm.h>
@@ -26,7 +26,7 @@ struct vbe_basic {
 
 PROTECTED static struct vbe_basic *vbe = NULL;
 
-static u32 fb_map_buffer(struct page_dir *dir)
+static u32 vbe_map_buffer(struct page_dir *dir)
 {
 	assert(vbe);
 	struct memory_range r =
@@ -35,7 +35,7 @@ static u32 fb_map_buffer(struct page_dir *dir)
 }
 
 static u32 fb_owner = 0;
-static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3)
+static res vbe_control(u32 request, void *arg1, void *arg2, void *arg3)
 {
 	UNUSED(arg3);
 
@@ -52,7 +52,7 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3)
 			return -EBUSY;
 		fb_owner = proc_current()->pid;
 
-		u32 fb = fb_map_buffer(proc_current()->page_dir);
+		u32 fb = vbe_map_buffer(proc_current()->page_dir);
 
 		stac();
 		memcpy(arg1, vbe, size);
@@ -66,12 +66,12 @@ static res fb_ioctl(u32 request, void *arg1, void *arg2, void *arg3)
 	}
 }
 
-CLEAR void fb_install(void)
+CLEAR void vbe_install(u32 data)
 {
-	vbe = (void *)multiboot_vbe();
+	vbe = (void *)data;
 
 	struct io_dev *dev = zalloc(sizeof(*dev));
-	dev->control = fb_ioctl;
+	dev->control = vbe_control;
 	io_add(IO_FRAMEBUFFER, dev);
 
 	// Set framebuffer range used to prevent unwanted writing

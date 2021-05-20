@@ -2,22 +2,23 @@
 
 #include <assert.h>
 #include <bus.h>
-#include <cpu.h>
 #include <def.h>
-#include <fb.h>
-#include <interrupts.h>
+#include <drivers/cpu.h>
+#include <drivers/interrupts.h>
+#include <drivers/ps2.h>
+#include <drivers/timer.h>
+#include <drivers/vbe.h>
+#include <drivers/vmware.h>
 #include <io.h>
 #include <list.h>
 #include <logger.h>
 #include <mem.h>
 #include <mm.h>
+#include <multiboot.h>
 #include <proc.h>
-#include <ps2.h>
 #include <rand.h>
 #include <str.h>
 #include <syscall.h>
-#include <timer.h>
-#include <vmware.h>
 
 struct io_listener {
 	u32 group;
@@ -211,6 +212,10 @@ CLEAR void io_install(void)
 	for (u32 i = 0; i < IO_MAX; i++)
 		io_listeners[i] = list_new();
 
+	/**
+	 * Keyboard & mouse detection
+	 */
+
 	ps2_detect();
 
 	u8 ps2_keyboard = ps2_keyboard_detect();
@@ -226,8 +231,19 @@ CLEAR void io_install(void)
 			ps2_mouse_install(ps2_mouse);
 	}
 
+	/**
+	 * Framebuffer detection
+	 */
+
+	u32 vbe = multiboot_vbe();
+	if (vbe)
+		vbe_install(vbe);
+
+	/**
+	 * Other devices
+	 */
+
 	timer_install();
 	logger_install();
-	fb_install();
 	bus_install();
 }

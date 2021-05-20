@@ -7,38 +7,6 @@
 
 void *memcpy(void *dest, const void *src, u32 n)
 {
-#ifdef USER
-	// Inspired by Jeko at osdev
-	u8 *dest_byte = dest;
-	const u8 *src_byte = src;
-	for (u32 i = 0; i < n / 16; i++) {
-		__asm__ volatile("movups (%0), %%xmm0\n"
-				 "movntdq %%xmm0, (%1)\n" ::"r"(src_byte),
-				 "r"(dest_byte)
-				 : "memory");
-
-		src_byte += 16;
-		dest_byte += 16;
-	}
-
-	if (n & 7) {
-		n = n & 7;
-
-		int d0, d1, d2;
-		__asm__ volatile("rep ; movsl\n\t"
-				 "testb $2,%b4\n\t"
-				 "je 1f\n\t"
-				 "movsw\n"
-				 "1:\ttestb $1,%b4\n\t"
-				 "je 2f\n\t"
-				 "movsb\n"
-				 "2:"
-				 : "=&c"(d0), "=&D"(d1), "=&S"(d2)
-				 : "0"(n / 4), "q"(n), "1"((long)dest_byte), "2"((long)src_byte)
-				 : "memory");
-	}
-	return dest_byte;
-#else
 	// Inspired by jgraef at osdev
 	u32 num_dwords = n / 4;
 	u32 num_bytes = n % 4;
@@ -47,25 +15,20 @@ void *memcpy(void *dest, const void *src, u32 n)
 	u8 *dest8 = ((u8 *)dest) + num_dwords * 4;
 	const u8 *src8 = ((const u8 *)src) + num_dwords * 4;
 
-	// TODO: What's faster?
 	__asm__ volatile("rep movsl\n"
 			 : "=S"(src32), "=D"(dest32), "=c"(num_dwords)
 			 : "S"(src32), "D"(dest32), "c"(num_dwords)
 			 : "memory");
 
-	/* for (u32 i = 0; i < num_dwords; i++) { */
-	/* 	dest32[i] = src32[i]; */
-	/* } */
-
-	for (u32 i = 0; i < num_bytes; i++) {
+	for (u32 i = 0; i < num_bytes; i++)
 		dest8[i] = src8[i];
-	}
+
 	return dest;
-#endif
 }
 
 void *memset(void *dest, u32 val, u32 n)
 {
+	// Inspired by jgraef at osdev
 	u32 uval = val;
 	u32 num_dwords = n / 4;
 	u32 num_bytes = n % 4;
@@ -74,19 +37,14 @@ void *memset(void *dest, u32 val, u32 n)
 	u8 val8 = (u8)val;
 	u32 val32 = uval | (uval << 8) | (uval << 16) | (uval << 24);
 
-	// TODO: What's faster?
 	__asm__ volatile("rep stosl\n"
 			 : "=D"(dest32), "=c"(num_dwords)
 			 : "D"(dest32), "c"(num_dwords), "a"(val32)
 			 : "memory");
 
-	/* for (u32 i = 0; i < num_dwords; i++) { */
-	/* 	dest32[i] = val32; */
-	/* } */
-
-	for (u32 i = 0; i < num_bytes; i++) {
+	for (u32 i = 0; i < num_bytes; i++)
 		dest8[i] = val8;
-	}
+
 	return dest;
 }
 
@@ -122,7 +80,7 @@ u8 mememp(const u8 *buf, u32 n)
 
 #ifdef KERNEL
 
-#include <cpu.h>
+#include <drivers/cpu.h>
 
 void *memcpy_user(void *dest, const void *src, u32 n)
 {

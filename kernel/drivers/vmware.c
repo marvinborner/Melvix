@@ -2,13 +2,13 @@
 // VMWare extensions/backdoors for better VM integration
 
 #include <def.h>
-#include <interrupts.h>
+#include <drivers/interrupts.h>
 #include <io.h>
 #include <mem.h>
 #include <print.h>
-#include <ps2.h>
+#include <drivers/ps2.h>
 #include <stack.h>
-#include <vmware.h>
+#include <drivers/vmware.h>
 
 #define VMWARE_CMD_VERSION 0x0a
 

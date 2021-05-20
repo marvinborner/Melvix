@@ -1,12 +1,12 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
-#include <cpu.h>
+#include <drivers/cpu.h>
 #include <def.h>
 #include <fs.h>
 #include <mem.h>
-#include <rtc.h>
+#include <drivers/rtc.h>
 #include <str.h>
-#include <timer.h>
+#include <drivers/timer.h>
 
 static u8 rtc_busy(void)
 {
