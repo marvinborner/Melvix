@@ -28,7 +28,8 @@ no_ask="${2}"
 # TODO: Support -enable-kvm: GPF?!
 qemu_with_flags() {
     network="rtl8139"
-    qemu-system-i386 -d guest_errors,unimp,pcall -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -netdev user,id=net0,hostfwd=tcp:127.0.0.1:8000-10.0.2.15:8000 -device $network,netdev=net0 -object filter-dump,id=dump,netdev=net0,file=dump.pcap "$@"
+    [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ] && accel="-enable-kvm" || echo "KVM acceleration not available. Make sure your PC supports it and that you're in the KVM group"
+    qemu-system-i386 -d guest_errors,unimp,pcall -cpu max -no-reboot -vga std -rtc base=localtime -m 256M -netdev user,id=net0,hostfwd=tcp:127.0.0.1:8000-10.0.2.15:8000 -device $network,netdev=net0 -object filter-dump,id=dump,netdev=net0,file=dump.pcap $accel "$@"
 }
 
 make_cross() {
