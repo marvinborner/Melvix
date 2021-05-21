@@ -364,6 +364,16 @@ static void window_destroy(struct window *win)
 	free(win);
 }
 
+static void window_request_destroy(struct window *win)
+{
+	struct message_mouse msg = { 0 };
+	msg.header.state = MSG_NEED_ANSWER;
+	msg.id = win->id;
+
+	if (msg_connect_conn(win->client.conn) == EOK)
+		msg_send(GUI_DESTROY_WINDOW, &msg, sizeof(msg));
+}
+
 /**
  * Window bar
  */
@@ -380,7 +390,7 @@ static void window_bar_mousemove(struct window *win, struct event_mouse *event, 
 		return;
 
 	if (pos.x >= win->ctx.size.x - BAR_BUTTONS_WIDTH && event->but.left)
-		window_destroy(win);
+		window_request_destroy(win);
 	else if (event->but.left)
 		window_move(win, vec2_sub(mouse_pos, vec2(win->ctx.size.x / 2, BAR_HEIGHT / 2)));
 }

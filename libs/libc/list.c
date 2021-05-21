@@ -110,7 +110,6 @@ struct node *list_add(struct list *list, void *data)
 }
 
 // Maybe list_remove_node?
-// TODO: Free node on destroy
 struct list *list_remove(struct list *list, struct node *node)
 {
 	if (!list->head)
@@ -118,6 +117,7 @@ struct list *list_remove(struct list *list, struct node *node)
 
 	if (list->head == node) {
 		list->head = list->head->next;
+		free(node);
 		return list;
 	}
 
@@ -131,5 +131,6 @@ struct list *list_remove(struct list *list, struct node *node)
 	iterator->prev->next = iterator->next;
 	if (iterator->next)
 		iterator->next->prev = iterator->prev;
+	free(node);
 	return list;
 }

@@ -405,7 +405,7 @@ static struct gui_widget *gui_new_plain_widget(vec2 pos, vec2 size, u8 bpp)
 	return widget;
 }
 
-void gui_add_widget(u32 *widget, u32 win_id, u32 widget_id, vec2 pos, vec2 size)
+u32 gui_new_widget(u32 win_id, u32 widget_id, vec2 pos, vec2 size)
 {
 	struct gui_widget *parent = gui_widget_by_id(win_id, widget_id);
 	if (!parent)
@@ -414,7 +414,7 @@ void gui_add_widget(u32 *widget, u32 win_id, u32 widget_id, vec2 pos, vec2 size)
 	struct gui_widget *child = gui_new_plain_widget(pos, size, parent->bg.bpp);
 	list_add(parent->children, child);
 
-	*widget = child->id;
+	return child->id;
 }
 
 static void gui_destroy_widget(u32 win_id, u32 widget_id)
@@ -450,15 +450,6 @@ static void gui_destroy_widgets(u32 win_id)
 		iterator = iterator->next;
 	}
 	list_destroy(win->widgets);
-}
-
-void gui_new_widget(u32 *widget, u32 win_id, vec2 pos, vec2 size)
-{
-	struct gui_window *win = gui_window_by_id(win_id);
-	if (!win)
-		gui_error(ENOENT);
-
-	gui_add_widget(widget, win->id, gui_main_widget(win)->id, pos, size);
 }
 
 void gui_listen_widget(u32 win_id, u32 widget_id, enum gui_listener listener, u32 func)
@@ -504,8 +495,7 @@ void gui_popup(const char *text)
 	struct gui_window *win = gui_window_by_id(popup);
 	gui_fill(popup, gui_main_widget_id(win), GUI_LAYER_BG, COLOR_WHITE);
 
-	u32 widget;
-	gui_new_widget(&widget, popup, vec2(0, 0), vec2(POPUP_WIDTH, 32));
+	u32 widget = gui_new_widget(popup, GUI_MAIN, vec2(0, 0), vec2(POPUP_WIDTH, 32));
 	gui_fill(popup, widget, GUI_LAYER_BG, COLOR_WHITE);
 	gui_write(popup, widget, GUI_LAYER_FG, vec2(0, 0), FONT_32, COLOR_BLACK, text);
 
@@ -564,6 +554,7 @@ void gui_new_custom_window(u32 *id, vec2 pos, vec2 size)
 		list_add(windows, win);
 		win->widgets = list_new();
 
+		// Initialize GUI_MAIN widget
 		list_add(win->widgets,
 			 gui_new_plain_widget(vec2(0, 0), win->ctx.size, win->ctx.bpp));
 
@@ -604,19 +595,22 @@ static void gui_destroy_window(u32 id)
 	struct gui_window *win = gui_window_by_id(id);
 	u8 *fb = win->ctx.fb - (win->off.y * win->ctx.pitch);
 	assert(sys_free(fb) == EOK);
+
+	struct message_destroy_window msg = { .id = id };
+	gui_connect_wm();
+	msg_send(GUI_DESTROY_WINDOW, &msg, sizeof(msg));
+
+	list_remove(windows, list_first_data(windows, win));
 	free(win);
 }
 
-static void gui_destroy_all(void)
+static void gui_destroy_windows(void)
 {
 	struct node *iterator = windows->head;
 	while (iterator) {
 		struct gui_window *win = iterator->data;
-		struct message_destroy_window msg = { .id = win->id };
-		gui_destroy_window(win->id);
-		gui_connect_wm();
-		msg_send(GUI_DESTROY_WINDOW, &msg, sizeof(msg));
 		iterator = iterator->next;
+		gui_destroy_window(win->id);
 	}
 
 	list_destroy(windows);
@@ -672,12 +666,21 @@ static void gui_handle_mouse(struct message_mouse *msg)
 		widget.event.mouseclick(&event);
 }
 
+static void gui_handle_destroy_window(struct message_destroy_window *msg)
+{
+	gui_destroy_window(msg->id);
+	if (!windows || !windows->head || !windows->head->data) {
+		log("No more windows, exiting\n");
+		exit(0);
+	}
+}
+
 static void gui_handle_exit(void)
 {
 	if (!windows)
 		return;
 
-	gui_destroy_all();
+	gui_destroy_windows();
 }
 
 /**
@@ -691,15 +694,18 @@ void gui_loop(void)
 	if (!windows)
 		err(1, "Create some windows first\n");
 
-	void *msg = zalloc(4096);
+	u8 msg[4096] = { 0 };
 	while (gui_connect_wm(), msg_receive(msg, 4096) > 0) {
-		struct message_header *head = msg;
+		struct message_header *head = (void *)msg;
 		switch (head->type) {
 		case GUI_PING:
-			gui_handle_ping(msg);
+			gui_handle_ping((void *)msg);
 			break;
 		case GUI_MOUSE:
-			gui_handle_mouse(msg);
+			gui_handle_mouse((void *)msg);
+			break;
+		case GUI_DESTROY_WINDOW:
+			gui_handle_destroy_window((void *)msg);
 			break;
 		default:
 			// TODO: Fix random unknown msg types
@@ -707,6 +713,5 @@ void gui_loop(void)
 		}
 	}
 
-	free(msg);
 	err(1, "Gui loop failed\n");
 }

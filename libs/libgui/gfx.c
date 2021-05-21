@@ -310,6 +310,7 @@ void gfx_draw_border(struct context *ctx, u32 width, u32 c)
 }
 
 // Using Bresenham's algorithm
+// TODO: Better line scaling
 void gfx_draw_line(struct context *ctx, vec2 pos1, vec2 pos2, u32 scale, u32 c)
 {
 	int dx = ABS(pos2.x - pos1.x), sx = pos1.x < pos2.x ? 1 : -1;
@@ -318,7 +319,6 @@ void gfx_draw_line(struct context *ctx, vec2 pos1, vec2 pos2, u32 scale, u32 c)
 
 	while (1) {
 		gfx_draw_rectangle(ctx, pos1, vec2_add(pos1, vec2(scale, scale)), c);
-		/* gfx_draw_pixel(ctx, pos1, c); */
 		if (pos1.x == pos2.x && pos1.y == pos2.y)
 			break;
 		e2 = err;

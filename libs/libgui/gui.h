@@ -8,6 +8,8 @@
 #include <libgui/gfx.h>
 #include <vec.h>
 
+#define GUI_MAIN 0 // First widget is the main widget
+
 enum gui_listener {
 	GUI_LISTEN_MOUSEMOVE,
 	GUI_LISTEN_MOUSECLICK,
@@ -61,8 +63,7 @@ void gui_draw_line(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos1, v
  * Widget operations
  */
 
-void gui_add_widget(u32 *widget, u32 win_id, u32 widget_id, vec2 pos, vec2 size);
-void gui_new_widget(u32 *widget, u32 win_id, vec2 pos, vec2 size);
+u32 gui_new_widget(u32 win_id, u32 widget_id, vec2 pos, vec2 size);
 void gui_listen_widget(u32 win_id, u32 widget_id, enum gui_listener listener, u32 func);
 void gui_redraw_widget(u32 win_id, u32 widget_id);
 
