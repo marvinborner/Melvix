@@ -57,15 +57,15 @@ static vec2 selected = { -1, -1 }; // Selected tile
 
 static void load_image(struct piece *tile)
 {
-	assert(gui_clear(win, tile->widget, GUI_LAYER_FG) == EOK);
+	gui_clear(win, tile->widget, GUI_LAYER_FG);
 
 	char icon[48] = { 0 };
 	snprintf(icon, sizeof(icon), "/icons/chess-%s-%d.png", tile->name, TILE);
 	enum gfx_filter filter = IS_COLOR(tile->piece, BLACK) ? GFX_FILTER_NONE : GFX_FILTER_INVERT;
 
 	/* assert(gui_fill(win, tile->widget, GUI_LAYER_FG, 0) == EOK); */
-	assert(gui_load_image_filter(win, tile->widget, GUI_LAYER_FG, vec2(0, 0), vec2(TILE, TILE),
-				     filter, icon) == EOK);
+	gui_load_image_filter(win, tile->widget, GUI_LAYER_FG, vec2(0, 0), vec2(TILE, TILE), filter,
+			      icon);
 }
 
 static void mouseclick(u32 widget_id, vec2 pos)
@@ -92,14 +92,14 @@ static void mouseclick(u32 widget_id, vec2 pos)
 		strlcpy(clicked_piece->name, selected_piece->name, sizeof(clicked_piece->name));
 		selected_piece->name[0] = '\0';
 
-		assert(gui_clear(win, selected_piece->widget, GUI_LAYER_FG) == EOK);
+		gui_clear(win, selected_piece->widget, GUI_LAYER_FG);
 		load_image(clicked_piece);
 
-		assert(gui_redraw_window(win) == EOK);
+		gui_redraw_window(win);
 
 		selected = vec2(-1, -1);
 	} else if (clicked_piece->piece) {
-		assert(gui_redraw_widget(win, clicked_piece->widget) == EOK);
+		gui_redraw_widget(win, clicked_piece->widget);
 		selected = clicked;
 	}
 }
@@ -216,20 +216,18 @@ static void draw_board(void)
 {
 	for (u8 x = 0; x < 8; x++) {
 		for (u8 y = 0; y < 8; y++) {
-			u32 widget =
-				gui_new_widget(win, vec2(TILE, TILE), vec2(TILE * x, TILE * y));
+			u32 widget;
+			gui_new_widget(&widget, win, vec2(TILE * x, TILE * y), vec2(TILE, TILE));
 			assert((signed)widget > 0);
 
 			u8 colored = (x + y + 1) % 2 == 0;
 #if !WHITE_STARTS
 			colored = !colored;
 #endif
-			assert(gui_fill(win, widget, GUI_LAYER_BG,
-					colored ? DARK_COLOR : LIGHT_COLOR) == EOK);
+			gui_fill(win, widget, GUI_LAYER_BG, colored ? DARK_COLOR : LIGHT_COLOR);
 
 			struct piece *tile = &tiles[x][y];
-			assert(gui_listen_widget(win, widget, GUI_LISTEN_MOUSECLICK,
-						 (u32)mouseclick) == EOK);
+			gui_listen_widget(win, widget, GUI_LISTEN_MOUSECLICK, (u32)mouseclick);
 
 			tile->widget = widget;
 
@@ -238,12 +236,12 @@ static void draw_board(void)
 		}
 	}
 
-	assert(gui_redraw_window(win) == EOK);
+	gui_redraw_window(win);
 }
 
 int main(void)
 {
-	assert(gui_new_window(&win) == EOK);
+	gui_new_custom_window(&win, vec2(0, 0), vec2(TILE * 8, TILE * 8));
 	fen_parse(START_FEN);
 	draw_board();
 

@@ -13,8 +13,6 @@
 #include <rand.h>
 #include <sys.h>
 
-#define WINDOW_MOVE_TIMEOUT 20
-
 struct client {
 	u32 conn; // Bus conn
 };
@@ -223,9 +221,9 @@ static struct window *window_new(struct client client, struct vec2 pos, struct v
 	win->id = id++;
 	win->ctx.size = size;
 	win->ctx.bpp = screen.bpp;
-	win->ctx.pitch = size.x * bypp;
+	win->ctx.pitch = win->ctx.size.x * bypp;
 	win->ctx.bytes = win->ctx.pitch * win->ctx.size.y;
-	if ((flags & WF_NO_FB) != 0) {
+	if (flags & WF_NO_FB) {
 		win->ctx.fb = NULL;
 	} else {
 		assert(shalloc(win->ctx.bytes, (u32 *)&win->ctx.fb, &win->shid) == EOK);
@@ -347,6 +345,13 @@ static void window_redraw(struct window *win)
 		window_redraw_non_alpha(win);
 }
 
+static void window_move(struct window *win, vec2 pos)
+{
+	win->pos_prev = win->pos;
+	win->pos = pos;
+	window_redraw(win);
+}
+
 // TODO: Fix strange artifacts after destroying
 static void window_destroy(struct window *win)
 {
@@ -355,6 +360,37 @@ static void window_destroy(struct window *win)
 	list_remove(windows, list_first_data(windows, win));
 	sys_free(win->ctx.fb);
 	free(win);
+}
+
+/**
+ * Window bar
+ */
+
+#define BAR_HEIGHT 32
+#define BAR_CLOSE_SIZE 24
+#define BAR_MARGIN GFX_CENTER_IN(BAR_HEIGHT, BAR_CLOSE_SIZE)
+#define BAR_BUTTONS_WIDTH (BAR_MARGIN * 2 + BAR_CLOSE_SIZE)
+
+static void window_bar_mousemove(struct window *win, struct event_mouse *event, vec2 pos,
+				 vec2 mouse_pos)
+{
+	if (pos.y > BAR_HEIGHT)
+		return;
+
+	if (pos.x >= win->ctx.size.x - BAR_BUTTONS_WIDTH && event->but.left)
+		window_destroy(win);
+	else if (event->but.left)
+		window_move(win, vec2_sub(mouse_pos, vec2(win->ctx.size.x / 2, BAR_HEIGHT / 2)));
+}
+
+static void window_bar_draw(struct window *win)
+{
+	if (!(win->flags & WF_BAR))
+		return;
+
+	gfx_load_image_filter(&win->ctx,
+			      vec2(win->ctx.size.x - BAR_CLOSE_SIZE - BAR_MARGIN, BAR_MARGIN),
+			      GFX_FILTER_INVERT, "/icons/close-" STRINGIFY(BAR_CLOSE_SIZE) ".png");
 }
 
 /**
@@ -389,7 +425,6 @@ static void handle_event_keyboard(struct event_keyboard *event)
 	UNUSED(ch);
 }
 
-static struct timer mouse_timer = { 0 };
 static void handle_event_mouse(struct event_mouse *event)
 {
 	if (event->magic != MOUSE_MAGIC) {
@@ -428,14 +463,7 @@ static void handle_event_mouse(struct event_mouse *event)
 		focused = win;
 
 	if (focused && !(focused->flags & WF_NO_DRAG) && event->but.left && special_keys.alt) {
-		struct timer timer = { 0 };
-		io_read(IO_TIMER, &timer, 0, sizeof(timer));
-		if (timer.time - mouse_timer.time > WINDOW_MOVE_TIMEOUT) {
-			focused->pos_prev = focused->pos;
-			focused->pos = mouse.pos;
-			window_redraw(focused);
-			mouse_timer = timer;
-		}
+		window_move(win, mouse.pos);
 		return;
 	} else if (!vec2_eq(cursor->pos, cursor->pos_prev)) {
 		window_redraw(cursor);
@@ -444,10 +472,20 @@ static void handle_event_mouse(struct event_mouse *event)
 	if (!win)
 		return;
 
+	vec2 relative_pos = vec2_sub(mouse.pos, win->pos);
+	if (win->flags & WF_BAR) {
+		if (relative_pos.y <= BAR_HEIGHT) {
+			window_bar_mousemove(win, event, relative_pos, mouse.pos);
+			return;
+		} else {
+			relative_pos.y -= BAR_HEIGHT;
+		}
+	}
+
 	struct message_mouse msg = { 0 };
 	msg.header.state = MSG_GO_ON;
 	msg.id = win->id;
-	msg.pos = vec2_sub(mouse.pos, win->pos);
+	msg.pos = relative_pos;
 	msg.bits.click = event->but.left;
 
 	if (msg_connect_conn(win->client.conn) == EOK)
@@ -462,9 +500,12 @@ static void handle_event_mouse(struct event_mouse *event)
 
 static void handle_message_new_window(struct message_new_window *msg)
 {
-	struct window *win = window_new((struct client){ .conn = msg->header.bus.conn },
-					vec2(500, 600), vec2(600, 400), 0);
+	struct window *win = window_new((struct client){ .conn = msg->header.bus.conn }, msg->pos,
+					vec2_add(msg->size, vec2(0, BAR_HEIGHT)), WF_BAR);
+	window_bar_draw(win);
+
 	msg->ctx = win->ctx;
+	msg->off = vec2(0, BAR_HEIGHT);
 	msg->shid = win->shid;
 	msg->id = win->id;
 

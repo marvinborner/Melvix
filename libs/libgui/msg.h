@@ -35,6 +35,9 @@ struct message_new_window {
 	struct message_header header;
 	u32 id;
 	u32 shid;
+	vec2 off;
+	vec2 size;
+	vec2 pos;
 	struct context ctx;
 };
 

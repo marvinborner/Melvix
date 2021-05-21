@@ -107,8 +107,7 @@ make_disk() {
     rm -rf "spleen-$VERSION"*
     cd ../../
 
-    icons="cursor-default
-    cursor-default-outline
+    icons="close
     chess-bishop
     chess-king
     chess-knight

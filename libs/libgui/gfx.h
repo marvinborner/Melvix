@@ -43,9 +43,12 @@
 #define WF_NO_FB (1 << 3)
 #define WF_NO_WINDOW (1 << 4)
 #define WF_ALPHA (1 << 5)
+#define WF_BAR (1 << 6)
 
 #define GFX_NON_ALPHA 0
 #define GFX_ALPHA 1
+
+#define GFX_CENTER_IN(a, b) (ABS((a) - (b)) / 2)
 
 enum font_type { FONT_8, FONT_12, FONT_16, FONT_24, FONT_32, FONT_64 };
 enum gfx_filter {
@@ -88,13 +91,5 @@ void gfx_border(struct context *ctx, u32 c, u32 width) NONNULL;
 
 int gfx_font_height(enum font_type);
 int gfx_font_width(enum font_type);
-
-/**
- * Wrappers
- */
-
-/* #define gfx_redraw()                                                                               \ */
-/* 	(msg_send(pidof(WM_PATH), GFX_REDRAW, NULL)) // TODO: Partial redraw (optimization) */
-/* #define gfx_redraw_focused() (msg_send(pidof(WM_PATH), GFX_REDRAW_FOCUSED, NULL)) */
 
 #endif

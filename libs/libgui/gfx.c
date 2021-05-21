@@ -92,22 +92,6 @@ static void write_char(struct context *ctx, vec2 pos, struct font *font, u32 c, 
 	}
 }
 
-static void draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
-{
-	assert(pos1.x <= pos2.x && pos1.y <= pos2.y);
-	int bypp = ctx->bpp >> 3;
-	u8 *draw = &ctx->fb[pos1.x * bypp + pos1.y * ctx->pitch];
-	for (u32 i = 0; i < pos2.y - pos1.y; i++) {
-		for (u32 j = 0; j < pos2.x - pos1.x; j++) {
-			draw[bypp * j] = GET_BLUE(c);
-			draw[bypp * j + 1] = GET_GREEN(c);
-			draw[bypp * j + 2] = GET_RED(c);
-			draw[bypp * j + 3] = GET_ALPHA(c);
-		}
-		draw += ctx->pitch;
-	}
-}
-
 struct context *gfx_new_ctx(struct context *ctx, vec2 size, u8 bpp)
 {
 	ctx->size = size;
@@ -222,7 +206,6 @@ static void gfx_image_cache_save(const char *path, struct bmp *bmp)
 
 void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter, const char *path)
 {
-	// TODO: Support x, y
 	// TODO: Detect image type
 
 	struct bmp *bmp = gfx_image_cache_get(path);
@@ -245,7 +228,7 @@ void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter
 	u8 bypp = bmp->bpp >> 3;
 	/* u8 *srcfb = &bmp->data[bypp + (bmp->size.y - 1) * bmp->pitch]; */
 	u8 *srcfb = bmp->data;
-	u8 *destfb = &ctx->fb[bypp];
+	u8 *destfb = &ctx->fb[pos.x * bypp + pos.y * ctx->pitch];
 	for (u32 cy = 0; cy < bmp->size.y && cy + pos.y < ctx->size.y; cy++) {
 		int diff = 0;
 		for (u32 cx = 0; cx < bmp->size.x && cx + pos.x < ctx->size.x; cx++) {
@@ -277,6 +260,22 @@ void gfx_load_image(struct context *ctx, vec2 pos, const char *path)
 void gfx_load_wallpaper(struct context *ctx, const char *path)
 {
 	gfx_load_image(ctx, vec2(0, 0), path);
+}
+
+void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
+{
+	assert(pos1.x <= pos2.x && pos1.y <= pos2.y);
+	int bypp = ctx->bpp >> 3;
+	u8 *draw = &ctx->fb[pos1.x * bypp + pos1.y * ctx->pitch];
+	for (u32 i = 0; i < pos2.y - pos1.y; i++) {
+		for (u32 j = 0; j < pos2.x - pos1.x; j++) {
+			draw[bypp * j] = GET_BLUE(c);
+			draw[bypp * j + 1] = GET_GREEN(c);
+			draw[bypp * j + 2] = GET_RED(c);
+			draw[bypp * j + 3] = GET_ALPHA(c);
+		}
+		draw += ctx->pitch;
+	}
 }
 
 void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size)
@@ -323,11 +322,6 @@ void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos, u8 alph
 	}
 }
 
-void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
-{
-	draw_rectangle(ctx, pos1, pos2, c);
-}
-
 void gfx_clear(struct context *ctx)
 {
 	memset(ctx->fb, 0, ctx->bytes);
@@ -335,7 +329,7 @@ void gfx_clear(struct context *ctx)
 
 void gfx_fill(struct context *ctx, u32 c)
 {
-	draw_rectangle(ctx, vec2(0, 0), vec2(ctx->size.x, ctx->size.y), c);
+	gfx_draw_rectangle(ctx, vec2(0, 0), vec2(ctx->size.x, ctx->size.y), c);
 }
 
 void gfx_border(struct context *ctx, u32 c, u32 width)

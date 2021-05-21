@@ -21,6 +21,7 @@ typedef struct vec3 {
 #define vec2_div(a, b) ((vec2){ a.x / (b), a.y / (b) })
 #define vec2_dot(a, b) ((u32)(a.x * b.x + a.y * b.y))
 #define vec2_eq(a, b) (a.x == b.x && a.y == b.y)
+#define vec2_sum(a) ((u32)(a.x + a.y))
 
 #define vec3(x, y, z) ((vec3){ (x), (y), (z) })
 #define vec3to2(a) ((vec2){ a.x, a.y })
@@ -32,5 +33,6 @@ typedef struct vec3 {
 #define vec3_eq(a, b) (a.x == b.x && a.y == b.y && a.z == c.z)
 #define vec3_cross(a, b)                                                                           \
 	((vec3){ a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x })
+#define vec3_sum(a) ((u32)(a.x + a.y + a.z))
 
 #endif
