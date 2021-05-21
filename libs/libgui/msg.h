@@ -55,9 +55,12 @@ struct message_mouse {
 	struct message_header header;
 	u32 id;
 	vec2 pos;
+	s8 scroll; // Dir: -1 neg, +1 pos
 	struct {
-		u8 click : 1;
-	} bits;
+		u8 left : 1;
+		u8 right : 1;
+		u8 middle : 1;
+	} but;
 };
 
 enum message_type {

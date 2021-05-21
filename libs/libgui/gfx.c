@@ -72,7 +72,7 @@ static void free_fonts(void)
 
 static void write_char(struct context *ctx, vec2 pos, struct font *font, u32 c, char ch)
 {
-	int bypp = ctx->bpp >> 3;
+	u8 bypp = ctx->bpp >> 3;
 
 	char *draw = (char *)&ctx->fb[pos.x * bypp + pos.y * ctx->pitch];
 
@@ -262,10 +262,20 @@ void gfx_load_wallpaper(struct context *ctx, const char *path)
 	gfx_load_image(ctx, vec2(0, 0), path);
 }
 
+void gfx_draw_pixel(struct context *ctx, vec2 pos1, u32 c)
+{
+	u8 bypp = ctx->bpp >> 3;
+	u8 *draw = &ctx->fb[pos1.x * bypp + pos1.y * ctx->pitch];
+	draw[0] = GET_BLUE(c);
+	draw[1] = GET_GREEN(c);
+	draw[2] = GET_RED(c);
+	draw[3] = GET_ALPHA(c);
+}
+
 void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
 {
 	assert(pos1.x <= pos2.x && pos1.y <= pos2.y);
-	int bypp = ctx->bpp >> 3;
+	u8 bypp = ctx->bpp >> 3;
 	u8 *draw = &ctx->fb[pos1.x * bypp + pos1.y * ctx->pitch];
 	for (u32 i = 0; i < pos2.y - pos1.y; i++) {
 		for (u32 j = 0; j < pos2.x - pos1.x; j++) {
@@ -278,9 +288,54 @@ void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
 	}
 }
 
+void gfx_draw_border(struct context *ctx, u32 width, u32 c)
+{
+	if (width <= 0)
+		return;
+
+	u8 bypp = ctx->bpp >> 3;
+	u8 *draw = ctx->fb;
+	for (u32 i = 0; i < ctx->size.y; i++) {
+		for (u32 j = 0; j < ctx->size.x; j++) {
+			if (j <= width - 1 || i <= width - 1 || j - ctx->size.x + width <= width ||
+			    i - ctx->size.y + width <= width) {
+				draw[bypp * j + 0] = GET_BLUE(c);
+				draw[bypp * j + 1] = GET_GREEN(c);
+				draw[bypp * j + 2] = GET_RED(c);
+				draw[bypp * j + 3] = GET_ALPHA(c);
+			}
+		}
+		draw += ctx->pitch;
+	}
+}
+
+// Using Bresenham's algorithm
+void gfx_draw_line(struct context *ctx, vec2 pos1, vec2 pos2, u32 scale, u32 c)
+{
+	int dx = ABS(pos2.x - pos1.x), sx = pos1.x < pos2.x ? 1 : -1;
+	int dy = ABS(pos2.y - pos1.y), sy = pos1.y < pos2.y ? 1 : -1;
+	int err = (dx > dy ? dx : -dy) / 2, e2;
+
+	while (1) {
+		gfx_draw_rectangle(ctx, pos1, vec2_add(pos1, vec2(scale, scale)), c);
+		/* gfx_draw_pixel(ctx, pos1, c); */
+		if (pos1.x == pos2.x && pos1.y == pos2.y)
+			break;
+		e2 = err;
+		if (e2 > -dx) {
+			err -= dy;
+			pos1.x += sx;
+		}
+		if (e2 < dy) {
+			err += dx;
+			pos1.y += sy;
+		}
+	}
+}
+
 void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size)
 {
-	int bypp = dest->bpp >> 3;
+	u8 bypp = dest->bpp >> 3;
 	u8 *srcfb = &src->fb[pos.x * bypp + pos.y * src->pitch];
 	u8 *destfb = &dest->fb[pos.x * bypp + pos.y * dest->pitch];
 	for (u32 cy = 0; cy < size.y; cy++) {
@@ -292,7 +347,7 @@ void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size)
 
 // TODO: Support alpha values other than 0x0 and 0xff (blending)
 // TODO: Optimize!
-void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos, u8 alpha)
+HOT void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos, u8 alpha)
 {
 	// TODO: Some kind of alpha-acknowledging memcpy?
 	if (!alpha && src->size.x == dest->size.x && src->size.y == dest->size.y) {
@@ -330,28 +385,6 @@ void gfx_clear(struct context *ctx)
 void gfx_fill(struct context *ctx, u32 c)
 {
 	gfx_draw_rectangle(ctx, vec2(0, 0), vec2(ctx->size.x, ctx->size.y), c);
-}
-
-void gfx_border(struct context *ctx, u32 c, u32 width)
-{
-	if (width <= 0)
-		return;
-
-	int bypp = ctx->bpp >> 3;
-	u8 *draw = ctx->fb;
-	for (u32 i = 0; i < ctx->size.y; i++) {
-		for (u32 j = 0; j < ctx->size.x; j++) {
-			if (j <= width - 1 || i <= width - 1 ||
-			    j - ctx->size.x + width + 1 <= width ||
-			    i - ctx->size.y + width <= width) {
-				draw[bypp * j + 0] = GET_BLUE(c);
-				draw[bypp * j + 1] = GET_GREEN(c);
-				draw[bypp * j + 2] = GET_RED(c);
-				draw[bypp * j + 3] = GET_ALPHA(c);
-			}
-		}
-		draw += ctx->pitch;
-	}
 }
 
 int gfx_font_height(enum font_type font_type)

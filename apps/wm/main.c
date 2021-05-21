@@ -347,6 +347,8 @@ static void window_redraw(struct window *win)
 
 static void window_move(struct window *win, vec2 pos)
 {
+	if (!win)
+		return;
 	win->pos_prev = win->pos;
 	win->pos = pos;
 	window_redraw(win);
@@ -463,7 +465,7 @@ static void handle_event_mouse(struct event_mouse *event)
 		focused = win;
 
 	if (focused && !(focused->flags & WF_NO_DRAG) && event->but.left && special_keys.alt) {
-		window_move(win, mouse.pos);
+		window_move(focused, mouse.pos);
 		return;
 	} else if (!vec2_eq(cursor->pos, cursor->pos_prev)) {
 		window_redraw(cursor);
@@ -486,7 +488,10 @@ static void handle_event_mouse(struct event_mouse *event)
 	msg.header.state = MSG_GO_ON;
 	msg.id = win->id;
 	msg.pos = relative_pos;
-	msg.bits.click = event->but.left;
+	msg.scroll = event->scroll;
+	msg.but.left = event->but.left;
+	msg.but.right = event->but.right;
+	msg.but.middle = event->but.middle;
 
 	if (msg_connect_conn(win->client.conn) == EOK)
 		msg_send(GUI_MOUSE, &msg, sizeof(msg));
@@ -632,7 +637,7 @@ int main(int argc, char **argv)
 
 	assert(io_control(IO_BUS, IOCTL_BUS_REGISTER, "wm") == EOK);
 
-	assert(exec("chess", NULL) == EOK);
+	assert(exec("paint", NULL) == EOK);
 
 	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };

@@ -17,13 +17,14 @@ struct gui_widget {
 	struct list *children;
 
 	struct {
-		void (*mousemove)(u32 widget_id, vec2 pos);
-		void (*mouseclick)(u32 widget_id, vec2 pos);
+		void (*mousemove)(struct gui_event_mouse *event);
+		void (*mouseclick)(struct gui_event_mouse *event);
 	} event;
 };
 
 struct gui_window {
 	u32 id;
+	vec2 off; // fb offset
 	vec2 pos;
 	struct context ctx;
 	struct list *widgets;
@@ -190,6 +191,50 @@ void gui_load_image(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, v
 	gui_load_image_filter(win_id, widget_id, layer, pos, size, GFX_FILTER_NONE, path);
 }
 
+void gui_draw_rectangle(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos1, vec2 pos2,
+			u32 c)
+{
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
+	if (!widget)
+		gui_error(ENOENT);
+
+	if (layer == GUI_LAYER_BG)
+		gfx_draw_rectangle(&widget->bg, pos1, pos2, c);
+	else if (layer == GUI_LAYER_FG)
+		gfx_draw_rectangle(&widget->fg, pos1, pos2, c);
+	else
+		gui_error(EINVAL);
+}
+
+void gui_draw_border(u32 win_id, u32 widget_id, enum gui_layer layer, u32 width, u32 c)
+{
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
+	if (!widget)
+		gui_error(ENOENT);
+
+	if (layer == GUI_LAYER_BG)
+		gfx_draw_border(&widget->bg, width, c);
+	else if (layer == GUI_LAYER_FG)
+		gfx_draw_border(&widget->fg, width, c);
+	else
+		gui_error(EINVAL);
+}
+
+void gui_draw_line(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos1, vec2 pos2, u32 scale,
+		   u32 c)
+{
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
+	if (!widget)
+		gui_error(ENOENT);
+
+	if (layer == GUI_LAYER_BG)
+		gfx_draw_line(&widget->bg, pos1, pos2, scale, c);
+	else if (layer == GUI_LAYER_FG)
+		gfx_draw_line(&widget->fg, pos1, pos2, scale, c);
+	else
+		gui_error(EINVAL);
+}
+
 /**
  * Widgets
  */
@@ -266,6 +311,7 @@ static void gui_sync_sub_widgets(struct gui_widget *widget)
 	struct node *iterator = widget->children->head;
 	while (iterator) {
 		struct gui_widget *w = iterator->data;
+		gui_sync_sub_widgets(w);
 		gfx_ctx_on_ctx(&widget->bg, &w->bg, w->pos, GFX_NON_ALPHA);
 		gfx_ctx_on_ctx(&widget->fg, &w->fg, w->pos, GFX_NON_ALPHA);
 		iterator = iterator->next;
@@ -346,14 +392,14 @@ static vec2 gui_offset_widget(struct gui_widget *parent, struct gui_widget *chil
 static struct gui_widget *gui_new_plain_widget(vec2 pos, vec2 size, u8 bpp)
 {
 	struct gui_widget *widget = zalloc(sizeof(*widget));
-	struct context *bg = zalloc(sizeof(*bg));
-	struct context *fg = zalloc(sizeof(*fg));
+	struct context bg;
+	struct context fg;
 
 	static u32 id = 0;
 	widget->id = id++;
 	widget->pos = pos;
-	widget->bg = *gfx_new_ctx(bg, size, bpp);
-	widget->fg = *gfx_new_ctx(fg, size, bpp);
+	widget->bg = *gfx_new_ctx(&bg, size, bpp);
+	widget->fg = *gfx_new_ctx(&fg, size, bpp);
 	widget->children = list_new();
 
 	return widget;
@@ -369,6 +415,41 @@ void gui_add_widget(u32 *widget, u32 win_id, u32 widget_id, vec2 pos, vec2 size)
 	list_add(parent->children, child);
 
 	*widget = child->id;
+}
+
+static void gui_destroy_widget(u32 win_id, u32 widget_id)
+{
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
+	if (!widget)
+		return;
+
+	struct node *iterator = widget->children->head;
+	while (iterator) {
+		struct gui_widget *sub = iterator->data;
+		gui_destroy_widget(win_id, sub->id);
+		iterator = iterator->next;
+	}
+
+	list_destroy(widget->children);
+	free(widget->bg.fb);
+	free(widget->fg.fb);
+	free(widget);
+}
+
+static void gui_destroy_widgets(u32 win_id)
+{
+	struct gui_window *win = gui_window_by_id(win_id);
+
+	if (!win->widgets)
+		return;
+
+	struct node *iterator = win->widgets->head;
+	while (iterator) {
+		struct gui_widget *widget = iterator->data;
+		gui_destroy_widget(win_id, widget->id);
+		iterator = iterator->next;
+	}
+	list_destroy(win->widgets);
 }
 
 void gui_new_widget(u32 *widget, u32 win_id, vec2 pos, vec2 size)
@@ -391,10 +472,10 @@ void gui_listen_widget(u32 win_id, u32 widget_id, enum gui_listener listener, u3
 
 	switch (listener) {
 	case GUI_LISTEN_MOUSEMOVE:
-		widget->event.mousemove = (void (*)(u32, vec2))func;
+		widget->event.mousemove = (void (*)(struct gui_event_mouse *))func;
 		break;
 	case GUI_LISTEN_MOUSECLICK:
-		widget->event.mouseclick = (void (*)(u32, vec2))func;
+		widget->event.mouseclick = (void (*)(struct gui_event_mouse *))func;
 		break;
 	default:
 		gui_error(ENOENT);
@@ -404,7 +485,7 @@ void gui_listen_widget(u32 win_id, u32 widget_id, enum gui_listener listener, u3
 void gui_redraw_widget(u32 win_id, u32 widget_id)
 {
 	gui_sync_widget(win_id, widget_id);
-	gui_redraw_window(win_id);
+	gui_redraw_window_only(win_id);
 }
 
 /**
@@ -467,6 +548,7 @@ void gui_new_custom_window(u32 *id, vec2 pos, vec2 size)
 	if (msg_send(GUI_NEW_WINDOW, &msg, sizeof(msg)) > 0 && msg_receive(&msg, sizeof(msg)) > 0 &&
 	    msg.header.type == (GUI_NEW_WINDOW | MSG_SUCCESS)) {
 		win->id = msg.id;
+		win->off = msg.off;
 		win->ctx = msg.ctx;
 		win->pos = msg.pos;
 		u32 buf_size;
@@ -497,10 +579,8 @@ INLINE void gui_new_window(u32 *id)
 	gui_new_custom_window(id, vec2(0, 0), vec2(0, 0));
 }
 
-void gui_redraw_window(u32 id)
+void gui_redraw_window_only(u32 id)
 {
-	gui_sync_widgets(id);
-
 	struct message_redraw_window msg = { .id = id, .header.state = MSG_NEED_ANSWER };
 	gui_connect_wm();
 	if (msg_send(GUI_REDRAW_WINDOW, &msg, sizeof(msg)) > 0 &&
@@ -509,6 +589,37 @@ void gui_redraw_window(u32 id)
 		return;
 
 	gui_error(EINVAL);
+}
+
+void gui_redraw_window(u32 id)
+{
+	gui_sync_widgets(id);
+	gui_redraw_window_only(id);
+}
+
+static void gui_destroy_window(u32 id)
+{
+	gui_destroy_widgets(id);
+
+	struct gui_window *win = gui_window_by_id(id);
+	u8 *fb = win->ctx.fb - (win->off.y * win->ctx.pitch);
+	assert(sys_free(fb) == EOK);
+	free(win);
+}
+
+static void gui_destroy_all(void)
+{
+	struct node *iterator = windows->head;
+	while (iterator) {
+		struct gui_window *win = iterator->data;
+		struct message_destroy_window msg = { .id = win->id };
+		gui_destroy_window(win->id);
+		gui_connect_wm();
+		msg_send(GUI_DESTROY_WINDOW, &msg, sizeof(msg));
+		iterator = iterator->next;
+	}
+
+	list_destroy(windows);
 }
 
 /**
@@ -542,12 +653,23 @@ static void gui_handle_mouse(struct message_mouse *msg)
 
 	struct gui_window *win = gui_window_by_id(msg->id);
 	vec2 offset = gui_offset_widget(gui_main_widget(win), &widget);
+	vec2 pos = vec2_sub(msg->pos, offset);
+
+	struct gui_event_mouse event = {
+		.win = win->id,
+		.widget = widget.id,
+		.pos = pos,
+		.scroll = msg->scroll,
+		.but.left = msg->but.left,
+		.but.right = msg->but.right,
+		.but.middle = msg->but.middle,
+	};
 
 	if (widget.event.mousemove)
-		widget.event.mousemove(widget.id, vec2_sub(msg->pos, offset));
+		widget.event.mousemove(&event);
 
-	if (widget.event.mouseclick && msg->bits.click)
-		widget.event.mouseclick(widget.id, vec2_sub(msg->pos, offset));
+	if (widget.event.mouseclick && msg->but.left)
+		widget.event.mouseclick(&event);
 }
 
 static void gui_handle_exit(void)
@@ -555,16 +677,7 @@ static void gui_handle_exit(void)
 	if (!windows)
 		return;
 
-	struct node *iterator = windows->head;
-	while (iterator) {
-		struct gui_window *win = iterator->data;
-		struct message_destroy_window msg = { .id = win->id };
-		gui_connect_wm();
-		msg_send(GUI_DESTROY_WINDOW, &msg, sizeof(msg));
-		iterator = iterator->next;
-	}
-
-	list_destroy(windows);
+	gui_destroy_all();
 }
 
 /**

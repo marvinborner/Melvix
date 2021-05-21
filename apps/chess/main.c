@@ -68,14 +68,12 @@ static void load_image(struct piece *tile)
 			      icon);
 }
 
-static void mouseclick(u32 widget_id, vec2 pos)
+static void mouseclick(struct gui_event_mouse *event)
 {
-	UNUSED(pos);
-
 	vec2 clicked = vec2(0, 0);
 	for (u32 x = 0; x < SIZE; x++)
 		for (u32 y = 0; y < SIZE; y++)
-			if (tiles[x][y].widget == widget_id)
+			if (tiles[x][y].widget == event->widget)
 				clicked = vec2(x, y);
 
 	struct piece *clicked_piece = &tiles[clicked.x][clicked.y];

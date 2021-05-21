@@ -73,23 +73,46 @@ struct context {
 };
 
 struct context *gfx_new_ctx(struct context *ctx, vec2 size, u8 bpp) NONNULL;
+
+/**
+ * Text stuff
+ */
+
 struct font *gfx_resolve_font(enum font_type font_type);
 void gfx_write_char(struct context *ctx, vec2 pos, enum font_type font_type, u32 c,
 		    char ch) NONNULL;
 void gfx_write(struct context *ctx, vec2 pos, enum font_type font_type, u32 c,
 	       const char *text) NONNULL;
+
+int gfx_font_height(enum font_type);
+int gfx_font_width(enum font_type);
+
+/**
+ * Image loading
+ */
+
 void gfx_load_image(struct context *ctx, vec2 pos, const char *path) NONNULL;
 void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter,
 			   const char *path) NONNULL;
 void gfx_load_wallpaper(struct context *ctx, const char *path) NONNULL;
+
+/**
+ * Context copying
+ */
+
 void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size) NONNULL;
 void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos, u8 alpha) NONNULL;
+
+/**
+ * Drawing functions
+ */
+
+void gfx_draw_pixel(struct context *ctx, vec2 pos1, u32 c);
 void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c) NONNULL;
+void gfx_draw_line(struct context *ctx, vec2 pos1, vec2 pos2, u32 scale, u32 c);
+
 void gfx_clear(struct context *ctx);
 void gfx_fill(struct context *ctx, u32 c) NONNULL;
-void gfx_border(struct context *ctx, u32 c, u32 width) NONNULL;
-
-int gfx_font_height(enum font_type);
-int gfx_font_width(enum font_type);
+void gfx_draw_border(struct context *ctx, u32 width, u32 c) NONNULL;
 
 #endif
