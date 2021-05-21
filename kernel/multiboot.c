@@ -13,16 +13,23 @@ PROTECTED static char vbe[256] = { 0 };
 
 CLEAR static void multiboot_parse_cmdline(const char *line)
 {
+	u8 nolog = 0;
+
 	const char *start = line;
 	for (const char *p = line; p && *p; p++) {
 		if (*p == ' ')
 			start = p + 1;
 
-		if (memcmp(start, "log", 3) == 0 && !ALPHANUMERIC(start[3])) {
-			serial_enable();
-			start += 3;
+		if (memcmp(start, "nolog", 5) == 0 && !ALPHANUMERIC(start[5])) {
+			nolog = 1;
+			start += 5;
 		}
 	}
+
+	if (nolog)
+		serial_disable();
+	else
+		serial_enable();
 }
 
 CLEAR u32 multiboot_vbe(void)
