@@ -6,7 +6,7 @@
     <a href="https://github.com/marvinborner/Melvix/actions?query=workflow%3A%22Project+build+and+test%22" target="_blank">
         <img src="https://img.shields.io/github/workflow/status/marvinborner/Melvix/Project%20build?style=for-the-badge" />
     </a>
-    <a href="https://app.codacy.com/manual/marvin-borner/Melvix/dashboard" target="_blank">
+    <a href="https://app.codacy.com/gh/marvinborner/Melvix/dashboard" target="_blank">
         <img src="https://img.shields.io/codacy/grade/e68699c7f9314476a52acf9819a0a386/dev?style=for-the-badge" />
     </a>
     <a href="https://www.buymeacoffee.com/marvinborner" target="_blank">

@@ -7,7 +7,7 @@ This document explains the testing/building/booting process and requirements. Ev
 -   Install the qemu i386 emulator
 -   Download the `disk-img` artifact from the newest stable [GitHub Workflow build](https://github.com/marvinborner/Melvix/actions?query=branch%3Amain)
 -   Unzip `disk-img.zip`
--   Run `qemu-system-i386 -m 256M -vga std -drive file=path/to/disk.img,format=raw,index=1,media=disk -netdev user,id=net0 -device rtl8139,netdev=net0`
+-   Run `qemu-system-i386 -m 256M -vga std -enable-kvm -cpu max -drive file=disk.img,format=raw,index=1,media=disk -netdev user,id=net0 -device rtl8139,netdev=net0`
 -   Try entering `browser`, `files`, `mandelbrot` (or any other program in `apps/`) into the input field and press enter
 -   Move windows using `ALT`+`Left click`
 -   Enjoy, or try building it yourself!
