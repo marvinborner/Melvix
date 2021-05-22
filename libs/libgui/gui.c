@@ -572,11 +572,9 @@ INLINE void gui_new_window(u32 *id)
 
 void gui_redraw_window_only(u32 id)
 {
-	struct message_redraw_window msg = { .id = id, .header.state = MSG_NEED_ANSWER };
+	struct message_redraw_window msg = { .id = id };
 	gui_connect_wm();
-	if (msg_send(GUI_REDRAW_WINDOW, &msg, sizeof(msg)) > 0 &&
-	    msg_receive(&msg, sizeof(msg)) > 0 &&
-	    msg.header.type == (GUI_REDRAW_WINDOW | MSG_SUCCESS))
+	if (msg_send(GUI_REDRAW_WINDOW, &msg, sizeof(msg)) > 0)
 		return;
 
 	gui_error(EINVAL);
@@ -620,26 +618,25 @@ static void gui_destroy_windows(void)
  * Message handling
  */
 
-static void gui_handle_ping(struct message_ping *msg)
+static void gui_handle_ping_window(struct message_ping_window *msg)
 {
 	if (msg->ping != MSG_PING_SEND)
 		gui_error(EINVAL);
 
-	msg->header.type |= MSG_SUCCESS;
 	msg->ping = MSG_PING_RECV;
 	if (msg_connect_conn(msg->header.bus.conn) == EOK &&
-	    msg_send(GUI_PING, msg, sizeof(msg)) == EOK)
+	    msg_send(msg->header.type | MSG_SUCCESS, msg, sizeof(*msg)) > 0)
 		return;
-	gui_error(errno);
+	gui_error(EINVAL);
 }
 
 static void gui_handle_mouse(struct message_mouse *msg)
 {
 	if (msg->header.state == MSG_NEED_ANSWER) {
 		if (msg_connect_conn(msg->header.bus.conn) == EOK &&
-		    msg_send(msg->header.type | MSG_SUCCESS, msg, sizeof(msg)) == EOK)
+		    msg_send(msg->header.type | MSG_SUCCESS, msg, sizeof(*msg)) > 0)
 			return;
-		gui_error(errno);
+		gui_error(EINVAL);
 	}
 
 	struct gui_widget widget = { 0 };
@@ -698,11 +695,11 @@ void gui_loop(void)
 	while (gui_connect_wm(), msg_receive(msg, 4096) > 0) {
 		struct message_header *head = (void *)msg;
 		switch (head->type) {
-		case GUI_PING:
-			gui_handle_ping((void *)msg);
-			break;
 		case GUI_MOUSE:
 			gui_handle_mouse((void *)msg);
+			break;
+		case GUI_PING_WINDOW:
+			gui_handle_ping_window((void *)msg);
 			break;
 		case GUI_DESTROY_WINDOW:
 			gui_handle_destroy_window((void *)msg);

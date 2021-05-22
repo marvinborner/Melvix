@@ -26,8 +26,9 @@ struct message_header {
 	enum message_state state;
 };
 
-struct message_ping {
+struct message_ping_window {
 	struct message_header header;
+	u32 id;
 	u32 ping;
 };
 
@@ -64,7 +65,7 @@ struct message_mouse {
 };
 
 enum message_type {
-	GUI_PING,
+	GUI_PING_WINDOW,
 	GUI_NEW_WINDOW,
 	GUI_REDRAW_WINDOW,
 	GUI_DESTROY_WINDOW,

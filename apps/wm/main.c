@@ -36,6 +36,7 @@ struct rectangle {
 // Global vars ftw!
 static u8 bypp = 4;
 static struct fb_generic screen = { 0 };
+static struct list *ping_await = NULL;
 static struct list *windows = NULL; // THIS LIST SHALL BE SORTED BY Z-INDEX!
 static struct window *direct = NULL;
 static struct window *wallpaper = NULL;
@@ -360,6 +361,15 @@ static void window_destroy(struct window *win)
 	memset(win->ctx.fb, 0, win->ctx.bytes);
 	rectangle_redraw(win->pos, vec2_add(win->pos, win->ctx.size));
 	list_remove(windows, list_first_data(windows, win));
+
+	// Remove window from ping list
+	struct node *iterator = ping_await->head;
+	while (iterator) {
+		if (iterator->data == win)
+			list_remove(ping_await, iterator);
+		iterator = iterator->next;
+	}
+
 	sys_free(win->ctx.fb);
 	free(win);
 }
@@ -372,6 +382,71 @@ static void window_request_destroy(struct window *win)
 
 	if (msg_connect_conn(win->client.conn) == EOK)
 		msg_send(GUI_DESTROY_WINDOW, &msg, sizeof(msg));
+}
+
+/**
+ * Window ping-pong
+ */
+
+#define PING_INTERVAL 100
+#define PING_COUNT 3 // -> kill if >=
+
+static void window_ping(struct window *win)
+{
+	struct message_ping_window msg = { 0 };
+	msg.header.state = MSG_NEED_ANSWER;
+	msg.ping = MSG_PING_SEND;
+	msg.id = win->id;
+
+	if (msg_connect_conn(win->client.conn) == EOK) {
+		list_add(ping_await, win);
+		msg_send(GUI_PING_WINDOW, &msg, sizeof(msg));
+	}
+}
+
+static u32 window_ping_count(struct window *win)
+{
+	u32 count = 0;
+	struct node *iterator = ping_await->head;
+	while (iterator) {
+		if (iterator->data == win)
+			count++;
+		iterator = iterator->next;
+	}
+	return count;
+}
+
+static void window_ping_check(void)
+{
+	struct node *iterator = windows->head;
+	while (iterator) {
+		struct window *win = iterator->data;
+		if (window_ping_count(win) >= PING_COUNT) {
+			log("Window didn't answer to ping, destroying\n");
+			window_destroy(win);
+		}
+		iterator = iterator->next;
+	}
+}
+
+static void window_ping_all(void)
+{
+	static struct timer last = { 0 };
+	struct timer timer;
+	io_read(IO_TIMER, &timer, 0, sizeof(timer));
+	if (timer.time - last.time > PING_INTERVAL) {
+		window_ping_check();
+
+		struct node *iterator = windows->head;
+		while (iterator) {
+			struct window *win = iterator->data;
+			if (!(win->flags & WF_NO_WINDOW))
+				window_ping(win);
+			iterator = iterator->next;
+		}
+
+		last = timer;
+	}
 }
 
 /**
@@ -570,11 +645,31 @@ static void handle_message_destroy_window(struct message_destroy_window *msg)
 	}
 }
 
+static void handle_message_ping_window(struct message_ping_window *msg)
+{
+	if (msg->ping != MSG_PING_RECV || !(msg->header.type & MSG_SUCCESS)) {
+		log("Invalid ping answer\n");
+		return;
+	}
+
+	struct node *iterator = ping_await->head;
+	while (iterator) {
+		struct window *win = iterator->data;
+		if (win->id == msg->id) {
+			list_remove(ping_await, iterator);
+			return;
+		}
+		iterator = iterator->next;
+	}
+
+	log("Unknown ping answer origin\n");
+}
+
 static void handle_message(void *msg)
 {
 	struct message_header *header = msg;
 
-	switch (header->type) {
+	switch (header->type & ~(MSG_SUCCESS | MSG_FAILURE)) {
 	case GUI_NEW_WINDOW:
 		handle_message_new_window(msg);
 		break;
@@ -584,10 +679,13 @@ static void handle_message(void *msg)
 	case GUI_DESTROY_WINDOW:
 		handle_message_destroy_window(msg);
 		break;
+	case GUI_PING_WINDOW:
+		handle_message_ping_window(msg);
+		break;
 	default:
 		log("Message type %d not implemented!\n", header->type);
 		msg_connect_conn(header->bus.conn);
-		msg_send(GUI_DESTROY_WINDOW | MSG_SUCCESS, msg, sizeof(header));
+		msg_send(GUI_DESTROY_WINDOW | MSG_SUCCESS, msg, sizeof(*header));
 	}
 }
 
@@ -598,6 +696,9 @@ static void handle_exit(void)
 
 	if (screen.fb)
 		memset(screen.fb, COLOR_RED, screen.height * screen.pitch);
+
+	if (ping_await)
+		list_destroy(ping_await);
 
 	if (windows) {
 		struct node *iterator = windows->head;
@@ -627,6 +728,8 @@ int main(int argc, char **argv)
 	log("WM loaded: %dx%d\n", screen.width, screen.height);
 	wm_client = (struct client){ .conn = 0 };
 	bypp = (screen.bpp >> 3);
+
+	ping_await = list_new();
 
 	windows = list_new();
 	keymap = keymap_parse("/res/keymaps/en.keymap");
@@ -659,21 +762,18 @@ int main(int argc, char **argv)
 		if ((poll_ret = io_poll(listeners)) >= 0) {
 			if (poll_ret == IO_KEYBOARD) {
 				if (io_read(IO_KEYBOARD, &event_keyboard, 0,
-					    sizeof(event_keyboard)) > 0) {
+					    sizeof(event_keyboard)) > 0)
 					handle_event_keyboard(&event_keyboard);
-					continue;
-				}
 			} else if (poll_ret == IO_MOUSE) {
-				if (io_read(IO_MOUSE, &event_mouse, 0, sizeof(event_mouse)) > 0) {
+				if (io_read(IO_MOUSE, &event_mouse, 0, sizeof(event_mouse)) > 0)
 					handle_event_mouse(&event_mouse);
-					continue;
-				}
 			} else if (poll_ret == IO_BUS) {
-				if (msg_receive(msg, sizeof(msg)) > 0) {
+				if (msg_receive(msg, sizeof(msg)) > 0)
 					handle_message(msg);
-					continue;
-				}
 			}
+
+			window_ping_all();
+			continue;
 		}
 		panic("Poll/read error: %s\n", strerror(errno));
 	}
