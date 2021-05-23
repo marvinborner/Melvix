@@ -2,13 +2,13 @@
 
 #include <assert.h>
 #include <drivers/cpu.h>
-#include <errno.h>
 #include <drivers/interrupts.h>
+#include <drivers/ps2.h>
+#include <errno.h>
 #include <io.h>
 #include <mem.h>
 #include <print.h>
 #include <proc.h>
-#include <drivers/ps2.h>
 #include <stack.h>
 #include <str.h>
 #include <sys.h>

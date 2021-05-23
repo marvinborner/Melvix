@@ -2,14 +2,14 @@
 // TODO: Remove some magic numbers
 
 #include <assert.h>
-#include <drivers/cpu.h>
 #include <def.h>
+#include <drivers/cpu.h>
 #include <drivers/interrupts.h>
+#include <drivers/serial.h>
 #include <mem.h>
 #include <mm.h>
 #include <print.h>
 #include <proc.h>
-#include <drivers/serial.h>
 
 /**
  * IDT

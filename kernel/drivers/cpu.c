@@ -2,8 +2,8 @@
 // This file is a wrapper around some CPU asm calls
 
 #include <assert.h>
-#include <drivers/cpu.h>
 #include <def.h>
+#include <drivers/cpu.h>
 #include <mem.h>
 #include <print.h>
 

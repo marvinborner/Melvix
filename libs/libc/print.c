@@ -188,9 +188,9 @@ int print(const char *str)
 // The kernel prints everything into the serial console
 
 #include <drivers/cpu.h>
+#include <drivers/serial.h>
 #include <mm.h>
 #include <proc.h>
-#include <drivers/serial.h>
 
 static void print_kernel(const char *str)
 {

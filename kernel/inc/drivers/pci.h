@@ -76,14 +76,14 @@ static inline u8 pci_extract_func(u32 device)
 	return (u8)(device);
 }
 
-static inline u32 pci_get_addr(u32 device, int field)
+UNUSED_FUNC static inline u32 pci_get_addr(u32 device, int field)
 {
 	return 0x80000000 | (u32)(pci_extract_bus(device) << 16) |
 	       (u32)(pci_extract_slot(device) << 11) | (u32)(pci_extract_func(device) << 8) |
 	       ((field)&0xFC);
 }
 
-static inline u32 pci_box_device(int bus, int slot, int func)
+UNUSED_FUNC static inline u32 pci_box_device(int bus, int slot, int func)
 {
 	return (u32)((bus << 16) | (slot << 8) | func);
 }

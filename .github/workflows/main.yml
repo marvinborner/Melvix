@@ -1,9 +1,23 @@
-name: Project build and test
+name: lint, build, test, release
 
 on: push
 
 jobs:
-  build-and-test:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install
+        run: sudo apt-get update && sudo apt-get install -y build-essential ctags ccache clang-tidy-11 clang-format-11
+      - name: Generate linting instructions
+        run: sh run sync
+      - name: Lint
+        run: sh run lint
+
+  build-test-release:
+    needs: [lint]
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +30,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: cross
-          key: toolchain
+          key: cached-toolchain
       - name: Build cross compiler
         if: steps.cache-cross.outputs.cache-hit != 'true'
         run: sh run cross -y

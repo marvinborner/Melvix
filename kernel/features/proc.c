@@ -2,9 +2,10 @@
 
 #include <assert.h>
 #include <drivers/cpu.h>
+#include <drivers/gdt.h>
+#include <drivers/timer.h>
 #include <errno.h>
 #include <fs.h>
-#include <drivers/gdt.h>
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
@@ -12,7 +13,6 @@
 #include <proc.h>
 #include <stack.h>
 #include <str.h>
-#include <drivers/timer.h>
 
 #define PROC(node) ((struct proc *)node->data)
 

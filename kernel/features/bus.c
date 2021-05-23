@@ -2,9 +2,9 @@
 
 #include <assert.h>
 #include <bus.h>
-#include <drivers/cpu.h>
 #include <crypto.h>
 #include <def.h>
+#include <drivers/cpu.h>
 #include <errno.h>
 #include <io.h>
 #include <list.h>

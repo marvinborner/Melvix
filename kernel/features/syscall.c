@@ -1,20 +1,19 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <drivers/cpu.h>
+#include <drivers/interrupts.h>
+#include <drivers/timer.h>
 #include <errno.h>
 #include <fs.h>
-#include <drivers/interrupts.h>
 #include <io.h>
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
-#include <net.h>
 #include <print.h>
 #include <proc.h>
 #include <str.h>
 #include <sys.h>
 #include <syscall.h>
-#include <drivers/timer.h>
 
 static void syscall_handler(struct regs *r)
 {

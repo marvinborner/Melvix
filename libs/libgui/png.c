@@ -408,7 +408,6 @@ u32 png_load_file(u8 **out, u32 *outsize, const char *filename)
 /*write given buffer to the file, overwriting the file, it doesn't append to it.*/
 u32 png_save_file(const u8 *buffer, u32 buffersize, const char *filename)
 {
-	err(1, "Not implemented!\n");
 	if (write(filename, buffer, 0, buffersize) <= 0)
 		return 79;
 	return 0;

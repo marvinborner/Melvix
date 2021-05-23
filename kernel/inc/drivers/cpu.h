@@ -5,7 +5,7 @@
 
 #include <def.h>
 
-static inline void spinlock(u32 *ptr)
+UNUSED_FUNC static inline void spinlock(u32 *ptr)
 {
 	u32 prev;
 	do

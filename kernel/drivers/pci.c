@@ -2,10 +2,10 @@
 // Uses parts of the ToAruOS Project, released under the terms of the NCSA
 // Copyright (C) 2011-2018 K. Lange
 
-#include <drivers/cpu.h>
 #include <def.h>
-#include <mem.h>
+#include <drivers/cpu.h>
 #include <drivers/pci.h>
+#include <mem.h>
 
 CLEAR void pci_write_field(u32 device, int field, u32 value)
 {

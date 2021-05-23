@@ -1,8 +1,8 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
-#include <drivers/cpu.h>
 #include <def.h>
+#include <drivers/cpu.h>
 #include <drivers/serial.h>
 #include <str.h>
 

@@ -1,13 +1,13 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
-#include <drivers/acpi.h>
 #include <assert.h>
-#include <drivers/cpu.h>
 #include <def.h>
+#include <drivers/acpi.h>
+#include <drivers/cpu.h>
 #include <mem.h>
 #include <print.h>
 
-int check_sdt(struct sdt_header *header)
+static int check_sdt(struct sdt_header *header)
 {
 	u8 sum = 0;
 
@@ -17,7 +17,7 @@ int check_sdt(struct sdt_header *header)
 	return sum == 0;
 }
 
-int check_sdp(struct sdp_header *header)
+static int check_sdp(struct sdp_header *header)
 {
 	u8 sum = 0;
 
@@ -27,7 +27,7 @@ int check_sdp(struct sdp_header *header)
 	return sum == 0;
 }
 
-struct rsdp *find_rsdp(void)
+static struct rsdp *find_rsdp(void)
 {
 	// Main BIOS area
 	for (int i = 0xe0000; i < 0xfffff; i++) {
@@ -45,7 +45,7 @@ struct rsdp *find_rsdp(void)
 	return NULL;
 }
 
-void *find_sdt(struct rsdt *rsdt, const char *signature)
+static void *find_sdt(struct rsdt *rsdt, const char *signature)
 {
 	u32 entries = (rsdt->header.length - sizeof(rsdt->header)) / 4;
 

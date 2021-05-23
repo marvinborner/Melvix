@@ -1,10 +1,10 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
 #include <assert.h>
-#include <drivers/cpu.h>
 #include <def.h>
-#include <print.h>
+#include <drivers/cpu.h>
 #include <drivers/ps2.h>
+#include <print.h>
 
 #define PS2_TIMEOUT 100
 

@@ -270,6 +270,23 @@ make_sync() {
     mv tmp compile_commands.json
 }
 
+make_lint() {
+    format=$({ find . -path ./cross -prune -false -o -iname *.h -o -iname *.c -exec clang-format-11 -n --Werror {} \;; } 2>&1)
+    if [ $(echo -n "$format" | head -c1 | wc -c) -ne 0 ]; then
+        echo "$format"
+        exit 1
+    fi
+
+    # TODO: Implement clang-tidy linting
+    # find . -path ./cross -prune -o -iname *.h -o -iname *.c | xargs clang-tidy-11 --checks=-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling
+
+    echo "No errors!"
+}
+
+make_format() {
+    find . -path ./cross -prune -false -o -iname *.h -o -iname *.c -exec clang-format-11 -i {} \;
+}
+
 make_clean() {
     #rm -rf build/
     $MAKE clean
@@ -283,6 +300,10 @@ elif [ "${mode}" = "build" ]; then
     make_build
 elif [ "${mode}" = "clean" ]; then
     make_clean
+elif [ "${mode}" = "lint" ]; then
+    make_lint
+elif [ "${mode}" = "format" ]; then
+    make_format
 elif [ "${mode}" = "again" ]; then
     make_test
 elif [ "${mode}" = "disasm" ]; then
@@ -313,6 +334,8 @@ else
     printf "\nDescription of options:\n"
     printf "cross\t\tBuilds the cross compiler\n"
     printf "clean\t\tRemoves the compiled files\n"
+    printf "lint\t\tLint the entire project using clang-tidy\n"
+    printf "format\t\tFormat the entire project using clang-format\n"
     printf "build\t\tBuilds the whole project (cross+clean)\n"
     printf "test\t\tRuns the Melvix unit tests with QEMU (cross+clean+build)\n"
     printf "debug\t\tEmulates Melvix with QEMU and debug options (cross+clean+build)\n"

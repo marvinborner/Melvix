@@ -3,12 +3,12 @@
 
 #include <def.h>
 #include <drivers/interrupts.h>
+#include <drivers/ps2.h>
+#include <drivers/vmware.h>
 #include <io.h>
 #include <mem.h>
 #include <print.h>
-#include <drivers/ps2.h>
 #include <stack.h>
-#include <drivers/vmware.h>
 
 #define VMWARE_CMD_VERSION 0x0a
 

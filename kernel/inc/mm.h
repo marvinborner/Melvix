@@ -4,8 +4,8 @@
 #define PAGING_H
 
 #include <def.h>
-#include <errno.h>
 #include <drivers/interrupts.h>
+#include <errno.h>
 
 struct memory_range {
 	u32 base;

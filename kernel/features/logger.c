@@ -1,13 +1,13 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
-#include <drivers/cpu.h>
 #include <def.h>
+#include <drivers/cpu.h>
+#include <drivers/serial.h>
 #include <errno.h>
 #include <io.h>
 #include <logger.h>
 #include <mem.h>
 #include <print.h>
-#include <drivers/serial.h>
 
 static res logger_write(const void *buf, u32 offset, u32 count)
 {
