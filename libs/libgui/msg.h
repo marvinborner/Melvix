@@ -34,12 +34,13 @@ struct message_ping_window {
 
 struct message_new_window {
 	struct message_header header;
+	char name[64];
 	u32 id;
 	u32 shid;
 	vec2 off;
 	vec2 size;
 	vec2 pos;
-	struct context ctx;
+	struct gfx_context ctx;
 };
 
 struct message_redraw_window {

@@ -36,8 +36,8 @@ struct gui_event_mouse {
  * Window operations
  */
 
-void gui_new_custom_window(u32 *id, vec2 pos, vec2 size);
-void gui_new_window(u32 *id);
+u32 gui_new_custom_window(const char *name, vec2 pos, vec2 size);
+u32 gui_new_window(const char *name);
 void gui_redraw_window(u32 id);
 void gui_redraw_window_only(u32 id); // Without widgets
 

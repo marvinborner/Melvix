@@ -239,7 +239,7 @@ static void draw_board(void)
 
 int main(void)
 {
-	gui_new_custom_window(&win, vec2(0, 0), vec2(TILE * 8, TILE * 8));
+	win = gui_new_custom_window(APPNAME, vec2(0, 0), vec2(TILE * 8, TILE * 8));
 	fen_parse(START_FEN);
 	draw_board();
 

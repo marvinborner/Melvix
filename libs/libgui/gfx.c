@@ -24,7 +24,7 @@
 #define FONT_32_PATH "/font/spleen-16x32.psfu"
 #define FONT_64_PATH "/font/spleen-32x64.psfu"
 
-struct font *fonts[FONT_COUNT] = { 0 };
+struct gfx_font *fonts[FONT_COUNT] = { 0 };
 
 static void load_font(enum font_type font_type)
 {
@@ -70,7 +70,7 @@ static void free_fonts(void)
 	}
 }
 
-static void write_char(struct context *ctx, vec2 pos, struct font *font, u32 c, char ch)
+static void write_char(struct gfx_context *ctx, vec2 pos, struct gfx_font *font, u32 c, char ch)
 {
 	u8 bypp = ctx->bpp >> 3;
 
@@ -92,7 +92,7 @@ static void write_char(struct context *ctx, vec2 pos, struct font *font, u32 c, 
 	}
 }
 
-struct context *gfx_new_ctx(struct context *ctx, vec2 size, u8 bpp)
+struct gfx_context *gfx_new_ctx(struct gfx_context *ctx, vec2 size, u8 bpp)
 {
 	ctx->size = size;
 	ctx->bpp = bpp;
@@ -104,7 +104,7 @@ struct context *gfx_new_ctx(struct context *ctx, vec2 size, u8 bpp)
 
 // On-demand font loading
 static u8 fonts_loaded = 0;
-struct font *gfx_resolve_font(enum font_type font_type)
+struct gfx_font *gfx_resolve_font(enum font_type font_type)
 {
 	if (!fonts_loaded) {
 		fonts_loaded = 1;
@@ -116,15 +116,15 @@ struct font *gfx_resolve_font(enum font_type font_type)
 	return fonts[font_type];
 }
 
-void gfx_write_char(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, char ch)
+void gfx_write_char(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 c, char ch)
 {
-	struct font *font = gfx_resolve_font(font_type);
+	struct gfx_font *font = gfx_resolve_font(font_type);
 	write_char(ctx, pos, font, c, ch);
 }
 
-void gfx_write(struct context *ctx, vec2 pos, enum font_type font_type, u32 c, const char *text)
+void gfx_write(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 c, const char *text)
 {
-	struct font *font = gfx_resolve_font(font_type);
+	struct gfx_font *font = gfx_resolve_font(font_type);
 	u32 cnt = 0;
 	for (u32 i = 0; i < strlen(text); i++) {
 		// TODO: Should this be here?
@@ -204,7 +204,7 @@ static void gfx_image_cache_save(const char *path, struct bmp *bmp)
 	list_add(gfx_image_cache_list, cache);
 }
 
-void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter, const char *path)
+void gfx_load_image_filter(struct gfx_context *ctx, vec2 pos, enum gfx_filter filter, const char *path)
 {
 	// TODO: Detect image type
 
@@ -252,17 +252,17 @@ void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter
 	}
 }
 
-void gfx_load_image(struct context *ctx, vec2 pos, const char *path)
+void gfx_load_image(struct gfx_context *ctx, vec2 pos, const char *path)
 {
 	gfx_load_image_filter(ctx, pos, GFX_FILTER_NONE, path);
 }
 
-void gfx_load_wallpaper(struct context *ctx, const char *path)
+void gfx_load_wallpaper(struct gfx_context *ctx, const char *path)
 {
 	gfx_load_image(ctx, vec2(0, 0), path);
 }
 
-void gfx_draw_pixel(struct context *ctx, vec2 pos1, u32 c)
+void gfx_draw_pixel(struct gfx_context *ctx, vec2 pos1, u32 c)
 {
 	u8 bypp = ctx->bpp >> 3;
 	u8 *draw = &ctx->fb[pos1.x * bypp + pos1.y * ctx->pitch];
@@ -272,7 +272,7 @@ void gfx_draw_pixel(struct context *ctx, vec2 pos1, u32 c)
 	draw[3] = GET_ALPHA(c);
 }
 
-void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
+void gfx_draw_rectangle(struct gfx_context *ctx, vec2 pos1, vec2 pos2, u32 c)
 {
 	assert(pos1.x <= pos2.x && pos1.y <= pos2.y);
 	u8 bypp = ctx->bpp >> 3;
@@ -288,7 +288,7 @@ void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c)
 	}
 }
 
-void gfx_draw_border(struct context *ctx, u32 width, u32 c)
+void gfx_draw_border(struct gfx_context *ctx, u32 width, u32 c)
 {
 	if (width <= 0)
 		return;
@@ -311,7 +311,7 @@ void gfx_draw_border(struct context *ctx, u32 width, u32 c)
 
 // Using Bresenham's algorithm
 // TODO: Better line scaling
-void gfx_draw_line(struct context *ctx, vec2 pos1, vec2 pos2, u32 scale, u32 c)
+void gfx_draw_line(struct gfx_context *ctx, vec2 pos1, vec2 pos2, u32 scale, u32 c)
 {
 	int dx = ABS(pos2.x - pos1.x), sx = pos1.x < pos2.x ? 1 : -1;
 	int dy = ABS(pos2.y - pos1.y), sy = pos1.y < pos2.y ? 1 : -1;
@@ -333,7 +333,7 @@ void gfx_draw_line(struct context *ctx, vec2 pos1, vec2 pos2, u32 scale, u32 c)
 	}
 }
 
-void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size)
+void gfx_copy(struct gfx_context *dest, struct gfx_context *src, vec2 pos, vec2 size)
 {
 	u8 bypp = dest->bpp >> 3;
 	u8 *srcfb = &src->fb[pos.x * bypp + pos.y * src->pitch];
@@ -347,7 +347,7 @@ void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size)
 
 // TODO: Support alpha values other than 0x0 and 0xff (blending)
 // TODO: Optimize!
-HOT void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos, u8 alpha)
+HOT void gfx_ctx_on_ctx(struct gfx_context *dest, struct gfx_context *src, vec2 pos, u8 alpha)
 {
 	// TODO: Some kind of alpha-acknowledging memcpy?
 	if (!alpha && src->size.x == dest->size.x && src->size.y == dest->size.y) {
@@ -377,24 +377,24 @@ HOT void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos, u8 
 	}
 }
 
-void gfx_clear(struct context *ctx)
+void gfx_clear(struct gfx_context *ctx)
 {
 	memset(ctx->fb, 0, ctx->bytes);
 }
 
-void gfx_fill(struct context *ctx, u32 c)
+void gfx_fill(struct gfx_context *ctx, u32 c)
 {
 	gfx_draw_rectangle(ctx, vec2(0, 0), vec2(ctx->size.x, ctx->size.y), c);
 }
 
 int gfx_font_height(enum font_type font_type)
 {
-	struct font *font = gfx_resolve_font(font_type);
+	struct gfx_font *font = gfx_resolve_font(font_type);
 	return font->size.y;
 }
 
 int gfx_font_width(enum font_type font_type)
 {
-	struct font *font = gfx_resolve_font(font_type);
+	struct gfx_font *font = gfx_resolve_font(font_type);
 	return font->size.x;
 }

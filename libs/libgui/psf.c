@@ -23,7 +23,7 @@ static int psf_verify(char *data)
 		return 0;
 }
 
-struct font *psf_parse(char *data)
+struct gfx_font *psf_parse(char *data)
 {
 	int version = psf_verify(data);
 
@@ -47,7 +47,7 @@ struct font *psf_parse(char *data)
 		return NULL;
 	}
 
-	struct font *font = malloc(sizeof(*font));
+	struct gfx_font *font = malloc(sizeof(*font));
 	font->raw = data;
 	font->chars = chars;
 	font->size.x = width;

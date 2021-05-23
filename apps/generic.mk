@@ -14,4 +14,4 @@ clean:
 	@$(RM) -f $(OBJS)
 
 %.o: %.c
-	@$(CC) -c $(CFLAGS) $< -o $@
+	@$(CC) -c $(CFLAGS) -DAPPNAME=\"$(NAME)\" $< -o $@

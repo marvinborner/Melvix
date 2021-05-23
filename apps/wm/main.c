@@ -20,7 +20,7 @@ struct client {
 struct window {
 	u32 id;
 	u32 shid;
-	struct context ctx;
+	struct gfx_context ctx;
 	struct client client;
 	u32 flags;
 	vec2 pos;
@@ -470,11 +470,12 @@ static void window_bar_mousemove(struct window *win, struct event_mouse *event, 
 		window_move(win, vec2_sub(mouse_pos, vec2(win->ctx.size.x / 2, BAR_HEIGHT / 2)));
 }
 
-static void window_bar_draw(struct window *win)
+static void window_bar_draw(struct window *win, char name[64])
 {
 	if (!(win->flags & WF_BAR))
 		return;
 
+	gfx_write(&win->ctx, vec2(BAR_MARGIN, BAR_MARGIN), FONT_24, COLOR_WHITE, name);
 	gfx_load_image_filter(&win->ctx,
 			      vec2(win->ctx.size.x - BAR_CLOSE_SIZE - BAR_MARGIN, BAR_MARGIN),
 			      GFX_FILTER_INVERT, "/icons/close-" STRINGIFY(BAR_CLOSE_SIZE) ".png");
@@ -592,7 +593,7 @@ static void handle_message_new_window(struct message_new_window *msg)
 {
 	struct window *win = window_new((struct client){ .conn = msg->header.bus.conn }, msg->pos,
 					vec2_add(msg->size, vec2(0, BAR_HEIGHT)), WF_BAR);
-	window_bar_draw(win);
+	window_bar_draw(win, msg->name);
 
 	msg->ctx = win->ctx;
 	msg->off = vec2(0, BAR_HEIGHT);

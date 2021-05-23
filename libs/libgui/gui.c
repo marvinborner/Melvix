@@ -11,9 +11,8 @@
 struct gui_widget {
 	u32 id;
 	vec2 pos;
-	/* struct context ctx; */
-	struct context fg;
-	struct context bg;
+	struct gfx_context fg;
+	struct gfx_context bg;
 	struct list *children;
 
 	struct {
@@ -26,7 +25,7 @@ struct gui_window {
 	u32 id;
 	vec2 off; // fb offset
 	vec2 pos;
-	struct context ctx;
+	struct gfx_context ctx;
 	struct list *widgets;
 };
 
@@ -392,8 +391,8 @@ static vec2 gui_offset_widget(struct gui_widget *parent, struct gui_widget *chil
 static struct gui_widget *gui_new_plain_widget(vec2 pos, vec2 size, u8 bpp)
 {
 	struct gui_widget *widget = zalloc(sizeof(*widget));
-	struct context bg;
-	struct context fg;
+	struct gfx_context bg;
+	struct gfx_context fg;
 
 	static u32 id = 0;
 	widget->id = id++;
@@ -490,8 +489,7 @@ void gui_popup(const char *text)
 {
 	vec2 pos = vec2(200, 200);
 
-	u32 popup;
-	gui_new_custom_window(&popup, pos, vec2(POPUP_WIDTH, POPUP_HEIGHT));
+	u32 popup = gui_new_custom_window("Popup", pos, vec2(POPUP_WIDTH, POPUP_HEIGHT));
 	struct gui_window *win = gui_window_by_id(popup);
 	gui_fill(popup, gui_main_widget_id(win), GUI_LAYER_BG, COLOR_WHITE);
 
@@ -518,7 +516,7 @@ vec2 gui_window_size(u32 win_id)
  * Window manager interfaces
  */
 
-void gui_new_custom_window(u32 *id, vec2 pos, vec2 size)
+u32 gui_new_custom_window(const char *name, vec2 pos, vec2 size)
 {
 	if (!windows)
 		windows = list_new();
@@ -533,6 +531,7 @@ void gui_new_custom_window(u32 *id, vec2 pos, vec2 size)
 	struct message_new_window msg = { .header.state = MSG_NEED_ANSWER,
 					  .pos = pos,
 					  .size = size };
+	strlcpy(msg.name, name, sizeof(msg.name));
 
 	gui_connect_wm();
 	if (msg_send(GUI_NEW_WINDOW, &msg, sizeof(msg)) > 0 && msg_receive(&msg, sizeof(msg)) > 0 &&
@@ -558,16 +557,15 @@ void gui_new_custom_window(u32 *id, vec2 pos, vec2 size)
 		list_add(win->widgets,
 			 gui_new_plain_widget(vec2(0, 0), win->ctx.size, win->ctx.bpp));
 
-		*id = win->id;
-		return;
+		return win->id;
 	}
 
 	gui_error(EINVAL);
 }
 
-INLINE void gui_new_window(u32 *id)
+u32 gui_new_window(const char *name)
 {
-	gui_new_custom_window(id, vec2(0, 0), vec2(0, 0));
+	return gui_new_custom_window(name, vec2(0, 0), vec2(0, 0));
 }
 
 void gui_redraw_window_only(u32 id)

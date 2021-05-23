@@ -48,7 +48,19 @@
 #define GFX_NON_ALPHA 0
 #define GFX_ALPHA 1
 
+/**
+ * Useful macros
+ */
+
 #define GFX_CENTER_IN(a, b) (ABS((a) - (b)) / 2)
+#define GFX_RECT(pos, size) ((struct gfx_rect){ .pos = (pos), .size = (size) })
+#define GFX_IN_RECT(rect, p)                                                                       \
+	((p).x >= (rect).pos.x && (p).x < (rect).pos.x + (rect).size.x && (p).y >= (rect).pos.y && \
+	 (p).y < (rect).pos.y + (rect).size.y)
+
+/**
+ * Structures
+ */
 
 enum font_type { FONT_8, FONT_12, FONT_16, FONT_24, FONT_32, FONT_64 };
 enum gfx_filter {
@@ -57,14 +69,14 @@ enum gfx_filter {
 };
 
 // Generalized font struct
-struct font {
+struct gfx_font {
 	void *raw;
 	char *chars;
 	vec2 size;
 	int char_size;
 };
 
-struct context {
+struct gfx_context {
 	vec2 size;
 	u8 *fb;
 	u32 bpp;
@@ -72,16 +84,21 @@ struct context {
 	u32 bytes;
 };
 
-struct context *gfx_new_ctx(struct context *ctx, vec2 size, u8 bpp) NONNULL;
+struct gfx_rect {
+	vec2 pos; // Upper left
+	vec2 size;
+};
+
+struct gfx_context *gfx_new_ctx(struct gfx_context *ctx, vec2 size, u8 bpp) NONNULL;
 
 /**
  * Text stuff
  */
 
-struct font *gfx_resolve_font(enum font_type font_type);
-void gfx_write_char(struct context *ctx, vec2 pos, enum font_type font_type, u32 c,
+struct gfx_font *gfx_resolve_font(enum font_type font_type);
+void gfx_write_char(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 c,
 		    char ch) NONNULL;
-void gfx_write(struct context *ctx, vec2 pos, enum font_type font_type, u32 c,
+void gfx_write(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 c,
 	       const char *text) NONNULL;
 
 int gfx_font_height(enum font_type);
@@ -91,28 +108,28 @@ int gfx_font_width(enum font_type);
  * Image loading
  */
 
-void gfx_load_image(struct context *ctx, vec2 pos, const char *path) NONNULL;
-void gfx_load_image_filter(struct context *ctx, vec2 pos, enum gfx_filter filter,
+void gfx_load_image(struct gfx_context *ctx, vec2 pos, const char *path) NONNULL;
+void gfx_load_image_filter(struct gfx_context *ctx, vec2 pos, enum gfx_filter filter,
 			   const char *path) NONNULL;
-void gfx_load_wallpaper(struct context *ctx, const char *path) NONNULL;
+void gfx_load_wallpaper(struct gfx_context *ctx, const char *path) NONNULL;
 
 /**
  * Context copying
  */
 
-void gfx_copy(struct context *dest, struct context *src, vec2 pos, vec2 size) NONNULL;
-void gfx_ctx_on_ctx(struct context *dest, struct context *src, vec2 pos, u8 alpha) NONNULL;
+void gfx_copy(struct gfx_context *dest, struct gfx_context *src, vec2 pos, vec2 size) NONNULL;
+void gfx_ctx_on_ctx(struct gfx_context *dest, struct gfx_context *src, vec2 pos, u8 alpha) NONNULL;
 
 /**
  * Drawing functions
  */
 
-void gfx_draw_pixel(struct context *ctx, vec2 pos1, u32 c);
-void gfx_draw_rectangle(struct context *ctx, vec2 pos1, vec2 pos2, u32 c) NONNULL;
-void gfx_draw_line(struct context *ctx, vec2 pos1, vec2 pos2, u32 scale, u32 c);
+void gfx_draw_pixel(struct gfx_context *ctx, vec2 pos1, u32 c);
+void gfx_draw_rectangle(struct gfx_context *ctx, vec2 pos1, vec2 pos2, u32 c) NONNULL;
+void gfx_draw_line(struct gfx_context *ctx, vec2 pos1, vec2 pos2, u32 scale, u32 c);
 
-void gfx_clear(struct context *ctx);
-void gfx_fill(struct context *ctx, u32 c) NONNULL;
-void gfx_draw_border(struct context *ctx, u32 width, u32 c) NONNULL;
+void gfx_clear(struct gfx_context *ctx);
+void gfx_fill(struct gfx_context *ctx, u32 c) NONNULL;
+void gfx_draw_border(struct gfx_context *ctx, u32 width, u32 c) NONNULL;
 
 #endif
