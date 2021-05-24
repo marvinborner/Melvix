@@ -61,7 +61,7 @@ NONNULL static struct node *list_add_node(struct list *list, struct node *node)
 
 struct node *list_last(struct list *list)
 {
-	if (list->head)
+	if (!list->head)
 		return NULL;
 
 	struct node *iterator = list->head;

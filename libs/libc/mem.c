@@ -48,6 +48,18 @@ void *memset(void *dest, u32 val, u32 n)
 	return dest;
 }
 
+const void *memcchr(const void *src, char c, u32 n)
+{
+	const u8 *s = (const u8 *)src;
+
+	while (n-- > 0) {
+		if (*s == c)
+			return s;
+		s++;
+	}
+	return NULL;
+}
+
 void *memchr(void *src, char c, u32 n)
 {
 	u8 *s = (u8 *)src;
@@ -94,6 +106,14 @@ void *memset_user(void *dest, u32 val, u32 n)
 {
 	stac();
 	void *ret = memset(dest, val, n);
+	clac();
+	return ret;
+}
+
+const void *memcchr_user(const void *src, char c, u32 n)
+{
+	stac();
+	const void *ret = memcchr(src, c, n);
 	clac();
 	return ret;
 }

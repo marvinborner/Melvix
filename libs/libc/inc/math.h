@@ -17,7 +17,9 @@
 #define M_PI_2 1.57079632679489661923
 #define M_PI_4 0.78539816339744830962
 
+f32 powf(f32 base, f32 exp);
 f64 pow(f64 base, f64 exp);
+f32 sqrtf(f64 num);
 f64 sqrt(f64 num);
 
 f32 sinf(f32 angle);

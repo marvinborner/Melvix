@@ -18,8 +18,6 @@ struct node {
 
 struct list *list_new(void);
 void list_destroy(struct list *list) NONNULL;
-/* struct node *list_new_node(); */ // TODO: Make node-specific things static/private?
-/* void list_add_node(struct list *list, struct node *node); */
 struct node *list_add(struct list *list, void *data) NONNULL;
 struct list *list_remove(struct list *list, struct node *node) NONNULL;
 struct node *list_last(struct list *list) NONNULL;

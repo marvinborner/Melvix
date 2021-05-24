@@ -34,7 +34,7 @@ u32 strlcpy(char *dst, const char *src, u32 size)
 				break;
 
 	if (!left) {
-		if (!size)
+		if (size)
 			*dst = 0;
 		while (*src++)
 			;
@@ -73,6 +73,29 @@ s32 strncmp(const char *s1, const char *s2, u32 n)
 	}
 
 	return d;
+}
+
+const char *strcchr(const char *s, char c)
+{
+	while (*s != c) {
+		if (!*s)
+			return NULL;
+		s++;
+	}
+
+	return s;
+}
+
+const char *strrcchr(const char *s, char c)
+{
+	const char *ret = 0;
+
+	do {
+		if (*s == c)
+			ret = s;
+	} while (*s++);
+
+	return ret;
 }
 
 char *strchr(char *s, char c)
@@ -120,8 +143,7 @@ u32 strlcat(char *dst, const char *src, u32 size)
 		}
 		src++;
 	}
-
-	src = 0;
+	*dst = 0;
 
 	return len + (src - orig_src);
 }
@@ -269,6 +291,22 @@ s32 strncmp_user(const char *s1, const char *s2, u32 n)
 {
 	stac();
 	s32 ret = strncmp(s1, s2, n);
+	clac();
+	return ret;
+}
+
+const char *strcchr_user(const char *s, char c)
+{
+	stac();
+	const char *ret = strcchr(s, c);
+	clac();
+	return ret;
+}
+
+const char *strrcchr_user(const char *s, char c)
+{
+	stac();
+	const char *ret = strrcchr(s, c);
 	clac();
 	return ret;
 }

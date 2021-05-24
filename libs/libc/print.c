@@ -54,7 +54,7 @@ int vsnprintf(char *str, u32 size, const char *format, va_list ap)
 				break;
 			case 'f':
 				temp_double = va_arg(ap, double);
-				ftoa(temp_double, buffer);
+				ftoa(temp_double, buffer, 5);
 				length += strlcpy(&str[length], buffer, size - length);
 				break;
 			default:

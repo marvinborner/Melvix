@@ -8,6 +8,8 @@
 PURE u32 strlen(const char *s) NONNULL;
 PURE u32 strnlen(const char *s, u32 max) NONNULL;
 u32 strlcpy(char *dst, const char *src, u32 size) NONNULL;
+PURE const char *strcchr(const char *s, char c) NONNULL;
+PURE const char *strrcchr(const char *s, char c) NONNULL;
 PURE char *strchr(char *s, char c) NONNULL;
 PURE char *strrchr(char *s, char c) NONNULL;
 u32 strlcat(char *dst, const char *src, u32 size) NONNULL;
@@ -21,6 +23,8 @@ ATTR((malloc)) char *strdup(const char *s) NONNULL;
 PURE u32 strlen_user(const char *s) NONNULL;
 PURE u32 strnlen_user(const char *s, u32 max) NONNULL;
 u32 strlcpy_user(char *dst, const char *src, u32 size) NONNULL;
+PURE const char *strcchr_user(const char *s, char c) NONNULL;
+PURE const char *strrcchr_user(const char *s, char c) NONNULL;
 PURE char *strchr_user(char *s, char c) NONNULL;
 PURE char *strrchr_user(char *s, char c) NONNULL;
 u32 strlcat_user(char *dst, const char *src, u32 size) NONNULL;

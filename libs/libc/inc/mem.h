@@ -68,6 +68,7 @@ void free_debug(void *ptr, const char *file, int line, const char *func, const c
 
 void *memcpy(void *dest, const void *src, u32 n) NONNULL;
 void *memset(void *dest, u32 val, u32 n) NONNULL;
+const void *memcchr(const void *src, char c, u32 n) NONNULL;
 void *memchr(void *src, char c, u32 n) NONNULL;
 s32 memcmp(const void *s1, const void *s2, u32 n) NONNULL;
 u8 mememp(const u8 *buf, u32 n) NONNULL;
@@ -75,6 +76,7 @@ u8 mememp(const u8 *buf, u32 n) NONNULL;
 #ifdef KERNEL
 void *memcpy_user(void *dest, const void *src, u32 n) NONNULL;
 void *memset_user(void *dest, u32 val, u32 n) NONNULL;
+const void *memcchr_user(const void *src, char c, u32 n) NONNULL;
 void *memchr_user(void *src, char c, u32 n) NONNULL;
 s32 memcmp_user(const void *s1, const void *s2, u32 n) NONNULL;
 u8 mememp_user(const u8 *buf, u32 n) NONNULL;

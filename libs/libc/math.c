@@ -2,6 +2,11 @@
 
 #include <math.h>
 
+f32 powf(f32 base, f32 exp)
+{
+	return (f32)pow(base, exp);
+}
+
 f64 pow(f64 base, f64 exp)
 {
 	f64 out;
@@ -26,6 +31,12 @@ f64 pow(f64 base, f64 exp)
 }
 
 // TODO: More efficient sqrt?
+
+f32 sqrtf(f64 num)
+{
+	return powf(num, .5);
+}
+
 f64 sqrt(f64 num)
 {
 	return pow(num, .5);

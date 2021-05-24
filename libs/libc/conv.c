@@ -6,7 +6,7 @@
 #include <mem.h>
 #include <str.h>
 
-int itoa(int value, char *buffer, int base)
+int itoa(s32 value, char *buffer, u32 base)
 {
 	char tmp[16];
 	char *tp = tmp;
@@ -37,6 +37,7 @@ int itoa(int value, char *buffer, int base)
 
 	while (tp > tmp)
 		*buffer++ = *--tp;
+	*buffer = '\0';
 
 	return len;
 }
@@ -59,8 +60,7 @@ static int normalize(f64 *val)
 	return exp;
 }
 
-#define FLOAT_WIDTH 5
-char *ftoa(f64 value, char *buffer)
+char *ftoa(f64 value, char *buffer, u32 width)
 {
 	int exp = 0;
 	u32 loc = 0;
@@ -91,13 +91,13 @@ char *ftoa(f64 value, char *buffer)
 
 	*buffer++ = '.';
 
-	while (exp < 0 && loc < FLOAT_WIDTH) {
+	while (exp < 0 && loc < width) {
 		*buffer++ = '0';
 		--exp;
 		++loc;
 	}
 
-	while (loc < FLOAT_WIDTH) {
+	while (loc < width) {
 		int digit = value * 10.0;
 		*buffer++ = digit + '0';
 		value = value * 10.0 - digit;

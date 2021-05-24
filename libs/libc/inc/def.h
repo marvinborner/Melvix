@@ -33,6 +33,7 @@ typedef long double f80;
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
 #define ABS(a) ((u32)(((s32)(a) < 0) ? -(a) : (a)))
+#define FABS(a) ((f64)(((f64)(a) < 0.0) ? -(a) : (a)))
 
 #define COUNT(a) (sizeof(a) / sizeof 0 [a])
 
@@ -42,8 +43,8 @@ typedef long double f80;
 #define NUMERIC(a) ((a) >= '0' && ((a) <= '9'))
 #define ALPHANUMERIC(a) (ALPHA(a) || NUMERIC(a))
 
-#define __STRINGIFY(a) #a
-#define STRINGIFY(a) __STRINGIFY(a)
+#define STRINGIFY_PARAM(a) #a
+#define STRINGIFY(a) STRINGIFY_PARAM(a)
 
 #define ALIGN_UP(addr, align) (((addr) + (align)-1) & ~((align)-1))
 #define ALIGN_DOWN(addr, align) ((addr) & ~((align)-1))
@@ -86,18 +87,17 @@ typedef long double f80;
 #define EOF (-1)
 #define NULL ((void *)0)
 
-#define U8_MAX 255
-#define S8_MAX 127
-#define S8_MIN -128
-#define U16_MAX 65535
-#define S16_MAX 32767
-#define S16_MIN -32768
-#define U32_MAX 4294967295
-#define S32_MAX 2147483647
-#define S32_MIN -2147483648
-
-#define LONG_MAX S32_MAX
-#define LONG_MIN S32_MIN
+#define U8_MAX ((u8)255)
+#define S8_MAX ((s8)127)
+#define S8_MIN ((s8)-128)
+#define U16_MAX ((u16)65535)
+#define S16_MAX ((s16)32767)
+#define S16_MIN ((s16)-32768)
+#define U32_MAX ((u32)4294967295)
+#define S32_MAX ((s32)2147483647)
+#define S32_MIN ((s32)-2147483648)
+#define F64_MAX ((f64)0x7fefffffffffffff)
+#define F64_MIN ((f64)0x10000000000000)
 
 #define MILLION 1000000
 #define BILLION 1000000000

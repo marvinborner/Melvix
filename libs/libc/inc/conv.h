@@ -5,7 +5,7 @@
 
 #include <def.h>
 
-int itoa(int value, char *buffer, int base);
-char *ftoa(f64 value, char *buffer);
+int itoa(s32 value, char *buffer, u32 base);
+char *ftoa(f64 value, char *buffer, u32 width);
 
 #endif
