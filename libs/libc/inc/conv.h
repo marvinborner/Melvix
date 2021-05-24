@@ -5,11 +5,7 @@
 
 #include <def.h>
 
-int atoi(const char *str) NONNULL;
-char *htoa(u32 n);
-int htoi(const char *str) NONNULL;
-char *itoa(int n);
-
-char *conv_base(int value, char *result, int base, int is_signed) NONNULL;
+int itoa(int value, char *buffer, int base);
+char *ftoa(f64 value, char *buffer);
 
 #endif

@@ -2,16 +2,72 @@
 
 #include <math.h>
 
-int pow(int base, int exp)
+f64 pow(f64 base, f64 exp)
 {
-	if (exp < 0)
-		return 0;
+	f64 out;
+	__asm__ volatile("fyl2x;"
+			 "fld %%st;"
+			 "frndint;"
+			 "fsub %%st,%%st(1);"
+			 "fxch;"
+			 "fchs;"
+			 "f2xm1;"
+			 "fld1;"
+			 "faddp;"
+			 "fxch;"
+			 "fld1;"
+			 "fscale;"
+			 "fstp %%st(1);"
+			 "fmulp;"
+			 : "=t"(out)
+			 : "0"(base), "u"(exp)
+			 : "st(1)");
+	return out;
+}
 
-	if (!exp)
-		return 1;
+// TODO: More efficient sqrt?
+f64 sqrt(f64 num)
+{
+	return pow(num, .5);
+}
 
-	int ret = base;
-	for (int i = 1; i < exp; i++)
-		ret *= base;
+/**
+ * Trigonometric functions
+ */
+
+f32 sinf(f32 angle)
+{
+	f32 ret = 0.0;
+	__asm__ volatile("fsin" : "=t"(ret) : "0"(angle));
+	return ret;
+}
+
+f64 sin(f64 angle)
+{
+	f64 ret = 0.0;
+	__asm__ volatile("fsin" : "=t"(ret) : "0"(angle));
+	return ret;
+}
+
+f32 cosf(f32 angle)
+{
+	return sinf(angle + (f32)M_PI_2);
+}
+
+f64 cos(f64 angle)
+{
+	return sin(angle + (f64)M_PI_2);
+}
+
+f32 tanf(f32 angle)
+{
+	return (f32)tan(angle);
+}
+
+f64 tan(f64 angle)
+{
+	f64 ret = 0.0, one;
+	__asm__ volatile("fptan" : "=t"(one), "=u"(ret) : "0"(angle));
+
 	return ret;
 }

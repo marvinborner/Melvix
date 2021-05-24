@@ -53,22 +53,6 @@ TEST(crypto)
 	EQUALS(memcmp(md5_res, md5_text, 16), 0);
 }
 
-TEST(conv)
-{
-	char buf1[1] = { 0 };
-	char buf2[7] = { 0 };
-	char buf3[5] = { 0 };
-	char buf4[3] = { 0 };
-	EQUALS(atoi("42"), 42);
-	EQUALS_STR(htoa(0x42), "42");
-	EQUALS(htoi("42"), 0x42);
-	EQUALS_STR(itoa(42), "42");
-	EQUALS_STR(conv_base(42, buf1, 0, 0), "");
-	EQUALS_STR(conv_base(42, buf2, 2, 0), "101010");
-	EQUALS_STR(conv_base(424242, buf3, 36, 0), "93ci");
-	EQUALS_STR(conv_base(0xffffffff, buf4, 10, 1), "-1");
-}
-
 TEST(mem)
 {
 	const char *str0 = "";
@@ -92,7 +76,6 @@ int main(void)
 {
 	test_math();
 	test_crypto();
-	test_conv();
 	test_mem();
 
 	/* fuzz(); */

@@ -16,82 +16,56 @@
 #define WHT "\x1B[1;37m"
 #define RES "\x1B[0m"
 
-static void append(char *dest, char *src, int index)
-{
-	for (u32 i = index; i < strlen(src) + index; i++)
-		dest[i] = src[i - index];
-	dest[index + strlen(src)] = 0;
-}
-
 int vsnprintf(char *str, u32 size, const char *format, va_list ap)
 {
-	u8 ready_to_format = 0;
+	u32 length = 0;
 
-	u32 i = 0;
-	char buf = 0;
+	int temp_int;
+	char temp_ch;
+	char *temp_str;
+	f64 temp_double;
 
-	// TODO: Fix format buffer overflow exploit
-	char format_buffer[42] = { 0 };
+	char buffer[64] = { 0 };
 
-	for (; *format; format++) {
-		if (ready_to_format) {
-			ready_to_format = 0;
-
-			if (*format == '%') {
-				str[i] = '%';
-				continue;
-			}
-
-			buf = *format;
-
-			// TODO: Improve this repetitive code
-			if (buf == 's') {
-				char *string = va_arg(ap, char *);
-				assert(string);
-				append(str, string, i);
-				i = strlen(str);
-			} else if (buf == 'x') {
-				conv_base(va_arg(ap, u32), format_buffer, 16, 0);
-				append(str, format_buffer, i);
-				i = strlen(str);
-			} else if (buf == 'd' || buf == 'i') {
-				conv_base(va_arg(ap, s32), format_buffer, 10, 1);
-				append(str, format_buffer, i);
-				i = strlen(str);
-			} else if (buf == 'u') {
-				conv_base(va_arg(ap, u32), format_buffer, 10, 0);
-				append(str, format_buffer, i);
-				i = strlen(str);
-			} else if (buf == 'o') {
-				conv_base(va_arg(ap, u32), format_buffer, 8, 0);
-				append(str, format_buffer, i);
-				i = strlen(str);
-			} else if (buf == 'b') {
-				conv_base(va_arg(ap, u32), format_buffer, 2, 0);
-				append(str, format_buffer, i);
-				i = strlen(str);
-			} else if (buf == 'c') {
-				str[i] = (char)va_arg(ap, int);
-				i++;
-			} else {
-				assert(0);
+	char ch;
+	while ((ch = *format++)) {
+		if (ch == '%') {
+			switch (*format++) {
+			case '%':
+				str[length++] = '%';
+				break;
+			case 'c':
+				temp_ch = va_arg(ap, int);
+				str[length++] = temp_ch;
+				break;
+			case 's':
+				temp_str = va_arg(ap, char *);
+				length += strlcpy(&str[length], temp_str, size - length);
+				break;
+			case 'd':
+				temp_int = va_arg(ap, int);
+				itoa(temp_int, buffer, 10);
+				length += strlcpy(&str[length], buffer, size - length);
+				break;
+			case 'x':
+				temp_int = va_arg(ap, int);
+				itoa(temp_int, buffer, 16);
+				length += strlcpy(&str[length], buffer, size - length);
+				break;
+			case 'f':
+				temp_double = va_arg(ap, double);
+				ftoa(temp_double, buffer);
+				length += strlcpy(&str[length], buffer, size - length);
+				break;
+			default:
+				print("Unknown printf format\n");
 			}
 		} else {
-			if (*format == '%')
-				ready_to_format = 1;
-			else {
-				str[i] = *format;
-				if (++i == size) {
-					str[i] = 0;
-					break;
-				}
-			}
+			str[length++] = ch;
 		}
-
-		memset(format_buffer, 0, sizeof(format_buffer));
 	}
 
-	return strlen(str);
+	return length;
 }
 
 int snprintf(char *str, u32 size, const char *format, ...)

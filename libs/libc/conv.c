@@ -6,140 +6,104 @@
 #include <mem.h>
 #include <str.h>
 
-static const char HTOA_TABLE[] = "0123456789ABCDEF";
-static const char ITOA_TABLE[] = "0123456789";
-
-int atoi(const char *str)
+int itoa(int value, char *buffer, int base)
 {
-	u32 s_str = strlen(str);
-	if (!s_str)
-		return 0;
+	char tmp[16];
+	char *tp = tmp;
+	int i;
+	unsigned v;
 
-	u8 negative = 0;
-	if (str[0] == '-')
-		negative = 1;
+	int sign = (base == 10 && value < 0);
+	if (sign)
+		v = -value;
+	else
+		v = (unsigned)value;
 
-	u32 i = 0;
-	if (negative)
-		i++;
-
-	int ret = 0;
-	for (; i < s_str; i++) {
-		ret += (str[i] - '0') * pow(10, (int)((s_str - i) - 1));
+	while (v || tp == tmp) {
+		i = v % base;
+		v /= base;
+		if (i < 10)
+			*tp++ = i + '0';
+		else
+			*tp++ = i + 'a' - 10;
 	}
 
-	if (negative)
-		ret *= -1;
-	return ret;
+	int len = tp - tmp;
+
+	if (sign) {
+		*buffer++ = '-';
+		len++;
+	}
+
+	while (tp > tmp)
+		*buffer++ = *--tp;
+
+	return len;
 }
 
-char *htoa(u32 n)
+static int normalize(f64 *val)
 {
-	char *ret = (char *)malloc(10);
+	int exp = 0;
+	double value = *val;
 
-	int i = 0;
-	while (n) {
-		ret[i++] = HTOA_TABLE[n & 0xF];
-		n >>= 4;
+	while (value >= 1.0) {
+		value /= 10.0;
+		++exp;
 	}
 
-	if (!i) {
-		ret[0] = '0';
-		i++;
+	while (value < 0.1) {
+		value *= 10.0;
+		--exp;
 	}
-
-	for (; i <= 9; i++)
-		ret[i] = 0;
-
-	char *aux = strdup(ret);
-	free(ret);
-	ret = aux;
-
-	strinv(ret);
-	return ret;
+	*val = value;
+	return exp;
 }
 
-int htoi(const char *str)
+#define FLOAT_WIDTH 5
+char *ftoa(f64 value, char *buffer)
 {
-	u32 s_str = strlen(str);
+	int exp = 0;
+	u32 loc = 0;
 
-	u32 i = 0;
-	int ret = 0;
-	for (; i < s_str; i++) {
-		char c = str[i];
-		int aux = 0;
-		if (c >= '0' && c <= '9')
-			aux = c - '0';
-		else if (c >= 'A' && c <= 'F')
-			aux = (c - 'A') + 10;
-
-		ret += aux * pow(16, (int)((s_str - i) - 1));
+	if (value == 0.0) {
+		buffer[0] = '0';
+		buffer[1] = '\0';
+		return buffer;
 	}
 
-	return ret;
-}
-
-char *itoa(int n)
-{
-	if (!n) {
-		char *ret = (char *)malloc(2);
-		ret[0] = '0';
-		ret[1] = 0;
-		return ret;
-	}
-	u8 negative = (u8)(n < 0);
-	if (negative)
-		n *= -1;
-
-	int sz;
-	for (sz = 0; n % pow(10, sz) != n; sz++) {
+	if (value < 0.0) {
+		*buffer++ = '-';
+		value = -value;
 	}
 
-	char *ret = (char *)malloc((u32)(sz + 1));
+	exp = normalize(&value);
 
-	for (int i = 0; i < sz; i++) {
-		int digit = (n % pow(10, i + 1)) / pow(10, i);
-		ret[i] = ITOA_TABLE[digit];
-	}
-	ret[sz] = 0;
-
-	if (negative) {
-		char *aux = (char *)malloc((u32)(sz + 2));
-		strlcpy(aux, ret, sz + 2);
-		aux[sz] = '-';
-		aux[sz + 1] = 0;
-		free(ret);
-		ret = aux;
+	while (exp > 0) {
+		int digit = value * 10;
+		*buffer++ = digit + '0';
+		value = value * 10 - digit;
+		++loc;
+		--exp;
 	}
 
-	strinv(ret);
-	return ret;
-}
+	if (loc == 0)
+		*buffer++ = '0';
 
-char *conv_base(int value, char *result, int base, int is_signed)
-{
-	if (base < 2 || base > 36) {
-		*result = '\0';
-		return result;
+	*buffer++ = '.';
+
+	while (exp < 0 && loc < FLOAT_WIDTH) {
+		*buffer++ = '0';
+		--exp;
+		++loc;
 	}
 
-	char *ptr = result, *ptr1 = result;
-	int tmp_value;
-
-	do {
-		tmp_value = value;
-		value /= base;
-		*ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz"
-			[35 + (tmp_value - value * base)];
-	} while (value);
-
-	if (is_signed && tmp_value < 0)
-		*ptr++ = '-';
-	*ptr-- = '\0';
-	while (ptr1 < ptr) {
-		char tmp_char = *ptr;
-		*ptr-- = *ptr1;
-		*ptr1++ = tmp_char;
+	while (loc < FLOAT_WIDTH) {
+		int digit = value * 10.0;
+		*buffer++ = digit + '0';
+		value = value * 10.0 - digit;
+		++loc;
 	}
-	return result;
+	*buffer = '\0';
+
+	return buffer;
 }
