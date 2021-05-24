@@ -204,7 +204,8 @@ static void gfx_image_cache_save(const char *path, struct bmp *bmp)
 	list_add(gfx_image_cache_list, cache);
 }
 
-void gfx_load_image_filter(struct gfx_context *ctx, vec2 pos, enum gfx_filter filter, const char *path)
+void gfx_load_image_filter(struct gfx_context *ctx, vec2 pos, enum gfx_filter filter,
+			   const char *path)
 {
 	// TODO: Detect image type
 
