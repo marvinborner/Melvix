@@ -2,7 +2,7 @@
 
 #include <assert.h>
 #include <drivers/cpu.h>
-#include <drivers/interrupts.h>
+#include <drivers/int.h>
 #include <drivers/ps2.h>
 #include <errno.h>
 #include <io.h>
@@ -36,9 +36,8 @@ static void mouse_finish(void)
 	io_unblock(IO_MOUSE);
 }
 
-static void mouse_handler(struct regs *r)
+static void mouse_handler(void)
 {
-	UNUSED(r);
 	switch (mouse_cycle) {
 	case 0:
 		mouse_byte[0] = ps2_read_data();
@@ -139,7 +138,7 @@ CLEAR void ps2_mouse_install(u8 device)
 {
 	ps2_mouse_enable(device);
 
-	irq_install_handler(12, mouse_handler);
+	int_event_handler_add(12, mouse_handler);
 
 	queue = stack_new();
 	struct io_dev *dev = zalloc(sizeof(*dev));

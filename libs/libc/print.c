@@ -194,9 +194,10 @@ int printf(const char *format, ...)
 
 int print_prefix(void)
 {
-	serial_print(CYN "[LOG] to ");
-	serial_print(proc_current()->name);
-	serial_print(": ");
+	char buf[64] = { 0 };
+	snprintf(buf, sizeof(buf), CYN "[LOG] to %s (%d): ", proc_current()->name,
+		 proc_current()->pid);
+	serial_print(buf);
 	return 1;
 }
 

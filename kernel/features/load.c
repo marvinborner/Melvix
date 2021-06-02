@@ -14,13 +14,11 @@ res elf_load(const char *name, struct proc *proc)
 	if (!memory_readable(name))
 		return -EFAULT;
 
-	stac();
 	char path[64] = { "/apps/" };
-	strlcat(path, name, sizeof(path));
-	strlcpy(proc->dir, path, sizeof(proc->dir));
-	strlcat(path, "/exec", sizeof(path));
-	strlcpy(proc->name, name, sizeof(proc->name));
-	clac();
+	strlcat_user(path, name, sizeof(path));
+	strlcpy_user(proc->dir, path, sizeof(proc->dir));
+	strlcat_user(path, "/exec", sizeof(path));
+	strlcpy_user(proc->name, name, sizeof(proc->name));
 
 	struct stat s = { 0 };
 	memory_bypass_enable();
@@ -30,11 +28,11 @@ res elf_load(const char *name, struct proc *proc)
 		return stat;
 
 	struct elf_header header = { 0 };
-	stac();
 	memory_bypass_enable();
+	stac();
 	res read = vfs_read(path, &header, 0, sizeof(header));
-	memory_bypass_disable();
 	clac();
+	memory_bypass_disable();
 	if (read < 0)
 		return read;
 	if (read != sizeof(header))
@@ -124,22 +122,6 @@ res elf_load(const char *name, struct proc *proc)
 		}
 		memory_bypass_disable();
 
-		// TODO: Use section and symbol name for logging or something? (e.g. in page fault handler)
-		/* u32 offset = section_strings.offset + section.name; */
-		/* if (offset >= s.size) */
-		/* 	return -ENOEXEC; */
-		/* memory_bypass_enable(); */
-		/* char name[64] = { 0 }; // Max length? */
-		/* if (vfs_read(path, &name, offset, sizeof(name)) != sizeof(name)) { */
-		/* 	memory_bypass_disable(); */
-		/* 	return -ENOEXEC; */
-		/* } */
-		/* memory_bypass_disable(); */
-		/* printf("%d\n", section.name); */
-		/* if (section.type == ELF_SECTION_TYPE_SYMTAB) { */
-		/* } else if (section.type == ELF_SECTION_TYPE_STRTAB && i != header.shstrndx) { */
-		/* } */
-
 		// Remap readonly sections
 		if (!(section.flags & ELF_SECTION_FLAG_WRITE) && section.addr &&
 		    memory_is_user((void *)section.addr)) {
@@ -149,26 +131,8 @@ res elf_load(const char *name, struct proc *proc)
 		}
 	}
 
-	struct page_dir *prev;
-	memory_backup_dir(&prev);
-	memory_switch_dir(proc->page_dir);
-
-	// Allocate user stack with readonly lower and upper page boundary
-	u32 user_stack = (u32)memory_alloc_with_boundary(proc->page_dir, PROC_STACK_SIZE,
-							 MEMORY_CLEAR | MEMORY_USER);
-
-	// Allocate kernel stack with readonly lower and upper page boundary
-	u32 kernel_stack =
-		(u32)memory_alloc_with_boundary(proc->page_dir, PROC_STACK_SIZE, MEMORY_CLEAR);
-
-	proc->stack.user = user_stack + PROC_STACK_SIZE;
-	proc->stack.kernel = kernel_stack + PROC_STACK_SIZE;
-	proc->regs.esp = proc->stack.kernel;
-	proc->regs.ebp = proc->stack.user;
-	proc->regs.useresp = proc->stack.user;
-	proc->regs.eip = header.entry + rand_off;
 	proc->entry = header.entry + rand_off;
+	proc_make_regs(proc);
 
-	memory_switch_dir(prev);
 	return EOK;
 }

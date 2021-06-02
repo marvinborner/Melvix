@@ -3,8 +3,9 @@
 #include <drivers/cpu.h>
 #include <drivers/gdt.h>
 #include <drivers/ide.h>
-#include <drivers/interrupts.h>
+#include <drivers/int.h>
 #include <drivers/pci.h>
+#include <drivers/pic.h>
 #include <drivers/rtc.h>
 #include <drivers/serial.h>
 #include <fs.h>
@@ -39,11 +40,9 @@ int kernel_main(u32 magic, u32 addr, u32 esp)
 	vfs_install();
 	ata_install();
 	pci_install();
-	interrupts_install();
+	pic_install();
+	idt_install();
 	io_install();
-
-	// Enable drivers
-	sti();
 
 	syscall_init();
 	proc_init();

@@ -14,6 +14,7 @@
 
 PROTECTED static struct page_dir kernel_dir ALIGNED(PAGE_SIZE) = { 0 };
 static struct page_table kernel_tables[PAGE_KERNEL_COUNT] ALIGNED(PAGE_SIZE) = { 0 };
+static struct page_dir *current_dir = NULL;
 
 extern u32 kernel_rw_start;
 extern u32 kernel_rw_end;
@@ -66,14 +67,15 @@ static const char *page_fault_section(u32 addr)
 	return section;
 }
 
-void page_fault_handler(struct regs *r)
+static void page_fault_handler(u32 esp)
 {
+	struct int_frame *frame = (struct int_frame *)esp;
 	print("--- PAGE FAULT! ---\n");
 
 	// Check error code
-	const char *type = (r->err_code & 1) ? "present" : "non-present";
-	const char *operation = (r->err_code & 2) ? "write" : "read";
-	const char *super = (r->err_code & 4) ? "User" : "Super";
+	const char *type = (frame->err_code & 1) ? "present" : "non-present";
+	const char *operation = (frame->err_code & 2) ? "write" : "read";
+	const char *super = (frame->err_code & 4) ? "User" : "Super";
 
 	// Check cr2 address (virtual and physical)
 	u32 vaddr;
@@ -87,16 +89,13 @@ void page_fault_handler(struct regs *r)
 	printf("%s process tried to %s a %s page at [vaddr=%x; paddr=%x]\n", super, operation, type,
 	       vaddr, paddr);
 
-	if (proc && vaddr > proc->regs.ebp - PROC_STACK_SIZE - PAGE_SIZE &&
-	    vaddr < proc->regs.ebp + PAGE_SIZE)
+	if (proc && vaddr > proc->stack.user_ptr - PROC_STACK_SIZE - PAGE_SIZE &&
+	    vaddr < proc->stack.user_ptr + PAGE_SIZE)
 		print("Probably a stack overflow\n");
 
 	printf("Sections: [vaddr_section=%s; paddr_section=%s; eip_section=%s]\n",
-	       page_fault_section(vaddr), page_fault_section(paddr), page_fault_section(r->eip));
-
-	/* printf("%b\n", virtual_entry(dir, vaddr)->uint); */
-
-	isr_panic(r);
+	       page_fault_section(vaddr), page_fault_section(paddr),
+	       page_fault_section(frame->eip));
 }
 
 /**
@@ -424,8 +423,18 @@ void *memory_alloc(struct page_dir *dir, u32 size, u32 flags)
 		goto err;
 	}
 
-	if (flags & MEMORY_CLEAR)
-		memset_user((void *)vaddr, 0, size);
+	if (flags & MEMORY_CLEAR) {
+		// TODO: Neater solution
+		if (dir == current_dir) {
+			memset_user((void *)vaddr, 0, size);
+		} else {
+			struct page_dir *bak;
+			memory_backup_dir(&bak);
+			memory_switch_dir(dir);
+			memset_user((void *)vaddr, 0, size);
+			memory_switch_dir(bak);
+		}
+	}
 
 	return (void *)vaddr;
 
@@ -587,6 +596,7 @@ res memory_sys_shaccess(struct page_dir *dir, u32 id, u32 *addr, u32 *size)
 
 void memory_switch_dir(struct page_dir *dir)
 {
+	current_dir = dir;
 	paging_switch_dir(virtual_to_physical(&kernel_dir, (u32)dir));
 }
 
@@ -760,4 +770,6 @@ CLEAR void memory_install(void)
 	paging_enable();
 
 	memory_objects = list_new();
+
+	int_trap_handler_add(14, page_fault_handler);
 }

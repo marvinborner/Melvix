@@ -27,24 +27,26 @@ PROTECTED static struct list *proc_list_idle = NULL;
 
 // TODO: Use less memcpy and only copy relevant registers
 // TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
-HOT FLATTEN void scheduler(struct regs *regs)
+HOT FLATTEN u32 scheduler(u32 esp)
 {
 	spinlock(&locked);
 
-	if (RING(regs) == 3)
-		PROC(current)->ticks.user++;
-	else
-		PROC(current)->ticks.kernel++;
+	if (!current) {
+		current = idle_proc;
+		locked = 0;
+		return PROC(current)->stack.kernel_ptr;
+	}
 
 	if (PROC(current)->quantum.cnt >= PROC(current)->quantum.val) {
 		PROC(current)->quantum.cnt = 0;
 	} else {
 		PROC(current)->quantum.cnt++;
 		locked = 0;
-		return;
+		return esp;
 	}
 
-	memcpy(&PROC(current)->regs, regs, sizeof(*regs));
+	fpu_save(PROC(current));
+	PROC(current)->stack.kernel_ptr = esp;
 
 	if (current->next) {
 		current = current->next;
@@ -54,17 +56,21 @@ HOT FLATTEN void scheduler(struct regs *regs)
 		current = idle_proc;
 	}
 
-	tss_set_stack(PROC(current)->stack.kernel);
 	memory_switch_dir(PROC(current)->page_dir);
-	memcpy(regs, &PROC(current)->regs, sizeof(*regs));
+	tss_set_stack(PROC(current)->stack.kernel_ptr);
+	fpu_restore(PROC(current));
 
 #if DEBUG_SCHEDULER
-	if (current != idle_proc)
+	if (current != idle_proc) {
+		struct int_frame_user *frame =
+			(struct int_frame_user *)PROC(current)->stack.kernel_ptr;
 		printf("%s (%d): eip %x esp %x useresp %x\n", PROC(current)->name,
-		       PROC(current)->pid, regs->eip, regs->esp, regs->useresp);
+		       PROC(current)->pid, frame->eip, frame->esp, frame->useresp);
+	}
 #endif
 
 	locked = 0;
+	return PROC(current)->stack.kernel_ptr;
 }
 
 void proc_print(void)
@@ -151,7 +157,7 @@ void proc_state(struct proc *proc, enum proc_state state)
 	// else: Nothing to do!
 }
 
-void proc_exit(struct proc *proc, struct regs *r, s32 status)
+void proc_exit(struct proc *proc, s32 status)
 {
 	assert(proc != idle_proc->data);
 
@@ -162,8 +168,8 @@ void proc_exit(struct proc *proc, struct regs *r, s32 status)
 	}
 
 	if (current->data == proc) {
-		current = idle_proc;
-		memcpy(r, &PROC(idle_proc)->regs, sizeof(*r));
+		memory_switch_dir(virtual_kernel_dir());
+		current = NULL;
 	}
 
 	printf("Process %s (%d) exited with status %d (%s)\n",
@@ -188,28 +194,46 @@ void proc_exit(struct proc *proc, struct regs *r, s32 status)
 	stack_destroy(proc->messages);
 	list_destroy(proc->memory); // TODO: Decrement memory ref links
 	virtual_destroy_dir(proc->page_dir);
-
+	memset(proc, 0, sizeof(*proc));
 	free(proc);
 
-	proc_yield_regs(r);
+	proc_yield();
+	assert_not_reached();
 }
 
 void proc_yield(void)
 {
-	// TODO: Fix yielding without debug mode (File size?! Regs?! IDK?!)
-	proc_reset_quantum(PROC(current));
-	__asm__ volatile("int $127");
+	__asm__ volatile("int $129");
 }
 
-void proc_yield_regs(struct regs *r)
+void proc_stack_user_push(struct proc *proc, const void *data, u32 size)
 {
-	proc_reset_quantum(PROC(current));
-	scheduler(r);
+	struct page_dir *prev;
+	memory_backup_dir(&prev);
+	memory_switch_dir(proc->page_dir);
+
+	proc->stack.user_ptr -= size;
+	memcpy_user((void *)proc->stack.user_ptr, data, size);
+
+	memory_switch_dir(prev);
+}
+
+void proc_stack_kernel_push(struct proc *proc, const void *data, u32 size)
+{
+	struct page_dir *prev;
+	memory_backup_dir(&prev);
+	memory_switch_dir(proc->page_dir);
+
+	proc->stack.kernel_ptr -= size;
+	memcpy_user((void *)proc->stack.kernel_ptr, data, size);
+
+	memory_switch_dir(prev);
 }
 
 struct proc *proc_make(enum proc_priv priv)
 {
 	struct proc *proc = zalloc(sizeof(*proc));
+	fpu_init(proc);
 	proc->pid = current_pid++;
 	proc->priv = priv;
 	proc->messages = stack_new();
@@ -219,35 +243,55 @@ struct proc *proc_make(enum proc_priv priv)
 	proc->quantum.val = PROC_QUANTUM;
 	proc->quantum.cnt = 0;
 
-	// Init regs
-	u8 is_kernel = priv == PROC_PRIV_KERNEL;
-	u32 data = is_kernel ? GDT_SUPER_DATA_OFFSET : GDT_USER_DATA_OFFSET;
-	u32 code = is_kernel ? GDT_SUPER_CODE_OFFSET : GDT_USER_CODE_OFFSET;
-	proc->regs.gs = data;
-	proc->regs.fs = data;
-	proc->regs.es = data;
-	proc->regs.ds = data;
-	proc->regs.ss = data;
-	proc->regs.cs = code;
-	proc->regs.eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
-
-	list_add(proc_list_running, proc);
-
 	return proc;
 }
 
-void proc_stack_push(struct proc *proc, u32 data)
+void proc_make_regs(struct proc *proc)
 {
-	struct page_dir *prev;
-	memory_backup_dir(&prev);
-	memory_switch_dir(proc->page_dir);
+	struct int_frame_user frame = { 0 };
 
-	proc->regs.useresp -= sizeof(data);
-	stac();
-	*(u32 *)proc->regs.useresp = data;
-	clac();
+	assert(proc->entry);
+	frame.eip = proc->entry;
 
-	memory_switch_dir(prev);
+	// Allocate user stack with readonly lower and upper page boundary
+	u32 user_stack = (u32)memory_alloc_with_boundary(proc->page_dir, PROC_STACK_SIZE,
+							 MEMORY_CLEAR | MEMORY_USER);
+
+	// Allocate kernel stack with readonly lower and upper page boundary
+	u32 kernel_stack =
+		(u32)memory_alloc_with_boundary(proc->page_dir, PROC_STACK_SIZE, MEMORY_CLEAR);
+
+	proc->stack.user = user_stack + PROC_STACK_SIZE;
+	proc->stack.user_ptr = proc->stack.user;
+
+	proc->stack.kernel = kernel_stack + PROC_STACK_SIZE;
+	proc->stack.kernel_ptr = proc->stack.kernel;
+
+	frame.esp = proc->stack.kernel;
+	frame.ebp = proc->stack.kernel;
+	frame.useresp = proc->stack.user;
+
+	// Init regs
+	u8 is_kernel = proc->priv == PROC_PRIV_KERNEL;
+	u32 data = is_kernel ? GDT_SUPER_DATA_OFFSET : GDT_USER_DATA_OFFSET;
+	u32 code = is_kernel ? GDT_SUPER_CODE_OFFSET : GDT_USER_CODE_OFFSET;
+	frame.gs = data;
+	frame.fs = data;
+	frame.es = data;
+	frame.ds = data;
+	frame.ss = data;
+	frame.cs = code;
+	frame.eflags = EFLAGS_ALWAYS | EFLAGS_INTERRUPTS;
+
+	// Push frame as the values get popped (see int.asm)
+	proc_stack_kernel_push(proc, &frame, sizeof(frame));
+
+	// Push argc and argv // TODO
+	u32 arg = 0;
+	proc_stack_user_push(proc, &arg, sizeof(arg));
+	proc_stack_user_push(proc, &arg, sizeof(arg));
+
+	list_add(proc_list_running, proc);
 }
 
 // TODO: Procfs needs a simpler interface structure (memcmp and everything sucks)
@@ -331,8 +375,6 @@ void proc_init(void)
 	if (proc_list_running)
 		panic("Already initialized processes!");
 
-	cli();
-	scheduler_enable();
 	proc_list_running = list_new();
 	proc_list_blocked = list_new();
 	proc_list_idle = list_new();
@@ -354,8 +396,6 @@ void proc_init(void)
 	// TODO: Reimplement hlt privileges in idle proc (SMEP!)
 	struct proc *kernel_proc = proc_make(PROC_PRIV_NONE);
 	assert(elf_load("idle", kernel_proc) == EOK);
-	proc_stack_push(kernel_proc, 0);
-	proc_stack_push(kernel_proc, 0);
 	kernel_proc->state = PROC_BLOCKED;
 	kernel_proc->quantum.val = 0;
 	kernel_proc->quantum.cnt = 0;
@@ -365,12 +405,10 @@ void proc_init(void)
 	// Init proc (root)
 	struct proc *init = proc_make(PROC_PRIV_ROOT);
 	assert(elf_load("init", init) == EOK);
-	proc_stack_push(init, 0);
-	proc_stack_push(init, 0);
 	current = list_first_data(proc_list_running, init);
 
-	_eip = init->regs.eip;
-	_esp = init->regs.useresp;
+	_eip = init->entry;
+	_esp = init->stack.user_ptr;
 
 	// We'll shortly jump to usermode. Clear and protect every secret!
 	memory_user_hook();
@@ -381,6 +419,5 @@ void proc_init(void)
 
 	// You're waiting for a train. A train that will take you far away...
 	proc_jump_userspace();
-
-	panic("Returned from limbo!\n");
+	assert_not_reached();
 }

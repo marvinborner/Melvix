@@ -4,7 +4,7 @@
 #define PAGING_H
 
 #include <def.h>
-#include <drivers/interrupts.h>
+#include <drivers/int.h>
 #include <errno.h>
 
 struct memory_range {
@@ -18,7 +18,6 @@ struct memory_range {
 
 void paging_disable(void);
 void paging_enable(void);
-void page_fault_handler(struct regs *r) NONNULL;
 
 /**
  * Physical

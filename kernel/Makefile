@@ -3,8 +3,9 @@
 COBJS = entry_asm.o \
 	main.o \
 	multiboot.o \
-	drivers/interrupts.o \
-	drivers/interrupts_asm.o \
+	drivers/int.o \
+	drivers/int_asm.o \
+	drivers/pic.o \
 	drivers/gdt.o \
 	drivers/cpu.o \
 	drivers/serial.o \

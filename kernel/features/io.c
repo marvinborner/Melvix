@@ -5,7 +5,7 @@
 #include <def.h>
 #include <drivers/bga.h>
 #include <drivers/cpu.h>
-#include <drivers/interrupts.h>
+#include <drivers/int.h>
 #include <drivers/ps2.h>
 #include <drivers/timer.h>
 #include <drivers/vbe.h>

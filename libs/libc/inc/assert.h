@@ -12,7 +12,8 @@
 		if (!(exp)) {                                                                      \
 			printf("%s:%d: %s: Kernel assertion '%s' failed\n", __FILE__, __LINE__,    \
 			       __func__, #exp);                                                    \
-			__asm__ volatile("cli\nhlt");                                              \
+			while (1)                                                                  \
+				__asm__ volatile("cli\nhlt");                                      \
 		}                                                                                  \
 	}
 #elif defined(USER)
@@ -24,5 +25,8 @@
 		}                                                                                  \
 	}
 #endif
+
+#define assert_not_reached()                                                                       \
+	panic("%s:%d: %s: Reached code that should not be reached\n", __FILE__, __LINE__, __func__)
 
 #endif

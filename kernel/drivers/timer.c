@@ -2,7 +2,7 @@
 
 #include <def.h>
 #include <drivers/cpu.h>
-#include <drivers/interrupts.h>
+#include <drivers/int.h>
 #include <drivers/rtc.h>
 #include <drivers/timer.h>
 #include <io.h>
@@ -10,7 +10,6 @@
 #include <proc.h>
 
 static u32 timer_ticks = 0;
-PROTECTED static u8 call_scheduler = 0;
 
 CLEAR static void timer_phase(int hz)
 {
@@ -25,36 +24,20 @@ u32 timer_get(void)
 	return timer_ticks;
 }
 
-void timer_handler(struct regs *r)
+static void timer_handler(void)
 {
 	if (timer_ticks >= U32_MAX)
 		timer_ticks = 0;
 	else
 		timer_ticks++;
-
-	if (call_scheduler)
-		scheduler(r);
 }
 
 // "Delay" function with CPU sleep
 void timer_wait(u32 ticks)
 {
 	u32 eticks = timer_ticks + ticks;
-	while (timer_ticks < eticks) {
+	while (timer_ticks < eticks)
 		__asm__ volatile("sti\nhlt\ncli");
-	}
-}
-
-CLEAR void scheduler_enable(void)
-{
-	call_scheduler = 1;
-	irq_install_handler(0, timer_handler);
-}
-
-CLEAR void scheduler_disable(void)
-{
-	call_scheduler = 0;
-	irq_install_handler(0, timer_handler);
 }
 
 static struct timer timer_struct(void)
@@ -85,7 +68,7 @@ CLEAR void timer_install(void)
 	/* hpet_install(10000); // TODO: Find optimal femtosecond period */
 	/* if (!hpet) */
 	timer_phase(1000);
-	irq_install_handler(0, timer_handler);
+	int_event_handler_add(0, timer_handler);
 
 	struct io_dev *dev = zalloc(sizeof(*dev));
 	dev->read = timer_read;

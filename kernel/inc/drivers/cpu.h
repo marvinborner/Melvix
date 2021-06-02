@@ -4,6 +4,7 @@
 #define CPU_H
 
 #include <def.h>
+#include <proc.h>
 
 UNUSED_FUNC static inline void spinlock(u32 *ptr)
 {
@@ -21,9 +22,12 @@ void outb(u16 port, u8 data);
 void outw(u16 port, u16 data);
 void outl(u16 port, u32 data);
 
+void fpu_init(struct proc *proc);
+void fpu_save(struct proc *proc);
+void fpu_restore(struct proc *proc);
+
 void cpu_print(void);
 void cpu_enable_features(void);
-void fpu_restore(void);
 
 u32 cr0_get(void);
 void cr0_set(u32 cr0);
@@ -34,9 +38,6 @@ void cr4_set(u32 cr4);
 
 void clac(void);
 void stac(void);
-
-void cli(void);
-void sti(void);
 
 struct cpuid {
 	u32 eax;

@@ -7,6 +7,10 @@
 #include <mem.h>
 #include <print.h>
 
+/**
+ * Serial in/out
+ */
+
 u8 inb(u16 port)
 {
 	u8 value;
@@ -42,6 +46,10 @@ void outl(u16 port, u32 data)
 {
 	__asm__ volatile("outl %0, %1" ::"a"(data), "Nd"(port));
 }
+
+/**
+ * Special register manipulation
+ */
 
 CLEAR u32 cr0_get(void)
 {
@@ -79,17 +87,38 @@ CLEAR void cr4_set(u32 cr4)
 	__asm__ volatile("movl %%eax, %%cr4" ::"a"(cr4));
 }
 
-static void fpu_handler(struct regs *r)
+/**
+ * FPU
+ */
+
+PROTECTED static u8 fpu_initial[512] ALIGNED(16);
+static u8 fpu_regs[512] ALIGNED(16);
+
+static void fpu_handler(void)
 {
-	UNUSED(r);
 	__asm__ volatile("clts");
 }
 
-static u8 fpu_state[512] ALIGNED(16);
-void fpu_restore(void)
+void fpu_init(struct proc *proc)
 {
-	__asm__ volatile("fxrstor (%0)" ::"r"(fpu_state));
+	memcpy(&proc->fpu, &fpu_initial, sizeof(fpu_initial));
 }
+
+void fpu_save(struct proc *proc)
+{
+	__asm__ volatile("fxsave (%0)" ::"r"(fpu_regs));
+	memcpy(&proc->fpu, &fpu_regs, sizeof(fpu_regs));
+}
+
+void fpu_restore(struct proc *proc)
+{
+	memcpy(&fpu_regs, &proc->fpu, sizeof(proc->fpu));
+	__asm__ volatile("fxrstor (%0)" ::"r"(fpu_regs));
+}
+
+/**
+ * CPU features
+ */
 
 CLEAR static struct cpuid cpuid(u32 code)
 {
@@ -129,8 +158,10 @@ CLEAR void cpu_enable_features(void)
 
 	// Enable SSE
 	if (cpu_features.edx & CPUID_FEAT_EDX_SSE) {
+		__asm__ volatile("clts");
 		cr0_set(cr0_get() & ~(1 << 2));
 		cr0_set(cr0_get() | (1 << 1));
+		cr0_set(cr0_get() | (1 << 5));
 		cr4_set(cr4_get() | (3 << 9));
 	} else {
 		panic("No SSE support!\n");
@@ -139,8 +170,8 @@ CLEAR void cpu_enable_features(void)
 	// Enable FPU
 	if (cpu_features.edx & CPUID_FEAT_EDX_FPU) {
 		__asm__ volatile("fninit");
-		__asm__ volatile("fxsave %0" : "=m"(fpu_state));
-		irq_install_handler(7, fpu_handler);
+		__asm__ volatile("fxsave %0" : "=m"(fpu_initial));
+		int_event_handler_add(7, fpu_handler);
 	} else {
 		panic("No FPU support!\n");
 	}
@@ -177,6 +208,10 @@ CLEAR void cpu_enable_features(void)
 	}
 }
 
+/**
+ * SMAP
+ */
+
 void clac(void)
 {
 	if (cpu_extended_features.ebx & CPUID_EXT_FEAT_EBX_SMAP)
@@ -187,14 +222,4 @@ void stac(void)
 {
 	if (cpu_extended_features.ebx & CPUID_EXT_FEAT_EBX_SMAP)
 		__asm__ volatile("stac" ::: "cc");
-}
-
-CLEAR void cli(void)
-{
-	__asm__ volatile("cli");
-}
-
-CLEAR void sti(void)
-{
-	__asm__ volatile("sti");
 }

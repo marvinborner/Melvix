@@ -56,6 +56,10 @@ struct overflow {
 	struct type_descriptor *type;
 };
 
+struct pointer_overflow {
+	struct source_location location;
+};
+
 struct out_of_bounds {
 	struct source_location location;
 	struct type_descriptor *left_type;
@@ -224,8 +228,10 @@ void __ubsan_handle_invalid_builtin(void)
 	panic("UBSAN: invalid-builtin\n");
 }
 
-void __ubsan_handle_pointer_overflow(void);
-void __ubsan_handle_pointer_overflow(void)
+void __ubsan_handle_pointer_overflow(struct pointer_overflow *data, void *value);
+void __ubsan_handle_pointer_overflow(struct pointer_overflow *data, void *value)
 {
-	panic("UBSAN: pointer-overflow\n");
+	UNUSED(value);
+	struct source_location *loc = &data->location;
+	panic("%s:%d: UBSAN: pointer-overflow\n", loc->file, loc->line);
 }

@@ -2,7 +2,7 @@
 // VMWare extensions/backdoors for better VM integration
 
 #include <def.h>
-#include <drivers/interrupts.h>
+#include <drivers/int.h>
 #include <drivers/ps2.h>
 #include <drivers/vmware.h>
 #include <io.h>
@@ -94,9 +94,8 @@ CLEAR static void vmware_mouse_enable(void)
 	vmware_out(&command);
 }
 
-static void vmware_mouse_handler(struct regs *r)
+static void vmware_mouse_handler(void)
 {
-	UNUSED(r);
 	ps2_read_data(); // Unused, for PS/2 compatibility
 
 	struct vmware_command command = { .b.bx = 0, .c.command = VMMOUSE_STATUS };
@@ -150,7 +149,7 @@ CLEAR void vmware_mouse_install(u8 device)
 	ps2_mouse_enable(device);
 
 	vmware_mouse_enable();
-	irq_install_handler(12, vmware_mouse_handler);
+	int_event_handler_add(12, vmware_mouse_handler);
 
 	queue = stack_new();
 	struct io_dev *dev = zalloc(sizeof(*dev));

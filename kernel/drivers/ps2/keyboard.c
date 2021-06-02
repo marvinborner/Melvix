@@ -2,7 +2,7 @@
 
 #include <def.h>
 #include <drivers/cpu.h>
-#include <drivers/interrupts.h>
+#include <drivers/int.h>
 #include <drivers/ps2.h>
 #include <errno.h>
 #include <io.h>
@@ -18,9 +18,8 @@ PROTECTED static struct stack *queue = NULL;
 static struct event_keyboard *event = NULL;
 static int state = 0;
 static int merged = 0;
-static void keyboard_handler(struct regs *r)
+static void keyboard_handler(void)
 {
-	UNUSED(r);
 	u8 scancode = ps2_read_data();
 
 	// TODO: Support more than two-byte scancodes
@@ -73,7 +72,7 @@ CLEAR void ps2_keyboard_install(u8 device)
 {
 	UNUSED(device);
 
-	irq_install_handler(1, keyboard_handler);
+	int_event_handler_add(1, keyboard_handler);
 
 	queue = stack_new();
 	struct io_dev *dev = zalloc(sizeof(*dev));

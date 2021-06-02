@@ -91,9 +91,9 @@ static struct liballoc_major *allocate_new_page(u32 size)
 	u32 st = size + MAJOR_SIZE + MINOR_SIZE;
 
 	if ((st % l_page_size) == 0)
-		st = st / (l_page_size);
+		st = st / l_page_size;
 	else
-		st = st / (l_page_size) + 1;
+		st = st / l_page_size + 1;
 
 	st = MAX(st, l_page_count);
 
