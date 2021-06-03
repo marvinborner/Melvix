@@ -25,7 +25,6 @@ PROTECTED static struct list *proc_list_running = NULL;
 PROTECTED static struct list *proc_list_blocked = NULL;
 PROTECTED static struct list *proc_list_idle = NULL;
 
-// TODO: Use less memcpy and only copy relevant registers
 // TODO: 20 priority queues (https://www.kernel.org/doc/html/latest/scheduler/sched-nice-design.html)
 HOT FLATTEN u32 scheduler(u32 esp)
 {
@@ -57,7 +56,7 @@ HOT FLATTEN u32 scheduler(u32 esp)
 	}
 
 	memory_switch_dir(PROC(current)->page_dir);
-	tss_set_stack(PROC(current)->stack.kernel_ptr);
+	tss_set_stack(PROC(current)->stack.kernel);
 	fpu_restore(PROC(current));
 
 #if DEBUG_SCHEDULER

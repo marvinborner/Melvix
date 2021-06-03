@@ -109,8 +109,8 @@ static void int_trap_handler(struct int_frame *frame)
 		       frame->eip, frame->eip - proc->entry);
 		printf("\t\t-> Process: [entry: %x, kstack: %x, esp %x, ustack: %x]\n", proc->entry,
 		       proc->stack.kernel, frame->esp, proc->stack.user);
-		proc_exit(proc, 1);
 		faulting--;
+		proc_exit(proc, 1);
 	} else {
 		while (1)
 			__asm__ volatile("cli\nhlt");
@@ -129,7 +129,6 @@ CLEAR void int_event_handler_add(u32 int_no, void (*handler)(void))
 	int_event_handlers[int_no] = handler;
 }
 
-#include <mm.h>
 static u32 int_event_handler(struct int_frame *frame)
 {
 	u32 int_no = frame->int_no - 32;

@@ -25,7 +25,6 @@ mode="${1}"
 no_ask="${2}"
 
 # TODO: Support q35 chipset ('-machine q35')
-# TODO: Support -enable-kvm: GPF?!
 qemu_with_flags() {
     network="rtl8139"
     [ -e /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ] && accel="-enable-kvm" || echo "KVM acceleration not available. Make sure your PC supports it and that you're in the KVM group"

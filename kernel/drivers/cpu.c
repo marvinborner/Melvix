@@ -156,6 +156,9 @@ CLEAR void cpu_enable_features(void)
 	cpu_extended_information = cpuid(0x80000001);
 	cpu_extended_features = cpuid(0x7);
 
+	// Enable NMI
+	outb(0x70, inb(0x70) & 0x7F);
+
 	// Enable SSE
 	if (cpu_features.edx & CPUID_FEAT_EDX_SSE) {
 		__asm__ volatile("clts");
@@ -201,11 +204,11 @@ CLEAR void cpu_enable_features(void)
 	}
 
 	// Enable UMIP // TODO: QEMU support?!
-	if (cpu_extended_features.ecx & CPUID_EXT_FEAT_ECX_UMIP) {
-		cr4_set(cr4_get() | 0x800);
-	} else {
-		print("No UMIP support :(\n");
-	}
+	/* if (cpu_extended_features.ecx & CPUID_EXT_FEAT_ECX_UMIP) { */
+	/* 	cr4_set(cr4_get() | 0x800); */
+	/* } else { */
+	/* 	print("No UMIP support :(\n"); */
+	/* } */
 }
 
 /**

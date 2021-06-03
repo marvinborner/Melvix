@@ -31,6 +31,7 @@ static void color_click(struct gui_event_mouse *event)
 }
 
 // TODO: Simplify using predefined widgets and utilities
+// TODO: Fix and improve paint without KVM
 int main(void)
 {
 	u32 win = gui_new_window(APPNAME);
