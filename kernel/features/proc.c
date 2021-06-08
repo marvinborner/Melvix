@@ -156,9 +156,10 @@ void proc_state(struct proc *proc, enum proc_state state)
 	// else: Nothing to do!
 }
 
-void proc_exit(struct proc *proc, s32 status)
+void proc_exit(s32 status)
 {
-	assert(proc != idle_proc->data);
+	struct proc *proc = proc_current();
+	assert(proc && proc != idle_proc->data);
 
 	struct node *running = list_first_data(proc_list_running, proc);
 	if (!running || !list_remove(proc_list_running, running)) {
@@ -166,10 +167,9 @@ void proc_exit(struct proc *proc, s32 status)
 		assert(blocked && list_remove(proc_list_blocked, blocked));
 	}
 
-	if (current->data == proc) {
-		memory_switch_dir(virtual_kernel_dir());
-		current = NULL;
-	}
+	// Force switch to other process
+	memory_switch_dir(virtual_kernel_dir());
+	current = NULL;
 
 	printf("Process %s (%d) exited with status %d (%s)\n",
 	       proc->name[0] ? proc->name : "UNKNOWN", proc->pid, status,

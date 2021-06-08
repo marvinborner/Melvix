@@ -75,7 +75,7 @@ static void page_fault_handler(u32 esp)
 	// Check error code
 	const char *type = (frame->err_code & 1) ? "present" : "non-present";
 	const char *operation = (frame->err_code & 2) ? "write" : "read";
-	const char *super = (frame->err_code & 4) ? "User" : "Super";
+	const char *super = (frame->err_code & 4) ? "user" : "super";
 
 	// Check cr2 address (virtual and physical)
 	u32 vaddr;
@@ -86,8 +86,8 @@ static void page_fault_handler(u32 esp)
 
 	// Print!
 
-	printf("%s process tried to %s a %s page at [vaddr=%x; paddr=%x]\n", super, operation, type,
-	       vaddr, paddr);
+	printf("Process in %s-state tried to %s a %s page at [vaddr=%x; paddr=%x]\n", super,
+	       operation, type, vaddr, paddr);
 
 	if (proc && vaddr > proc->stack.user_ptr - PROC_STACK_SIZE - PAGE_SIZE &&
 	    vaddr < proc->stack.user_ptr + PAGE_SIZE)

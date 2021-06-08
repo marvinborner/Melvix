@@ -60,7 +60,7 @@ struct proc *proc_current(void);
 u8 proc_super(void);
 u8 proc_idle(void);
 struct proc *proc_from_pid(u32 pid);
-void proc_exit(struct proc *proc, s32 status) NONNULL;
+void proc_exit(s32 status);
 void proc_yield(void);
 void proc_set_quantum(struct proc *proc, u32 value) NONNULL;
 void proc_reset_quantum(struct proc *proc) NONNULL;

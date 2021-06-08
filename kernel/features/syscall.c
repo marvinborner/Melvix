@@ -89,14 +89,14 @@ static u32 syscall_handler(u32 esp)
 		struct proc *proc = proc_make(PROC_PRIV_NONE);
 		frame->eax = (u32)elf_load(path, proc);
 		if (frame->eax != EOK)
-			proc_exit(proc, -frame->eax);
+			panic("NOT IMPLEMENTED\n"); // TODO: Implement exec path/etc verify
 		else
 			proc_yield();
 		break;
 	}
 	case SYS_EXIT: {
 		frame->eax = EOK;
-		proc_exit(proc_current(), (s32)frame->ebx);
+		proc_exit((s32)frame->ebx);
 		break;
 	}
 	case SYS_YIELD: {

@@ -109,12 +109,16 @@ static void int_trap_handler(struct int_frame *frame)
 		       frame->eip, frame->eip - proc->entry);
 		printf("\t\t-> Process: [entry: %x, kstack: %x, esp %x, ustack: %x]\n", proc->entry,
 		       proc->stack.kernel, frame->esp, proc->stack.user);
+
 		faulting--;
-		proc_exit(proc, 1);
+		proc_exit(1);
 	} else {
+		print_trace();
 		while (1)
 			__asm__ volatile("cli\nhlt");
 	}
+
+	assert_not_reached();
 }
 
 /**
