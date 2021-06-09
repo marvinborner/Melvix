@@ -24,7 +24,8 @@ NORETURN void err(int code, const char *format, ...) NONNULL;
 #else
 #include <proc.h>
 int print_prefix(void);
-void print_trace(u32 count);
+void print_trace_custom(u32 stack, u32 count);
+void print_trace(void);
 #endif
 
 #endif

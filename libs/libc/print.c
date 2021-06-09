@@ -207,20 +207,30 @@ int print(const char *str)
 	return strlen(str);
 }
 
-void print_trace(u32 count)
+void print_trace_custom(u32 stack, u32 count)
 {
+	stac();
 	struct frame {
 		struct frame *ebp;
 		u32 eip;
-	} * stk;
-	__asm__ volatile("movl %%ebp, %0;" : "=r"(stk));
-	print("EBP\tEIP\n");
+	} *stk = (void *)stack;
+	printf("Stack trace for 0x%x\n", stack);
+	print("\tEBP\tEIP\n");
 	for (u32 i = 0; stk && memory_readable(stk) && i < count; i++) {
 		if (!stk->ebp || !stk->eip)
 			break;
-		printf("0x%x\t0x%x\n", stk->ebp, stk->eip);
+		printf("\t0x%x\t0x%x\n", stk->ebp, stk->eip);
 		stk = stk->ebp;
 	}
+	print("Stack trace end\n");
+	clac();
+}
+
+void print_trace(void)
+{
+	u32 ebp;
+	__asm__ volatile("movl %%ebp, %0;" : "=r"(ebp));
+	print_trace_custom(ebp, 10);
 }
 
 #endif
@@ -235,7 +245,7 @@ void panic(const char *format, ...)
 #ifdef KERNEL
 	print("--- DON'T PANIC! ---\n");
 	print(buf);
-	print_trace(10);
+	print_trace();
 	while (1)
 		__asm__ volatile("cli\nhlt");
 #else
