@@ -69,6 +69,7 @@ typedef long double f80;
 #define USED_FUNC ATTR((used))
 #define UNUSED_FUNC ATTR((unused))
 #define NO_SANITIZE ATTR((no_sanitize("undefined")))
+#define OPTIMIZE(level) ATTR((optimize(level)))
 #define ALIGNED(align) ATTR((aligned(align)))
 
 /**

@@ -17,7 +17,7 @@
 #define ICW1_ICW4 0x01
 #define ICW1_INIT 0x10
 
-INLINE void pic_wait(void)
+CLEAR static void pic_wait(void)
 {
 	__asm__ volatile("jmp 1f\n\t"
 			 "1:\n\t"

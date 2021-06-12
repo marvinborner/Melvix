@@ -78,7 +78,7 @@ static void ide_poll(u16 io)
 	assert(!(inb(io + ATA_REG_STATUS) & ATA_SR_ERR));
 }
 
-static res ata_read(void *buf, u32 lba, u32 sector_count, struct vfs_dev *dev)
+OPTIMIZE("-Ofast") static res ata_read(void *buf, u32 lba, u32 sector_count, struct vfs_dev *dev)
 {
 	u8 drive = ((struct ata_data *)dev->data)->drive;
 	u16 io = (drive & ATA_PRIMARY << 1) == ATA_PRIMARY ? ATA_PRIMARY_IO : ATA_SECONDARY_IO;
