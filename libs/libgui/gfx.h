@@ -10,10 +10,11 @@
 
 #define WM_PATH "wm"
 
-#define GET_ALPHA(color) ((color >> 24) & 0x000000FF)
-#define GET_RED(color) ((color >> 16) & 0x000000FF)
-#define GET_GREEN(color) ((color >> 8) & 0x000000FF)
-#define GET_BLUE(color) ((color >> 0) & 0X000000FF)
+#define GET_COLOR(color, n) (((color) >> ((n) << 3)) & 0xff)
+#define GET_ALPHA(color) (GET_COLOR((color), 3))
+#define GET_RED(color) (GET_COLOR((color), 2))
+#define GET_GREEN(color) (GET_COLOR((color), 1))
+#define GET_BLUE(color) (GET_COLOR((color), 0))
 
 #define COLOR_TRANSPARENT 0x00000000
 #define COLOR_INVISIBLE 0x00000000
@@ -90,6 +91,7 @@ struct gfx_rect {
 };
 
 struct gfx_context *gfx_new_ctx(struct gfx_context *ctx, vec2 size, u8 bpp) NONNULL;
+struct gfx_context *gfx_clone(struct gfx_context *ctx) NONNULL;
 
 /**
  * Text stuff
@@ -108,8 +110,8 @@ int gfx_font_width(enum font_type);
  * Image loading
  */
 
-void gfx_load_image(struct gfx_context *ctx, vec2 pos, const char *path) NONNULL;
-void gfx_load_image_filter(struct gfx_context *ctx, vec2 pos, enum gfx_filter filter,
+void gfx_draw_image(struct gfx_context *ctx, vec2 pos, vec2 size, const char *path) NONNULL;
+void gfx_draw_image_filter(struct gfx_context *ctx, vec2 pos, vec2 size, enum gfx_filter filter,
 			   const char *path) NONNULL;
 void gfx_load_wallpaper(struct gfx_context *ctx, const char *path) NONNULL;
 
@@ -119,6 +121,12 @@ void gfx_load_wallpaper(struct gfx_context *ctx, const char *path) NONNULL;
 
 void gfx_copy(struct gfx_context *dest, struct gfx_context *src, vec2 pos, vec2 size) NONNULL;
 void gfx_ctx_on_ctx(struct gfx_context *dest, struct gfx_context *src, vec2 pos, u8 alpha) NONNULL;
+
+/**
+ * Context transformations
+ */
+
+struct gfx_context *gfx_scale(struct gfx_context *ctx, vec2 size) NONNULL;
 
 /**
  * Drawing functions

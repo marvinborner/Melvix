@@ -167,7 +167,7 @@ void gui_write(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, enum f
 		gui_error(EINVAL);
 }
 
-void gui_load_image_filter(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
+void gui_draw_image_filter(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
 			   enum gfx_filter filter, const char *path)
 {
 	UNUSED(size); // TODO: Add image scaling
@@ -177,17 +177,17 @@ void gui_load_image_filter(u32 win_id, u32 widget_id, enum gui_layer layer, vec2
 		gui_error(ENOENT);
 
 	if (layer == GUI_LAYER_BG)
-		gfx_load_image_filter(&widget->bg, pos, filter, path);
+		gfx_draw_image_filter(&widget->bg, pos, size, filter, path);
 	else if (layer == GUI_LAYER_FG)
-		gfx_load_image_filter(&widget->fg, pos, filter, path);
+		gfx_draw_image_filter(&widget->fg, pos, size, filter, path);
 	else
 		gui_error(EINVAL);
 }
 
-void gui_load_image(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
+void gui_draw_image(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
 		    const char *path)
 {
-	gui_load_image_filter(win_id, widget_id, layer, pos, size, GFX_FILTER_NONE, path);
+	gui_draw_image_filter(win_id, widget_id, layer, pos, size, GFX_FILTER_NONE, path);
 }
 
 void gui_draw_rectangle(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos1, vec2 pos2,

@@ -32,7 +32,7 @@ f64 pow(f64 base, f64 exp)
 
 // TODO: More efficient sqrt?
 
-f32 sqrtf(f64 num)
+f32 sqrtf(f32 num)
 {
 	return powf(num, .5);
 }
@@ -40,6 +40,30 @@ f32 sqrtf(f64 num)
 f64 sqrt(f64 num)
 {
 	return pow(num, .5);
+}
+
+/**
+ * Interpolations
+ */
+
+f32 lerpf(f32 from, f32 to, f32 trans)
+{
+	return from + (to - from) * trans;
+}
+
+f64 lerp(f64 from, f64 to, f64 trans)
+{
+	return from + (to - from) * trans;
+}
+
+f32 blerpf(f32 a, f32 b, f32 c, f32 d, f32 transx, f32 transy)
+{
+	return lerpf(lerpf(a, b, transx), lerpf(c, d, transx), transy);
+}
+
+f64 blerp(f64 a, f64 b, f64 c, f64 d, f64 transx, f64 transy)
+{
+	return lerp(lerp(a, b, transx), lerp(c, d, transx), transy);
 }
 
 /**

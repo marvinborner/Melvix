@@ -49,9 +49,9 @@ void gui_clear(u32 win_id, u32 widget_id, enum gui_layer layer);
 void gui_fill(u32 win_id, u32 widget_id, enum gui_layer layer, u32 c);
 void gui_write(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, enum font_type font_type,
 	       u32 c, const char *text);
-void gui_load_image(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
+void gui_draw_image(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
 		    const char *path) NONNULL;
-void gui_load_image_filter(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
+void gui_draw_image_filter(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos, vec2 size,
 			   enum gfx_filter filter, const char *path) NONNULL;
 void gui_draw_rectangle(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos1, vec2 pos2,
 			u32 c);

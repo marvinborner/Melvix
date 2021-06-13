@@ -1,7 +1,6 @@
 # MIT License, Copyright (c) 2020 Marvin Borner
 
 COBJS = psf.o \
-	bmp.o \
 	png.o \
 	gfx.o \
 	gui.o \

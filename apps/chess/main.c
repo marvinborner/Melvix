@@ -64,7 +64,7 @@ static void load_image(struct piece *tile)
 	enum gfx_filter filter = IS_COLOR(tile->piece, BLACK) ? GFX_FILTER_NONE : GFX_FILTER_INVERT;
 
 	/* assert(gui_fill(win, tile->widget, GUI_LAYER_FG, 0) == EOK); */
-	gui_load_image_filter(win, tile->widget, GUI_LAYER_FG, vec2(0, 0), vec2(TILE, TILE), filter,
+	gui_draw_image_filter(win, tile->widget, GUI_LAYER_FG, vec2(0, 0), vec2(TILE, TILE), filter,
 			      icon);
 }
 

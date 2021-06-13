@@ -5,12 +5,12 @@
 
 #include <assert.h>
 #include <crypto.h>
-#include <libgui/bmp.h>
 #include <libgui/gfx.h>
 #include <libgui/msg.h>
 #include <libgui/png.h>
 #include <libgui/psf.h>
 #include <list.h>
+#include <math.h>
 #include <mem.h>
 #include <str.h>
 #include <sys.h>
@@ -102,6 +102,19 @@ struct gfx_context *gfx_new_ctx(struct gfx_context *ctx, vec2 size, u8 bpp)
 	return ctx;
 }
 
+struct gfx_context *gfx_clone(struct gfx_context *ctx)
+{
+	struct gfx_context *new = zalloc(sizeof(*new));
+	gfx_new_ctx(new, ctx->size, ctx->bpp);
+	assert(new->bytes == ctx->bytes);
+	memcpy(new->fb, ctx->fb, ctx->bytes);
+	return new;
+}
+
+/**
+ * Font/text
+ */
+
 // On-demand font loading
 static u8 fonts_loaded = 0;
 struct gfx_font *gfx_resolve_font(enum font_type font_type)
@@ -147,9 +160,13 @@ void gfx_write(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 
 	}
 }
 
+/**
+ * Image drawing/caching
+ */
+
 struct gfx_image_cache {
 	u32 hash;
-	struct bmp *bmp;
+	struct gfx_context *ctx;
 };
 
 struct list *gfx_image_cache_list = NULL;
@@ -159,8 +176,8 @@ static void gfx_image_cache_clear(void)
 	struct node *iterator = gfx_image_cache_list->head;
 	while (iterator) {
 		struct gfx_image_cache *cache = iterator->data;
-		free(cache->bmp->data);
-		free(cache->bmp);
+		free(cache->ctx->fb);
+		free(cache->ctx);
 		free(cache);
 		iterator = iterator->next;
 	}
@@ -176,7 +193,7 @@ static void gfx_image_cache_init(void)
 	}
 }
 
-static struct bmp *gfx_image_cache_get(const char *path)
+static struct gfx_context *gfx_image_cache_get(const char *path)
 {
 	gfx_image_cache_init();
 
@@ -185,61 +202,65 @@ static struct bmp *gfx_image_cache_get(const char *path)
 	struct node *iterator = gfx_image_cache_list->head;
 	while (iterator) {
 		struct gfx_image_cache *cache = iterator->data;
-		if (cache->hash == hash) {
-			return cache->bmp;
-		}
+		if (cache->hash == hash)
+			return cache->ctx;
 		iterator = iterator->next;
 	}
 
 	return NULL;
 }
 
-static void gfx_image_cache_save(const char *path, struct bmp *bmp)
+static void gfx_image_cache_save(const char *path, struct gfx_context *ctx)
 {
 	gfx_image_cache_init();
 
 	struct gfx_image_cache *cache = zalloc(sizeof(*cache));
 	cache->hash = crc32(0, path, strlen(path));
-	cache->bmp = bmp;
+	cache->ctx = ctx;
 	list_add(gfx_image_cache_list, cache);
 }
 
-void gfx_load_image_filter(struct gfx_context *ctx, vec2 pos, enum gfx_filter filter,
+void gfx_draw_image_filter(struct gfx_context *ctx, vec2 pos, vec2 size, enum gfx_filter filter,
 			   const char *path)
 {
 	// TODO: Detect image type
 
-	struct bmp *bmp = gfx_image_cache_get(path);
+	struct gfx_context *bmp = gfx_image_cache_get(path);
 
 	if (!bmp) {
 		bmp = zalloc(sizeof(*bmp));
-		u32 error = png_decode32_file(&bmp->data, &bmp->size.x, &bmp->size.y, path);
+		u32 error = png_decode32_file(&bmp->fb, &bmp->size.x, &bmp->size.y, path);
 		if (error)
-			err(1, "error %u: %s\n", error, png_error_text(error));
+			err(1, "error %d: %s\n", error, png_error_text(error));
 
 		bmp->bpp = 32;
 		bmp->pitch = bmp->size.x * (bmp->bpp >> 3);
+		bmp->bytes = bmp->size.y * bmp->pitch;
 		gfx_image_cache_save(path, bmp);
 	}
+
+	// Scaling clones!
+	bmp = gfx_scale(bmp, size);
 
 	assert(bmp->size.x + pos.x <= ctx->size.x);
 	assert(bmp->size.y + pos.y <= ctx->size.y);
 
-	// TODO: Fix reversed png in decoder
 	u8 bypp = bmp->bpp >> 3;
-	/* u8 *srcfb = &bmp->data[bypp + (bmp->size.y - 1) * bmp->pitch]; */
-	u8 *srcfb = bmp->data;
+	u8 *srcfb = bmp->fb;
 	u8 *destfb = &ctx->fb[pos.x * bypp + pos.y * ctx->pitch];
 	for (u32 cy = 0; cy < bmp->size.y && cy + pos.y < ctx->size.y; cy++) {
 		int diff = 0;
 		for (u32 cx = 0; cx < bmp->size.x && cx + pos.x < ctx->size.x; cx++) {
 			if (srcfb[bypp - 1]) {
 				if (filter == GFX_FILTER_NONE) {
-					memcpy(destfb, srcfb, bypp);
+					destfb[0] = srcfb[2];
+					destfb[1] = srcfb[1];
+					destfb[2] = srcfb[0];
+					destfb[3] = srcfb[3];
 				} else if (filter == GFX_FILTER_INVERT) {
-					destfb[0] = 0xff - srcfb[0];
+					destfb[0] = 0xff - srcfb[2];
 					destfb[1] = 0xff - srcfb[1];
-					destfb[2] = 0xff - srcfb[2];
+					destfb[2] = 0xff - srcfb[0];
 					destfb[3] = srcfb[3];
 				}
 			}
@@ -251,22 +272,75 @@ void gfx_load_image_filter(struct gfx_context *ctx, vec2 pos, enum gfx_filter fi
 		srcfb += bmp->pitch - diff;
 		destfb += ctx->pitch - diff;
 	}
+
+	free(bmp);
+	free(bmp->fb);
 }
 
-void gfx_load_image(struct gfx_context *ctx, vec2 pos, const char *path)
+void gfx_draw_image(struct gfx_context *ctx, vec2 pos, vec2 size, const char *path)
 {
-	gfx_load_image_filter(ctx, pos, GFX_FILTER_NONE, path);
+	gfx_draw_image_filter(ctx, pos, size, GFX_FILTER_NONE, path);
 }
 
 void gfx_load_wallpaper(struct gfx_context *ctx, const char *path)
 {
-	gfx_load_image(ctx, vec2(0, 0), path);
+	gfx_draw_image(ctx, vec2(0, 0), ctx->size, path);
 }
 
-void gfx_draw_pixel(struct gfx_context *ctx, vec2 pos1, u32 c)
+/**
+ * Context transformations
+ */
+
+// Using bilinear interpolation
+// TODO: Fix alpha channel scaling
+struct gfx_context *gfx_scale(struct gfx_context *ctx, vec2 size)
+{
+	if (vec2_eq(ctx->size, size))
+		return gfx_clone(ctx);
+
+	u8 bypp = ctx->bpp >> 3;
+
+	struct gfx_context *new = zalloc(sizeof(*new));
+	gfx_new_ctx(new, size, ctx->bpp);
+
+	for (u32 x = 0, y = 0; y < size.y; x++) {
+		if (x > size.x) {
+			x = 0;
+			y++;
+		}
+
+		f32 gx = x / (f32)size.x * (ctx->size.x - 1);
+		f32 gy = y / (f32)size.y * (ctx->size.y - 1);
+		u32 gxi = (u32)gx;
+		u32 gyi = (u32)gy;
+
+		u32 a = *(u32 *)&ctx->fb[(gxi + 0) * bypp + (gyi + 0) * ctx->pitch];
+		u32 b = *(u32 *)&ctx->fb[(gxi + 1) * bypp + (gyi + 0) * ctx->pitch];
+		u32 c = *(u32 *)&ctx->fb[(gxi + 0) * bypp + (gyi + 1) * ctx->pitch];
+		u32 d = *(u32 *)&ctx->fb[(gxi + 1) * bypp + (gyi + 1) * ctx->pitch];
+
+		u32 color = 0;
+		for (u8 i = 0; i < bypp - 1; i++) {
+			color |= ((u8)blerpf(GET_COLOR(a, i), GET_COLOR(b, i), GET_COLOR(c, i),
+					     GET_COLOR(d, i), gx - gxi, gy - gyi))
+				 << (i << 3);
+		}
+
+		color |= 0xffu << ((bypp - 1) << 3);
+		gfx_draw_pixel(new, vec2(x, y), color);
+	}
+
+	return new;
+}
+
+/**
+ * General drawing functions
+ */
+
+void gfx_draw_pixel(struct gfx_context *ctx, vec2 pos, u32 c)
 {
 	u8 bypp = ctx->bpp >> 3;
-	u8 *draw = &ctx->fb[pos1.x * bypp + pos1.y * ctx->pitch];
+	u8 *draw = &ctx->fb[pos.x * bypp + pos.y * ctx->pitch];
 	draw[0] = GET_BLUE(c);
 	draw[1] = GET_GREEN(c);
 	draw[2] = GET_RED(c);

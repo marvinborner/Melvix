@@ -476,9 +476,10 @@ static void window_bar_draw(struct window *win, char name[64])
 		return;
 
 	gfx_write(&win->ctx, vec2(BAR_MARGIN, BAR_MARGIN), FONT_24, COLOR_WHITE, name);
-	gfx_load_image_filter(&win->ctx,
+	gfx_draw_image_filter(&win->ctx,
 			      vec2(win->ctx.size.x - BAR_CLOSE_SIZE - BAR_MARGIN, BAR_MARGIN),
-			      GFX_FILTER_INVERT, "/icons/close-" STRINGIFY(BAR_CLOSE_SIZE) ".png");
+			      vec2(BAR_CLOSE_SIZE, BAR_CLOSE_SIZE), GFX_FILTER_INVERT,
+			      "/icons/close-" STRINGIFY(BAR_CLOSE_SIZE) ".png");
 }
 
 /**
@@ -751,7 +752,7 @@ int main(int argc, char **argv)
 
 	assert(io_control(IO_BUS, IOCTL_BUS_REGISTER, "wm") == EOK);
 
-	assert(exec("paint", NULL) == EOK);
+	assert(exec("view", NULL) == EOK);
 
 	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
