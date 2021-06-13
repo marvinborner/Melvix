@@ -292,7 +292,6 @@ void gfx_load_wallpaper(struct gfx_context *ctx, const char *path)
  */
 
 // Using bilinear interpolation
-// TODO: Fix alpha channel scaling
 struct gfx_context *gfx_scale(struct gfx_context *ctx, vec2 size)
 {
 	if (vec2_eq(ctx->size, size))
@@ -320,13 +319,12 @@ struct gfx_context *gfx_scale(struct gfx_context *ctx, vec2 size)
 		u32 d = *(u32 *)&ctx->fb[(gxi + 1) * bypp + (gyi + 1) * ctx->pitch];
 
 		u32 color = 0;
-		for (u8 i = 0; i < bypp - 1; i++) {
-			color |= ((u8)blerpf(GET_COLOR(a, i), GET_COLOR(b, i), GET_COLOR(c, i),
-					     GET_COLOR(d, i), gx - gxi, gy - gyi))
+		for (u8 i = 0; i < bypp; i++) {
+			color |= ((u32)blerpf(GET_COLOR(a, i), GET_COLOR(b, i), GET_COLOR(c, i),
+					      GET_COLOR(d, i), gx - gxi, gy - gyi))
 				 << (i << 3);
 		}
 
-		color |= 0xffu << ((bypp - 1) << 3);
 		gfx_draw_pixel(new, vec2(x, y), color);
 	}
 
