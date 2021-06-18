@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <bus.h>
 #include <def.h>
+#include <dev.h>
 #include <drivers/bga.h>
 #include <drivers/cpu.h>
 #include <drivers/int.h>
@@ -11,7 +12,6 @@
 #include <drivers/vbe.h>
 #include <drivers/vmware.h>
 #include <fb.h>
-#include <io.h>
 #include <list.h>
 #include <logger.h>
 #include <mem.h>
@@ -22,39 +22,39 @@
 #include <str.h>
 #include <syscall.h>
 
-struct io_listener {
+struct dev_listener {
 	u32 group;
 	struct proc *proc;
 };
 
-PROTECTED static struct io_dev *io_mappings[IO_MAX] = { 0 };
-PROTECTED static struct list *io_listeners[IO_MAX] = { 0 };
+PROTECTED static struct dev_dev *dev_mappings[DEV_MAX] = { 0 };
+PROTECTED static struct list *dev_listeners[DEV_MAX] = { 0 };
 
 static u32 group_id = 0;
 
-static u8 io_type_valid(enum io_type io)
+static u8 dev_type_valid(enum dev_type type)
 {
-	return io > IO_MIN && io < IO_MAX;
+	return type > DEV_MIN && type < DEV_MAX;
 }
 
-static struct io_dev *io_get(enum io_type io)
+static struct dev_dev *dev_get(enum dev_type type)
 {
-	if (!io_type_valid(io))
+	if (!dev_type_valid(type))
 		return NULL;
 
-	return io_mappings[io];
+	return dev_mappings[type];
 }
 
 // TODO: Efficiency
-static void io_remove_group(u32 group)
+static void dev_remove_group(u32 group)
 {
-	for (u32 io = IO_MIN; io < IO_MAX; io++) {
-		struct node *iterator = io_listeners[io]->head;
+	for (u32 dev = DEV_MIN; dev < DEV_MAX; dev++) {
+		struct node *iterator = dev_listeners[dev]->head;
 		while (iterator) {
-			struct io_listener *listener = iterator->data;
+			struct dev_listener *listener = iterator->data;
 			struct node *next = iterator->next;
 			if (listener->group == group)
-				list_remove(io_listeners[io], iterator);
+				list_remove(dev_listeners[dev], iterator);
 			iterator = next;
 		}
 	}
@@ -63,13 +63,13 @@ static void io_remove_group(u32 group)
 		group_id--;
 }
 
-CLEAR void io_add(enum io_type io, struct io_dev *dev)
+CLEAR void dev_add(enum dev_type type, struct dev_dev *dev)
 {
-	assert(io_type_valid(io) && !io_mappings[io]);
-	io_mappings[io] = dev;
+	assert(dev_type_valid(type) && !dev_mappings[type]);
+	dev_mappings[type] = dev;
 }
 
-res io_poll(u32 *devs)
+res dev_poll(u32 *devs)
 {
 	if (!memory_readable(devs))
 		return -EFAULT;
@@ -78,67 +78,67 @@ res io_poll(u32 *devs)
 
 	for (u32 *p = devs; p && memory_readable(p); p++) {
 		stac();
-		enum io_type io = *p;
+		enum dev_type type = *p;
 		clac();
 
-		if (!io)
+		if (!type)
 			break;
 
-		struct io_dev *dev = io_get(io);
+		struct dev_dev *dev = dev_get(type);
 		if (!dev || !dev->read) {
-			io_remove_group(group);
+			dev_remove_group(group);
 			return -ENOENT;
 		}
 
 		if (dev->ready) {
 			res ready = dev->ready();
 			if (ready == EOK) {
-				io_remove_group(group);
-				return io;
+				dev_remove_group(group);
+				return type;
 			} else if (ready != -EAGAIN) {
 				return ready;
 			}
 		}
 
-		struct io_listener *listener = zalloc(sizeof(*listener));
+		struct dev_listener *listener = zalloc(sizeof(*listener));
 		listener->group = group;
 		listener->proc = proc_current();
-		list_add(io_listeners[io], listener);
+		list_add(dev_listeners[type], listener);
 	}
 
 	proc_state(proc_current(), PROC_BLOCKED);
 	proc_yield();
-	return io_poll(devs);
+	return dev_poll(devs);
 }
 
-res io_control(enum io_type io, u32 request, void *arg1, void *arg2, void *arg3)
+res dev_control(enum dev_type type, u32 request, void *arg1, void *arg2, void *arg3)
 {
-	struct io_dev *dev;
-	if (!(dev = io_get(io)) || !dev->control)
+	struct dev_dev *dev;
+	if (!(dev = dev_get(type)) || !dev->control)
 		return -ENOENT;
 
 	return dev->control(request, arg1, arg2, arg3);
 }
 
-res io_write(enum io_type io, const void *buf, u32 offset, u32 count)
+res dev_write(enum dev_type type, const void *buf, u32 offset, u32 count)
 {
 	if (!memory_readable_range(memory_range(buf, count)))
 		return -EFAULT;
 
-	struct io_dev *dev;
-	if (!(dev = io_get(io)) || !dev->write)
+	struct dev_dev *dev;
+	if (!(dev = dev_get(type)) || !dev->write)
 		return -ENOENT;
 
 	return dev->write(buf, offset, count);
 }
 
-res io_read(enum io_type io, void *buf, u32 offset, u32 count)
+res dev_read(enum dev_type type, void *buf, u32 offset, u32 count)
 {
 	if (!memory_writable_range(memory_range(buf, count)))
 		return -EFAULT;
 
-	struct io_dev *dev;
-	if (!(dev = io_get(io)) || !dev->read)
+	struct dev_dev *dev;
+	if (!(dev = dev_get(type)) || !dev->read)
 		return -ENOENT;
 
 	if (dev->ready && dev->ready() != EOK)
@@ -147,10 +147,10 @@ res io_read(enum io_type io, void *buf, u32 offset, u32 count)
 	return dev->read(buf, offset, count);
 }
 
-res io_ready(enum io_type io)
+res dev_ready(enum dev_type type)
 {
-	struct io_dev *dev;
-	if (!(dev = io_get(io)))
+	struct dev_dev *dev;
+	if (!(dev = dev_get(type)))
 		return -ENOENT;
 
 	if (dev->ready && dev->ready() != EOK)
@@ -159,27 +159,27 @@ res io_ready(enum io_type io)
 	return EOK;
 }
 
-void io_block(enum io_type io, struct proc *proc)
+void dev_block(enum dev_type type, struct proc *proc)
 {
-	assert(io_type_valid(io));
-	struct io_listener *listener = zalloc(sizeof(*listener));
+	assert(dev_type_valid(type));
+	struct dev_listener *listener = zalloc(sizeof(*listener));
 	listener->group = group_id++;
 	listener->proc = proc;
-	list_add(io_listeners[io], listener);
+	list_add(dev_listeners[type], listener);
 	proc_state(proc_current(), PROC_BLOCKED);
 	proc_yield();
 }
 
-void io_unblock(enum io_type io)
+void dev_unblock(enum dev_type type)
 {
-	assert(io_type_valid(io));
-	struct node *iterator = io_listeners[io]->head;
+	assert(dev_type_valid(type));
+	struct node *iterator = dev_listeners[type]->head;
 	while (iterator) {
-		struct io_listener *listener = iterator->data;
+		struct dev_listener *listener = iterator->data;
 		struct proc *proc = listener->proc;
 		proc_state(proc, PROC_RUNNING);
 		struct node *next = iterator->next;
-		io_remove_group(listener->group);
+		dev_remove_group(listener->group);
 		free(listener);
 		iterator = next;
 	}
@@ -188,17 +188,17 @@ void io_unblock(enum io_type io)
 		proc_yield();
 }
 
-void io_unblock_pid(u32 pid)
+void dev_unblock_pid(u32 pid)
 {
-	for (u32 io = IO_MIN; io < IO_MAX; io++) {
-		struct node *iterator = io_listeners[io]->head;
+	for (u32 type = DEV_MIN; type < DEV_MAX; type++) {
+		struct node *iterator = dev_listeners[type]->head;
 		while (iterator) {
-			struct io_listener *listener = iterator->data;
+			struct dev_listener *listener = iterator->data;
 			struct proc *proc = listener->proc;
 			proc_state(proc, PROC_RUNNING);
 			struct node *next = iterator->next;
 			if (proc->pid == pid) {
-				list_remove(io_listeners[io], iterator);
+				list_remove(dev_listeners[type], iterator);
 				free(listener);
 			}
 			iterator = next;
@@ -209,10 +209,10 @@ void io_unblock_pid(u32 pid)
 		proc_yield();
 }
 
-CLEAR void io_install(void)
+CLEAR void dev_install(void)
 {
-	for (u32 i = 0; i < IO_MAX; i++)
-		io_listeners[i] = list_new();
+	for (u32 i = 0; i < DEV_MAX; i++)
+		dev_listeners[i] = list_new();
 
 	/**
 	 * Keyboard & mouse detection

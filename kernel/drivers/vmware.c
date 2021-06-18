@@ -2,10 +2,10 @@
 // VMWare extensions/backdoors for better VM integration
 
 #include <def.h>
+#include <dev.h>
 #include <drivers/int.h>
 #include <drivers/ps2.h>
 #include <drivers/vmware.h>
-#include <io.h>
 #include <mem.h>
 #include <print.h>
 #include <stack.h>
@@ -125,7 +125,7 @@ static void vmware_mouse_handler(void)
 	event->but.right = (buttons & VMMOUSE_RIGHT_CLICK) != 0;
 	event->but.middle = (buttons & VMMOUSE_MIDDLE_CLICK) != 0;
 	stack_push_bot(queue, event);
-	io_unblock(IO_MOUSE);
+	dev_unblock(DEV_MOUSE);
 }
 
 static res vmware_mouse_ready(void)
@@ -152,8 +152,8 @@ CLEAR void vmware_mouse_install(u8 device)
 	int_event_handler_add(12, vmware_mouse_handler);
 
 	queue = stack_new();
-	struct io_dev *dev = zalloc(sizeof(*dev));
+	struct dev_dev *dev = zalloc(sizeof(*dev));
 	dev->read = vmware_mouse_read;
 	dev->ready = vmware_mouse_ready;
-	io_add(IO_MOUSE, dev);
+	dev_add(DEV_MOUSE, dev);
 }

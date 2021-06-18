@@ -1,10 +1,10 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
 #include <def.h>
+#include <dev.h>
 #include <drivers/cpu.h>
 #include <drivers/serial.h>
 #include <errno.h>
-#include <io.h>
 #include <logger.h>
 #include <mem.h>
 #include <print.h>
@@ -36,7 +36,7 @@ static res logger_write(const void *buf, u32 offset, u32 count)
 
 void logger_install(void)
 {
-	struct io_dev *dev = zalloc(sizeof(*dev));
+	struct dev_dev *dev = zalloc(sizeof(*dev));
 	dev->write = logger_write;
-	io_add(IO_LOGGER, dev);
+	dev_add(DEV_LOGGER, dev);
 }

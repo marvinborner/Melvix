@@ -128,22 +128,22 @@ res exec(const char *path, ...)
 	return sys5(SYS_EXEC, (int)path, args[0], args[1], args[2], args[3]);
 }
 
-res io_poll(enum io_type *devs)
+res dev_poll(enum dev_type *devs)
 {
-	return sys1(SYS_IOPOLL, (int)devs);
+	return sys1(SYS_DEV_POLL, (int)devs);
 }
 
-res io_read(enum io_type io, void *buf, u32 offset, u32 count)
+res dev_read(enum dev_type io, void *buf, u32 offset, u32 count)
 {
-	return sys4(SYS_IOREAD, (int)io, (int)buf, (int)offset, (int)count);
+	return sys4(SYS_DEV_READ, (int)io, (int)buf, (int)offset, (int)count);
 }
 
-res io_write(enum io_type io, const void *buf, u32 offset, u32 count)
+res dev_write(enum dev_type io, const void *buf, u32 offset, u32 count)
 {
-	return sys4(SYS_IOWRITE, (int)io, (int)buf, (int)offset, (int)count);
+	return sys4(SYS_DEV_WRITE, (int)io, (int)buf, (int)offset, (int)count);
 }
 
-res io_control(enum io_type io, ...)
+res dev_control(enum dev_type io, ...)
 {
 	va_list ap;
 	int args[4] = { 0 };
@@ -153,7 +153,7 @@ res io_control(enum io_type io, ...)
 		args[i] = va_arg(ap, int);
 	va_end(ap);
 
-	return sys5(SYS_IOCONTROL, (int)io, args[0], args[1], args[2], args[3]);
+	return sys5(SYS_DEV_CONTROL, (int)io, args[0], args[1], args[2], args[3]);
 }
 
 res yield(void)

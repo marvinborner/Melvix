@@ -1,11 +1,11 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
+#include <dev.h>
 #include <drivers/cpu.h>
 #include <drivers/int.h>
 #include <drivers/ps2.h>
 #include <errno.h>
-#include <io.h>
 #include <mem.h>
 #include <print.h>
 #include <proc.h>
@@ -33,7 +33,7 @@ static void mouse_finish(void)
 	event->but.middle = (mouse_byte[0] >> 2) & 1;
 	stack_push_bot(queue, event);
 	mouse_cycle = 0;
-	io_unblock(IO_MOUSE);
+	dev_unblock(DEV_MOUSE);
 }
 
 static void mouse_handler(void)
@@ -141,8 +141,8 @@ CLEAR void ps2_mouse_install(u8 device)
 	int_event_handler_add(12, mouse_handler);
 
 	queue = stack_new();
-	struct io_dev *dev = zalloc(sizeof(*dev));
+	struct dev_dev *dev = zalloc(sizeof(*dev));
 	dev->read = mouse_read;
 	dev->ready = mouse_ready;
-	io_add(IO_MOUSE, dev);
+	dev_add(DEV_MOUSE, dev);
 }

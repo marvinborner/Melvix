@@ -1,11 +1,11 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <def.h>
+#include <dev.h>
 #include <drivers/cpu.h>
 #include <drivers/int.h>
 #include <drivers/ps2.h>
 #include <errno.h>
-#include <io.h>
 #include <mem.h>
 #include <print.h>
 #include <proc.h>
@@ -43,7 +43,7 @@ static void keyboard_handler(void)
 	state = 0;
 	merged = 0;
 
-	io_unblock(IO_KEYBOARD);
+	dev_unblock(DEV_KEYBOARD);
 }
 
 static res keyboard_read(void *buf, u32 offset, u32 count)
@@ -75,8 +75,8 @@ CLEAR void ps2_keyboard_install(u8 device)
 	int_event_handler_add(1, keyboard_handler);
 
 	queue = stack_new();
-	struct io_dev *dev = zalloc(sizeof(*dev));
+	struct dev_dev *dev = zalloc(sizeof(*dev));
 	dev->read = keyboard_read;
 	dev->ready = keyboard_ready;
-	io_add(IO_KEYBOARD, dev);
+	dev_add(DEV_KEYBOARD, dev);
 }

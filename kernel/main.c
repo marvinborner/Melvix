@@ -1,5 +1,6 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <dev.h>
 #include <drivers/cpu.h>
 #include <drivers/gdt.h>
 #include <drivers/ide.h>
@@ -9,7 +10,6 @@
 #include <drivers/rtc.h>
 #include <drivers/serial.h>
 #include <fs.h>
-#include <io.h>
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
@@ -42,7 +42,7 @@ int kernel_main(u32 magic, u32 addr, u32 esp)
 	pci_install();
 	pic_install();
 	idt_install();
-	io_install();
+	dev_install();
 
 	syscall_init();
 	proc_init();

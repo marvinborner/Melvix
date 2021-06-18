@@ -84,7 +84,7 @@ int snprintf(char *str, u32 size, const char *format, ...)
 
 int vprintf(const char *format, va_list ap)
 {
-	return viprintf(IO_LOGGER, format, ap);
+	return vdprintf(DEV_LOGGER, format, ap);
 }
 
 int vfprintf(const char *path, const char *format, va_list ap)
@@ -94,11 +94,11 @@ int vfprintf(const char *path, const char *format, va_list ap)
 	return write(path, buf, 0, len);
 }
 
-int viprintf(enum io_type io, const char *format, va_list ap)
+int vdprintf(enum dev_type io, const char *format, va_list ap)
 {
 	char buf[1024] = { 0 };
 	int len = vsnprintf(buf, sizeof(buf), format, ap);
-	return io_write(io, buf, 0, len);
+	return dev_write(io, buf, 0, len);
 }
 
 int fprintf(const char *path, const char *format, ...)
@@ -111,11 +111,11 @@ int fprintf(const char *path, const char *format, ...)
 	return len;
 }
 
-int iprintf(enum io_type io, const char *format, ...)
+int dprintf(enum dev_type io, const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	int len = viprintf(io, format, ap);
+	int len = vdprintf(io, format, ap);
 	va_end(ap);
 
 	return len;
@@ -135,7 +135,7 @@ int log(const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	int len = viprintf(IO_LOGGER, format, ap);
+	int len = vdprintf(DEV_LOGGER, format, ap);
 	va_end(ap);
 
 	return len;
@@ -143,18 +143,19 @@ int log(const char *format, ...)
 
 NORETURN void err(int code, const char *format, ...)
 {
+	log("Exiting process with code %d\n", code);
 	if (errno != EOK)
 		log("ERRNO: %d (%s)\n", errno, strerror(errno));
 	va_list ap;
 	va_start(ap, format);
-	viprintf(IO_LOGGER, format, ap);
+	vdprintf(DEV_LOGGER, format, ap);
 	va_end(ap);
 	exit(code);
 }
 
 int print(const char *str)
 {
-	return io_write(IO_LOGGER, str, 0, strlen(str));
+	return dev_write(DEV_LOGGER, str, 0, strlen(str));
 }
 
 #else

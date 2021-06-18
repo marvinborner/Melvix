@@ -242,14 +242,11 @@ void gfx_draw_image_filter(struct gfx_context *ctx, vec2 pos, vec2 size, enum gf
 	// Scaling clones!
 	bmp = gfx_scale(bmp, size);
 
-	assert(bmp->size.x + pos.x <= ctx->size.x);
-	assert(bmp->size.y + pos.y <= ctx->size.y);
-
 	u8 bypp = bmp->bpp >> 3;
 	u8 *srcfb = bmp->fb;
 	u8 *destfb = &ctx->fb[pos.x * bypp + pos.y * ctx->pitch];
 	for (u32 cy = 0; cy < bmp->size.y && cy + pos.y < ctx->size.y; cy++) {
-		int diff = 0;
+		u32 diff = 0;
 		for (u32 cx = 0; cx < bmp->size.x && cx + pos.x < ctx->size.x; cx++) {
 			if (srcfb[bypp - 1]) {
 				if (filter == GFX_FILTER_NONE) {

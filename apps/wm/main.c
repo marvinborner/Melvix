@@ -429,11 +429,12 @@ static void window_ping_check(void)
 	}
 }
 
+// TODO: Run ping in parallel thread/process
 static void window_ping_all(void)
 {
 	static struct timer last = { 0 };
 	struct timer timer;
-	io_read(IO_TIMER, &timer, 0, sizeof(timer));
+	dev_read(DEV_TIMER, &timer, 0, sizeof(timer));
 	if (timer.time - last.time > PING_INTERVAL) {
 		window_ping_check();
 
@@ -726,7 +727,7 @@ int main(int argc, char **argv)
 
 	atexit(handle_exit);
 
-	assert(io_control(IO_FRAMEBUFFER, IOCTL_FB_GET, &screen, sizeof(screen)) == EOK);
+	assert(dev_control(DEV_FRAMEBUFFER, DEVCTL_FB_GET, &screen, sizeof(screen)) == EOK);
 	log("WM loaded: %dx%d\n", screen.width, screen.height);
 	wm_client = (struct client){ .conn = 0 };
 	bypp = (screen.bpp >> 3);
@@ -750,26 +751,27 @@ int main(int argc, char **argv)
 	gfx_load_wallpaper(&cursor->ctx, "/res/cursor.png");
 	window_redraw(wallpaper);
 
-	assert(io_control(IO_BUS, IOCTL_BUS_REGISTER, "wm") == EOK);
+	assert(dev_control(DEV_BUS, DEVCTL_BUS_REGISTER, "wm") == EOK);
 
-	assert(exec("view", NULL) == EOK);
+	assert(exec("test", NULL) == EOK);
+	assert(exec("test", NULL) == EOK);
 
 	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
 	struct event_mouse event_mouse = { 0 };
-	enum io_type listeners[] = { IO_KEYBOARD, IO_MOUSE, IO_BUS, 0 };
+	enum dev_type listeners[] = { DEV_KEYBOARD, DEV_MOUSE, DEV_BUS, 0 };
 
 	while (1) {
 		res poll_ret = 0;
-		if ((poll_ret = io_poll(listeners)) >= 0) {
-			if (poll_ret == IO_KEYBOARD) {
-				if (io_read(IO_KEYBOARD, &event_keyboard, 0,
-					    sizeof(event_keyboard)) > 0)
+		if ((poll_ret = dev_poll(listeners)) >= 0) {
+			if (poll_ret == DEV_KEYBOARD) {
+				if (dev_read(DEV_KEYBOARD, &event_keyboard, 0,
+					     sizeof(event_keyboard)) > 0)
 					handle_event_keyboard(&event_keyboard);
-			} else if (poll_ret == IO_MOUSE) {
-				if (io_read(IO_MOUSE, &event_mouse, 0, sizeof(event_mouse)) > 0)
+			} else if (poll_ret == DEV_MOUSE) {
+				if (dev_read(DEV_MOUSE, &event_mouse, 0, sizeof(event_mouse)) > 0)
 					handle_event_mouse(&event_mouse);
-			} else if (poll_ret == IO_BUS) {
+			} else if (poll_ret == DEV_BUS) {
 				if (msg_receive(msg, sizeof(msg)) > 0)
 					handle_message(msg);
 			}

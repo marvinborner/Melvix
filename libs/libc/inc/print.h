@@ -16,9 +16,9 @@ NORETURN void panic(const char *format, ...) NONNULL;
 #ifdef USER
 #include <sys.h>
 int vfprintf(const char *path, const char *format, va_list ap) NONNULL;
-int viprintf(enum io_type io, const char *format, va_list ap) NONNULL;
+int vdprintf(enum dev_type io, const char *format, va_list ap) NONNULL;
 int fprintf(const char *path, const char *format, ...) NONNULL;
-int iprintf(enum io_type io, const char *format, ...) NONNULL;
+int dprintf(enum dev_type io, const char *format, ...) NONNULL;
 int log(const char *format, ...) NONNULL;
 NORETURN void err(int code, const char *format, ...) NONNULL;
 #else

@@ -1,11 +1,11 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <def.h>
+#include <dev.h>
 #include <drivers/cpu.h>
 #include <drivers/int.h>
 #include <drivers/rtc.h>
 #include <drivers/timer.h>
-#include <io.h>
 #include <mem.h>
 #include <proc.h>
 
@@ -70,7 +70,7 @@ CLEAR void timer_install(void)
 	timer_phase(1000);
 	int_event_handler_add(0, timer_handler);
 
-	struct io_dev *dev = zalloc(sizeof(*dev));
+	struct dev_dev *dev = zalloc(sizeof(*dev));
 	dev->read = timer_read;
-	io_add(IO_TIMER, dev);
+	dev_add(DEV_TIMER, dev);
 }

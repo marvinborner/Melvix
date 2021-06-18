@@ -4,9 +4,9 @@
 #include <bus.h>
 #include <crypto.h>
 #include <def.h>
+#include <dev.h>
 #include <drivers/cpu.h>
 #include <errno.h>
-#include <io.h>
 #include <list.h>
 #include <mem.h>
 #include <mm.h>
@@ -36,8 +36,8 @@ struct bus {
 	u32 hash;
 };
 
-PROTECTED struct list *bus_list = NULL;
-PROTECTED struct list *bus_conns = NULL;
+PROTECTED static struct list *bus_list = NULL;
+PROTECTED static struct list *bus_conns = NULL;
 static u32 conn_cnt = 1; // 0 is reserved
 
 static struct bus *bus_find_bus(u32 hash)
@@ -104,7 +104,10 @@ static res bus_register(const char *name)
 
 	u32 hash = crc32_user(0, name, len);
 	if (bus_find_bus(hash))
-		return -EBUSY;
+		return -EINVAL;
+
+	if (bus_find_owner(proc_current()->pid))
+		return -EEXIST;
 
 	struct bus *bus = zalloc(sizeof(*bus));
 	strlcpy_user(bus->name, name, sizeof(bus->name));
@@ -182,10 +185,10 @@ static res bus_send(u32 conn, const void *buf, u32 count)
 
 	if (bus->pid == proc_current()->pid) {
 		stack_push_bot(bus_conn->out, msg);
-		io_unblock_pid(bus_conn->pid);
+		dev_unblock_pid(bus_conn->pid);
 	} else {
 		stack_push_bot(bus_conn->in, msg);
-		io_unblock_pid(bus->pid);
+		dev_unblock_pid(bus->pid);
 	}
 
 	return count;
@@ -229,8 +232,6 @@ static res bus_receive(void *buf, u32 offset, u32 count)
 	if (!bus_owner && !bus_conn)
 		return -ENOENT;
 
-	// TODO: Better round-robin
-
 	if (bus_owner) {
 		struct node *iterator = bus_conns->head;
 		while (iterator) {
@@ -257,13 +258,13 @@ static res bus_control(u32 request, void *arg1, void *arg2, void *arg3)
 	UNUSED(arg3);
 
 	switch (request) {
-	case IOCTL_BUS_CONNECT_BUS: {
+	case DEVCTL_BUS_CONNECT_BUS: {
 		return bus_connect_bus(arg1, arg2);
 	}
-	case IOCTL_BUS_CONNECT_CONN: {
+	case DEVCTL_BUS_CONNECT_CONN: {
 		return bus_connect_conn((u32)arg1);
 	}
-	case IOCTL_BUS_REGISTER: {
+	case DEVCTL_BUS_REGISTER: {
 		return bus_register(arg1);
 	}
 	default: {
@@ -307,8 +308,6 @@ static res bus_ready(void)
 	if (!bus_owner && !bus_conn)
 		return -ENOENT;
 
-	// TODO: Better round-robin
-
 	if (bus_owner) {
 		struct node *iterator = bus_conns->head;
 		while (iterator) {
@@ -331,10 +330,10 @@ CLEAR void bus_install(void)
 	bus_list = list_new();
 	bus_conns = list_new();
 
-	struct io_dev *dev = zalloc(sizeof(*dev));
+	struct dev_dev *dev = zalloc(sizeof(*dev));
 	dev->control = bus_control;
 	dev->read = bus_read;
 	dev->ready = bus_ready;
 	dev->write = bus_write;
-	io_add(IO_BUS, dev);
+	dev_add(DEV_BUS, dev);
 }

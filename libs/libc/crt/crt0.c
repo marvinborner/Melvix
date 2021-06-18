@@ -16,7 +16,7 @@ int _start(int argc, char **argv);
 int _start(int argc, char **argv)
 {
 	struct timer timer = { 0 };
-	assert(io_read(IO_TIMER, &timer, 0, sizeof(timer)) == sizeof(timer));
+	assert(dev_read(DEV_TIMER, &timer, 0, sizeof(timer)) == sizeof(timer));
 	srand(timer.rtc + timer.time);
 	__stack_chk_guard = rand();
 

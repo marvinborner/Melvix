@@ -1,11 +1,11 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
+#include <dev.h>
 #include <drivers/cpu.h>
 #include <drivers/int.h>
 #include <drivers/timer.h>
 #include <errno.h>
 #include <fs.h>
-#include <io.h>
 #include <load.h>
 #include <mem.h>
 #include <mm.h>
@@ -57,29 +57,29 @@ static u32 syscall_handler(u32 esp)
 		break;
 	}
 
-	// I/O operations
-	case SYS_IOPOLL: {
-		frame->eax = io_poll((void *)frame->ebx);
+	// Device operations
+	case SYS_DEV_POLL: {
+		frame->eax = dev_poll((void *)frame->ebx);
 		break;
 	}
-	case SYS_IOREAD: {
-		res ready = io_ready(frame->ebx);
+	case SYS_DEV_READ: {
+		res ready = dev_ready(frame->ebx);
 		if (ready == -EAGAIN) {
-			io_block(frame->ebx, proc_current());
+			dev_block(frame->ebx, proc_current());
 		} else if (ready != EOK) {
 			frame->eax = ready;
 			break;
 		}
-		frame->eax = io_read(frame->ebx, (void *)frame->ecx, frame->edx, frame->esi);
+		frame->eax = dev_read(frame->ebx, (void *)frame->ecx, frame->edx, frame->esi);
 		break;
 	}
-	case SYS_IOWRITE: {
-		frame->eax = io_write(frame->ebx, (void *)frame->ecx, frame->edx, frame->esi);
+	case SYS_DEV_WRITE: {
+		frame->eax = dev_write(frame->ebx, (void *)frame->ecx, frame->edx, frame->esi);
 		break;
 	}
-	case SYS_IOCONTROL: {
-		frame->eax = io_control(frame->ebx, frame->ecx, (void *)frame->edx,
-					(void *)frame->esi, (void *)frame->edi);
+	case SYS_DEV_CONTROL: {
+		frame->eax = dev_control(frame->ebx, frame->ecx, (void *)frame->edx,
+					 (void *)frame->esi, (void *)frame->edi);
 		break;
 	}
 

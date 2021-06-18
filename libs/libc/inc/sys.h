@@ -24,33 +24,33 @@ enum sys {
 	SYS_WRITE, // Write to file
 	SYS_STAT, // Get file information
 	SYS_EXEC, // Execute path
-	SYS_IOPOLL, // Block proc until I/O device is ready
-	SYS_IOREAD, // Read data from I/O device (blocking)
-	SYS_IOWRITE, // Write data to I/O device
-	SYS_IOCONTROL, // Interact with an I/O device
+	SYS_DEV_POLL, // Block proc until device is ready
+	SYS_DEV_READ, // Read data from device (blocking)
+	SYS_DEV_WRITE, // Write data to device
+	SYS_DEV_CONTROL, // Interact with an I/O device
 	SYS_EXIT, // Exit current process
 	SYS_BOOT, // Boot functions (e.g. reboot/shutdown)
 	SYS_YIELD, // Switch to next process
 	SYS_MAX,
 };
 
-enum io_type {
-	IO_MIN,
-	IO_LOGGER,
-	IO_FRAMEBUFFER,
-	IO_NETWORK,
-	IO_KEYBOARD,
-	IO_MOUSE,
-	IO_TIMER,
-	IO_BUS,
-	IO_MAX,
+enum dev_type {
+	DEV_MIN,
+	DEV_LOGGER,
+	DEV_FRAMEBUFFER,
+	DEV_NETWORK,
+	DEV_KEYBOARD,
+	DEV_MOUSE,
+	DEV_TIMER,
+	DEV_BUS,
+	DEV_MAX,
 };
 
-// I/O control declarations
-#define IOCTL_FB_GET 0
-#define IOCTL_BUS_CONNECT_BUS 0
-#define IOCTL_BUS_CONNECT_CONN 1
-#define IOCTL_BUS_REGISTER 2
+// Device control declarations
+#define DEVCTL_FB_GET 0
+#define DEVCTL_BUS_CONNECT_BUS 0
+#define DEVCTL_BUS_CONNECT_CONN 1
+#define DEVCTL_BUS_REGISTER 2
 
 struct fb_generic {
 	u16 bpp;
@@ -112,10 +112,10 @@ res write(const char *path, const void *buf, u32 offset, u32 count) NONNULL;
 res stat(const char *path, struct stat *buf) NONNULL;
 res exec(const char *path, ...) ATTR((nonnull(1))) SENTINEL;
 
-res io_poll(enum io_type *devs) NONNULL;
-res io_read(enum io_type io, void *buf, u32 offset, u32 count) NONNULL;
-res io_write(enum io_type io, const void *buf, u32 offset, u32 count) NONNULL;
-res io_control(enum io_type io, ...);
+res dev_poll(enum dev_type *devs) NONNULL;
+res dev_read(enum dev_type dev, void *buf, u32 offset, u32 count) NONNULL;
+res dev_write(enum dev_type dev, const void *buf, u32 offset, u32 count) NONNULL;
+res dev_control(enum dev_type dev, ...);
 
 res yield(void);
 res boot(u32 cmd);

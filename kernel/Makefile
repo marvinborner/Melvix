@@ -22,7 +22,7 @@ COBJS = entry_asm.o \
 	drivers/ps2/keyboard.o \
 	features/mm.o \
 	features/fs.o \
-	features/io.o \
+	features/dev.o \
 	features/bus.o \
 	features/fb.o \
 	features/logger.o \

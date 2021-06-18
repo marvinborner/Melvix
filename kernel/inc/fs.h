@@ -11,12 +11,12 @@
  * Device
  */
 
-enum dev_type { DEV_BLOCK, DEV_CHAR };
+enum vfs_dev_type { DEV_BLOCK, DEV_CHAR };
 
 struct vfs_dev {
 	u32 id;
 	char name[8];
-	enum dev_type type;
+	enum vfs_dev_type type;
 	struct vfs *vfs;
 	void *data;
 	res (*read)(void *buf, u32 offset, u32 count, struct vfs_dev *dev) NONNULL;

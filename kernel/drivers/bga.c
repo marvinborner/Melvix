@@ -2,11 +2,11 @@
 
 #include <assert.h>
 #include <def.h>
+#include <dev.h>
 #include <drivers/bga.h>
 #include <drivers/cpu.h>
 #include <drivers/pci.h>
 #include <fb.h>
-#include <io.h>
 #include <mem.h>
 #include <mm.h>
 
@@ -75,7 +75,7 @@ static res bga_control(u32 request, void *arg1, void *arg2, void *arg3)
 	UNUSED(arg3);
 
 	switch (request) {
-	case IOCTL_FB_GET: {
+	case DEVCTL_FB_GET: {
 		if (!generic.fb)
 			return -ENOENT;
 
@@ -121,7 +121,7 @@ CLEAR void bga_install(void)
 {
 	bga_enable(1920, 1200, 32);
 
-	struct io_dev *dev = zalloc(sizeof(*dev));
+	struct dev_dev *dev = zalloc(sizeof(*dev));
 	dev->control = bga_control;
-	io_add(IO_FRAMEBUFFER, dev);
+	dev_add(DEV_FRAMEBUFFER, dev);
 }
