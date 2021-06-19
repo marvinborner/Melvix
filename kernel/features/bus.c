@@ -93,6 +93,21 @@ static void bus_add_conn(u32 hash, u32 conn)
 	list_add(bus_conns, bus_conn);
 }
 
+static res bus_conn_ready(struct bus_conn *bus_conn)
+{
+	struct bus *bus = bus_find_bus(bus_conn->bus);
+	if (!bus)
+		return -ENOENT;
+
+	u8 ready = 0;
+	if (bus->pid == proc_current()->pid)
+		ready = !stack_empty(bus_conn->in);
+	else
+		ready = !stack_empty(bus_conn->out);
+
+	return ready ? EOK : -EAGAIN;
+}
+
 static res bus_register(const char *name)
 {
 	if (!memory_readable(name))
@@ -236,14 +251,14 @@ static res bus_receive(void *buf, u32 offset, u32 count)
 		struct node *iterator = bus_conns->head;
 		while (iterator) {
 			struct bus_conn *sub_bus = iterator->data;
-			if (sub_bus->bus == bus_owner->hash)
+			if (sub_bus->bus == bus_owner->hash && bus_conn_ready(sub_bus) == EOK)
 				return bus_conn_receive(sub_bus, buf, offset, count);
 
 			iterator = iterator->next;
 		}
 	}
 
-	if (bus_conn)
+	if (bus_conn && bus_conn_ready(bus_conn) == EOK)
 		return bus_conn_receive(bus_conn, buf, offset, count);
 
 	return -EAGAIN;
@@ -286,21 +301,6 @@ static res bus_read(void *buf, u32 offset, u32 count)
 	return bus_receive(buf, offset, count);
 }
 
-static res bus_conn_ready(struct bus_conn *bus_conn)
-{
-	struct bus *bus = bus_find_bus(bus_conn->bus);
-	if (!bus)
-		return -ENOENT;
-
-	u8 ready = 0;
-	if (bus->pid == proc_current()->pid)
-		ready = !stack_empty(bus_conn->in);
-	else
-		ready = !stack_empty(bus_conn->out);
-
-	return ready ? EOK : -EAGAIN;
-}
-
 static res bus_ready(void)
 {
 	struct bus *bus_owner = bus_find_owner(proc_current()->pid);
@@ -312,15 +312,15 @@ static res bus_ready(void)
 		struct node *iterator = bus_conns->head;
 		while (iterator) {
 			struct bus_conn *sub_bus = iterator->data;
-			if (sub_bus->bus == bus_owner->hash)
-				return bus_conn_ready(sub_bus);
+			if (sub_bus->bus == bus_owner->hash && bus_conn_ready(sub_bus) == EOK)
+				return EOK;
 
 			iterator = iterator->next;
 		}
 	}
 
-	if (bus_conn)
-		return bus_conn_ready(bus_conn);
+	if (bus_conn && bus_conn_ready(bus_conn) == EOK)
+		return EOK;
 
 	return -EAGAIN;
 }

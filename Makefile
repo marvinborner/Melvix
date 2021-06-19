@@ -9,7 +9,7 @@ endef
 
 PREPROCESSOR_FLAGS = $(foreach flag, $(ALL_PREPROCESSOR_FLAGS), $(call PREPROCESSOR_FLAG_TEMPLATE,$(flag)))
 
-CFLAGS_WARNINGS = -Wall -Wextra -Werror -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wformat=2 -Wmissing-declarations -Wstrict-prototypes -Wmissing-prototypes -Wcast-qual -Wswitch-default -Wswitch-enum -Wunreachable-code -Wundef -Wold-style-definition -Wvla -Winline -pedantic-errors
+CFLAGS_WARNINGS = -Wall -Wextra -Werror -Wshadow -Wpointer-arith -Wwrite-strings -Wredundant-decls -Wnested-externs -Wformat=2 -Wmissing-declarations -Wstrict-prototypes -Wmissing-prototypes -Wcast-qual -Wswitch-default -Wswitch-enum -Wunreachable-code -Wundef -Wold-style-definition -Wvla -pedantic-errors
 CFLAGS_DEFAULT = $(CFLAGS_WARNINGS) -std=c99 -m32 -nostdlib -nostdinc -fno-builtin -fno-profile-generate -fno-omit-frame-pointer -fno-common -fno-asynchronous-unwind-tables -mno-red-zone -mno-mmx -mno-sse -mno-sse2 $(CONFIG_OPTIMIZATION) $(CONFIG_EXTRA_CFLAGS) $(PREPROCESSOR_FLAGS)
 
 CC = $(CONFIG_CACHE) $(PWD)/cross/opt/bin/i686-elf-gcc

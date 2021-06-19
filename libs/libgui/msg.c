@@ -35,8 +35,11 @@ res msg_send(enum message_type type, void *data, u32 size)
 
 res msg_receive(void *buf, u32 size)
 {
-	res ret = dev_read(DEV_BUS, buf, 0, size);
+	assert(size >= sizeof(struct message_header));
 	struct message_header *header = buf;
+	memset(header, 0, sizeof(*header));
+
+	res ret = dev_read(DEV_BUS, buf, 0, size);
 	if (header->magic == MSG_MAGIC)
 		return ret;
 	else

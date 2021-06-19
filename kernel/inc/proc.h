@@ -66,7 +66,7 @@ void proc_set_quantum(struct proc *proc, u32 value) NONNULL;
 void proc_reset_quantum(struct proc *proc) NONNULL;
 void proc_state(struct proc *proc, enum proc_state state) NONNULL;
 struct proc *proc_make(enum proc_priv priv);
-void proc_make_regs(struct proc *proc);
+void proc_make_regs(struct proc *proc) NONNULL;
 void proc_stack_user_push(struct proc *proc, const void *data, u32 size) NONNULL;
 void proc_stack_kernel_push(struct proc *proc, const void *data, u32 size) NONNULL;
 

@@ -63,6 +63,20 @@ static void dev_remove_group(u32 group)
 		group_id--;
 }
 
+void dev_remove_proc(struct proc *proc)
+{
+	for (u32 dev = DEV_MIN; dev < DEV_MAX; dev++) {
+		struct node *iterator = dev_listeners[dev]->head;
+		while (iterator) {
+			struct dev_listener *listener = iterator->data;
+			struct node *next = iterator->next;
+			if (listener->proc == proc)
+				list_remove(dev_listeners[dev], iterator);
+			iterator = next;
+		}
+	}
+}
+
 CLEAR void dev_add(enum dev_type type, struct dev_dev *dev)
 {
 	assert(dev_type_valid(type) && !dev_mappings[type]);

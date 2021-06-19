@@ -63,10 +63,11 @@ static u32 syscall_handler(u32 esp)
 		break;
 	}
 	case SYS_DEV_READ: {
-		res ready = dev_ready(frame->ebx);
-		if (ready == -EAGAIN) {
+		// TODO: This could be done more elegant (e.g. with better bus design)
+		res ready;
+		while ((ready = dev_ready(frame->ebx)) == -EAGAIN)
 			dev_block(frame->ebx, proc_current());
-		} else if (ready != EOK) {
+		if (ready != EOK) {
 			frame->eax = ready;
 			break;
 		}

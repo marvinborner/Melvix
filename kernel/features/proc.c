@@ -1,6 +1,7 @@
 // MIT License, Copyright (c) 2020 Marvin Borner
 
 #include <assert.h>
+#include <dev.h>
 #include <drivers/cpu.h>
 #include <drivers/gdt.h>
 #include <drivers/timer.h>
@@ -190,6 +191,7 @@ void proc_exit(s32 status)
 		printf("Process didn't leak memory!\n");
 	}
 
+	dev_remove_proc(proc);
 	stack_destroy(proc->messages);
 	list_destroy(proc->memory); // TODO: Decrement memory ref links
 	virtual_destroy_dir(proc->page_dir);

@@ -17,6 +17,7 @@ struct dev_dev {
 
 void dev_install(void);
 void dev_add(enum dev_type type, struct dev_dev *dev) NONNULL;
+void dev_remove_proc(struct proc *proc) NONNULL;
 
 // No NONNULL on syscalls
 res dev_control(enum dev_type type, u32 request, void *arg1, void *arg2, void *arg3);

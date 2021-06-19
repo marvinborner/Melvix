@@ -596,6 +596,7 @@ static void handle_message_new_window(struct message_new_window *msg)
 	struct window *win = window_new((struct client){ .conn = msg->header.bus.conn }, msg->pos,
 					vec2_add(msg->size, vec2(0, BAR_HEIGHT)), WF_BAR);
 	window_bar_draw(win, msg->name);
+	window_redraw(win);
 
 	msg->ctx = win->ctx;
 	msg->off = vec2(0, BAR_HEIGHT);
@@ -753,8 +754,7 @@ int main(int argc, char **argv)
 
 	assert(dev_control(DEV_BUS, DEVCTL_BUS_REGISTER, "wm") == EOK);
 
-	assert(exec("test", NULL) == EOK);
-	assert(exec("test", NULL) == EOK);
+	assert(exec("view", NULL) == EOK);
 
 	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
@@ -763,23 +763,21 @@ int main(int argc, char **argv)
 
 	while (1) {
 		res poll_ret = 0;
-		if ((poll_ret = dev_poll(listeners)) >= 0) {
-			if (poll_ret == DEV_KEYBOARD) {
-				if (dev_read(DEV_KEYBOARD, &event_keyboard, 0,
-					     sizeof(event_keyboard)) > 0)
-					handle_event_keyboard(&event_keyboard);
-			} else if (poll_ret == DEV_MOUSE) {
-				if (dev_read(DEV_MOUSE, &event_mouse, 0, sizeof(event_mouse)) > 0)
-					handle_event_mouse(&event_mouse);
-			} else if (poll_ret == DEV_BUS) {
-				if (msg_receive(msg, sizeof(msg)) > 0)
-					handle_message(msg);
-			}
+		if ((poll_ret = dev_poll(listeners)) < 0)
+			panic("Poll/read error: %s\n", strerror(errno));
 
-			window_ping_all();
-			continue;
+		if (poll_ret == DEV_KEYBOARD) {
+			if (dev_read(DEV_KEYBOARD, &event_keyboard, 0, sizeof(event_keyboard)) > 0)
+				handle_event_keyboard(&event_keyboard);
+		} else if (poll_ret == DEV_MOUSE) {
+			if (dev_read(DEV_MOUSE, &event_mouse, 0, sizeof(event_mouse)) > 0)
+				handle_event_mouse(&event_mouse);
+		} else if (poll_ret == DEV_BUS) {
+			if (msg_receive(msg, sizeof(msg)) > 0)
+				handle_message(msg);
 		}
-		panic("Poll/read error: %s\n", strerror(errno));
+
+		window_ping_all();
 	}
 
 	return 1;
