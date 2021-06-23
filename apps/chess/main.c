@@ -214,7 +214,7 @@ static void draw_board(void)
 {
 	for (u8 x = 0; x < 8; x++) {
 		for (u8 y = 0; y < 8; y++) {
-			u32 widget = gui_new_widget(win, GUI_MAIN, vec2(TILE * x, TILE * y),
+			u32 widget = gui_widget(win, GUI_MAIN, vec2(TILE * x, TILE * y),
 						    vec2(TILE, TILE));
 			assert((signed)widget > 0);
 
@@ -225,7 +225,7 @@ static void draw_board(void)
 			gui_fill(win, widget, GUI_LAYER_BG, colored ? DARK_COLOR : LIGHT_COLOR);
 
 			struct piece *tile = &tiles[x][y];
-			gui_listen_widget(win, widget, GUI_LISTEN_MOUSECLICK, (u32)mouseclick);
+			gui_widget_listen(win, widget, GUI_LISTEN_MOUSECLICK, (u32)mouseclick);
 
 			tile->widget = widget;
 
@@ -239,7 +239,7 @@ static void draw_board(void)
 
 int main(void)
 {
-	win = gui_new_custom_window(APPNAME, vec2(0, 0), vec2(TILE * 8, TILE * 8));
+	win = gui_custom_window(APPNAME, vec2(0, 0), vec2(TILE * 8, TILE * 8));
 	fen_parse(START_FEN);
 	draw_board();
 

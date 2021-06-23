@@ -4,7 +4,8 @@ COBJS = psf.o \
 	png.o \
 	gfx.o \
 	gui.o \
-	msg.o
+	msg.o \
+	widgets.o
 
 CFLAGS = $(CFLAGS_DEFAULT) -I$(LIBS) -I$(LIBS)/libc/inc/ -pie -fPIE -fPIC -DUSER
 

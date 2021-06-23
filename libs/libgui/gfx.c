@@ -457,14 +457,8 @@ void gfx_fill(struct gfx_context *ctx, u32 c)
 	gfx_draw_rectangle(ctx, vec2(0, 0), vec2(ctx->size.x, ctx->size.y), c);
 }
 
-int gfx_font_height(enum font_type font_type)
+vec2 gfx_font_size(enum font_type font_type)
 {
 	struct gfx_font *font = gfx_resolve_font(font_type);
-	return font->size.y;
-}
-
-int gfx_font_width(enum font_type font_type)
-{
-	struct gfx_font *font = gfx_resolve_font(font_type);
-	return font->size.x;
+	return font->size;
 }

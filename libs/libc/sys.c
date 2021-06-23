@@ -189,12 +189,20 @@ static void atexit_trigger(void)
 	if (!slot)
 		return;
 
+	static u8 cnt = 0;
+	if (cnt++ != 0) {
+		log("Couldn't execute all atexit routines\n");
+		return;
+	}
+
 	while (slot-- > 0) {
 		if (funcs[slot]) {
 			funcs[slot]();
 			funcs[slot] = NULL;
 		}
 	}
+
+	cnt = 0;
 }
 
 void atexit(void (*func)(void))

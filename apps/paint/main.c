@@ -34,29 +34,29 @@ static void color_click(struct gui_event_mouse *event)
 // TODO: Fix and improve paint without KVM
 int main(void)
 {
-	u32 win = gui_new_window(APPNAME);
+	u32 win = gui_window(APPNAME);
 	vec2 win_size = gui_window_size(win);
 
-	u32 toolbar = gui_new_widget(win, GUI_MAIN, vec2(0, 0),
+	u32 toolbar = gui_widget(win, GUI_MAIN, vec2(0, 0),
 				     vec2(win_size.x, COLOR_SIZE + 2 * TOOLBAR_MARGIN));
 	gui_fill(win, toolbar, GUI_LAYER_BG, COLOR_WHITE);
 
 	u32 color_count = COUNT(colors);
 	for (u32 i = 0; i < color_count; i++) {
-		u32 color = gui_new_widget(win, toolbar,
+		u32 color = gui_widget(win, toolbar,
 					   vec2(TOOLBAR_MARGIN + i * (COLOR_SIZE + TOOLBAR_MARGIN),
 						TOOLBAR_MARGIN),
 					   vec2(COLOR_SIZE, COLOR_SIZE));
 		gui_fill(win, color, GUI_LAYER_FG, colors[i]);
 		gui_draw_border(win, color, GUI_LAYER_FG, 2, COLOR_BLACK);
-		gui_listen_widget(win, color, GUI_LISTEN_MOUSECLICK, (u32)color_click);
+		gui_widget_listen(win, color, GUI_LISTEN_MOUSECLICK, (u32)color_click);
 	}
 
 	u32 canvas =
-		gui_new_widget(win, GUI_MAIN, vec2(0, COLOR_SIZE + 2 * TOOLBAR_MARGIN),
+		gui_widget(win, GUI_MAIN, vec2(0, COLOR_SIZE + 2 * TOOLBAR_MARGIN),
 			       vec2(win_size.x, win_size.y - (COLOR_SIZE + 2 * TOOLBAR_MARGIN)));
 	gui_fill(win, canvas, GUI_LAYER_BG, COLOR_WHITE);
-	gui_listen_widget(win, canvas, GUI_LISTEN_MOUSEMOVE, (u32)mousemove);
+	gui_widget_listen(win, canvas, GUI_LISTEN_MOUSEMOVE, (u32)mousemove);
 
 	gui_redraw_window(win);
 	gui_loop();

@@ -103,8 +103,7 @@ void gfx_write_char(struct gfx_context *ctx, vec2 pos, enum font_type font_type,
 void gfx_write(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 c,
 	       const char *text) NONNULL;
 
-int gfx_font_height(enum font_type);
-int gfx_font_width(enum font_type);
+vec2 gfx_font_size(enum font_type font_type);
 
 /**
  * Image loading

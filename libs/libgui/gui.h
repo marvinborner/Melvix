@@ -20,6 +20,12 @@ enum gui_layer {
 	GUI_LAYER_FG,
 };
 
+enum gui_layout {
+	GUI_NO_LAYOUT,
+	GUI_VLAYOUT, // New widgets get positioned under previous widget
+	GUI_HLAYOUT, // New widgets get positioned right of previous widget
+};
+
 struct gui_event_mouse {
 	u32 win;
 	u32 widget;
@@ -32,12 +38,15 @@ struct gui_event_mouse {
 	} but;
 };
 
+// Down here because of codependency stuff
+#include <libgui/widgets.h>
+
 /**
  * Window operations
  */
 
-u32 gui_new_custom_window(const char *name, vec2 pos, vec2 size);
-u32 gui_new_window(const char *name);
+u32 gui_custom_window(const char *name, vec2 pos, vec2 size);
+u32 gui_window(const char *name);
 void gui_redraw_window(u32 id);
 void gui_redraw_window_only(u32 id); // Without widgets
 
@@ -63,8 +72,8 @@ void gui_draw_line(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos1, v
  * Widget operations
  */
 
-u32 gui_new_widget(u32 win_id, u32 widget_id, vec2 pos, vec2 size);
-void gui_listen_widget(u32 win_id, u32 widget_id, enum gui_listener listener, u32 func);
+u32 gui_widget(u32 win_id, u32 widget_id, vec2 pos, vec2 size);
+void gui_widget_listen(u32 win_id, u32 widget_id, enum gui_listener listener, u32 func);
 void gui_redraw_widget(u32 win_id, u32 widget_id);
 
 void gui_popup(const char *text);

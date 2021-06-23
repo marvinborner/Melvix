@@ -15,6 +15,9 @@ struct gui_widget {
 	struct gfx_context bg;
 	struct list *children;
 
+	u32 margin; // Between sub-widgets
+	enum gui_layout layout;
+
 	struct {
 		void (*mousemove)(struct gui_event_mouse *event);
 		void (*mouseclick)(struct gui_event_mouse *event);
@@ -388,7 +391,7 @@ static vec2 gui_offset_widget(struct gui_widget *parent, struct gui_widget *chil
 	return offset;
 }
 
-static struct gui_widget *gui_new_plain_widget(vec2 pos, vec2 size, u8 bpp)
+static struct gui_widget *gui_new_plain_widget(vec2 pos, vec2 size, enum gui_layout layout, u8 bpp)
 {
 	struct gui_widget *widget = zalloc(sizeof(*widget));
 	struct gfx_context bg;
@@ -400,17 +403,19 @@ static struct gui_widget *gui_new_plain_widget(vec2 pos, vec2 size, u8 bpp)
 	widget->bg = *gfx_new_ctx(&bg, size, bpp);
 	widget->fg = *gfx_new_ctx(&fg, size, bpp);
 	widget->children = list_new();
+	widget->margin = 4;
+	widget->layout = layout;
 
 	return widget;
 }
 
-u32 gui_new_widget(u32 win_id, u32 widget_id, vec2 pos, vec2 size)
+u32 gui_widget(u32 win_id, u32 widget_id, vec2 pos, vec2 size)
 {
 	struct gui_widget *parent = gui_widget_by_id(win_id, widget_id);
 	if (!parent)
 		gui_error(ENOENT);
 
-	struct gui_widget *child = gui_new_plain_widget(pos, size, parent->bg.bpp);
+	struct gui_widget *child = gui_new_plain_widget(pos, size, GUI_HLAYOUT, parent->bg.bpp);
 	list_add(parent->children, child);
 
 	return child->id;
@@ -451,7 +456,7 @@ static void gui_destroy_widgets(u32 win_id)
 	list_destroy(win->widgets);
 }
 
-void gui_listen_widget(u32 win_id, u32 widget_id, enum gui_listener listener, u32 func)
+void gui_widget_listen(u32 win_id, u32 widget_id, enum gui_listener listener, u32 func)
 {
 	if (!func)
 		gui_error(EFAULT);
@@ -489,11 +494,11 @@ void gui_popup(const char *text)
 {
 	vec2 pos = vec2(200, 200);
 
-	u32 popup = gui_new_custom_window("Popup", pos, vec2(POPUP_WIDTH, POPUP_HEIGHT));
+	u32 popup = gui_custom_window("Popup", pos, vec2(POPUP_WIDTH, POPUP_HEIGHT));
 	struct gui_window *win = gui_window_by_id(popup);
 	gui_fill(popup, gui_main_widget_id(win), GUI_LAYER_BG, COLOR_WHITE);
 
-	u32 widget = gui_new_widget(popup, GUI_MAIN, vec2(0, 0), vec2(POPUP_WIDTH, 32));
+	u32 widget = gui_widget(popup, GUI_MAIN, vec2(0, 0), vec2(POPUP_WIDTH, 32));
 	gui_fill(popup, widget, GUI_LAYER_BG, COLOR_WHITE);
 	gui_write(popup, widget, GUI_LAYER_FG, vec2(0, 0), FONT_32, COLOR_BLACK, text);
 
@@ -516,7 +521,7 @@ vec2 gui_window_size(u32 win_id)
  * Window manager interfaces
  */
 
-u32 gui_new_custom_window(const char *name, vec2 pos, vec2 size)
+u32 gui_custom_window(const char *name, vec2 pos, vec2 size)
 {
 	if (!windows)
 		windows = list_new();
@@ -554,8 +559,8 @@ u32 gui_new_custom_window(const char *name, vec2 pos, vec2 size)
 		win->widgets = list_new();
 
 		// Initialize GUI_MAIN widget
-		list_add(win->widgets,
-			 gui_new_plain_widget(vec2(0, 0), win->ctx.size, win->ctx.bpp));
+		list_add(win->widgets, gui_new_plain_widget(vec2(0, 0), win->ctx.size, GUI_HLAYOUT,
+							    win->ctx.bpp));
 
 		return win->id;
 	}
@@ -563,9 +568,9 @@ u32 gui_new_custom_window(const char *name, vec2 pos, vec2 size)
 	gui_error(EINVAL);
 }
 
-u32 gui_new_window(const char *name)
+u32 gui_window(const char *name)
 {
-	return gui_new_custom_window(name, vec2(0, 0), vec2(0, 0));
+	return gui_custom_window(name, vec2(0, 0), vec2(0, 0));
 }
 
 void gui_redraw_window_only(u32 id)
