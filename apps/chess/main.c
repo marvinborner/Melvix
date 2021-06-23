@@ -214,8 +214,8 @@ static void draw_board(void)
 {
 	for (u8 x = 0; x < 8; x++) {
 		for (u8 y = 0; y < 8; y++) {
-			u32 widget = gui_widget(win, GUI_MAIN, vec2(TILE * x, TILE * y),
-						    vec2(TILE, TILE));
+			u32 widget = gui_widget(win, gui_main_widget(win), vec2(TILE * x, TILE * y),
+						vec2(TILE, TILE));
 			assert((signed)widget > 0);
 
 			u8 colored = (x + y + 1) % 2 == 0;

@@ -8,8 +8,6 @@
 #include <libgui/gfx.h>
 #include <vec.h>
 
-#define GUI_MAIN 0 // First widget is the main widget
-
 enum gui_listener {
 	GUI_LISTEN_MOUSEMOVE,
 	GUI_LISTEN_MOUSECLICK,
@@ -21,9 +19,8 @@ enum gui_layer {
 };
 
 enum gui_layout {
-	GUI_NO_LAYOUT,
-	GUI_VLAYOUT, // New widgets get positioned under previous widget
 	GUI_HLAYOUT, // New widgets get positioned right of previous widget
+	GUI_VLAYOUT, // New widgets get positioned under previous widget
 };
 
 struct gui_event_mouse {
@@ -73,6 +70,7 @@ void gui_draw_line(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos1, v
  */
 
 u32 gui_widget(u32 win_id, u32 widget_id, vec2 pos, vec2 size);
+u32 gui_main_widget(u32 win_id);
 void gui_widget_listen(u32 win_id, u32 widget_id, enum gui_listener listener, u32 func);
 void gui_redraw_widget(u32 win_id, u32 widget_id);
 

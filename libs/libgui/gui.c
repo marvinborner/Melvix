@@ -16,6 +16,7 @@ struct gui_widget {
 	struct list *children;
 
 	u32 margin; // Between sub-widgets
+	u32 offset;
 	enum gui_layout layout;
 
 	struct {
@@ -29,7 +30,7 @@ struct gui_window {
 	vec2 off; // fb offset
 	vec2 pos;
 	struct gfx_context ctx;
-	struct list *widgets;
+	struct gui_widget *main_widget;
 };
 
 struct list *windows = NULL;
@@ -82,31 +83,10 @@ static struct gui_widget *gui_widget_in_widget(struct gui_widget *parent, u32 wi
 	return NULL;
 }
 
-static struct gui_widget *gui_widget_in_win(struct gui_window *win, u32 widget_id)
-{
-	if (!win || !win->widgets)
-		return NULL;
-
-	struct node *iterator = win->widgets->head;
-	while (iterator) {
-		struct gui_widget *widget = iterator->data;
-		if (widget->id == widget_id)
-			return iterator->data;
-
-		struct gui_widget *sub = gui_widget_in_widget(widget, widget_id);
-		if (sub && sub->id == widget_id)
-			return sub;
-
-		iterator = iterator->next;
-	}
-
-	return NULL;
-}
-
 static struct gui_widget *gui_widget_by_id(u32 win_id, u32 widget_id)
 {
 	struct gui_window *win = gui_window_by_id(win_id);
-	return gui_widget_in_win(win, widget_id);
+	return gui_widget_in_widget(win->main_widget, widget_id);
 }
 
 /**
@@ -277,23 +257,11 @@ static u8 gui_widget_at(u32 win_id, vec2 pos, struct gui_widget *widget)
 	if (!win)
 		gui_error(ENOENT);
 
-	if (!win->widgets)
-		return 1;
-
 	struct gui_widget *ret = NULL;
 	struct gui_widget sub = { 0 };
 
-	struct node *iterator = win->widgets->head;
-	while (iterator) {
-		struct gui_widget *w = iterator->data;
-		if (pos.x >= w->pos.x && pos.x <= w->pos.x + w->bg.size.x && pos.y >= w->pos.y &&
-		    pos.y <= w->pos.y + w->bg.size.y)
-			ret = w;
-
-		if (w->children->head && gui_sub_widget_at(w, pos, &sub))
-			ret = &sub;
-		iterator = iterator->next;
-	}
+	if (gui_sub_widget_at(win->main_widget, pos, &sub))
+		ret = &sub;
 
 	if (!ret)
 		return 0;
@@ -323,7 +291,7 @@ static void gui_sync_sub_widgets(struct gui_widget *widget)
 static void gui_sync_widget(u32 win_id, u32 widget_id)
 {
 	struct gui_window *win = gui_window_by_id(win_id);
-	struct gui_widget *widget = gui_widget_in_win(win, widget_id);
+	struct gui_widget *widget = gui_widget_in_widget(win->main_widget, widget_id);
 	if (!widget)
 		gui_error(ENOENT);
 
@@ -335,32 +303,13 @@ static void gui_sync_widget(u32 win_id, u32 widget_id)
 static void gui_sync_widgets(u32 win_id)
 {
 	struct gui_window *win = gui_window_by_id(win_id);
+	struct gui_widget *widget = win->main_widget;
 	if (!win)
 		gui_error(ENOENT);
 
-	if (!win->widgets)
-		return;
-
-	struct node *iterator = win->widgets->head;
-	while (iterator) {
-		struct gui_widget *widget = iterator->data;
-		gui_sync_sub_widgets(widget);
-		gfx_ctx_on_ctx(&win->ctx, &widget->bg, widget->pos, GFX_ALPHA);
-		gfx_ctx_on_ctx(&win->ctx, &widget->fg, widget->pos, GFX_ALPHA);
-		iterator = iterator->next;
-	}
-}
-
-static struct gui_widget *gui_main_widget(struct gui_window *win)
-{
-	assert(win && win->widgets && win->widgets->head);
-	return win->widgets->head->data;
-}
-
-static u32 gui_main_widget_id(struct gui_window *win)
-{
-	assert(win && win->widgets && win->widgets->head);
-	return ((struct gui_widget *)win->widgets->head->data)->id;
+	gui_sync_sub_widgets(win->main_widget);
+	gfx_ctx_on_ctx(&win->ctx, &widget->bg, widget->pos, GFX_ALPHA);
+	gfx_ctx_on_ctx(&win->ctx, &widget->fg, widget->pos, GFX_ALPHA);
 }
 
 // TODO: This is very recursive and inefficient -> improve!
@@ -391,7 +340,26 @@ static vec2 gui_offset_widget(struct gui_widget *parent, struct gui_widget *chil
 	return offset;
 }
 
-static struct gui_widget *gui_new_plain_widget(vec2 pos, vec2 size, enum gui_layout layout, u8 bpp)
+static void gui_destroy_widget(u32 win_id, u32 widget_id)
+{
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
+	if (!widget)
+		return;
+
+	struct node *iterator = widget->children->head;
+	while (iterator) {
+		struct gui_widget *sub = iterator->data;
+		gui_destroy_widget(win_id, sub->id);
+		iterator = iterator->next;
+	}
+
+	list_destroy(widget->children);
+	free(widget->bg.fb);
+	free(widget->fg.fb);
+	free(widget);
+}
+
+static struct gui_widget *gui_plain_widget(vec2 pos, vec2 size, enum gui_layout layout, u8 bpp)
 {
 	struct gui_widget *widget = zalloc(sizeof(*widget));
 	struct gfx_context bg;
@@ -415,45 +383,19 @@ u32 gui_widget(u32 win_id, u32 widget_id, vec2 pos, vec2 size)
 	if (!parent)
 		gui_error(ENOENT);
 
-	struct gui_widget *child = gui_new_plain_widget(pos, size, GUI_HLAYOUT, parent->bg.bpp);
+	struct gui_widget *child = gui_plain_widget(pos, size, GUI_HLAYOUT, parent->bg.bpp);
 	list_add(parent->children, child);
 
 	return child->id;
 }
 
-static void gui_destroy_widget(u32 win_id, u32 widget_id)
-{
-	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
-	if (!widget)
-		return;
-
-	struct node *iterator = widget->children->head;
-	while (iterator) {
-		struct gui_widget *sub = iterator->data;
-		gui_destroy_widget(win_id, sub->id);
-		iterator = iterator->next;
-	}
-
-	list_destroy(widget->children);
-	free(widget->bg.fb);
-	free(widget->fg.fb);
-	free(widget);
-}
-
-static void gui_destroy_widgets(u32 win_id)
+u32 gui_main_widget(u32 win_id)
 {
 	struct gui_window *win = gui_window_by_id(win_id);
+	if (!win)
+		gui_error(ENOENT);
 
-	if (!win->widgets)
-		return;
-
-	struct node *iterator = win->widgets->head;
-	while (iterator) {
-		struct gui_widget *widget = iterator->data;
-		gui_destroy_widget(win_id, widget->id);
-		iterator = iterator->next;
-	}
-	list_destroy(win->widgets);
+	return win->main_widget->id;
 }
 
 void gui_widget_listen(u32 win_id, u32 widget_id, enum gui_listener listener, u32 func)
@@ -496,9 +438,9 @@ void gui_popup(const char *text)
 
 	u32 popup = gui_custom_window("Popup", pos, vec2(POPUP_WIDTH, POPUP_HEIGHT));
 	struct gui_window *win = gui_window_by_id(popup);
-	gui_fill(popup, gui_main_widget_id(win), GUI_LAYER_BG, COLOR_WHITE);
+	gui_fill(popup, win->main_widget->id, GUI_LAYER_BG, COLOR_WHITE);
 
-	u32 widget = gui_widget(popup, GUI_MAIN, vec2(0, 0), vec2(POPUP_WIDTH, 32));
+	u32 widget = gui_widget(popup, win->main_widget->id, vec2(0, 0), vec2(POPUP_WIDTH, 32));
 	gui_fill(popup, widget, GUI_LAYER_BG, COLOR_WHITE);
 	gui_write(popup, widget, GUI_LAYER_FG, vec2(0, 0), FONT_32, COLOR_BLACK, text);
 
@@ -556,11 +498,10 @@ u32 gui_custom_window(const char *name, vec2 pos, vec2 size)
 		win->ctx.fb += msg.off.y * msg.ctx.pitch;
 
 		list_add(windows, win);
-		win->widgets = list_new();
 
 		// Initialize GUI_MAIN widget
-		list_add(win->widgets, gui_new_plain_widget(vec2(0, 0), win->ctx.size, GUI_HLAYOUT,
-							    win->ctx.bpp));
+		win->main_widget =
+			gui_plain_widget(vec2(0, 0), win->ctx.size, GUI_HLAYOUT, win->ctx.bpp);
 
 		return win->id;
 	}
@@ -591,9 +532,8 @@ void gui_redraw_window(u32 id)
 
 static void gui_destroy_window(u32 id)
 {
-	gui_destroy_widgets(id);
-
 	struct gui_window *win = gui_window_by_id(id);
+	gui_destroy_widget(id, win->main_widget->id);
 	u8 *fb = win->ctx.fb - (win->off.y * win->ctx.pitch);
 	assert(sys_free(fb) == EOK);
 
@@ -646,7 +586,7 @@ static void gui_handle_mouse(struct message_mouse *msg)
 	gui_widget_at(msg->id, msg->pos, &widget);
 
 	struct gui_window *win = gui_window_by_id(msg->id);
-	vec2 offset = gui_offset_widget(gui_main_widget(win), &widget);
+	vec2 offset = gui_offset_widget(win->main_widget, &widget);
 	vec2 pos = vec2_sub(msg->pos, offset);
 
 	struct gui_event_mouse event = {

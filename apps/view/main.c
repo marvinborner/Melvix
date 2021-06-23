@@ -25,10 +25,10 @@ int main(int argc, char *argv[])
 
 	path = "/res/test.png";
 
-	u32 win = gui_new_custom_window(APPNAME, vec2(0, 0), size);
-	u32 canvas = gui_new_widget(win, GUI_MAIN, vec2(0, 0), size);
+	u32 win = gui_custom_window(APPNAME, vec2(0, 0), size);
+	u32 canvas = gui_widget(win, gui_main_widget(win), vec2(0, 0), size);
 	gui_fill(win, canvas, GUI_LAYER_BG, COLOR_WHITE);
-	gui_listen_widget(win, canvas, GUI_LISTEN_MOUSEMOVE, (u32)mousemove);
+	gui_widget_listen(win, canvas, GUI_LISTEN_MOUSEMOVE, (u32)mousemove);
 
 	gui_redraw_window(win);
 	gui_loop();
