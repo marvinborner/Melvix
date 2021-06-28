@@ -93,11 +93,11 @@ static void mouseclick(struct gui_event_mouse *event)
 		gui_clear(win, selected_piece->widget, GUI_LAYER_FG);
 		load_image(clicked_piece);
 
-		gui_redraw_window(win);
+		gui_window_redraw(win);
 
 		selected = vec2(-1, -1);
 	} else if (clicked_piece->piece) {
-		gui_redraw_widget(win, clicked_piece->widget);
+		gui_widget_redraw(win, clicked_piece->widget);
 		selected = clicked;
 	}
 }
@@ -212,10 +212,15 @@ static void fen_parse(const char *fen)
 
 static void draw_board(void)
 {
-	for (u8 x = 0; x < 8; x++) {
-		for (u8 y = 0; y < 8; y++) {
-			u32 widget = gui_widget(win, gui_main_widget(win), vec2(TILE * x, TILE * y),
-						vec2(TILE, TILE));
+	gui_widget_margin(win, gui_widget_main(win), vec2(0, 0));
+	gui_widget_layout(win, gui_widget_main(win), GUI_VLAYOUT);
+
+	for (u8 y = 0; y < 8; y++) {
+		u8 row = gui_widget(win, gui_widget_main(win), vec2(TILE * 8, TILE));
+		gui_widget_margin(win, row, vec2(0, 0));
+
+		for (u8 x = 0; x < 8; x++) {
+			u32 widget = gui_widget(win, row, vec2(TILE, TILE));
 			assert((signed)widget > 0);
 
 			u8 colored = (x + y + 1) % 2 == 0;
@@ -234,12 +239,12 @@ static void draw_board(void)
 		}
 	}
 
-	gui_redraw_window(win);
+	gui_window_redraw(win);
 }
 
 int main(void)
 {
-	win = gui_custom_window(APPNAME, vec2(0, 0), vec2(TILE * 8, TILE * 8));
+	win = gui_window_custom(APPNAME, vec2(0, 0), vec2(TILE * 8, TILE * 8));
 	fen_parse(START_FEN);
 	draw_board();
 

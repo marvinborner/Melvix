@@ -42,10 +42,10 @@ struct gui_event_mouse {
  * Window operations
  */
 
-u32 gui_custom_window(const char *name, vec2 pos, vec2 size);
 u32 gui_window(const char *name);
-void gui_redraw_window(u32 id);
-void gui_redraw_window_only(u32 id); // Without widgets
+u32 gui_window_custom(const char *name, vec2 pos, vec2 size);
+void gui_window_redraw(u32 id);
+void gui_window_redraw_plain(u32 id); // Without widgets
 
 /**
  * GFX wrappers
@@ -69,14 +69,20 @@ void gui_draw_line(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos1, v
  * Widget operations
  */
 
-u32 gui_widget(u32 win_id, u32 widget_id, vec2 pos, vec2 size);
-u32 gui_main_widget(u32 win_id);
+u32 gui_widget(u32 win_id, u32 widget_id, vec2 size);
+u32 gui_widget_main(u32 win_id);
 void gui_widget_listen(u32 win_id, u32 widget_id, enum gui_listener listener, u32 func);
-void gui_redraw_widget(u32 win_id, u32 widget_id);
+void gui_widget_redraw(u32 win_id, u32 widget_id);
 
 void gui_popup(const char *text);
 
+/**
+ * Getters/setters
+ */
+
 vec2 gui_window_size(u32 win_id);
+void gui_widget_margin(u32 win_id, u32 widget_id, vec2 margin);
+void gui_widget_layout(u32 win_id, u32 widget_id, enum gui_layout layout);
 
 void gui_loop(void);
 

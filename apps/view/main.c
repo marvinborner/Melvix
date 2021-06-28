@@ -14,7 +14,7 @@ static void mousemove(struct gui_event_mouse *event)
 		size = vec2_mul(size, event->scroll < 0 ? SCALING_FACTOR + 1 : 1 - SCALING_FACTOR);
 		gui_fill(event->win, event->widget, GUI_LAYER_FG, COLOR_WHITE);
 		gui_draw_image(event->win, event->widget, GUI_LAYER_FG, vec2(0, 0), size, path);
-		gui_redraw_widget(event->win, event->widget);
+		gui_widget_redraw(event->win, event->widget);
 	}
 }
 
@@ -25,12 +25,13 @@ int main(int argc, char *argv[])
 
 	path = "/res/test.png";
 
-	u32 win = gui_custom_window(APPNAME, vec2(0, 0), size);
-	u32 canvas = gui_widget(win, gui_main_widget(win), vec2(0, 0), size);
+	u32 win = gui_window_custom(APPNAME, vec2(0, 0), size);
+	gui_widget_margin(win, gui_widget_main(win), vec2(0, 0));
+	u32 canvas = gui_widget(win, gui_widget_main(win), size);
 	gui_fill(win, canvas, GUI_LAYER_BG, COLOR_WHITE);
 	gui_widget_listen(win, canvas, GUI_LISTEN_MOUSEMOVE, (u32)mousemove);
 
-	gui_redraw_window(win);
+	gui_window_redraw(win);
 	gui_loop();
 
 	return 0;

@@ -754,7 +754,7 @@ int main(int argc, char **argv)
 
 	assert(dev_control(DEV_BUS, DEVCTL_BUS_REGISTER, "wm") == EOK);
 
-	assert(exec("view", NULL) == EOK);
+	assert(exec("chess", NULL) == EOK);
 
 	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
