@@ -115,13 +115,12 @@ static vec2 gui_layout_position(struct gui_widget *parent)
 	while (iterator) {
 		struct gui_widget *widget = iterator->data;
 
-		if (layout == GUI_HLAYOUT) {
-			pos.x += MAX(widget->bg.size.x, widget->fg.size.x) + parent->margin.x;
-		} else if (layout == GUI_VLAYOUT) {
-			pos.y += MAX(widget->bg.size.y, widget->fg.size.y) + parent->margin.y;
-		} else {
+		if (layout == GUI_HLAYOUT)
+			pos.x += widget->bg.size.x + parent->margin.x;
+		else if (layout == GUI_VLAYOUT)
+			pos.y += widget->bg.size.y + parent->margin.y;
+		else
 			gui_error(EINVAL);
-		}
 
 		iterator = iterator->next;
 	}
@@ -247,7 +246,6 @@ void gui_draw_line(u32 win_id, u32 widget_id, enum gui_layer layer, vec2 pos1, v
  * Widgets
  */
 
-// TODO: Fix child location algorithm
 static u8 gui_widget_child_at(struct gui_widget *widget, vec2 pos, struct gui_widget *buf)
 {
 	if (!widget || !widget->children || !buf)
@@ -263,7 +261,7 @@ static u8 gui_widget_child_at(struct gui_widget *widget, vec2 pos, struct gui_wi
 		    pos.y <= w->pos.y + w->bg.size.y)
 			ret = w;
 
-		if (w->children->head && gui_widget_child_at(w, pos, &sub))
+		if (w->children->head && gui_widget_child_at(w, vec2_sub(pos, w->pos), &sub))
 			ret = &sub;
 		iterator = iterator->next;
 	}

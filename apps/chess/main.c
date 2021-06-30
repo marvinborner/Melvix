@@ -97,7 +97,6 @@ static void mouseclick(struct gui_event_mouse *event)
 
 		selected = vec2(-1, -1);
 	} else if (clicked_piece->piece) {
-		gui_widget_redraw(win, clicked_piece->widget);
 		selected = clicked;
 	}
 }
