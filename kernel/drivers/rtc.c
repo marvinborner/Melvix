@@ -3,10 +3,10 @@
 #include <def.h>
 #include <drivers/cpu.h>
 #include <drivers/rtc.h>
-#include <drivers/timer.h>
 #include <fs.h>
 #include <mem.h>
 #include <str.h>
+#include <timer.h>
 
 static u8 rtc_busy(void)
 {

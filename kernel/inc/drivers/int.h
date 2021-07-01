@@ -44,6 +44,8 @@ struct idt_ptr {
 } PACKED;
 
 void idt_install(void);
+void int_enable(void);
+void int_disable(void);
 
 void int_trap_handler_add(u32 int_no, void (*handler)(u32 esp));
 void int_event_handler_add(u32 int_no, void (*handler)(void));

@@ -48,6 +48,7 @@ enum dev_type {
 
 // Device control declarations
 #define DEVCTL_FB_GET 0
+#define DEVCTL_TIMER_SLEEP 0
 #define DEVCTL_BUS_CONNECT_BUS 0
 #define DEVCTL_BUS_CONNECT_CONN 1
 #define DEVCTL_BUS_REGISTER 2

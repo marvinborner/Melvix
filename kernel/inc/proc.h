@@ -8,6 +8,7 @@
 #include <list.h>
 #include <stack.h>
 #include <sys.h>
+#include <timer.h>
 
 #define PROC_QUANTUM 15 // Milliseconds or something // TODO
 #define PROC_STACK_SIZE 0x4000 // 16KiB
@@ -51,6 +52,11 @@ struct proc {
 		u8 val;
 		u8 cnt;
 	} quantum;
+
+	struct {
+		enum timer_mode mode;
+		u32 data;
+	} timer;
 };
 
 u32 scheduler(u32 esp);
@@ -62,6 +68,7 @@ u8 proc_idle(void);
 struct proc *proc_from_pid(u32 pid);
 void proc_exit(s32 status);
 void proc_yield(void);
+void proc_timer_check(u32 time);
 void proc_set_quantum(struct proc *proc, u32 value) NONNULL;
 void proc_reset_quantum(struct proc *proc) NONNULL;
 void proc_state(struct proc *proc, enum proc_state state) NONNULL;

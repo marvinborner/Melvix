@@ -8,7 +8,6 @@
 #include <drivers/cpu.h>
 #include <drivers/int.h>
 #include <drivers/ps2.h>
-#include <drivers/timer.h>
 #include <drivers/vbe.h>
 #include <drivers/vmware.h>
 #include <fb.h>
@@ -21,6 +20,7 @@
 #include <rand.h>
 #include <str.h>
 #include <syscall.h>
+#include <timer.h>
 
 struct dev_listener {
 	u32 group;

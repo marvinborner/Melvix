@@ -172,19 +172,32 @@ static u32 int_special_handler(struct int_frame *frame)
  * Universal handler
  */
 
+static u8 int_enabled = 1;
+
 u32 int_handler(u32 esp);
 u32 int_handler(u32 esp)
 {
 	struct int_frame *frame = (struct int_frame *)esp;
-	if (frame->int_no < 32)
+	if (frame->int_no < 32) {
 		int_trap_handler(frame);
-	else if (frame->int_no < 48)
+	} else if (int_enabled && frame->int_no < 48) {
 		esp = int_event_handler(frame);
-	else if (frame->int_no >= 128 && frame->int_no < 144)
+	} else if (frame->int_no >= 128 && frame->int_no < 144) {
 		esp = int_special_handler(frame);
-	else
+	} else if (frame->int_no >= 48) {
 		panic("Unknown interrupt: %d\n", frame->int_no);
+	}
 
 	pic_ack(frame->int_no);
 	return esp;
+}
+
+void int_disable(void)
+{
+	int_enabled = 0;
+}
+
+void int_enable(void)
+{
+	int_enabled = 1;
 }

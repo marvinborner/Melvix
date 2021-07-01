@@ -429,24 +429,16 @@ static void window_ping_check(void)
 	}
 }
 
-// TODO: Run ping in parallel thread/process
 static void window_ping_all(void)
 {
-	static struct timer last = { 0 };
-	struct timer timer;
-	dev_read(DEV_TIMER, &timer, 0, sizeof(timer));
-	if (timer.time - last.time > PING_INTERVAL) {
-		window_ping_check();
+	window_ping_check();
 
-		struct node *iterator = windows->head;
-		while (iterator) {
-			struct window *win = iterator->data;
-			if (!(win->flags & WF_NO_WINDOW))
-				window_ping(win);
-			iterator = iterator->next;
-		}
-
-		last = timer;
+	struct node *iterator = windows->head;
+	while (iterator) {
+		struct window *win = iterator->data;
+		if (!(win->flags & WF_NO_WINDOW))
+			window_ping(win);
+		iterator = iterator->next;
 	}
 }
 
@@ -759,7 +751,8 @@ int main(int argc, char **argv)
 	u8 msg[1024] = { 0 };
 	struct event_keyboard event_keyboard = { 0 };
 	struct event_mouse event_mouse = { 0 };
-	enum dev_type listeners[] = { DEV_KEYBOARD, DEV_MOUSE, DEV_BUS, 0 };
+	enum dev_type listeners[] = { DEV_KEYBOARD, DEV_MOUSE, DEV_BUS, DEV_TIMER, 0 };
+	dev_control(DEV_TIMER, DEVCTL_TIMER_SLEEP, 0);
 
 	while (1) {
 		res poll_ret = 0;
@@ -775,9 +768,10 @@ int main(int argc, char **argv)
 		} else if (poll_ret == DEV_BUS) {
 			if (msg_receive(msg, sizeof(msg)) > 0)
 				handle_message(msg);
+		} else if (poll_ret == DEV_TIMER) {
+			dev_control(DEV_TIMER, DEVCTL_TIMER_SLEEP, PING_INTERVAL);
+			window_ping_all();
 		}
-
-		window_ping_all();
 	}
 
 	return 1;

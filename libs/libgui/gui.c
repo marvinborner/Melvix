@@ -646,7 +646,6 @@ static void gui_handle_mouse(struct message_mouse *msg)
 
 	struct gui_widget widget = { 0 };
 	gui_widget_at(msg->id, msg->pos, &widget);
-	printf("%d\n", widget.id);
 
 	struct gui_window *win = gui_window_by_id(msg->id);
 	vec2 offset = gui_widget_offset(win->main_widget, &widget);
@@ -690,6 +689,25 @@ static void gui_handle_exit(void)
  * Main loop
  */
 
+static void gui_handle_message(void *msg)
+{
+	struct message_header *head = msg;
+	switch (head->type) {
+	case GUI_MOUSE:
+		gui_handle_mouse(msg);
+		break;
+	case GUI_PING_WINDOW:
+		gui_handle_ping_window(msg);
+		break;
+	case GUI_DESTROY_WINDOW:
+		gui_handle_destroy_window(msg);
+		break;
+	default:
+		// TODO: Fix random unknown msg types
+		gui_error(EINVAL);
+	}
+}
+
 void gui_loop(void)
 {
 	atexit(gui_handle_exit);
@@ -699,22 +717,43 @@ void gui_loop(void)
 
 	u8 msg[4096] = { 0 };
 	while (gui_connect_wm(), msg_receive(msg, 4096) > 0) {
-		struct message_header *head = (void *)msg;
-		switch (head->type) {
-		case GUI_MOUSE:
-			gui_handle_mouse((void *)msg);
-			break;
-		case GUI_PING_WINDOW:
-			gui_handle_ping_window((void *)msg);
-			break;
-		case GUI_DESTROY_WINDOW:
-			gui_handle_destroy_window((void *)msg);
-			break;
-		default:
-			// TODO: Fix random unknown msg types
-			gui_error(EINVAL);
-		}
+		gui_handle_message(msg);
 	}
 
 	err(1, "Gui loop failed\n");
+}
+
+void gui_time_loop(u32 time, void (*callback)(struct timer *time))
+{
+	atexit(gui_handle_exit);
+
+	if (!windows)
+		err(1, "Create some windows first\n");
+
+	u8 msg[4096] = { 0 };
+	struct timer timer = { 0 };
+	enum dev_type listeners[] = { DEV_TIMER, DEV_BUS, 0 };
+	dev_control(DEV_TIMER, DEVCTL_TIMER_SLEEP, 0);
+
+	while (1) {
+		gui_connect_wm();
+		res poll_ret = 0;
+		if ((poll_ret = dev_poll(listeners)) < 0)
+			panic("Poll/read error: %s\n", strerror(errno));
+
+		if (poll_ret == DEV_TIMER) {
+			if (dev_read(DEV_TIMER, &timer, 0, sizeof(timer)) > 0) {
+				callback(&timer);
+				continue;
+			}
+		} else if (poll_ret == DEV_BUS) {
+			if (msg_receive(msg, sizeof(msg)) > 0) {
+				gui_handle_message(msg);
+				dev_control(DEV_TIMER, DEVCTL_TIMER_SLEEP, time);
+				continue;
+			}
+		}
+
+		err(1, "Gui loop failed\n");
+	}
 }

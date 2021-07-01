@@ -3,7 +3,6 @@
 #include <dev.h>
 #include <drivers/cpu.h>
 #include <drivers/int.h>
-#include <drivers/timer.h>
 #include <errno.h>
 #include <fs.h>
 #include <load.h>
@@ -14,6 +13,7 @@
 #include <str.h>
 #include <sys.h>
 #include <syscall.h>
+#include <timer.h>
 
 static u32 syscall_handler(u32 esp)
 {

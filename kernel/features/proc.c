@@ -4,7 +4,6 @@
 #include <dev.h>
 #include <drivers/cpu.h>
 #include <drivers/gdt.h>
-#include <drivers/timer.h>
 #include <errno.h>
 #include <fs.h>
 #include <load.h>
@@ -14,6 +13,7 @@
 #include <proc.h>
 #include <stack.h>
 #include <str.h>
+#include <timer.h>
 
 #define PROC(node) ((struct proc *)node->data)
 
@@ -131,6 +131,17 @@ struct proc *proc_from_pid(u32 pid)
 	}
 
 	return NULL;
+}
+
+void proc_timer_check(u32 time)
+{
+	struct node *iterator = proc_list_blocked->head;
+	while (iterator) {
+		struct proc *proc = PROC(iterator);
+		if (proc->timer.mode == TIMER_MODE_SLEEP && time >= proc->timer.data)
+			dev_unblock_pid(proc->pid);
+		iterator = iterator->next;
+	}
 }
 
 CLEAR void proc_set_quantum(struct proc *proc, u32 value)

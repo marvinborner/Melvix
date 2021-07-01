@@ -6,6 +6,7 @@
 #include <def.h>
 #include <errno.h>
 #include <libgui/gfx.h>
+#include <sys.h>
 #include <vec.h>
 
 enum gui_listener {
@@ -87,5 +88,6 @@ void gui_widget_margin(u32 win_id, u32 widget_id, vec2 margin);
 void gui_widget_layout(u32 win_id, u32 widget_id, enum gui_layout layout);
 
 void gui_loop(void);
+void gui_time_loop(u32 time, void (*callback)(struct timer *time));
 
 #endif
