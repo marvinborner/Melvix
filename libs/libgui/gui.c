@@ -486,8 +486,24 @@ vec2 gui_window_size(u32 win_id)
 }
 
 /**
- * Window data setters
+ * Widget data getters/setters
  */
+
+vec2 gui_widget_size(u32 win_id, u32 widget_id)
+{
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
+	if (!widget)
+		gui_error(ENOENT);
+	return widget->bg.size;
+}
+
+struct gfx_context *gui_widget_context(u32 win_id, u32 widget_id, enum gui_layer layer)
+{
+	struct gui_widget *widget = gui_widget_by_id(win_id, widget_id);
+	if (!widget)
+		gui_error(ENOENT);
+	return layer == GUI_LAYER_BG ? &widget->bg : &widget->fg;
+}
 
 void gui_widget_margin(u32 win_id, u32 widget_id, vec2 margin)
 {

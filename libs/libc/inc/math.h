@@ -17,21 +17,25 @@
 #define M_PI_2 1.57079632679489661923
 #define M_PI_4 0.78539816339744830962
 
-f32 powf(f32 base, f32 exp);
-f64 pow(f64 base, f64 exp);
-f32 sqrtf(f32 num);
-f64 sqrt(f64 num);
+f64 mceil(f64 x);
+f64 mfloor(f64 x);
 
-f32 lerpf(f32 from, f32 to, f32 trans);
-f64 lerp(f64 from, f64 to, f64 trans);
-f32 blerpf(f32 a, f32 b, f32 c, f32 d, f32 transx, f32 transy);
-f64 blerp(f64 a, f64 b, f64 c, f64 d, f64 transx, f64 transy);
+f64 mexp(f64 exp);
+f64 mexp2(f64 exp);
 
-f32 sinf(f32 angle);
-f64 sin(f64 angle);
-f32 cosf(f32 angle);
-f64 cos(f64 angle);
-f32 tanf(f32 angle);
-f64 tan(f64 angle);
+f64 mlog(f64 x);
+f64 mlog2(f64 x);
+
+f64 mpow(f64 base, f64 exp);
+f64 msqrt(f64 num);
+
+f64 mcubic(f64 x, f64 a, f64 b, f64 c, f64 d);
+
+f64 mlerp(f64 from, f64 to, f64 trans);
+f64 mblerp(f64 a, f64 b, f64 c, f64 d, f64 transx, f64 transy);
+
+f64 msin(f64 angle);
+f64 mcos(f64 angle);
+f64 mtan(f64 angle);
 
 #endif

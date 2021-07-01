@@ -305,8 +305,8 @@ struct gfx_context *gfx_scale(struct gfx_context *ctx, vec2 size)
 			y++;
 		}
 
-		f32 gx = x / (f32)size.x * (ctx->size.x - 1);
-		f32 gy = y / (f32)size.y * (ctx->size.y - 1);
+		f64 gx = x / (f64)size.x * (ctx->size.x - 1);
+		f64 gy = y / (f64)size.y * (ctx->size.y - 1);
 		u32 gxi = (u32)gx;
 		u32 gyi = (u32)gy;
 
@@ -317,7 +317,7 @@ struct gfx_context *gfx_scale(struct gfx_context *ctx, vec2 size)
 
 		u32 color = 0;
 		for (u8 i = 0; i < bypp; i++) {
-			color |= ((u32)blerpf(GET_COLOR(a, i), GET_COLOR(b, i), GET_COLOR(c, i),
+			color |= ((u32)mblerp(GET_COLOR(a, i), GET_COLOR(b, i), GET_COLOR(c, i),
 					      GET_COLOR(d, i), gx - gxi, gy - gyi))
 				 << (i << 3);
 		}

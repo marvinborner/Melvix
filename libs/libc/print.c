@@ -23,10 +23,12 @@ int vsnprintf(char *str, u32 size, const char *format, va_list ap)
 	int temp_int;
 	char temp_ch;
 	char *temp_str;
-	f64 temp_double;
+	double temp_double;
+	vec2 temp_vec2;
 
 	char buffer[64] = { 0 };
 
+	// TODO: Fix potential memory overflows because of str[length++]=xxx
 	char ch;
 	while ((ch = *format++)) {
 		if (ch == '%') {
@@ -42,10 +44,25 @@ int vsnprintf(char *str, u32 size, const char *format, va_list ap)
 				temp_str = va_arg(ap, char *);
 				length += strlcpy(&str[length], temp_str, size - length);
 				break;
+			case 'b':
+				temp_int = va_arg(ap, int);
+				itoa(temp_int, buffer, 2);
+				length += strlcpy(&str[length], buffer, size - length);
+				break;
 			case 'd':
 				temp_int = va_arg(ap, int);
 				itoa(temp_int, buffer, 10);
 				length += strlcpy(&str[length], buffer, size - length);
+				break;
+			case 'v':
+				str[length++] = '(';
+				temp_vec2 = va_arg(ap, vec2);
+				itoa(temp_vec2.x, buffer, 10);
+				length += strlcpy(&str[length], buffer, size - length);
+				str[length++] = '/';
+				itoa(temp_vec2.y, buffer, 10);
+				length += strlcpy(&str[length], buffer, size - length);
+				str[length++] = ')';
 				break;
 			case 'x':
 				temp_int = va_arg(ap, int);

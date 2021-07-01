@@ -81,6 +81,8 @@ void gui_popup(const char *text);
  */
 
 vec2 gui_window_size(u32 win_id);
+vec2 gui_widget_size(u32 win_id, u32 widget_id);
+struct gfx_context *gui_widget_context(u32 win_id, u32 widget_id, enum gui_layer layer);
 void gui_widget_margin(u32 win_id, u32 widget_id, vec2 margin);
 void gui_widget_layout(u32 win_id, u32 widget_id, enum gui_layout layout);
 
