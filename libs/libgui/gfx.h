@@ -72,9 +72,13 @@ enum gfx_filter {
 // Generalized font struct
 struct gfx_font {
 	void *raw;
-	char *chars;
+	u8 *chars;
 	vec2 size;
-	int char_size;
+	u32 char_size;
+	u32 total_size;
+	struct {
+		u8 unicode : 1;
+	} flags;
 };
 
 struct gfx_context {
@@ -98,8 +102,6 @@ struct gfx_context *gfx_clone(struct gfx_context *ctx) NONNULL;
  */
 
 struct gfx_font *gfx_resolve_font(enum font_type font_type);
-void gfx_write_char(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 c,
-		    char ch) NONNULL;
 void gfx_write(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 c,
 	       const char *text) NONNULL;
 

@@ -99,7 +99,7 @@ make_disk() {
 
     echo "Getting font"
     cd disk/font/
-    VERSION="1.8.2"
+    VERSION="1.9.1"
     wget -q "https://github.com/fcambus/spleen/releases/download/$VERSION/spleen-$VERSION.tar.gz"
     tar xzf "spleen-$VERSION.tar.gz"
     mv spleen-"$VERSION"/*.psfu .

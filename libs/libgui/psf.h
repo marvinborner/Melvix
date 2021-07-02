@@ -10,15 +10,10 @@
  * PSF version 1
  */
 
-#define PSF1_MAGIC_0 0x36
-#define PSF1_MAGIC_1 0x04
-#define PSF1_MODE_256 0
-#define PSF1_MODE_512 1
-#define PSF1_MODE_256_UNICODE 2
-#define PSF1_MODE_512_UNICODE 3
+#define PSF1_MAGIC 0x0436
 
 struct psf1_header {
-	u8 magic[2];
+	u16 magic;
 	u8 mode;
 	u8 char_size;
 };
@@ -27,22 +22,22 @@ struct psf1_header {
  * PSF version 2
  */
 
-#define PSF2_MAGIC_0 0x72
-#define PSF2_MAGIC_1 0xb5
-#define PSF2_MAGIC_2 0x4a
-#define PSF2_MAGIC_3 0x86
+enum psf2_flags { PSF2_UNICODE = 1 };
+#define PSF2_MAGIC 0x864ab572
 
 struct psf2_header {
-	u8 magic[4];
+	u32 magic;
 	u32 version;
 	u32 size;
-	u32 flags;
-	u32 glyph_count;
+	enum psf2_flags flags;
+	u32 char_count;
 	u32 char_size;
 	u32 height;
 	u32 width;
 };
 
-struct gfx_font *psf_parse(char *data) NONNULL;
+struct gfx_font *psf_parse(const char *path) NONNULL;
+u32 psf_unicode(struct gfx_font *font, u32 needle);
+void psf_free(struct gfx_font *font);
 
 #endif

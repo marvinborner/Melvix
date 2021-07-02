@@ -14,6 +14,7 @@
 #include <mem.h>
 #include <str.h>
 #include <sys.h>
+#include <utf8.h>
 
 // TODO: Move to some global config file
 #define FONT_COUNT 6
@@ -56,30 +57,36 @@ static void load_font(enum font_type font_type)
 		return;
 	}
 
-	fonts[font_type] = psf_parse(sread(path));
+	fonts[font_type] = psf_parse(path);
 	assert(fonts[font_type]);
 }
 
 static void free_fonts(void)
 {
 	for (u8 i = 0; i < FONT_COUNT; i++) {
-		if (fonts[i]) {
-			free(fonts[i]->raw);
-			free(fonts[i]);
-		}
+		psf_free(fonts[i]);
 	}
 }
 
-static void write_char(struct gfx_context *ctx, vec2 pos, struct gfx_font *font, u32 c, char ch)
+static void write_char(struct gfx_context *ctx, vec2 pos, struct gfx_font *font, u32 c, u32 ch)
 {
 	u8 bypp = ctx->bpp >> 3;
+
+	u32 glyph = ch;
+	if (ch > 0x7f) {
+		glyph = psf_unicode(font, ch);
+		if (!glyph) {
+			log("Char '%x' is not renderable\n", ch);
+			glyph = '?';
+		}
+	}
 
 	char *draw = (char *)&ctx->fb[pos.x * bypp + pos.y * ctx->pitch];
 
 	u32 stride = font->char_size / font->size.y;
 	for (u32 cy = 0; cy < font->size.y; cy++) {
 		for (u32 cx = 0; cx < font->size.x; cx++) {
-			u8 bits = font->chars[ch * font->char_size + cy * stride + cx / 8];
+			u8 bits = font->chars[glyph * font->char_size + cy * stride + cx / 8];
 			u8 bit = bits >> (7 - cx % 8) & 1;
 			if (bit) {
 				draw[bypp * cx] = GET_BLUE(c);
@@ -129,24 +136,30 @@ struct gfx_font *gfx_resolve_font(enum font_type font_type)
 	return fonts[font_type];
 }
 
-void gfx_write_char(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 c, char ch)
-{
-	struct gfx_font *font = gfx_resolve_font(font_type);
-	write_char(ctx, pos, font, c, ch);
-}
-
 void gfx_write(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 c, const char *text)
 {
 	struct gfx_font *font = gfx_resolve_font(font_type);
 	u32 cnt = 0;
-	for (u32 i = 0; i < strlen(text); i++) {
-		// TODO: Should this be here?
-		if (text[i] == '\r') {
+
+	u32 length = strlen(text);
+	void *buffer = zalloc(length + 5); // utf8_decode needs 3B zero padding
+	strlcpy(buffer, text, length + 1);
+
+	char *next;
+	for (char *p = buffer; p && *p; p = next) {
+		u32 ch, err;
+		next = utf8_decode(p, &ch, &err);
+		if (err) {
+			log("Invalid utf8 sequence\n");
+			continue;
+		}
+
+		if (ch == '\r') {
 			cnt = 0;
-		} else if (text[i] == '\n') {
+		} else if (ch == '\n') {
 			cnt = 0;
 			pos.y += font->size.y;
-		} else if (text[i] == '\t') {
+		} else if (ch == '\t') {
 			cnt += 4;
 		} else {
 			// TODO: Overflow on single line input
@@ -154,10 +167,12 @@ void gfx_write(struct gfx_context *ctx, vec2 pos, enum font_type font_type, u32 
 				cnt = 0;
 				pos.y += font->size.y;
 			}
-			write_char(ctx, vec2(pos.x + cnt * font->size.x, pos.y), font, c, text[i]);
+			write_char(ctx, vec2(pos.x + cnt * font->size.x, pos.y), font, c, ch);
 			cnt++;
 		}
 	}
+
+	free(buffer);
 }
 
 /**

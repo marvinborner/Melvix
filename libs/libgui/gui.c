@@ -70,7 +70,7 @@ static struct gui_widget *gui_widget_in_widget(struct gui_widget *parent, u32 wi
 	while (iterator) {
 		struct gui_widget *widget = iterator->data;
 		if (widget->id == widget_id)
-			return iterator->data;
+			return widget;
 
 		struct gui_widget *sub = gui_widget_in_widget(widget, widget_id);
 		if (sub && sub->id == widget_id)
