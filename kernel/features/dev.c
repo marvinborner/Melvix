@@ -114,7 +114,7 @@ res dev_poll(u32 *devs)
 			}
 		}
 
-		struct dev_listener *listener = zalloc(sizeof(*listener));
+		struct dev_listener *listener = malloc(sizeof(*listener));
 		listener->group = group;
 		listener->proc = proc_current();
 		list_add(dev_listeners[type], listener);

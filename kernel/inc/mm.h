@@ -28,6 +28,7 @@ void physical_free(struct memory_range range);
 void physical_set_used(struct memory_range range);
 void physical_set_free(struct memory_range range);
 void physical_set_total(u32 total);
+void physical_print(void);
 
 /**
  * Virtual

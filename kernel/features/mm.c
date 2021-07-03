@@ -194,7 +194,7 @@ struct memory_range physical_alloc(u32 size)
 		}
 	}
 
-	panic("Out of physical memory!\n");
+	panic("Out of physical memory (%d of %d)!\n", memory_used, memory_total);
 	return memory_range(0, 0);
 }
 
@@ -202,6 +202,11 @@ void physical_free(struct memory_range range)
 {
 	assert(PAGE_ALIGNED(range.base) && PAGE_ALIGNED(range.size));
 	physical_set_free(range);
+}
+
+void physical_print(void)
+{
+	printf("%d of %d\n", memory_used, memory_total);
 }
 
 /**

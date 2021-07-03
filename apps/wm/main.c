@@ -389,7 +389,7 @@ static void window_request_destroy(struct window *win)
  */
 
 #define PING_INTERVAL 100
-#define PING_COUNT 3 // -> kill if >=
+#define PING_COUNT 5 // -> kill if >=
 
 static void window_ping(struct window *win)
 {
