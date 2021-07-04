@@ -30,7 +30,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: cross
-          key: cached-toolchain
+          key: cross-compiler
       - name: Build cross compiler
         if: steps.cache-cross.outputs.cache-hit != 'true'
         run: sh run cross -y

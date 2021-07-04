@@ -85,7 +85,7 @@ make_cross() {
         fi
 
         # Remove sources
-        rm -rf "${dir}/src/"
+        rm -rf "${DIR}/src/"
 
         cd "${DIR}/.."
     fi
