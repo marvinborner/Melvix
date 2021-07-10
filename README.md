@@ -34,6 +34,7 @@ This project is somewhat of a coding playground for me. It doesn't have any usef
 ## Screenshot
 
 ![Melvix screenshot](screenshot.png?raw=true "Screenshot")
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmarvinborner%2FMelvix.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmarvinborner%2FMelvix?ref=badge_shield)
 
 ## Documentation
 
@@ -87,3 +88,6 @@ Libraries:
 
 -   [lodepng (modified)](https://github.com/lvandeve/lodepng) - [ZLIB License](https://github.com/lvandeve/lodepng/blob/7fdcc96a5e5864eee72911c3ca79b1d9f0d12292/LICENSE)
 -   [sxml (modified)](https://github.com/capmar/sxml) - [Unlicense License](https://github.com/capmar/sxml/blob/91176b4c62ef7c6342804e02fc440b2e82326469/UNLICENSE)
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmarvinborner%2FMelvix.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmarvinborner%2FMelvix?ref=badge_large)
