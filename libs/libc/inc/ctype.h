@@ -1,5 +1,5 @@
 // MIT License, Copyright(c) 2021 Marvin Borner
 
-#ifndef MATH_H
-#define MATH_H
+#ifndef CTYPE_H
+#define CTYPE_H
 #endif

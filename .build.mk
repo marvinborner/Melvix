@@ -1,5 +1,8 @@
 # MIT License, Copyright (c) 2021 Marvin Borner
 
+VERSION = v0.0
+ARCH ?= x86_32
+
 # All preprocessor flags - enable using the custom config group below
 ALL_PREPROCESSOR_FLAGS = \
     DEBUG_ALLOC \
@@ -19,7 +22,7 @@ CONFIG_CACHE ?= ccache
 # Specific config groups
 ifeq ($(CONFIG), debug)
     CONFIG_OPTIMIZATION ?= -Ofast
-    CONFIG_EXTRA_CFLAGS ?= -Wno-error -ggdb3 -s -fsanitize=undefined -fstack-protector-all
+    CONFIG_EXTRA_CFLAGS ?= -Wno-error -ggdb3 -s #-fsanitize=undefined -fstack-protector-all
 else ifeq ($(CONFIG), dev)
     CONFIG_OPTIMIZATION ?= -finline -finline-functions -Ofast
 else ifeq ($(CONFIG), release)

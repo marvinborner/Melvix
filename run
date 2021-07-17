@@ -95,7 +95,7 @@ make_disk() {
     rm -rf disk && mkdir -p disk/font/ && mkdir -p disk/icons/ && mkdir -p disk/conf/ && mkdir -p disk/boot/
     echo "Hallo" >disk/conf/test
 
-    cp -r res/ disk/
+    # cp -r res/ disk/
 
     echo "Getting font"
     cd disk/font/
@@ -148,7 +148,7 @@ make_build() {
 
     # Prepare Grub
     mkdir -p disk/boot/grub/
-    cp build/apps/kernel/exec disk/boot/melvix
+    cp build/kernel.elf disk/boot/melvix
     cp boot/grub.cfg disk/boot/grub/
 
     # Create disk image # TODO: Fix build for OpenBSD
@@ -173,7 +173,8 @@ make_build() {
 
     # Set test app as init
     if [ "$mode" = "test" ]; then
-        cp build/apps/test/exec build/apps/init/exec
+        echo "not implemented"
+        exit 1
     fi
 
     mkdir -p mnt/
@@ -183,8 +184,8 @@ make_build() {
         $SUDO mount "$DEV$PART" mnt/
     fi
     $SUDO cp -r disk/* mnt/
-    $SUDO chmod -R 0 mnt/conf/
-    $SUDO cp -r build/apps/ mnt/apps/
+    #$SUDO chmod -R 0 mnt/conf/
+    #$SUDO cp -r build/apps/ mnt/apps/
 
     # Install grub if release
     if [ "$MELVIX_CONFIG" = "release" ]; then
@@ -205,17 +206,17 @@ make_build() {
 
 make_test() {
     if [ "$mode" = "test" ]; then
-        qemu_with_flags -serial file:test.log -nographic -kernel build/apps/kernel/exec -drive file=build/disk.img,format=raw,index=1,media=disk
+        qemu_with_flags -serial file:test.log -nographic -kernel build/kernel.elf -drive file=build/disk.img,format=raw,index=1,media=disk
         echo
         grep -E 'PASS|FAIL' test.log
         if grep -q "All tests passed" test.log; then exit 0; else exit 1; fi
     else
-        qemu_with_flags -serial stdio -kernel build/apps/kernel/exec -drive file=build/disk.img,format=raw,index=1,media=disk
+        qemu_with_flags -serial stdio -kernel build/kernel.elf -drive file=build/disk.img,format=raw,index=1,media=disk
     fi
 }
 
 make_debug() {
-    qemu_with_flags -serial stdio -kernel build/apps/kernel/exec -drive file=build/disk.img,format=raw,index=1,media=disk -s -S
+    qemu_with_flags -serial stdio -kernel build/kernel.elf -drive file=build/disk.img,format=raw,index=1,media=disk -s -S
 }
 
 make_disasm() {
@@ -237,36 +238,11 @@ make_addr() {
 }
 
 make_cloc() {
-    cloc . --exclude-dir=build,iso,disk,res,cross,icons
-}
-
-make_append_commands() {
-    s=""
-    while read -r data; do
-        s="${s}
-${data}"
-    done
-
-    echo "$s" |
-        sed -n "/Compiled $1/,/Compiled $2/p" |
-        grep -wE 'gcc' |
-        grep -w '\-c' |
-        jq -nR '[inputs|{directory:"'"$(pwd)/$3"'/", command:., file: match(" [^ ]+$").string[1:]}]' \
-            >>compile_commands.json
+    cloc . --exclude-dir=build,disk,res,cross,icons
 }
 
 make_sync() {
     $TAGS -R --exclude=.git --exclude=build --exclude=disk --exclude=cross --exclude=boot .
-
-    rm -f compile_commands.json
-    output=$($MAKE --always-make --dry-run)
-    echo "$output" | make_append_commands libc libk libs/libc
-    echo "$output" | make_append_commands libk libgui libs/libgui
-    echo "$output" | make_append_commands libgui libtxt libs/libtxt
-    echo "$output" | make_append_commands libtxt kernel kernel
-    echo "$output" | make_append_commands kernel apps apps
-    tr <compile_commands.json '\n' '\r' | sed -e 's/\r]\r\[/,/g' | tr '\r' '\n' >tmp
-    mv tmp compile_commands.json
 }
 
 make_lint() {
