@@ -5,7 +5,7 @@ SRC = ./src
 INC = ./inc
 ARCH_DIR = $(SRC)/arch
 
-CFLAGS += -I$(INC) -I$(ARCH_DIR)/$(ARCH)/$(INC) -I$(LIBS)/libc/inc -I$(LIBS)/libc/src/arch/$(ARCH)/inc -ffreestanding -mgeneral-regs-only -Wl,-earch_init
+CFLAGS += -I$(INC) -I$(ARCH_DIR)/$(ARCH)/$(INC) -I$(ARCH_DIR)/$(ARCH_MAJOR)/$(INC) -I$(LIBS)/libc/inc -I$(LIBS)/libc/src/arch/$(ARCH)/inc -ffreestanding -mgeneral-regs-only -Wl,-earch_init
 
 CSRCS = $(shell find $(SRC) -path $(ARCH_DIR) -prune -false -o -type f -name "*.c")
 CSRCS += $(shell find $(ARCH_DIR)/$(ARCH) -type f -name "*.c")

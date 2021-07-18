@@ -28,7 +28,7 @@ void vga_print(const char *data)
 		if (*p == '\n') {
 			x = 0;
 			y++;
-			return;
+			continue;
 		} else if (x + 1 == VGA_WIDTH) {
 			x = 0;
 			y++;

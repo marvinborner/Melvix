@@ -64,6 +64,7 @@ CLEAR void idt_init(void)
 		};
 	}
 
+	__asm__ volatile("cli");
 	__asm__ volatile("lidt %0" : : "m"(idtr));
-	__asm__ volatile("sti");
+	__asm__ volatile("cli");
 }

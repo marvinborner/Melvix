@@ -183,7 +183,7 @@ make_build() {
     else
         $SUDO mount "$DEV$PART" mnt/
     fi
-    $SUDO cp -r disk/* mnt/
+    #$SUDO cp -r disk/* mnt/
     #$SUDO chmod -R 0 mnt/conf/
     #$SUDO cp -r build/apps/ mnt/apps/
 

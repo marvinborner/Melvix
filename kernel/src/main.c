@@ -1,12 +1,33 @@
 // MIT License, Copyright(c) 2021 Marvin Borner
 
+#include <acpi.h>
+#include <arch.h>
 #include <drivers/vga.h>
 #include <kernel.h>
+#include <tasking/task.h>
 
-void kernel_main(struct boot_information *data)
+static void kernel_task(void)
 {
-	UNUSED(data);
+	while (1)
+		;
+}
+
+void kernel_panic(const char *reason)
+{
+	vga_print("\n[FATAL] Kernel panic!\nReason: ");
+	vga_print(reason);
+	arch_halt();
+}
+
+void kernel_main(struct boot_information *info)
+{
 	vga_clear();
+
+	struct task *kernel = task_create(NULL, "kernel", (uintptr_t)&kernel_task, PRIV_SUPER);
+	struct task *idle = task_create(kernel, "idle", (uintptr_t)&kernel_task, PRIV_DEFAULT);
+
+	acpi_probe(info);
+
 	vga_print("OK!\n");
 	while (1)
 		;

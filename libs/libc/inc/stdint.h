@@ -6,6 +6,4 @@
 // Arch dependent
 #include <_types.h>
 
-#define NULL ((void *)0)
-
 #endif

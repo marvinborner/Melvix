@@ -13,13 +13,9 @@ typedef int int32_t;
 typedef long long int64_t;
 
 typedef long intptr_t;
-typedef long ptrdiff_t;
 typedef long long int intmax_t;
 typedef long wint_t;
 typedef long wchar_t;
-
-typedef unsigned long size_t;
-typedef long ssize_t;
 
 typedef long long time_t;
 

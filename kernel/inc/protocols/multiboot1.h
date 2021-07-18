@@ -1,7 +1,7 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
-#ifndef MULTIBOOT1_H
-#define MULTIBOOT1_H
+#ifndef PROTOCOLS_MULTIBOOT1_H
+#define PROTOCOLS_MULTIBOOT1_H
 
 #include <kernel.h>
 

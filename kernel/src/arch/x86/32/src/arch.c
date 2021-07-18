@@ -5,8 +5,14 @@
 #include <arch.h>
 #include <gdt.h>
 #include <idt.h>
-#include <kernel.h>
 #include <protocols.h>
+
+NORETURN void arch_halt(void)
+{
+	__asm__ volatile("cli");
+	while (1)
+		__asm__ volatile("hlt");
+}
 
 void arch_init(u32 magic, uintptr_t addr);
 CLEAR void arch_init(u32 magic, uintptr_t addr)

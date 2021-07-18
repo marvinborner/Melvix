@@ -16,11 +16,13 @@ CLEAR struct boot_information *multiboot1_convert(uintptr_t address, struct boot
 		info->memory.total = multiboot->memory_upper - multiboot->memory_lower;
 
 	if (multiboot->flags & MULTIBOOT1_INFO_MEMORY_MAP) {
+		info->memory.map.available = 1;
 		info->memory.map.entries = (void *)multiboot->mmap_addr; // TODO: Convert
 		info->memory.map.count = multiboot->mmap_length;
 	}
 
 	if (multiboot->flags & MULTIBOOT1_INFO_FRAMEBUFFER_INFO) {
+		info->framebuffer.available = 1;
 		info->framebuffer.address = multiboot->framebuffer_addr_low;
 		info->framebuffer.width = multiboot->framebuffer_width;
 		info->framebuffer.height = multiboot->framebuffer_height;

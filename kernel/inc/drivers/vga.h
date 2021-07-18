@@ -1,7 +1,7 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
-#ifndef VGA_H
-#define VGA_H
+#ifndef DRIVERS_VGA_H
+#define DRIVERS_VGA_H
 
 #include <kernel.h>
 
