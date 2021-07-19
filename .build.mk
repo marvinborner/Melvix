@@ -1,9 +1,9 @@
 # MIT License, Copyright (c) 2021 Marvin Borner
 
 VERSION = v0.0
-ARCH_MINOR ?= x86
-ARCH_MAJOR ?= 32
-ARCH ?= $(ARCH_MINOR)/$(ARCH_MAJOR)
+ARCH_MAJOR ?= x86
+ARCH_MINOR ?= 32
+ARCH ?= $(ARCH_MAJOR)/$(ARCH_MINOR)
 
 # All preprocessor flags - enable using the custom config group below
 ALL_PREPROCESSOR_FLAGS = \

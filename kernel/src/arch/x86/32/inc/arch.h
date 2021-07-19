@@ -1,7 +1,7 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
-#ifndef ARCH_H
-#define ARCH_H
+#ifndef X86_32_ARCH_H
+#define X86_32_ARCH_H
 
 #include <kernel.h>
 

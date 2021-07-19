@@ -9,10 +9,12 @@ CFLAGS += -I$(INC) -I$(ARCH_DIR)/$(ARCH)/$(INC) -I$(ARCH_DIR)/$(ARCH_MAJOR)/$(IN
 
 CSRCS = $(shell find $(SRC) -path $(ARCH_DIR) -prune -false -o -type f -name "*.c")
 CSRCS += $(shell find $(ARCH_DIR)/$(ARCH) -type f -name "*.c")
+CSRCS += $(shell find $(ARCH_DIR)/$(ARCH_MAJOR) -maxdepth 1 -type f -name "*.c")
 COBJS = $(patsubst $(SRC)/%.c,$(BUILD)/$(NAME)/%_c.o,$(CSRCS))
 
 ASRCS = $(shell find $(SRC) -path $(ARCH_DIR) -prune -false -o -type f -name "*.asm")
 ASRCS += $(shell find $(ARCH_DIR)/$(ARCH) -type f -name "*.asm")
+CSRCS += $(shell find $(ARCH_DIR)/$(ARCH_MAJOR) -maxdepth 1 -type f -name "*.asm")
 AOBJS = $(patsubst $(SRC)/%.asm,$(BUILD)/$(NAME)/%_asm.o,$(ASRCS))
 
 all: $(BUILD)/$(NAME).elf

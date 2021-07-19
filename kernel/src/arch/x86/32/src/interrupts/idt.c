@@ -1,7 +1,7 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
 #include <gdt.h>
-#include <idt.h>
+#include <interrupts/idt.h>
 #include <kernel.h>
 
 #define IDT_TYPE_TASK 0x5
@@ -35,22 +35,12 @@ PROTECTED static struct idtr idtr = {
 	0,
 };
 
-struct interrupt_frame {
-	u32 gs, fs, es, ds;
-	u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
-	u32 int_no, err_code;
-	u32 eip, cs, eflags;
-} PACKED;
-
-ATTR((interrupt)) static void handler(struct interrupt_frame *frame)
-{
-	UNUSED(frame);
-}
+PROTECTED extern u32 interrupt_table[];
 
 CLEAR void idt_init(void)
 {
 	for (u16 i = 0; i < COUNT(idt_descriptors); i++) {
-		u32 base = (u32)&handler;
+		u32 base = (u32)interrupt_table[i];
 		u8 type = i > 32 ? IDT_TYPE_INTERRUPT : IDT_TYPE_TRAP;
 		idt_descriptors[i] = (struct idt_descriptor){
 			.base_low = base & 0xffff,
@@ -64,7 +54,6 @@ CLEAR void idt_init(void)
 		};
 	}
 
-	__asm__ volatile("cli");
 	__asm__ volatile("lidt %0" : : "m"(idtr));
-	__asm__ volatile("cli");
+	__asm__ volatile("sti");
 }
