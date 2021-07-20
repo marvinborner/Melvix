@@ -242,6 +242,11 @@ make_cloc() {
 }
 
 make_sync() {
+    make --always-make --dry-run |
+        grep -wE 'gcc|g\+\+' |
+        grep -w '\-c' |
+        jq -nR '[inputs|{directory:".", command:., file: match(" [^ ]+$").string[1:]}]' \
+            >compile_commands.json
     $TAGS -R --exclude=.git --exclude=build --exclude=disk --exclude=cross --exclude=boot .
 }
 

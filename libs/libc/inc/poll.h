@@ -3,6 +3,8 @@
 #ifndef POLL_H
 #define POLL_H
 
+#include <sys/dev.h>
+
 #define POLLIN 0x0001
 #define POLLPRI 0x0002
 #define POLLOUT 0x0004
@@ -16,7 +18,7 @@
 #define POLLREMOVE 0x1000
 
 struct pollfd {
-	int fd;
+	dev_t dev;
 	short events;
 	short revents;
 };

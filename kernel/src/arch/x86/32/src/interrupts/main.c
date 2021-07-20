@@ -11,6 +11,7 @@ struct interrupt_frame {
 	u32 eip, cs, eflags;
 } PACKED;
 
+u32 interrupt_handler(u32 esp);
 u32 interrupt_handler(u32 esp)
 {
 	struct interrupt_frame *frame = (struct interrupt_frame *)esp;

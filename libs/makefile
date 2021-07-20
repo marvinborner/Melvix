@@ -1,9 +1,9 @@
 # MIT License, Copyright (c) 2021 Marvin Borner
 
-LIBS = $(wildcard */.)
+DIRS = $(wildcard */.)
 
-all: $(LIBS)
-$(LIBS):
+all: $(DIRS)
+$(DIRS):
 	@$(MAKE) --no-print-directory -C $@
 
-.PHONY: all $(LIBS)
+.PHONY: all $(DIRS)

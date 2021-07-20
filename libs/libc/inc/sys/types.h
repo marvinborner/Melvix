@@ -5,7 +5,6 @@
 
 #include <_types.h>
 
-typedef uint32_t dev_t;
 typedef uint16_t gid_t;
 typedef uint16_t mode_t;
 typedef uint16_t nlink_t;
