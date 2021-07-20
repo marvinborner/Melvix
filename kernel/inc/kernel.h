@@ -28,8 +28,6 @@ typedef uint64_t u64;
 #define HOT ATTR((hot))
 #define OPTIMIZE(level) ATTR((optimize(level)))
 #define ALIGNED(align) ATTR((aligned(align)))
-#define UNUSED(a) ((void)(a))
-#define COUNT(a) (sizeof(a) / sizeof 0 [a])
 
 #define STRINGIFY_PARAM(a) #a
 #define STRINGIFY(a) STRINGIFY_PARAM(a)

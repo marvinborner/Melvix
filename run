@@ -140,9 +140,6 @@ make_build() {
         make_disk
     fi
 
-    mkdir -p build/
-    rm -rf build/*
-
     printf "\nBuilding...\n"
     $MAKE -j $($NPROC) CONFIG="$MELVIX_CONFIG" $MELVIX_MAKE
 
@@ -298,17 +295,14 @@ elif [ "${mode}" = "disk" ]; then
     make_disk
 elif [ "${mode}" = "debug" ]; then
     make_cross
-    make_clean
     make_build
     make_sync &
     make_debug
 elif [ "${mode}" = "test" ] || [ "${mode}" = "" ]; then
     make_cross
-    make_clean
     make_build
     make_sync &
     make_test
-    make_clean
 else
     echo "Usage: ./run {cross | clean | build | test | debug | again | disasm | addr | sync | disk} [-y]"
     printf "\nDescription of options:\n"

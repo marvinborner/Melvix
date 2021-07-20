@@ -1,7 +1,7 @@
 // MIT License, Copyright (c) 2021 Marvin Borner
 
-#ifndef ACPI_H
-#define ACPI_H
+#ifndef ACPI_MAIN_H
+#define ACPI_MAIN_H
 
 #include <kernel.h>
 #include <stdint.h>
@@ -144,6 +144,14 @@ struct fadt {
 	struct generic_address x_gpe0_block;
 	struct generic_address x_gpe1_block;
 } PACKED;
+
+// boot_architecture_flags
+#define ACPI_FADT_HAS_ISA (1)
+#define ACPI_FADT_HAS_8042 (1 << 1)
+#define ACPI_FADT_NO_VGA (1 << 2)
+#define ACPI_FADT_NO_MSI (1 << 3)
+#define ACPI_FADT_NO_ASPM (1 << 4)
+#define ACPI_FADT_NO_CMOS_RTC (1 << 5)
 
 /**
  * HPET

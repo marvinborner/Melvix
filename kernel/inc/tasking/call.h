@@ -4,13 +4,9 @@
 #define TASKING_CALL_H
 
 #include <stdint.h>
+#include <sys/call.h>
 
-typedef enum {
-	CALL_INVALID,
-	CALL_TEST,
-} call_t;
-
-uintptr_t syscall_handle(call_t call, uintptr_t arg0, uintptr_t arg1, uintptr_t arg2,
-			 uintptr_t arg3, uintptr_t arg4);
+uintptr_t syscall_handle(syscall_t call, syscall_arg_t arg0, syscall_arg_t arg1, syscall_arg_t arg2,
+			 syscall_arg_t arg3, syscall_arg_t arg4);
 
 #endif

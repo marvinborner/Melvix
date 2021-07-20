@@ -4,7 +4,10 @@
 #define STDDEF_H
 
 #define NULL ((void *)0)
-#define offsetof(type, field) ((int)(&((type *)0)->field))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define UNUSED(a) ((void)(a))
+#define COUNT(a) (sizeof(a) / sizeof 0 [a])
 
 typedef unsigned long size_t;
 typedef long ssize_t;

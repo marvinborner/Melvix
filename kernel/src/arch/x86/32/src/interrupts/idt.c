@@ -7,6 +7,8 @@
 #define IDT_TYPE_TASK 0x5
 #define IDT_TYPE_INTERRUPT 0xe
 #define IDT_TYPE_TRAP 0xf
+#define IDT_PRIV(priv) (priv << 5)
+#define IDT_PRESENT (1 << 7)
 
 struct idtr {
 	u16 limit;
@@ -18,12 +20,7 @@ struct idt_descriptor {
 	u16 base_low;
 	u16 selector; // cs
 	u8 zero;
-	struct {
-		u8 type : 4;
-		u8 storage : 1; // 0 for int/trap
-		u8 privilege : 2;
-		u8 present : 1;
-	} flags;
+	u8 flags;
 	u16 base_high;
 } PACKED;
 
@@ -46,10 +43,7 @@ CLEAR void idt_init(void)
 			.base_low = base & 0xffff,
 			.selector = GDT_CODE_SEGMENT,
 			.zero = 0,
-			.flags.type = type,
-			.flags.storage = 0,
-			.flags.privilege = 0,
-			.flags.present = 1,
+			.flags = type | IDT_PRIV(0) | IDT_PRESENT,
 			.base_high = base >> 16,
 		};
 	}

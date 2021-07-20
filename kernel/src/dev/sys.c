@@ -5,6 +5,18 @@
 #include <dev/management.h>
 #include <dev/sys.h>
 
+ssize_t sys_dev_write(dev_t type, const void *buf, off_t offset, size_t count)
+{
+	struct dev *dev = dev_get(type);
+	if (!dev)
+		return -EINVAL;
+	if (!dev->exists)
+		return -ENODEV;
+	if (!dev->write)
+		return -EINVAL;
+	return dev->write(buf, offset, count);
+}
+
 ssize_t sys_dev_read(dev_t type, void *buf, off_t offset, size_t count)
 {
 	struct dev *dev = dev_get(type);

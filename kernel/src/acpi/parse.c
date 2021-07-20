@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include <acpi.h>
+#include <acpi/main.h>
 
 /**
  * General SDP
@@ -73,6 +73,7 @@ CLEAR static struct rsdp *acpi_rsdp_find(void)
  * TODO: Don't panic?
  */
 
+#include <arch.h>
 CLEAR static void acpi_parse(struct rsdp *rsdp)
 {
 	if (!rsdp || rsdp->header.revision != 0 || !acpi_sdp_verify(&rsdp->header))
@@ -86,6 +87,10 @@ CLEAR static void acpi_parse(struct rsdp *rsdp)
 	struct madt *madt = acpi_sdt_find(rsdt, MADT_MAGIC);
 	struct fadt *fadt = acpi_sdt_find(rsdt, FADT_MAGIC);
 	struct hpet *hpet = acpi_sdt_find(rsdt, HPET_MAGIC);
+
+	// TODO!
+	/* if (fadt->boot_architecture_flags & ACPI_FADT_HAS_8042) */
+	/* 	arch_log("YAY!\n"); */
 
 	// TODO!
 	UNUSED(madt);
