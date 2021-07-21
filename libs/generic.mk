@@ -3,17 +3,19 @@
 NAME ?= $(shell basename $(CURDIR))
 SRC ?= $(shell pwd)/src
 INC ?= $(shell pwd)/inc
-ARCH_DIR ?= $(SRC)/arch
+ARCH_DIR ?= arch
 
-CFLAGS += -I$(INC) -I$(ARCH_DIR)/$(ARCH)/inc
+CFLAGS += -I$(INC) -I$(INC)/$(ARCH_DIR)/$(ARCH) -I$(INC)/$(ARCH_DIR)/$(ARCH_MAJOR)
 
 # TODO: Make arch dir usage optional
-CSRCS = $(shell find $(SRC) -path $(ARCH_DIR) -prune -false -o -type f -name "*.c")
-CSRCS += $(shell find $(ARCH_DIR)/$(ARCH) -type f -name "*.c")
+CSRCS = $(shell find $(SRC) -path $(SRC)/$(ARCH_DIR) -prune -false -o -type f -name "*.c")
+CSRCS += $(shell find $(SRC)/$(ARCH_DIR)/$(ARCH) -type f -name "*.c")
+CSRCS += $(shell find $(SRC)/$(ARCH_DIR)/$(ARCH_MAJOR) -maxdepth 1 -type f -name "*.c")
 COBJS = $(patsubst $(SRC)/%.c,$(BUILD)/libs/$(NAME)/%_c.o,$(CSRCS))
 
-ASRCS = $(shell find $(SRC) -path $(ARCH_DIR) -prune -false -o -type f -name "*.asm")
-ASRCS += $(shell find $(ARCH_DIR)/$(ARCH) -type f -name "*.asm")
+ASRCS = $(shell find $(SRC) -path $(SRC)/$(ARCH_DIR) -prune -false -o -type f -name "*.asm")
+ASRCS += $(shell find $(SRC)/$(ARCH_DIR)/$(ARCH) -type f -name "*.asm")
+CSRCS += $(shell find $(SRC)/$(ARCH_DIR)/$(ARCH_MAJOR) -maxdepth 1 -type f -name "*.asm")
 AOBJS = $(patsubst $(SRC)/%.asm,$(BUILD)/libs/$(NAME)/%_asm.o,$(ASRCS))
 
 all: dir $(BUILD)/$(NAME).a

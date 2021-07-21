@@ -3,18 +3,18 @@
 NAME = kernel
 SRC = $(shell pwd)/src
 INC = $(shell pwd)/inc
-ARCH_DIR = $(SRC)/arch
+ARCH_DIR = arch
 
-CFLAGS += -I$(INC) -I$(ARCH_DIR)/$(ARCH)/inc -I$(ARCH_DIR)/$(ARCH_MAJOR)/inc -I$(LIBS)/libc/inc -I$(LIBS)/libc/src/arch/$(ARCH)/inc -Wl,-earch_init
+CFLAGS += -I$(INC) -I$(INC)/$(ARCH_DIR)/$(ARCH) -I$(INC)/$(ARCH_DIR)/$(ARCH_MAJOR) -I$(LIBS)/libc/inc -I$(LIBS)/libc/inc/arch/$(ARCH) -I$(LIBS)/libc/inc/arch/$(ARCH_MAJOR) -Wl,-earch_init
 
-CSRCS = $(shell find $(SRC) -path $(ARCH_DIR) -prune -false -o -type f -name "*.c")
-CSRCS += $(shell find $(ARCH_DIR)/$(ARCH) -type f -name "*.c")
-CSRCS += $(shell find $(ARCH_DIR)/$(ARCH_MAJOR) -maxdepth 1 -type f -name "*.c")
+CSRCS = $(shell find $(SRC) -path $(SRC)/$(ARCH_DIR) -prune -false -o -type f -name "*.c")
+CSRCS += $(shell find $(SRC)/$(ARCH_DIR)/$(ARCH) -type f -name "*.c")
+CSRCS += $(shell find $(SRC)/$(ARCH_DIR)/$(ARCH_MAJOR) -maxdepth 1 -type f -name "*.c")
 COBJS = $(patsubst $(SRC)/%.c,$(BUILD)/$(NAME)/%_c.o,$(CSRCS))
 
-ASRCS = $(shell find $(SRC) -path $(ARCH_DIR) -prune -false -o -type f -name "*.asm")
-ASRCS += $(shell find $(ARCH_DIR)/$(ARCH) -type f -name "*.asm")
-CSRCS += $(shell find $(ARCH_DIR)/$(ARCH_MAJOR) -maxdepth 1 -type f -name "*.asm")
+ASRCS = $(shell find $(SRC) -path $(SRC)/$(ARCH_DIR) -prune -false -o -type f -name "*.asm")
+ASRCS += $(shell find $(SRC)/$(ARCH_DIR)/$(ARCH) -type f -name "*.asm")
+CSRCS += $(shell find $(SRC)/$(ARCH_DIR)/$(ARCH_MAJOR) -maxdepth 1 -type f -name "*.asm")
 AOBJS = $(patsubst $(SRC)/%.asm,$(BUILD)/$(NAME)/%_asm.o,$(ASRCS))
 
 all: $(BUILD)/$(NAME).elf
