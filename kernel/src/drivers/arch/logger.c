@@ -2,7 +2,7 @@
 
 #include <arch.h>
 #include <dev/management.h>
-#include <drivers/logger.h>
+#include <drivers/arch/logger.h>
 #include <errno.h>
 
 static ssize_t logger_write(const void *buf, off_t offset, size_t count)
@@ -20,10 +20,12 @@ static int logger_request(dev_req_t request, va_list ap)
 
 static void logger_enable(void)
 {
+	arch_log_enable();
 }
 
 static void logger_disable(void)
 {
+	arch_log_disable();
 }
 
 PROTECTED static struct dev dev = {

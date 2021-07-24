@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 int vsnprintf(char *str, size_t size, const char *format, va_list ap)
 {
@@ -56,4 +57,63 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap)
 	}
 
 	return length;
+}
+
+int snprintf(char *str, size_t size, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	int len = vsnprintf(str, size, format, ap);
+	va_end(ap);
+
+	return len;
+}
+
+int vprintf(const char *format, va_list ap)
+{
+	return vdprintf(DEV_LOGGER, format, ap);
+}
+
+int vfprintf(const char *path, const char *format, va_list ap)
+{
+	char buf[1024] = { 0 };
+	int len = vsnprintf(buf, sizeof(buf), format, ap);
+	return fs_write(path, buf, 0, len);
+}
+
+int vdprintf(dev_t type, const char *format, va_list ap)
+{
+	char buf[1024] = { 0 };
+	int len = vsnprintf(buf, sizeof(buf), format, ap);
+	return dev_write(type, buf, 0, len);
+}
+
+int fprintf(const char *path, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	int len = vfprintf(path, format, ap);
+	va_end(ap);
+
+	return len;
+}
+
+int dprintf(dev_t type, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	int len = vdprintf(type, format, ap);
+	va_end(ap);
+
+	return len;
+}
+
+int printf(const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	int len = vprintf(format, ap);
+	va_end(ap);
+
+	return len;
 }

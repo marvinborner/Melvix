@@ -60,7 +60,7 @@ struct boot_information {
 	} acpi;
 };
 
-void kernel_panic(const char *reason);
-void kernel_main(struct boot_information *data);
+NORETURN void kernel_panic(const char *reason) NONNULL;
+NORETURN void kernel_main(struct boot_information *data) NONNULL;
 
 #endif

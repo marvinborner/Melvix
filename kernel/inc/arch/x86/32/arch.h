@@ -6,6 +6,8 @@
 #include <kernel.h>
 
 NORETURN void arch_halt(void);
+void arch_log_enable(void);
+void arch_log_disable(void);
 void arch_log(const char *data, size_t count) NONNULL;
 
 #endif
