@@ -9,10 +9,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-ssize_t fs_read(const char *pathname, void *buf, off_t offset, size_t count);
-ssize_t fs_write(const char *pathname, const void *buf, off_t offset, size_t count);
-int fs_stat(const char *pathname, struct stat *statbuf);
-int fs_create(const char *pathname);
+ssize_t fs_read(const char *path, void *buf, off_t offset, size_t count);
+ssize_t fs_write(const char *path, const void *buf, off_t offset, size_t count);
+int fs_stat(const char *path, struct stat *statbuf);
+int fs_create(const char *path);
 
 ssize_t dev_read(dev_t type, void *buf, off_t offset, size_t count);
 ssize_t dev_write(dev_t type, const void *buf, off_t offset, size_t count);

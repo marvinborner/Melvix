@@ -3,26 +3,26 @@
 #include <sys/call.h>
 #include <unistd.h>
 
-ssize_t fs_read(const char *pathname, void *buf, off_t offset, size_t count)
+ssize_t fs_read(const char *path, void *buf, off_t offset, size_t count)
 {
-	return syscall(CALL_FS_READ, (syscall_arg_t)pathname, (syscall_arg_t)buf,
+	return syscall(CALL_FS_READ, (syscall_arg_t)path, (syscall_arg_t)buf, (syscall_arg_t)offset,
+		       (syscall_arg_t)count);
+}
+
+ssize_t fs_write(const char *path, const void *buf, off_t offset, size_t count)
+{
+	return syscall(CALL_FS_WRITE, (syscall_arg_t)path, (syscall_arg_t)buf,
 		       (syscall_arg_t)offset, (syscall_arg_t)count);
 }
 
-ssize_t fs_write(const char *pathname, const void *buf, off_t offset, size_t count)
+int fs_stat(const char *path, struct stat *statbuf)
 {
-	return syscall(CALL_FS_WRITE, (syscall_arg_t)pathname, (syscall_arg_t)buf,
-		       (syscall_arg_t)offset, (syscall_arg_t)count);
+	return syscall(CALL_FS_STAT, (syscall_arg_t)path, (syscall_arg_t)statbuf);
 }
 
-int fs_stat(const char *pathname, struct stat *statbuf)
+int fs_create(const char *path)
 {
-	return syscall(CALL_FS_STAT, (syscall_arg_t)pathname, (syscall_arg_t)statbuf);
-}
-
-int fs_create(const char *pathname)
-{
-	return syscall(CALL_FS_CREATE, (syscall_arg_t)pathname);
+	return syscall(CALL_FS_CREATE, (syscall_arg_t)path);
 }
 
 ssize_t dev_read(dev_t type, void *buf, off_t offset, size_t count)

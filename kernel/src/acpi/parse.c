@@ -56,9 +56,8 @@ CLEAR static void *acpi_sdt_find(struct rsdt *rsdt, const char *signature)
 
 CLEAR static struct rsdp *acpi_rsdp_find(void)
 {
-	uintptr_t ebda = EBDA;
-	for (uintptr_t i = ebda; i < 0x100000; i += 16) {
-		if (i == ebda + 1024)
+	for (uintptr_t i = EBDA; i < 0x100000; i += 16) {
+		if (i == EBDA + 1024)
 			i = BIOS; // Next: BIOS area
 
 		if (memcmp((char *)i, RSDP_MAGIC, 8) == 0)
@@ -73,7 +72,7 @@ CLEAR static struct rsdp *acpi_rsdp_find(void)
  * TODO: Don't panic?
  */
 
-#include <arch.h>
+/* #include <arch.h> */
 CLEAR static void acpi_parse(struct rsdp *rsdp)
 {
 	if (!rsdp || rsdp->header.revision != 0 || !acpi_sdp_verify(&rsdp->header))

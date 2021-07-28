@@ -7,9 +7,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-ssize_t sys_fs_read(const char *pathname, void *buf, off_t offset, size_t count);
-ssize_t sys_fs_write(const char *pathname, const void *buf, off_t offset, size_t count);
-int sys_fs_stat(const char *pathname, struct stat *statbuf);
-int sys_fs_create(const char *pathname);
+ssize_t sys_fs_read(const char *path, void *buf, off_t offset, size_t count);
+ssize_t sys_fs_write(const char *path, const void *buf, off_t offset, size_t count);
+int sys_fs_stat(const char *path, struct stat *statbuf);
+int sys_fs_create(const char *path);
 
 #endif
