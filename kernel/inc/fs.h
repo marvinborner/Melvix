@@ -112,6 +112,20 @@ struct ext2_superblock {
 	u32 major_version;
 	u16 res_block_uid;
 	u16 res_block_gid;
+	// From here on only if major_version >=1
+	u32 first_inode;
+	u16 inode_size;
+	u16 block_group_number;
+	u32 compatible_features;
+	u32 incompatible_features;
+	u32 ro_compatible_features;
+	u8 uuid[16];
+	char volume_name[16];
+	char last_mounted_dir[64];
+	u32 algorithm_usage;
+	u8 preallocate_blocks;
+	u8 preallocate_dir_blocks;
+	u8 padding[50]; // idk? Doesn't really matter
 };
 
 struct ext2_bgd {
@@ -151,8 +165,6 @@ struct ext2_inode {
 
 	u8 extension[128]; // TODO: 2038 extension time support
 };
-
-#define EXT2_INODE_SIZE (sizeof(struct ext2_inode))
 
 struct ext2_dirent {
 	u32 inode_num;

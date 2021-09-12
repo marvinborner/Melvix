@@ -217,41 +217,63 @@ CLEAR void vfs_install(void)
  * EXT2
  */
 
-INLINE static void ext2_buffer_read(u32 block, void *buf, struct vfs_dev *dev)
+static void ext2_buffer_read(u32 block, void *buf, struct vfs_dev *dev)
 {
 	dev->read(buf, block * SECTOR_COUNT, SECTOR_COUNT, dev);
 }
 
-static void ext2_superblock(struct ext2_superblock *buf, struct vfs_dev *dev)
+static u8 ext2_verify(struct vfs_dev *dev)
 {
 	u8 data[BLOCK_SIZE] = { 0 };
 	ext2_buffer_read(EXT2_SUPER, data, dev);
-	memcpy(buf, data, sizeof(*buf));
+	struct ext2_superblock *sb = (struct ext2_superblock *)data;
+	return sb->magic == EXT2_MAGIC;
+}
 
-	assert(buf->magic == EXT2_MAGIC);
+static struct ext2_superblock *ext2_superblock(struct vfs_dev *dev)
+{
+	struct ext2_superblock *sb;
+
+	if (dev->vfs->data) {
+		sb = dev->vfs->data;
+	} else {
+		sb = malloc(BLOCK_SIZE); // TODO: Destroy malloced superblock?
+		ext2_buffer_read(EXT2_SUPER, sb, dev);
+		dev->vfs->data = sb;
+	}
+
+	assert(sb->magic == EXT2_MAGIC);
+	return sb;
+}
+
+static u32 ext2_inode_size(struct vfs_dev *dev)
+{
+	struct ext2_superblock *sb = ext2_superblock(dev);
+	if (sb->major_version == 1)
+		return sb->inode_size;
+	return 128; // Or 256?
 }
 
 static struct ext2_inode *ext2_inode(u32 i, struct ext2_inode *in_buf, struct vfs_dev *dev)
 {
-	struct ext2_superblock sb = { 0 };
-	ext2_superblock(&sb, dev);
+	struct ext2_superblock *sb = ext2_superblock(dev);
+	u32 inode_size = ext2_inode_size(dev);
 
 	u8 data[BLOCK_SIZE] = { 0 };
 	ext2_buffer_read(EXT2_SUPER + 1, data, dev);
 	struct ext2_bgd *bgd = (struct ext2_bgd *)data;
 
-	u32 block_group = (i - 1) / sb.inodes_per_group;
-	u32 index = (i - 1) % sb.inodes_per_group;
-	u32 block = (index * EXT2_INODE_SIZE) / BLOCK_SIZE;
+	u32 block_group = (i - 1) / sb->inodes_per_group;
+	u32 index = (i - 1) % sb->inodes_per_group;
+	u32 block = (index * inode_size) / BLOCK_SIZE;
 	bgd += block_group;
 
 	u8 buf[BLOCK_SIZE] = { 0 };
 	ext2_buffer_read(bgd->inode_table + block, buf, dev);
 	struct ext2_inode *in =
-		(struct ext2_inode *)((u32)buf +
-				      (index % (BLOCK_SIZE / EXT2_INODE_SIZE)) * EXT2_INODE_SIZE);
+		(struct ext2_inode *)((u32)buf + (index % (BLOCK_SIZE / inode_size)) * inode_size);
 
-	memcpy(in_buf, in, sizeof(*in_buf));
+	memcpy(in_buf, in, inode_size);
 
 	return in_buf;
 }
@@ -477,9 +499,7 @@ static res ext2_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev)
 
 CLEAR u8 ext2_load(struct vfs_dev *dev)
 {
-	struct ext2_superblock sb = { 0 };
-	ext2_superblock(&sb, dev);
-	if (sb.magic != EXT2_MAGIC)
+	if (!ext2_verify(dev))
 		return 0;
 
 	struct vfs *vfs = zalloc(sizeof(*vfs));
