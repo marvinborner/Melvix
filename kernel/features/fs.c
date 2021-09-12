@@ -135,8 +135,9 @@ res vfs_read(const char *path, void *buf, u32 offset, u32 count)
 	if (len > 1)
 		path += len;
 
-	if (m->dev->vfs->perm(path, VFS_READ, m->dev) != EOK && !proc_super())
-		return -EACCES;
+	res perm = m->dev->vfs->perm(path, VFS_READ, m->dev);
+	if (perm != EOK)
+		return perm;
 
 	if (!count)
 		return EOK;
@@ -163,8 +164,9 @@ res vfs_write(const char *path, const void *buf, u32 offset, u32 count)
 	if (len > 1)
 		path += len;
 
-	if (m->dev->vfs->perm(path, VFS_WRITE, m->dev) != EOK && !proc_super())
-		return -EACCES;
+	res perm = m->dev->vfs->perm(path, VFS_WRITE, m->dev);
+	if (perm != EOK)
+		return perm;
 
 	if (!count)
 		return EOK;
@@ -191,8 +193,9 @@ res vfs_stat(const char *path, struct stat *buf)
 	if (len > 1)
 		path += len;
 
-	if (m->dev->vfs->perm(path, VFS_READ, m->dev) != EOK && !proc_super())
-		return -EACCES;
+	res perm = m->dev->vfs->perm(path, VFS_READ, m->dev);
+	if (perm != EOK)
+		return perm;
 
 	return m->dev->vfs->stat(path, buf, m->dev);
 }
@@ -219,7 +222,7 @@ INLINE static void ext2_buffer_read(u32 block, void *buf, struct vfs_dev *dev)
 	dev->read(buf, block * SECTOR_COUNT, SECTOR_COUNT, dev);
 }
 
-static void ext2_get_superblock(struct ext2_superblock *buf, struct vfs_dev *dev)
+static void ext2_superblock(struct ext2_superblock *buf, struct vfs_dev *dev)
 {
 	u8 data[BLOCK_SIZE] = { 0 };
 	ext2_buffer_read(EXT2_SUPER, data, dev);
@@ -228,10 +231,10 @@ static void ext2_get_superblock(struct ext2_superblock *buf, struct vfs_dev *dev
 	assert(buf->magic == EXT2_MAGIC);
 }
 
-static struct ext2_inode *ext2_get_inode(u32 i, struct ext2_inode *in_buf, struct vfs_dev *dev)
+static struct ext2_inode *ext2_inode(u32 i, struct ext2_inode *in_buf, struct vfs_dev *dev)
 {
 	struct ext2_superblock sb = { 0 };
-	ext2_get_superblock(&sb, dev);
+	ext2_superblock(&sb, dev);
 
 	u8 data[BLOCK_SIZE] = { 0 };
 	ext2_buffer_read(EXT2_SUPER + 1, data, dev);
@@ -361,7 +364,7 @@ static u32 ext2_find_inode(const char *name, u32 dir_inode, struct vfs_dev *dev)
 		return (unsigned)-1;
 
 	struct ext2_inode i = { 0 };
-	ext2_get_inode(dir_inode, &i, dev);
+	ext2_inode(dir_inode, &i, dev);
 
 	char *buf = zalloc(BLOCK_SIZE * i.blocks / 2);
 
@@ -383,8 +386,8 @@ static u32 ext2_find_inode(const char *name, u32 dir_inode, struct vfs_dev *dev)
 			return d->inode_num;
 		}
 		d = (struct ext2_dirent *)((u32)d + d->total_len);
+	} while (sum < (BLOCK_SIZE * i.blocks / 2));
 
-	} while (sum < (1024 * i.blocks / 2));
 	free(buf);
 	return (unsigned)-1;
 }
@@ -428,7 +431,7 @@ static struct ext2_inode *ext2_find_inode_by_path(const char *path, struct ext2_
 	if ((signed)inode <= 0)
 		return NULL;
 
-	return ext2_get_inode(inode, in_buf, dev);
+	return ext2_inode(inode, in_buf, dev);
 }
 
 static res ext2_read(const char *path, void *buf, u32 offset, u32 count, struct vfs_dev *dev)
@@ -475,7 +478,7 @@ static res ext2_perm(const char *path, enum vfs_perm perm, struct vfs_dev *dev)
 CLEAR u8 ext2_load(struct vfs_dev *dev)
 {
 	struct ext2_superblock sb = { 0 };
-	ext2_get_superblock(&sb, dev);
+	ext2_superblock(&sb, dev);
 	if (sb.magic != EXT2_MAGIC)
 		return 0;
 

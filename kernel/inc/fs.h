@@ -148,6 +148,8 @@ struct ext2_inode {
 
 	u32 fragment_addr;
 	u8 os_specific_val2[12];
+
+	u8 extension[128]; // TODO: 2038 extension time support
 };
 
 #define EXT2_INODE_SIZE (sizeof(struct ext2_inode))
