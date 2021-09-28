@@ -76,10 +76,8 @@ typedef long double f80;
  * Kernel section macros
  */
 
-#ifdef KERNEL
-#define CLEAR NOINLINE ATTR((section(".temp_clear")))
+#define TEMPORARY NOINLINE ATTR((section(".temp_clear")))
 #define PROTECTED ATTR((section(".temp_protect")))
-#endif
 
 /**
  * General macro numbers

@@ -35,7 +35,7 @@ enum sys {
 };
 
 enum dev_type {
-	DEV_MIN,
+	DEV_INVALID,
 	DEV_LOGGER,
 	DEV_FRAMEBUFFER,
 	DEV_NETWORK,
@@ -101,8 +101,6 @@ struct stat {
 	u32 size;
 };
 
-#ifdef USER
-
 /**
  * Syscall wrappers
  */
@@ -126,50 +124,10 @@ res sys_free(void *ptr) NONNULL;
 res shalloc(u32 size, u32 *addr, u32 *id) NONNULL;
 res shaccess(u32 id, u32 *addr, u32 *size) NONNULL;
 
-static inline u32 getpid(void)
-{
-	static u32 buf = 0;
-	if (buf)
-		return buf;
-	read("/proc/self/pid", &buf, 0, sizeof(buf));
-	return buf;
-}
-
-#include <print.h>
-#include <str.h>
-NONNULL static inline u32 pidof(const char *name)
-{
-	u32 curr = 1;
-	char buf[32] = { 0 }, path[32] = { 0 };
-	while (curr < 1000) { // Max pid??
-		if (snprintf(path, sizeof(buf), "/proc/%d/name", curr) > 0 &&
-		    read(path, buf, 0, 32) > 0)
-			if (!strcmp(name, buf))
-				return curr;
-
-		curr++;
-	}
-
-	return -1;
-}
-
-// Simple read wrapper
-#include <mem.h>
-NONNULL static inline void *sread(const char *path)
-{
-	struct stat s = { 0 };
-	if (stat(path, &s) != 0 || !s.size)
-		return NULL;
-	void *buf = malloc(s.size);
-	read(path, buf, 0, s.size);
-	return buf;
-}
-
 /**
  * At exit
  */
 
 void atexit(void (*func)(void));
 
-#endif
 #endif

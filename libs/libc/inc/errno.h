@@ -44,7 +44,6 @@ typedef s32 res;
 #define ERANGE 34 /* Math result not representable */
 #define EMAX 35 /* Max errno */
 
-#ifdef USER
 #define errno (*__errno())
 extern u32 *__errno(void);
 
@@ -53,6 +52,5 @@ extern u32 *__errno(void);
 		errno = __num;                                                                     \
 		return -errno;                                                                     \
 	}
-#endif
 
 #endif

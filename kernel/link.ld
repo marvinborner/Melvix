@@ -1,3 +1,5 @@
+/* MIT License, Copyright (c) 2021 Marvin Borner */
+
 OUTPUT_ARCH(i386)
 ENTRY(boot_entry)
 phys = 0x00100000;

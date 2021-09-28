@@ -5,18 +5,6 @@
 
 #include <print.h>
 
-#ifdef KERNEL
-#include <proc.h>
-#define assert(exp)                                                                                \
-	{                                                                                          \
-		if (!(exp)) {                                                                      \
-			printf("%s:%d: %s: Kernel assertion '%s' failed\n", __FILE__, __LINE__,    \
-			       __func__, #exp);                                                    \
-			while (1)                                                                  \
-				__asm__ volatile("cli\nhlt");                                      \
-		}                                                                                  \
-	}
-#elif defined(USER)
 #define assert(exp)                                                                                \
 	{                                                                                          \
 		if (!(exp)) {                                                                      \
@@ -24,7 +12,6 @@
 			    #exp);                                                                 \
 		}                                                                                  \
 	}
-#endif
 
 #define assert_not_reached()                                                                       \
 	panic("%s:%d: %s: Reached code that should not be reached\n", __FILE__, __LINE__, __func__)

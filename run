@@ -92,10 +92,7 @@ make_cross() {
 }
 
 make_disk() {
-    rm -rf disk && mkdir -p disk/font/ && mkdir -p disk/icons/ && mkdir -p disk/conf/ && mkdir -p disk/boot/
-    echo "Hallo" >disk/conf/test
-
-    cp -r res/ disk/
+    rm -rf disk && mkdir -p disk/font/ && mkdir -p disk/boot/
 
     echo "Getting font"
     cd disk/font/
@@ -106,31 +103,6 @@ make_disk() {
     rm -rf "spleen-$VERSION"*
     cd ../../
 
-    icons="close
-    chess-bishop
-    chess-king
-    chess-knight
-    chess-pawn
-    chess-queen
-    chess-rook"
-
-    [ -d icons/ ] || git clone --depth=1 https://github.com/Templarian/MaterialDesign.git icons/
-    inkscape_version="$(inkscape --version | awk '{print $2}' | cut -c1)"
-    echo "$icons" | while read icon; do
-        echo "Converting $icon"
-        if [ "$inkscape_version" = "0" ]; then
-            inkscape -z -w 18 -h 18 icons/svg/"$icon".svg -e disk/icons/"$icon"-18.png
-            inkscape -z -w 24 -h 24 icons/svg/"$icon".svg -e disk/icons/"$icon"-24.png
-            inkscape -z -w 36 -h 36 icons/svg/"$icon".svg -e disk/icons/"$icon"-36.png
-            inkscape -z -w 48 -h 48 icons/svg/"$icon".svg -e disk/icons/"$icon"-48.png
-        else
-            inkscape -w 18 -h 18 icons/svg/"$icon".svg -o disk/icons/"$icon"-18.png
-            inkscape -w 24 -h 24 icons/svg/"$icon".svg -o disk/icons/"$icon"-24.png
-            inkscape -w 36 -h 36 icons/svg/"$icon".svg -o disk/icons/"$icon"-36.png
-            inkscape -w 48 -h 48 icons/svg/"$icon".svg -o disk/icons/"$icon"-48.png
-        fi
-    done
-
     echo "Done!"
 }
 
@@ -140,51 +112,29 @@ make_build() {
         make_disk
     fi
 
-    mkdir -p build/
-    rm -rf build/*
-
     printf "\nBuilding...\n"
     $MAKE -j $($NPROC) CONFIG="$MELVIX_CONFIG" $MELVIX_MAKE
 
     # Prepare Grub
     mkdir -p disk/boot/grub/
-    cp build/apps/kernel/exec disk/boot/melvix
+    cp build/kernel.elf disk/boot/melvix
     cp boot/grub.cfg disk/boot/grub/
 
-    # Create disk image # TODO: Fix build for OpenBSD
+    # Create disk image
     dd if=/dev/zero of=build/disk.img bs=1k count=32k status=none
     DEV=$($SUDO losetup --find --partscan --show build/disk.img)
     PART="p1"
     $SUDO parted -s "$DEV" mklabel msdos mkpart primary ext2 32k 100% -a minimal set 1 boot on
-    if [ "$(uname -s)" = "OpenBSD" ]; then
-        VND=$($SUDO vnconfig build/disk.img)
-        (
-            echo "e 0"
-            echo 83
-            echo n
-            echo 0
-            echo "*"
-            echo "quit"
-        ) | $SUDO fdisk -e $VND >/dev/null
-        $SUDO mkfs.ext2 -F /dev/${VND}i >/dev/null
-    else
-        $SUDO mke2fs -b 1024 -q "$DEV$PART"
-    fi
+    $SUDO mke2fs -b 1024 -q "$DEV$PART"
 
     # Set test app as init
     if [ "$mode" = "test" ]; then
-        cp build/apps/test/exec build/apps/init/exec
+        echo "not implemented"
+        exit 0
     fi
 
     mkdir -p mnt/
-    if [ "$(uname -s)" = "OpenBSD" ]; then
-        $SUDO mount -t ext2fs /dev/${VND}i mnt/
-    else
-        $SUDO mount "$DEV$PART" mnt/
-    fi
-    $SUDO cp -r disk/* mnt/
-    $SUDO chmod -R 0 mnt/conf/
-    $SUDO cp -r build/apps/ mnt/apps/
+    $SUDO mount "$DEV$PART" mnt/
 
     # Install grub if release
     if [ "$MELVIX_CONFIG" = "release" ]; then
@@ -194,28 +144,24 @@ make_build() {
     $SUDO umount mnt/ || (sync && sudo umount mnt/)
     $SUDO rm -rf mnt/
 
-    if [ "$(uname -s)" = "OpenBSD" ]; then
-        $SUDO vnconfig -u $VND
-    else
-        $SUDO losetup -d "$DEV"
-    fi
+    $SUDO losetup -d "$DEV"
 
     printf "Build finshed successfully!\n\n"
 }
 
 make_test() {
     if [ "$mode" = "test" ]; then
-        qemu_with_flags -serial file:test.log -nographic -kernel build/apps/kernel/exec -drive file=build/disk.img,format=raw,index=1,media=disk
+        qemu_with_flags -serial file:test.log -nographic -kernel build/kernel.elf -drive file=build/disk.img,format=raw,index=1,media=disk
         echo
         grep -E 'PASS|FAIL' test.log
         if grep -q "All tests passed" test.log; then exit 0; else exit 1; fi
     else
-        qemu_with_flags -serial stdio -kernel build/apps/kernel/exec -drive file=build/disk.img,format=raw,index=1,media=disk
+        qemu_with_flags -serial stdio -kernel build/kernel.elf -drive file=build/disk.img,format=raw,index=1,media=disk
     fi
 }
 
 make_debug() {
-    qemu_with_flags -serial stdio -kernel build/apps/kernel/exec -drive file=build/disk.img,format=raw,index=1,media=disk -s -S
+    qemu_with_flags -serial stdio -kernel build/kernel.elf -drive file=build/disk.img,format=raw,index=1,media=disk -s -S
 }
 
 make_disasm() {
@@ -237,7 +183,7 @@ make_addr() {
 }
 
 make_cloc() {
-    cloc . --exclude-dir=build,iso,disk,res,cross,icons
+    cloc . --exclude-dir=build,iso,disk,cross
 }
 
 make_append_commands() {
