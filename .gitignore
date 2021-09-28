@@ -1,17 +1,5 @@
 tags
 compile_commands.json
-*.o
-*.elf
-*.bin
-*.log
-*.pcap
-*.core
 
-.clangd/
-ext2util
 build/
-iso/
-cmake/
 cross/
-disk/
-icons/
