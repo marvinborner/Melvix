@@ -8,7 +8,7 @@
 
 #include <management/dev/index.h>
 
-PROTECTED static struct dev devs[DEV_MAX] = { 0 };
+PROTECTED static struct dev *devs[DEV_MAX] = { 0 };
 
 TEMPORARY void dev_add(struct dev *dev)
 {
@@ -17,17 +17,16 @@ TEMPORARY void dev_add(struct dev *dev)
 	else if (!dev->probe || dev->probe() != ERR_OK)
 		panic("Device probing failed\n");
 
-	if (devs[dev->type].exists)
-		devs[dev->type].disable();
+	if (devs[dev->type])
+		devs[dev->type]->disable();
 
-	dev->exists = 1;
-	devs[dev->type] = *dev;
+	devs[dev->type] = dev;
 	dev->enable();
 }
 
 struct dev *dev_get(enum dev_type type)
 {
-	if (type >= DEV_MAX || devs[type].exists == 0)
+	if (type >= DEV_MAX || !devs[type] || devs[type]->type != type)
 		return NULL;
-	return &devs[type];
+	return devs[type];
 }

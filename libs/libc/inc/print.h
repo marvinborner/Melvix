@@ -9,6 +9,6 @@
 #include <def.h>
 
 NONNULL u32 log(const char *fmt, ...);
-NONNULL void panic(const char *fmt, ...);
+NONNULL NORETURN void panic(const char *fmt, ...);
 
 #endif

@@ -4,6 +4,7 @@
  */
 
 #include <format.h>
+#include <print.h>
 
 NONNULL static u32 format_int(char *buf, u32 size, s32 integer, u32 base, u8 is_signed)
 {
@@ -82,11 +83,21 @@ u32 format(char *out, u32 size, const char *fmt, va_list ap)
 			(*buf)++;
 			length--;
 			break;
-		default:
+		case 's':
+			u.s = va_arg(ap, char *);
+			while (u.s && *u.s) {
+				**buf = *(u.s++);
+				(*buf)++;
+				length--;
+			}
+			break;
+		case '%':
 			**buf = *fmt;
 			(*buf)++;
 			length--;
-			continue;
+			break;
+		default:
+			panic("Unknown print directive '%%%c'", *fmt);
 		}
 	}
 

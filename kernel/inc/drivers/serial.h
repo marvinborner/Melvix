@@ -8,6 +8,6 @@
 
 #include <management/dev/index.h>
 
-extern struct dev serial_device;
+extern struct dev device_serial;
 
 #endif

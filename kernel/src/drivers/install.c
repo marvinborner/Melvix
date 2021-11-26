@@ -12,9 +12,9 @@
 
 TEMPORARY void drivers_install(void)
 {
-	dev_add(&serial_device);
-	/* dev_add(&video_device); */
-	/* dev_add(&network_device); */
-	/* dev_add(&keyboard_device); */
-	/* dev_add(&mouse_device); */
+	dev_add(&device_serial);
+	/* dev_add(&device_video); */
+	/* dev_add(&device_network); */
+	/* dev_add(&device_keyboard); */
+	/* dev_add(&device_mouse); */
 }

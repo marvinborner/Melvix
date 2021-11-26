@@ -7,7 +7,6 @@
 #define MANAGEMENT_DEV_INDEX_H
 
 #include <arg.h>
-#include <err.h>
 #include <sys.h>
 
 typedef err (*dev_read_t)(void *buf, u32 offset, u32 count);
@@ -18,7 +17,6 @@ typedef err (*dev_enable_t)(void);
 typedef err (*dev_disable_t)(void);
 
 struct dev {
-	u8 exists : 1;
 	enum dev_type type;
 	dev_read_t read;
 	dev_write_t write;

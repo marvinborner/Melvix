@@ -8,6 +8,6 @@
 
 #include <management/dev/index.h>
 
-extern struct dev keyboard_device;
+extern struct dev device_keyboard;
 
 #endif

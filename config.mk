@@ -15,7 +15,7 @@ DRIVER_SERIAL ?= ./src/drivers/serial/8250.c
 # Specific config groups
 ifeq ($(CONFIG), debug)
 	CONFIG_OPTIMIZE ?= fast
-	CONFIG_CFLAGS ?= -Wno-error -ggdb3 -s #-fsanitize=undefined -fstack-protector-all
+	CONFIG_CFLAGS ?= -Wno-error -ggdb3 -s -fsanitize=undefined -fstack-protector-all
 else ifeq ($(CONFIG), dev)
 	CONFIG_OPTIMIZE ?= fast
 	CONFIG_CFLAGS ?= -finline -finline-functions

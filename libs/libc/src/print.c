@@ -14,7 +14,6 @@ NONNULL static u32 vlog(const char *fmt, va_list ap)
 	u32 len = format(buf, sizeof(buf), fmt, ap);
 	dev_write(DEV_LOGGER, buf, 0, len);
 	dev_write(DEV_LOGGER, "\n", 0, 1);
-	// TODO: Write to device
 	return len;
 }
 

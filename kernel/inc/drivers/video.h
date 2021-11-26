@@ -8,6 +8,6 @@
 
 #include <management/dev/index.h>
 
-extern struct dev video_device;
+extern struct dev device_video;
 
 #endif
