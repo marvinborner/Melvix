@@ -51,6 +51,8 @@ u32 format(char *out, u32 size, const char *fmt, va_list ap)
 	u32 length = size;
 
 	union {
+		u32 length;
+
 		char c;
 		const char *s;
 		s32 i;
@@ -68,15 +70,21 @@ u32 format(char *out, u32 size, const char *fmt, va_list ap)
 		switch (*(++fmt)) {
 		case 'd':
 			u.i = va_arg(ap, s32);
-			length -= format_int(*buf, length, u.i, 10, 1);
+			u.length = format_int(*buf, length, u.i, 10, 1);
+			length -= u.length;
+			*buf += u.length;
 			break;
 		case 'u':
 			u.u = va_arg(ap, u32);
-			length -= format_int(*buf, length, u.u, 10, 0);
+			u.length = format_int(*buf, length, u.u, 10, 0);
+			length -= u.length;
+			*buf += u.length;
 			break;
 		case 'x':
 			u.u = va_arg(ap, u32);
-			length -= format_int(*buf, length, u.u, 16, 0);
+			u.length = format_int(*buf, length, u.u, 16, 0);
+			length -= u.length;
+			*buf += u.length;
 			break;
 		case 'c':
 			u.c = va_arg(ap, int);
