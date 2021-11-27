@@ -6,8 +6,8 @@
 #ifndef DRIVERS_KEYBOARD_H
 #define DRIVERS_KEYBOARD_H
 
-#include <management/dev/index.h>
+#include <management/device/index.h>
 
-extern struct dev device_keyboard;
+extern struct device device_keyboard;
 
 #endif

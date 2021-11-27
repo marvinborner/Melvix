@@ -49,7 +49,7 @@ static err probe(void)
 	IO_OUTB(PORT + 0, 0xae); // Write
 	if (IO_INB(PORT) == 0xae)
 		return ERR_OK;
-	return ERR_NOT_FOUND;
+	return -ERR_NOT_FOUND;
 }
 
 PROTECTED struct port port_8250 = {

@@ -15,6 +15,8 @@ typedef enum {
 	ERR_INVALID_ARGUMENTS,
 } err;
 
+const char *format_error(err code);
+
 #define errno (*__errno())
 extern u32 *__errno(void);
 

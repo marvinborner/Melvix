@@ -6,8 +6,8 @@
 #ifndef DRIVERS_VIDEO_H
 #define DRIVERS_VIDEO_H
 
-#include <management/dev/index.h>
+#include <management/device/index.h>
 
-extern struct dev device_video;
+extern struct device device_video;
 
 #endif

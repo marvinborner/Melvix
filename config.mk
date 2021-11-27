@@ -6,6 +6,7 @@ VERSION = v0.0
 CONFIG_CROSS_PATH ?= $(PWD)/cross
 CONFIG_CACHE ?= ccache
 
+DRIVER_INTERRUPT ?= ./src/drivers/interrupt/8259.c
 # DRIVER_KEYBOARD ?= ./src/drivers/keyboard/ps2.c
 # DRIVER_MOUSE ?= ./src/drivers/mouse/ps2.c
 # DRIVER_NETWORK ?= ./src/drivers/network/rtl8139.c

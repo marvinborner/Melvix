@@ -8,7 +8,7 @@ INC = ./inc
 CFLAGS += -I$(INC) -I$(LIBS)/libc/inc
 
 SRCS = $(shell find $(SRC) -path $(SRC)/drivers -prune -false -o -type f -name '*.c' -or -name '*.asm')
-SRCS += $(SRC)/drivers/install.c $(DRIVER_KEYBOARD) $(DRIVER_MOUSE) $(DRIVER_NETWORK) $(DRIVER_SERIAL) $(DRIVER_VIDEO)
+SRCS += $(SRC)/drivers/install.c $(DRIVER_INTERRUPT) $(DRIVER_KEYBOARD) $(DRIVER_MOUSE) $(DRIVER_NETWORK) $(DRIVER_SERIAL) $(DRIVER_VIDEO)
 OBJS = $(SRCS:%=$(BUILD)/$(NAME)/%.o)
 
 $(BUILD)/$(NAME).elf: $(OBJS)

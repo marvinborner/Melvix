@@ -4,7 +4,6 @@
  */
 
 #include <management/port/index.h>
-#include <management/port/sys.h>
 
 err port_read(enum port_type type, void *buf, u32 offset, u32 count)
 {

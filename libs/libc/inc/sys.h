@@ -13,19 +13,29 @@
  * Device management
  */
 
-enum dev_type {
-	DEV_INVALID,
-	DEV_LOGGER,
-	DEV_FRAMEBUFFER,
-	DEV_NETWORK,
-	DEV_KEYBOARD,
-	DEV_MOUSE,
-	DEV_MAX,
+enum device_type {
+	DEVICE_INVALID,
+	DEVICE_INTERRUPT,
+	DEVICE_LOGGER,
+	DEVICE_FRAMEBUFFER,
+	DEVICE_NETWORK,
+	DEVICE_KEYBOARD,
+	DEVICE_MOUSE,
+	DEVICE_MAX,
 };
 
-NONNULL err dev_read(enum dev_type type, void *buf, u32 offset, u32 count);
-NONNULL err dev_write(enum dev_type type, const void *buf, u32 offset, u32 count);
-NONNULL err dev_request(enum dev_type type, u32 request, ...);
+NONNULL err device_read(enum device_type type, void *buf, u32 offset, u32 count);
+NONNULL err device_write(enum device_type type, const void *buf, u32 offset, u32 count);
+NONNULL err device_request(enum device_type type, u32 request, ...);
+
+/**
+ * Interrupt management
+ */
+
+typedef err (*interrupt_t)(void *data);
+
+err interrupt_call(u32 interrupt, void *data);
+NONNULL err interrupt_register(u32 interrupt, interrupt_t handler);
 
 /**
  * Port management
@@ -34,6 +44,7 @@ NONNULL err dev_request(enum dev_type type, u32 request, ...);
 enum port_type {
 	PORT_8042,
 	PORT_8250,
+	PORT_8259,
 	PORT_MAX,
 };
 

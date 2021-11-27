@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef DRIVERS_MOUSE_H
-#define DRIVERS_MOUSE_H
+#ifndef DRIVERS_INTERRUPT_H
+#define DRIVERS_INTERRUPT_H
 
 #include <management/device/index.h>
 
-extern struct device device_mouse;
+#define DEVICE_INTERRUPT_ACK 1
+
+extern struct device device_interrupt;
 
 #endif

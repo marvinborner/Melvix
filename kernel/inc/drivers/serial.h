@@ -6,8 +6,8 @@
 #ifndef DRIVERS_SERIAL_H
 #define DRIVERS_SERIAL_H
 
-#include <management/dev/index.h>
+#include <management/device/index.h>
 
-extern struct dev device_serial;
+extern struct device device_serial;
 
 #endif

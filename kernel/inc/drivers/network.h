@@ -6,8 +6,8 @@
 #ifndef DRIVERS_NETWORK_H
 #define DRIVERS_NETWORK_H
 
-#include <management/dev/index.h>
+#include <management/device/index.h>
 
-extern struct dev device_network;
+extern struct device device_network;
 
 #endif

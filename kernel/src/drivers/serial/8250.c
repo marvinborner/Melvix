@@ -15,7 +15,7 @@ static err enable(void)
 static err disable(void)
 {
 	// TODO: request to loopback
-	return ERR_OK;
+	return -ERR_NOT_SUPPORTED;
 }
 
 static err probe(void)
@@ -28,8 +28,8 @@ static err write(const void *buf, u32 offset, u32 count)
 	return port_write(PORT_8250, buf, offset, count);
 }
 
-PROTECTED struct dev device_serial = {
-	.type = DEV_LOGGER,
+PROTECTED struct device device_serial = {
+	.type = DEVICE_LOGGER,
 	.write = write,
 	.enable = enable,
 	.disable = disable,

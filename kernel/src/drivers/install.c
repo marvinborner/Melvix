@@ -4,6 +4,7 @@
  */
 
 #include <drivers/install.h>
+#include <drivers/interrupt.h>
 #include <drivers/keyboard.h>
 #include <drivers/mouse.h>
 #include <drivers/network.h>
@@ -12,9 +13,10 @@
 
 TEMPORARY void drivers_install(void)
 {
-	dev_add(&device_serial);
-	/* dev_add(&device_video); */
-	/* dev_add(&device_network); */
-	/* dev_add(&device_keyboard); */
-	/* dev_add(&device_mouse); */
+	device_add(&device_serial);
+	device_add(&device_interrupt);
+	/* device_add(&device_video); */
+	/* device_add(&device_network); */
+	/* device_add(&device_keyboard); */
+	/* device_add(&device_mouse); */
 }

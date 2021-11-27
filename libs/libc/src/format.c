@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: MIT
  */
 
+#include <err.h>
 #include <format.h>
 #include <print.h>
 
@@ -51,7 +52,7 @@ u32 format(char *out, u32 size, const char *fmt, va_list ap)
 
 	union {
 		char c;
-		char *s;
+		const char *s;
 		s32 i;
 		u32 u;
 	} u;
@@ -83,8 +84,17 @@ u32 format(char *out, u32 size, const char *fmt, va_list ap)
 			(*buf)++;
 			length--;
 			break;
+		case 'e':
+			u.s = format_error(va_arg(ap, err));
+			// TODO: DRY
+			while (u.s && *u.s) {
+				**buf = *(u.s++);
+				(*buf)++;
+				length--;
+			}
+			break;
 		case 's':
-			u.s = va_arg(ap, char *);
+			u.s = va_arg(ap, const char *);
 			while (u.s && *u.s) {
 				**buf = *(u.s++);
 				(*buf)++;
