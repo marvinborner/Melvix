@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <err.h>
-
 #include <drivers/serial.h>
 
 static err enable(void)

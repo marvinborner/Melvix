@@ -13,6 +13,7 @@ typedef enum {
 	ERR_NOT_FOUND,
 	ERR_NOT_SUPPORTED,
 	ERR_INVALID_ARGUMENTS,
+	ERR_HARDWARE,
 } err;
 
 const char *format_error(err code);

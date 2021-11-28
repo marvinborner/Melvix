@@ -36,6 +36,11 @@ typedef long double f80;
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define COUNT(a) (sizeof(a) / sizeof 0 [a])
 
+#define BIT_GET(num, n) (((num) & (1UL << (n))) >> (n))
+#define BIT_SET(num, n) ((num) | (1UL << (n)))
+#define BIT_CLEAR(num, n) ((num) & ~(1UL << (n)))
+#define BIT_TOGGLE(num, n) ((num) ^ (1UL << (n)))
+
 /**
  * Compiler attribute wrappers
  */

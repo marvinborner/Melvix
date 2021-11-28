@@ -6,9 +6,8 @@
 #ifndef ASSERT_H
 #define ASSERT_H
 
-#define assert(exp) (void)(exp)
+#include <print.h>
 
-#if 0
 #define assert(exp)                                                                                \
 	{                                                                                          \
 		if (!(exp)) {                                                                      \
@@ -19,6 +18,5 @@
 
 #define assert_not_reached()                                                                       \
 	panic("%s:%d: %s: Reached code that should not be reached\n", __FILE__, __LINE__, __func__)
-#endif
 
 #endif

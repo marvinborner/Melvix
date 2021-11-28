@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <err.h>
-
 #include <drivers/interrupt.h>
 #include <ports/8259.h>
 

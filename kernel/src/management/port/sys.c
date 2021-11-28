@@ -41,6 +41,7 @@ err port_request(enum port_type type, u32 request, ...)
 	return result;
 }
 
+#include <print.h>
 err port_probe(enum port_type type)
 {
 	struct port *port = port_get(type);
