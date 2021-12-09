@@ -47,7 +47,7 @@ static err handler(void *data)
 	if (read != ERR_OK)
 		return read;
 
-	log("%x", scancode);
+	log("kbd: %x", scancode);
 
 	return ERR_OK;
 }

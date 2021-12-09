@@ -44,6 +44,8 @@
 #define DEVICE_RESEND 0xfe
 #define DEVICE_DISABLE_SCANNING 0xf5
 #define DEVICE_IDENTIFY 0xf2
+#define DEVICE_TEST_REQUEST 0xff
+#define DEVICE_TEST_RESPONSE 0xaa
 
 // Status bits
 #define STATUS_FULL_OUT 0
@@ -124,16 +126,17 @@ static void write_device(u8 device, u8 data)
 	if (device != 0 && device != 1)
 		DEBUG("Invalid device %d", device);
 
-	u8 response = DEVICE_RESEND;
-	for (u8 i = 0; response == DEVICE_RESEND && i < 5; i++) {
+	u8 response;
+	for (u8 i = 0; i < 5; i++) {
 		if (device == 1)
 			write_command(SELECT_SECOND);
 		write_data(data);
 		response = read_data();
+		if (response == DEVICE_ACK)
+			return;
 	}
 
-	if (response != DEVICE_ACK)
-		DEBUG("Write 0x%x to %d failed: 0x%x", data, device, response);
+	DEBUG("Write 0x%x to %d failed: 0x%x", data, device, response);
 }
 
 static u8 read_config(void)
@@ -181,15 +184,27 @@ static u8 test_second(void)
 
 static u16 device_type(u8 device)
 {
+	static u16 first = 0, second = 0;
+
+	if (device == 0 && first)
+		return first;
+	else if (device == 1 && second)
+		return second;
+
 	write_device(device, DEVICE_DISABLE_SCANNING);
 	write_device(device, DEVICE_IDENTIFY);
-	return (read_data() << 8) | read_data();
+	u16 type = (read_data() << 8) | read_data();
+	if (device == 0)
+		first = type;
+	else if (device == 1)
+		second = type;
+	return type;
 }
 
 static err device_test(u8 device)
 {
-	write_device(device, 0xff);
-	return read_data() == 0xaa ? ERR_OK : -ERR_HARDWARE;
+	write_device(device, DEVICE_TEST_REQUEST);
+	return read_data() == DEVICE_TEST_RESPONSE ? ERR_OK : -ERR_HARDWARE;
 }
 
 static err read(void *buf, u32 offset, u32 count)
@@ -209,6 +224,12 @@ static err request(u32 request, va_list ap)
 		return device_type(va_arg(ap, int));
 	case PORT_8042_DEVICE_TEST:
 		return device_test(va_arg(ap, int));
+	case PORT_8042_DEVICE_WRITE: {
+		u8 device = va_arg(ap, int);
+		u8 data = va_arg(ap, int);
+		write_device(device, data);
+		return ERR_OK;
+	}
 	default:
 		return -ERR_INVALID_ARGUMENTS;
 	}
@@ -217,6 +238,10 @@ static err request(u32 request, va_list ap)
 // TODO: Support for single-port controllers
 static err probe(void)
 {
+	static err done = 0xff;
+	if (done != 0xff)
+		return -done;
+
 	disable();
 
 	// Tests may reset config
@@ -228,7 +253,8 @@ static err probe(void)
 	u8 second = test_second();
 	write_config(config);
 
-	return (self && first && second) ? ERR_OK : -ERR_HARDWARE;
+	done = (self && first && second) ? ERR_OK : ERR_HARDWARE;
+	return -done;
 }
 
 static err setup(void)

@@ -10,6 +10,7 @@
 
 #define PORT_8042_DEVICE_TYPE 1
 #define PORT_8042_DEVICE_TEST 2
+#define PORT_8042_DEVICE_WRITE 3
 
 extern struct port port_8042;
 

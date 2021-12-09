@@ -16,7 +16,7 @@ void *interrupt_handler(void *data)
 
 	err call = interrupt_call(effective, data);
 	if (call != ERR_OK)
-		log("Interrupt %x failed: %e", effective, call);
+		log("Interrupt %d failed: %e", effective, call);
 	err request = device_request(DEVICE_INTERRUPT, DEVICE_INTERRUPT_ACK);
 	if (request != ERR_OK)
 		log("Interrupt ack failed: %e", call);

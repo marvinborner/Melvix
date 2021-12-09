@@ -16,7 +16,8 @@ TEMPORARY void drivers_install(void)
 	device_add(&device_serial);
 	device_add(&device_interrupt);
 	device_add(&device_keyboard);
+	device_add(&device_mouse);
 	/* device_add(&device_video); */
 	/* device_add(&device_network); */
-	/* device_add(&device_mouse); */
+	__asm__ volatile("sti");
 }
