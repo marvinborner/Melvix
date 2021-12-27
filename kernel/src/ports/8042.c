@@ -184,11 +184,11 @@ static u8 test_second(void)
 
 static u16 device_type(u8 device)
 {
-	static u16 first = 0, second = 0;
+	static u16 first = 0xffff, second = 0xffff;
 
-	if (device == 0 && first)
+	if (device == 0 && first < 0xffff)
 		return first;
-	else if (device == 1 && second)
+	if (device == 1 && second < 0xffff)
 		return second;
 
 	write_device(device, DEVICE_DISABLE_SCANNING);

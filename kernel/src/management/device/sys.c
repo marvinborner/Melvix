@@ -35,7 +35,7 @@ err device_request(enum device_type type, u32 request, ...)
 
 	va_list ap;
 	va_start(ap, request);
-	int result = device->request(request, ap);
+	err result = device->request(request, ap);
 	va_end(ap);
 
 	return result;

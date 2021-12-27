@@ -56,6 +56,8 @@ static err handler(void *data)
 	if (read != ERR_OK)
 		return read;
 
+	log("Mouse: %x", byte);
+
 	return ERR_OK;
 }
 

@@ -10,7 +10,7 @@ static err request(u32 request, va_list ap)
 {
 	switch (request) {
 	case DEVICE_INTERRUPT_ACK:
-		return port_request(PORT_8259, PORT_8259_ACK, ap);
+		return port_request(PORT_8259, PORT_8259_ACK, va_arg(ap, u32));
 	default:
 		return -ERR_INVALID_ARGUMENTS;
 	}

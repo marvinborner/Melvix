@@ -55,8 +55,8 @@ $(BUILD):
 
 %.img: $(BUILD)
 	@dd if=/dev/zero of=$@ bs=1k count=32k status=none
-	@DEV=$$($(SU) losetup --find --partscan --show $@) ;\
-	PART="p1";\
-	$(SU) parted -s "$$DEV" mklabel msdos mkpart primary ext2 32k 100% -a minimal set 1 boot on; \
-	$(SU) mke2fs -b 1024 -q "$$DEV$$PART"; \
-	$(SU) losetup -d "$$DEV"; \
+	@DEV=$$($(SU) losetup --find --partscan --show $@) && \
+	PART="p1" && \
+	$(SU) parted -s "$$DEV" mklabel msdos mkpart primary ext2 32k 100% -a minimal set 1 boot on && \
+	$(SU) mke2fs -b 1024 -q "$$DEV$$PART" && \
+	$(SU) losetup -d "$$DEV"
