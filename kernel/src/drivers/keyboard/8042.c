@@ -43,9 +43,7 @@ static err handler(void *data)
 	UNUSED(data);
 
 	u8 scancode = 0;
-	err read = port_read(PORT_8042, &scancode, 0, 1);
-	if (read != ERR_OK)
-		return read;
+	TRY(port_read(PORT_8042, &scancode, 0, 1));
 
 	log("Keyboard: %x", scancode);
 
@@ -54,9 +52,7 @@ static err handler(void *data)
 
 static err enable(void)
 {
-	err setup = port_setup(PORT_8042);
-	if (setup != ERR_OK)
-		return setup;
+	TRY(port_setup(PORT_8042));
 
 	interrupt_register(1, handler);
 	return ERR_OK;
@@ -65,19 +61,17 @@ static err enable(void)
 static err disable(void)
 {
 	// TODO: 'disable keyboard interrupt' request
-	return -ERR_NOT_SUPPORTED;
+
+	interrupt_remove(1);
+	return ERR_OK;
 }
 
 static err probe(void)
 {
-	err works = port_probe(PORT_8042);
-	if (works != ERR_OK)
-		return works;
+	TRY(port_probe(PORT_8042));
 
 	u8 device = get();
-	works = port_request(PORT_8042, PORT_8042_DEVICE_TEST, device);
-	if (works != ERR_OK)
-		return works;
+	TRY(port_request(PORT_8042, PORT_8042_DEVICE_TEST, device));
 
 	return ERR_OK;
 }

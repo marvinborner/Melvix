@@ -9,7 +9,12 @@
 
 PROTECTED static interrupt_t interrupts[0xff] = { 0 };
 
-TEMPORARY void interrupt_add(u32 interrupt, interrupt_t handler)
+TEMPORARY void interrupt_clear(u32 interrupt)
+{
+	interrupts[interrupt] = 0;
+}
+
+TEMPORARY void interrupt_set(u32 interrupt, interrupt_t handler)
 {
 	if (interrupts[interrupt])
 		log("Overwriting interrupt handler %d", interrupt);

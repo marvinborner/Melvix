@@ -18,6 +18,15 @@ typedef enum {
 
 const char *format_error(err code);
 
+// Only when return type is err
+// TODO: Add failure to some kind of stack-tracer
+#define TRY(exp)                                                                                   \
+	__extension__({                                                                            \
+		err _err = exp;                                                                    \
+		if (_err != ERR_OK)                                                                \
+			return _err;                                                               \
+	})
+
 #define errno (*__errno())
 extern u32 *__errno(void);
 

@@ -22,6 +22,12 @@ struct port {
 	port_request_t request;
 	port_probe_t probe;
 	port_setup_t setup;
+	struct {
+		u8 setup_done : 1;
+		err setup;
+		u8 probe_done : 1;
+		err probe;
+	} state;
 };
 
 NONNULL void port_add(struct port *port);

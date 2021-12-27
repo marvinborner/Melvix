@@ -238,10 +238,6 @@ static err request(u32 request, va_list ap)
 // TODO: Support for single-port controllers
 static err probe(void)
 {
-	static err done = 0xff;
-	if (done != 0xff)
-		return -done;
-
 	disable();
 
 	// Tests may reset config
@@ -253,16 +249,13 @@ static err probe(void)
 	u8 second = test_second();
 	write_config(config);
 
-	done = (self && first && second) ? ERR_OK : ERR_HARDWARE;
-	return -done;
+	if (self && first && second)
+		return ERR_OK;
+	return -ERR_HARDWARE;
 }
 
 static err setup(void)
 {
-	static u8 done = 0;
-	if (done)
-		return ERR_OK;
-
 	u8 config = read_config();
 
 	write_command(ENABLE_FIRST);
@@ -275,7 +268,6 @@ static err setup(void)
 
 	write_config(config);
 
-	done = 1;
 	return ERR_OK;
 }
 

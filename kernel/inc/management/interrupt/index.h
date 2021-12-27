@@ -9,7 +9,8 @@
 #include <def.h>
 #include <sys.h>
 
-NONNULL void interrupt_add(u32 interrupt, interrupt_t handler);
+void interrupt_clear(u32 interrupt);
+NONNULL void interrupt_set(u32 interrupt, interrupt_t handler);
 interrupt_t interrupt_get(u32 interrupt);
 
 #endif

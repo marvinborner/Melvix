@@ -15,8 +15,14 @@ err interrupt_call(u32 interrupt, void *data)
 	return handler(data);
 }
 
+TEMPORARY err interrupt_remove(u32 interrupt)
+{
+	interrupt_clear(interrupt);
+	return ERR_OK;
+}
+
 TEMPORARY err interrupt_register(u32 interrupt, interrupt_t handler)
 {
-	interrupt_add(interrupt, handler);
+	interrupt_set(interrupt, handler);
 	return ERR_OK;
 }

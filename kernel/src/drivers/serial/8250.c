@@ -27,7 +27,7 @@ static err write(const void *buf, u32 offset, u32 count)
 }
 
 PROTECTED struct device device_serial = {
-	.type = DEVICE_LOGGER,
+	.type = DEVICE_SERIAL,
 	.write = write,
 	.enable = enable,
 	.disable = disable,

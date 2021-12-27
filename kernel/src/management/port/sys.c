@@ -41,7 +41,6 @@ err port_request(enum port_type type, u32 request, ...)
 	return result;
 }
 
-#include <print.h>
 err port_probe(enum port_type type)
 {
 	struct port *port = port_get(type);
@@ -49,7 +48,13 @@ err port_probe(enum port_type type)
 		return -ERR_INVALID_ARGUMENTS;
 	if (!port->probe)
 		return -ERR_NOT_SUPPORTED;
-	return port->probe();
+	if (port->state.probe_done)
+		return port->state.probe;
+
+	err probe = port->probe();
+	port->state.probe_done = 1;
+	port->state.probe = probe;
+	return probe;
 }
 
 err port_setup(enum port_type type)
@@ -59,5 +64,11 @@ err port_setup(enum port_type type)
 		return -ERR_INVALID_ARGUMENTS;
 	if (!port->setup)
 		return -ERR_NOT_SUPPORTED;
+	if (port->state.setup_done)
+		return port->state.setup;
+
+	err setup = port->setup();
+	port->state.setup_done = 1;
+	port->state.setup = setup;
 	return port->setup();
 }
