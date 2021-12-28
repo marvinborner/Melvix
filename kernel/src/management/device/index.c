@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: MIT
  */
 
-#include <def.h>
 #include <print.h>
 
 #include <management/device/index.h>

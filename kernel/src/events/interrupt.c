@@ -4,21 +4,19 @@
  */
 
 #include <print.h>
-#include <sys.h>
 
 #include <drivers/interrupt.h>
-#include <management/interrupt/handle.h>
+#include <events/interrupt.h>
 
-void *interrupt_handler(void *data)
+struct interrupt_data *interrupt_handler(struct interrupt_data *frame)
 {
-	struct interrupt_frame *frame = data;
 	u32 effective = frame->interrupt - 32;
 
-	err call = interrupt_call(effective, data);
+	err call = interrupt_call(effective, frame);
 	if (call != ERR_OK)
 		log("Interrupt %d failed: %e", effective, call);
 	err request = device_request(DEVICE_INTERRUPT, DEVICE_INTERRUPT_ACK, frame->interrupt);
 	if (request != ERR_OK)
 		log("Interrupt %d ack failed for: %e", effective, request);
-	return data;
+	return frame;
 }

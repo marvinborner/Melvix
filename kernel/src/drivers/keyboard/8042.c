@@ -6,6 +6,7 @@
 #include <print.h>
 
 #include <drivers/interrupt.h>
+#include <events/keyboard.h>
 #include <ports/8042.h>
 
 #define TYPE_TRANSLATION_KEYBOARD1 0xab41
@@ -45,7 +46,8 @@ static err handler(void *data)
 	u8 scancode = 0;
 	TRY(port_read(PORT_8042, &scancode, 0, 1));
 
-	log("Keyboard: %x", scancode);
+	struct keyboard_data handler_data = { 0 }; // TODO
+	TRY(keyboard_handler(&handler_data));
 
 	return ERR_OK;
 }

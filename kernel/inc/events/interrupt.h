@@ -3,18 +3,18 @@
  * SPDX-License-Identifier: MIT
  */
 
-#ifndef MANAGEMENT_INTERRUPT_HANDLE_H
-#define MANAGEMENT_INTERRUPT_HANDLE_H
+#ifndef EVENTS_INTERRUPT_H
+#define EVENTS_INTERRUPT_H
 
 #include <def.h>
 
-struct interrupt_frame {
+struct interrupt_data {
 	u32 gs, fs, es, ds;
 	u32 edi, esi, ebp, esp, ebx, edx, ecx, eax;
 	u32 interrupt, error;
 	u32 eip, cs, eflags;
 } PACKED;
 
-void *interrupt_handler(void *data);
+struct interrupt_data *interrupt_handler(struct interrupt_data *frame);
 
 #endif

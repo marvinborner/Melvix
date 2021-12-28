@@ -6,6 +6,7 @@
 #include <print.h>
 
 #include <drivers/interrupt.h>
+#include <events/mouse.h>
 #include <ports/8042.h>
 
 #define TYPE_STANDARD_MOUSE 0x0000
@@ -54,7 +55,8 @@ static err handler(void *data)
 	u8 byte = 0;
 	TRY(port_read(PORT_8042, &byte, 0, 1));
 
-	log("Mouse: %x", byte);
+	struct mouse_data handler_data = { 0 }; // TODO
+	TRY(mouse_handler(&handler_data));
 
 	return ERR_OK;
 }
