@@ -9,6 +9,7 @@ CONFIG_CACHE ?= ccache
 DRIVER_SERIAL ?= ./src/drivers/serial/8250.c
 DRIVER_TIMER ?= ./src/drivers/timer/8253.c
 DRIVER_INTERRUPT ?= ./src/drivers/interrupt/8259.c
+DRIVER_DISK ?= ./src/drivers/disk/ata.c
 DRIVER_KEYBOARD ?= ./src/drivers/keyboard/8042.c
 DRIVER_MOUSE ?= ./src/drivers/mouse/8042.c
 # DRIVER_NETWORK ?= ./src/drivers/network/rtl8139.c
