@@ -23,7 +23,7 @@ const char *format_error(err code);
 #define TRY(exp)                                                                                   \
 	__extension__({                                                                            \
 		err _err = exp;                                                                    \
-		if (_err != ERR_OK)                                                                \
+		if (_err < 0)                                                                      \
 			return _err;                                                               \
 	})
 

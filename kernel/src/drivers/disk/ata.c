@@ -24,6 +24,9 @@ static struct ata_disk disks[4] = { 0 };
 
 static struct ata_disk *get(u32 id)
 {
+	if (!id)
+		return NULL;
+
 	for (u8 i = 0; i < 4; i++)
 		if (disks[i].id == id)
 			return &disks[i];
