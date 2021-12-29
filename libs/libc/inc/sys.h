@@ -31,6 +31,13 @@ NONNULL err device_write(enum device_type type, const void *buf, u32 offset, u32
 NONNULL err device_request(enum device_type type, u32 request, ...);
 
 /**
+ * Disk management
+ */
+
+NONNULL err disk_read(u32 id, void *buf, u32 offset, u32 count);
+NONNULL err disk_write(u32 id, const void *buf, u32 offset, u32 count);
+
+/**
  * Interrupt management
  */
 
