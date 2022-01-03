@@ -51,7 +51,7 @@ err disk_load(u32 id)
 {
 	err load = mbr_load(id);
 	// TODO: GPT
-	/* if (err != ERR_OK) */
-	/* 	err = gpt_load(id); */
+	/* if (load != ERR_OK) */
+	/* 	load = gpt_load(id); */
 	return load;
 }
