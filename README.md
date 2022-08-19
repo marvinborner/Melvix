@@ -18,6 +18,10 @@
 
 This project is somewhat of a coding playground for me. It doesn't have any useful functionality (yet?). Be aware that the installation on real hardware is not recommended and may break your computer.
 
+## Inactive
+
+I've stopped developing Melvix because it wasn't interesting anymore. As I've rewritten Melvix many times, the following features may not all be available in the `dev` branch but scattered around all other branches and commits - sorry :P
+
 ## Features
 
 -   From scratch (no POSIX/UNIX compatibility at all)
